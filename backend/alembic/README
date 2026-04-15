@@ -1,0 +1,7 @@
+Generic single-database configuration.
+
+Generate a migration:
+    task db:migration -- "add foo table"
+
+Apply migrations:
+    task db:migrate

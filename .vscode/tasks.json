@@ -1,0 +1,69 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup: Install all dependencies",
+      "type": "shell",
+      "command": "task setup",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: Start all servers",
+      "type": "shell",
+      "command": "task dev",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: Backend only",
+      "type": "shell",
+      "command": "task dev:backend",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: Frontend only",
+      "type": "shell",
+      "command": "task dev:frontend",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Run all tests",
+      "type": "shell",
+      "command": "task test",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Backend only",
+      "type": "shell",
+      "command": "task test:backend",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Frontend only",
+      "type": "shell",
+      "command": "task test:frontend",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: E2E",
+      "type": "shell",
+      "command": "task test:e2e",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint: All projects",
+      "type": "shell",
+      "command": "task lint",
+      "problemMatcher": []
+    },
+    {
+      "label": "Typecheck: Backend (ty)",
+      "type": "shell",
+      "command": "task typecheck:backend",
+      "problemMatcher": []
+    }
+  ]
+}

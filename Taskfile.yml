@@ -1,0 +1,124 @@
+version: '3'
+
+tasks:
+  setup:
+    desc: Install all dependencies
+    deps: [setup:backend, setup:frontend]
+
+  setup:backend:
+    dir: backend
+    cmds:
+      - uv sync
+
+  setup:frontend:
+    dir: frontend
+    cmds:
+      - pnpm install
+
+  db:up:
+    desc: Start local PostgreSQL via Docker
+    cmds:
+      - docker compose up -d
+      - echo "Waiting for PostgreSQL..."
+      - docker compose exec db pg_isready -U orion -d orion_dev --timeout=30
+
+  db:down:
+    desc: Stop local PostgreSQL
+    cmds:
+      - docker compose down
+
+  db:reset:
+    desc: Destroy and recreate local database
+    cmds:
+      - docker compose down -v
+      - docker compose up -d
+      - echo "Waiting for PostgreSQL..."
+      - sleep 2
+      - docker compose exec db pg_isready -U orion -d orion_dev --timeout=30
+
+  db:migrate:
+    desc: Run Alembic migrations
+    dir: backend
+    cmds:
+      - uv run alembic upgrade head
+
+  db:migration:
+    desc: 'Generate a new Alembic migration: task db:migration -- "add foo"'
+    dir: backend
+    cmds:
+      - uv run alembic revision --autogenerate -m "{{.CLI_ARGS}}"
+
+  dev:
+    desc: Start both frontend and backend dev servers
+    deps: [dev:backend, dev:frontend]
+
+  dev:backend:
+    dir: backend
+    cmds:
+      - uv run uvicorn main:app --reload --port 8000 --app-dir src
+
+  dev:frontend:
+    dir: frontend
+    cmds:
+      - pnpm dev
+
+  test:
+    desc: Run all tests (unit + e2e)
+    cmds:
+      - task: test:backend
+      - task: test:frontend
+      - task: test:e2e
+
+  test:backend:
+    desc: Run backend unit tests
+    dir: backend
+    cmds:
+      - uv run pytest
+
+  test:frontend:
+    desc: Run frontend unit tests (Vitest)
+    dir: frontend
+    cmds:
+      - pnpm test
+
+  test:e2e:
+    desc: Run end-to-end tests (Playwright)
+    dir: frontend
+    cmds:
+      - pnpm test:e2e
+
+  lint:
+    desc: Lint all projects
+    deps: [lint:backend, lint:frontend]
+
+  lint:backend:
+    dir: backend
+    cmds:
+      - uv run ruff check src tests
+      - uv run ruff format --check src tests
+
+  lint:frontend:
+    dir: frontend
+    cmds:
+      - pnpm lint
+
+  format:
+    desc: Format all code
+    deps: [format:backend, format:frontend]
+
+  format:backend:
+    dir: backend
+    cmds:
+      - uv run ruff format src tests
+      - uv run ruff check --fix src tests
+
+  format:frontend:
+    dir: frontend
+    cmds:
+      - pnpm prettier --write .
+
+  typecheck:backend:
+    desc: Type-check backend with ty
+    dir: backend
+    cmds:
+      - uv run ty check src

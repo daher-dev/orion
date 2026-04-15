@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read -r f && echo \"$f\" >> /tmp/orion-edited-files.txt; } 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport json, os, re, sys\nTRACKED = '/tmp/orion-edited-files.txt'\nAPP_PATTERN = re.compile(r'/(frontend/src|backend/src)/')\nif not os.path.exists(TRACKED):\n    print(json.dumps({'continue': True})); sys.exit(0)\nwith open(TRACKED) as f:\n    files = [l.strip() for l in f if l.strip()]\nos.unlink(TRACKED)\napp_changed = any(APP_PATTERN.search(p) for p in files)\nif app_changed:\n    print(json.dumps({'continue': False, 'stopReason': '[Preview Required] App code was edited but no dev server is running. Start dev servers and verify the change before finishing.'}))\nelse:\n    print(json.dumps({'continue': True}))\n\""
+          }
+        ]
+      }
+    ]
+  }
+}

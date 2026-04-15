@@ -1,0 +1,62 @@
+[project]
+name = "orion-api"
+version = "0.1.0"
+description = "Orion API"
+readme = "README.md"
+requires-python = ">=3.14.0"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "firebase-admin>=6.6.0",
+    "pydantic[email]>=2.12.0",
+    "pydantic-settings>=2.10.1",
+    "python-multipart>=0.0.18",
+    "sqlmodel>=0.0.24",
+    "asyncpg>=0.30.0",
+    "greenlet>=3.0.0",
+    "alembic>=1.16.0",
+    "python-dateutil>=2.9.0",
+    "python-dotenv>=1.2.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-random-order>=1.1.1",
+    "pytest-sugar>=1.0.0",
+    "pytest-timeout>=2.3.1",
+    "httpx>=0.28.0",
+    "respx>=0.22.0",
+    "ruff>=0.11.0",
+    "ty>=0.0.1a16",
+    "polyfactory>=2.22.1",
+    "faker>=37.0.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-p no:anyio --random-order --timeout 30 --cov=src --cov-report=term-missing -q"
+markers = ["anyio: compatibility marker treated as asyncio test"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["config", "database", "dependencies", "firebase", "logger", "models", "routers", "schemas", "services", "shared"]
+
+[tool.ty.environment]
+python-version = "3.14"
+
+[tool.ty.rules]
+unresolved-attribute = "ignore"
+no-matching-overload = "ignore"
+invalid-type-form = "ignore"
+invalid-argument-type = "ignore"

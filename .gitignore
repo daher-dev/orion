@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+*.egg
+
+# Node
+node_modules/
+.next/
+out/
+.vercel/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# GCP / Firebase
+sa.*.json
+.firebase/
+firebase-debug.log
+
+# Coverage
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# Testing
+.pytest_cache/
+.ruff_cache/
+playwright-report/
+.playwright-auth/
+test-results/
+
+# Build
+*.tsbuildinfo
+
+# Scratch / temp
+tmp/
+
+.claude/worktrees/
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

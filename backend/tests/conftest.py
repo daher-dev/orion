@@ -54,14 +54,18 @@ async def test_session_factory(test_engine):
     )
 
 
+# Reference tables seeded by Alembic migrations — preserved between tests.
+_SEED_TABLES: frozenset[str] = frozenset({"roles", "permissions", "role_permissions"})
+
+
 async def _truncate_all(session: AsyncSession) -> None:
-    """Truncate every user-created table — schema-agnostic."""
+    """Truncate every user-created table, preserving seeded reference data."""
     # Use the underlying connection to avoid SQLModel's execute() deprecation warning for raw SQL.
     conn = await session.connection()
     result = await conn.execute(
         text("SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'alembic_version'")
     )
-    tables = [row[0] for row in result]
+    tables = [row[0] for row in result if row[0] not in _SEED_TABLES]
     if not tables:
         return
     quoted = ", ".join(f'"{t}"' for t in tables)

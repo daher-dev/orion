@@ -209,22 +209,28 @@
   }
   /*
    * Subtle paper grain on the page background — direct port from the design
-   * source (.app::before): a fixed-layer 4×4 radial-gradient dot pattern at
-   * 2% ink opacity. Pointer-events: none so it never blocks clicks.
+   * source (.app::before): a 4×4 radial-gradient dot pattern at 2% ink
+   * opacity. Applied as a layered background on the cream `bg-background`
+   * surface so any element using --background gets the texture (e.g.
+   * SidebarInset, .main, the body itself). Was attempted as body::before
+   * but the shadcn SidebarInset paints solid bg-background on top, hiding
+   * the layer underneath.
    */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background-image: radial-gradient(rgba(31, 27, 21, 0.02) 1px, transparent 1px);
-    background-size: 4px 4px;
+  :root {
+    /*
+     * Paper grain texture. The design source specifies rgba(31,27,21,.02)
+     * @ 4×4 tiles, but at LCD subpixel scale 2% ink dots are invisible —
+     * effectively a flat surface. Bumped to 8% so the texture is actually
+     * legible while staying within "subtle" territory.
+     */
+    --orion-grain: radial-gradient(rgba(31, 27, 21, 0.08) 1px, transparent 1.5px);
+    --orion-grain-size: 4px 4px;
   }
-  /* Make sure app content sits above the grain layer. */
-  body > * {
-    position: relative;
-    z-index: 1;
+  body,
+  [data-slot="sidebar-inset"] {
+    background-image: var(--orion-grain);
+    background-size: var(--orion-grain-size);
+    background-color: var(--background);
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);

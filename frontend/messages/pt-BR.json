@@ -142,7 +142,76 @@
   "prints": {},
   "cutting": {},
   "sewing": {},
-  "contractors": {},
+  "contractors": {
+    "page": {
+      "eyebrow": "Produção"
+    },
+    "list": {
+      "title": "Bancas",
+      "titleEm": "parceiras",
+      "sub": "Diretório de bancas de costura.",
+      "empty": {
+        "title": "Nenhuma banca cadastrada",
+        "body": "Cadastre sua primeira banca para acompanhar remessas.",
+        "cta": "Cadastrar primeira banca"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar por nome ou telefone…"
+    },
+    "table": {
+      "columns": {
+        "name": "Nome",
+        "address": "Endereço",
+        "phone": "Telefone",
+        "created": "Criada em",
+        "actions": "Ações"
+      }
+    },
+    "actions": {
+      "create": "Nova banca",
+      "edit": "Editar banca",
+      "delete": "Excluir banca",
+      "confirmDelete": "Tem certeza? Esta ação não pode ser desfeita."
+    },
+    "form": {
+      "title": {
+        "new": "Nova banca",
+        "edit": "Editar banca",
+        "newSub": "Cadastre um novo parceiro de costura",
+        "editSub": "Atualizar dados da banca"
+      },
+      "sectionId": "Identificação",
+      "sectionContact": "Contato",
+      "labels": {
+        "name": "Nome da banca",
+        "address": "Endereço",
+        "phone": "Telefone"
+      },
+      "placeholders": {
+        "name": "Ex: Banca Dona Lúcia",
+        "address": "Ex: R. das Palmeiras, 120 — São Paulo, SP",
+        "phone": "(11) 91234-5678"
+      },
+      "validation": {
+        "nameRequired": "Nome é obrigatório",
+        "nameTooLong": "Nome é muito longo",
+        "duplicateName": "Já existe uma banca com esse nome"
+      },
+      "save": "Salvar alterações",
+      "cancel": "Cancelar",
+      "submitNew": "Cadastrar banca"
+    },
+    "toast": {
+      "created": "Banca cadastrada",
+      "updated": "Banca atualizada",
+      "deleted": "Banca excluída",
+      "error": "Operação falhou"
+    },
+    "fallback": {
+      "forbidden": "Você não tem acesso às bancas."
+    }
+  },
   "fabric": {},
   "stock": {},
   "reports": {},

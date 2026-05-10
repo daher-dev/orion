@@ -45,7 +45,7 @@ export function PageHead({
       {/* .page-head-l — column, gap 6px. */}
       <div className="flex min-w-0 flex-col gap-1.5">
         {/* .page-eyebrow — 11px, tracking .12em, uppercase, font-semibold (600). */}
-        <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.12em] uppercase text-[var(--sub-color)]">
+        <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--sub-color)]">
           {/* .page-eyebrow-mark — 18×18, rounded-4, brand bg, white 10px display glyph. */}
           <span
             className="grid h-[18px] w-[18px] place-items-center rounded-[4px] font-serif text-[10px] font-semibold text-white"
@@ -78,9 +78,7 @@ export function PageHead({
         ) : null}
       </div>
       {/* .page-head-r — 8px gap, wraps. */}
-      {actions ? (
-        <div className="flex flex-wrap items-center gap-2">{actions}</div>
-      ) : null}
+      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   );
 }

@@ -142,7 +142,76 @@
   "prints": {},
   "cutting": {},
   "sewing": {},
-  "contractors": {},
+  "contractors": {
+    "page": {
+      "eyebrow": "Production"
+    },
+    "list": {
+      "title": "Sewing workshops",
+      "titleEm": "partners",
+      "sub": "Sewing workshop directory.",
+      "empty": {
+        "title": "No workshops yet",
+        "body": "Register your first sewing partner to start tracking shipments.",
+        "cta": "Register first workshop"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search by name or phone…"
+    },
+    "table": {
+      "columns": {
+        "name": "Name",
+        "address": "Address",
+        "phone": "Phone",
+        "created": "Created",
+        "actions": "Actions"
+      }
+    },
+    "actions": {
+      "create": "New workshop",
+      "edit": "Edit workshop",
+      "delete": "Delete workshop",
+      "confirmDelete": "Are you sure? This cannot be undone."
+    },
+    "form": {
+      "title": {
+        "new": "New workshop",
+        "edit": "Edit workshop",
+        "newSub": "Register a new sewing partner",
+        "editSub": "Update workshop details"
+      },
+      "sectionId": "Identification",
+      "sectionContact": "Contact",
+      "labels": {
+        "name": "Workshop name",
+        "address": "Address",
+        "phone": "Phone"
+      },
+      "placeholders": {
+        "name": "e.g. Banca Dona Lúcia",
+        "address": "e.g. R. das Palmeiras, 120 — São Paulo, SP",
+        "phone": "(11) 91234-5678"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "nameTooLong": "Name is too long",
+        "duplicateName": "A workshop with this name already exists"
+      },
+      "save": "Save changes",
+      "cancel": "Cancel",
+      "submitNew": "Register workshop"
+    },
+    "toast": {
+      "created": "Workshop registered",
+      "updated": "Workshop updated",
+      "deleted": "Workshop deleted",
+      "error": "Operation failed"
+    },
+    "fallback": {
+      "forbidden": "You don't have access to workshops."
+    }
+  },
   "fabric": {},
   "stock": {},
   "reports": {},

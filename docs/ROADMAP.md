@@ -25,7 +25,7 @@ Features created through the `/pm` workflow are tracked here. Add a line when a 
 | F-005 | Catalog: Products + Variations | planned | 2 | `feature/005-products` |
 | F-006 | Inventory: Fabric (bobinas) | planned | 1 | `feature/006-fabric` |
 | F-007 | Production: Cutting | planned | 3 | `feature/007-cutting` |
-| F-008 | Production: Bancas (contractors) | planned | 1 | `feature/008-contractors` |
+| F-008 | Production: Bancas (contractors) | in-progress | 1 | `feature/008-contractors` |
 | F-009 | Production: Sewing (shipments) | planned | 3 | `feature/009-sewing` |
 | F-010 | Inventory: Stock | planned | 4 | `feature/010-stock` |
 | F-011 | Sales: Clients | in-progress | 1 | `feature/011-clients` |

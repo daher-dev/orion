@@ -217,13 +217,8 @@
    * the layer underneath.
    */
   :root {
-    /*
-     * Paper grain texture. The design source specifies rgba(31,27,21,.02)
-     * @ 4×4 tiles, but at LCD subpixel scale 2% ink dots are invisible —
-     * effectively a flat surface. Bumped to 8% so the texture is actually
-     * legible while staying within "subtle" territory.
-     */
-    --orion-grain: radial-gradient(rgba(31, 27, 21, 0.08) 1px, transparent 1.5px);
+    /* Paper grain — exact values from /docs/design/source/styles.css:960. */
+    --orion-grain: radial-gradient(rgba(31, 27, 21, 0.02) 1px, transparent 1px);
     --orion-grain-size: 4px 4px;
   }
   /*

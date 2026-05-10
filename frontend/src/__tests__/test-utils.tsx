@@ -1,6 +1,7 @@
-import { type ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
+import { render } from "@testing-library/react";
 import enMessages from "../../messages/en.json";
 
 /**
@@ -24,6 +25,10 @@ export type TestProvidersProps = {
   queryClient?: QueryClient;
 };
 
+/**
+ * Provider wrapper component — use directly when you need to compose with
+ * other providers or to render imperatively.
+ */
 export function TestProviders({ children, queryClient }: TestProvidersProps) {
   const client = queryClient ?? makeQueryClient();
   return (
@@ -31,4 +36,18 @@ export function TestProviders({ children, queryClient }: TestProvidersProps) {
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     </NextIntlClientProvider>
   );
+}
+
+/**
+ * Convenience: render a component inside `TestProviders`. Returns the
+ * RTL render result plus the QueryClient so tests can prime the cache.
+ */
+export function renderWithProviders(ui: ReactElement) {
+  const client = makeQueryClient();
+
+  function Wrapper({ children }: { children: ReactNode }) {
+    return <TestProviders queryClient={client}>{children}</TestProviders>;
+  }
+
+  return { ...render(ui, { wrapper: Wrapper }), client };
 }

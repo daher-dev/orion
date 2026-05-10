@@ -138,7 +138,130 @@
   },
   "ads": {},
   "products": {},
-  "specs": {},
+  "specs": {
+    "page": {
+      "eyebrow": "Catálogo"
+    },
+    "list": {
+      "title": "Fichas técnicas",
+      "sub": "Receitas de produção: tecido, gramatura, ribana e custo CMT.",
+      "empty": {
+        "title": "Nenhuma ficha ainda",
+        "body": "As fichas descrevem como um produto é feito. Crie a primeira para começar a cortar e costurar.",
+        "cta": "Nova ficha"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Procurar ficha…",
+      "fabricType": "Tipo de tecido",
+      "all": "Todas"
+    },
+    "table": {
+      "columns": {
+        "code": "Código",
+        "name": "Nome",
+        "fabricType": "Tecido",
+        "gsm": "GSM",
+        "laborCost": "Custo de mão de obra",
+        "salePrice": "Preço de venda",
+        "ribana": "Ribana",
+        "updatedAt": "Última edição",
+        "actions": "Ações"
+      }
+    },
+    "fabricTypes": {
+      "jersey": "Malha",
+      "fleece": "Moletom flanelado",
+      "french_terry": "Moletom (French Terry)",
+      "mesh": "Tela (Mesh)",
+      "rib": "Ribana"
+    },
+    "trimTypes": {
+      "button": "Botão",
+      "zipper": "Zíper",
+      "label": "Etiqueta",
+      "drawstring": "Cordão",
+      "snap": "Pressão",
+      "hook": "Gancho",
+      "eyelet": "Ilhós",
+      "elastic": "Elástico"
+    },
+    "actions": {
+      "create": "Nova ficha",
+      "edit": "Editar",
+      "delete": "Excluir",
+      "confirmDelete": "Excluir esta ficha?",
+      "confirmDeleteBody": "Esta ação não pode ser desfeita.",
+      "addTrim": "Adicionar aviamento",
+      "removeTrim": "Remover aviamento",
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "back": "Voltar",
+      "noResults": "Nenhuma ficha corresponde aos filtros."
+    },
+    "form": {
+      "title": {
+        "new": "Nova ficha técnica",
+        "edit": "Editar ficha técnica"
+      },
+      "sections": {
+        "identity": "Identificação",
+        "fabric": "Tecido principal",
+        "ribana": "Ribana",
+        "cost": "Aviamentos",
+        "pricing": "Custo & preço",
+        "notes": "Observações"
+      },
+      "labels": {
+        "code": "Código",
+        "name": "Nome da ficha",
+        "fabricType": "Tipo de tecido",
+        "gsm": "Gramatura (g/m²)",
+        "weightPerPiece": "Peso por peça (g)",
+        "hasRibana": "Tem ribana?",
+        "ribanaPct": "% peso ribana",
+        "laborCost": "Custo de mão de obra",
+        "salePrice": "Preço de venda",
+        "notes": "Observações",
+        "trimType": "Aviamento",
+        "trimQty": "Qtd",
+        "trimUnitPrice": "Preço unitário"
+      },
+      "placeholders": {
+        "code": "FT-001",
+        "name": "Ex: Cropped Oversized",
+        "notes": "Anotações internas sobre esta ficha"
+      },
+      "validation": {
+        "required": "Obrigatório",
+        "ribanaPctRequired": "Informe o % de peso da ribana quando “Tem ribana” estiver ativo.",
+        "ribanaPctRange": "% de peso deve estar entre 0 e 100.",
+        "duplicateCode": "Esse código já está em uso.",
+        "linkedProducts": "Não é possível excluir: produtos usam esta ficha."
+      }
+    },
+    "detail": {
+      "stats": {
+        "fabric": "Tecido",
+        "grammage": "Gramatura",
+        "weight": "Peso",
+        "ribana": "Ribana",
+        "trims": "Aviamentos",
+        "trimsSubtotal": "Subtotal aviamentos",
+        "labor": "Mão de obra",
+        "totalCost": "Custo total",
+        "sale": "Preço de venda",
+        "margin": "Margem bruta",
+        "updated": "Última edição"
+      },
+      "yes": "Sim",
+      "no": "Não"
+    },
+    "ribana": {
+      "yes": "Sim",
+      "no": "Não"
+    }
+  },
   "prints": {},
   "cutting": {},
   "sewing": {},

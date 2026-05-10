@@ -338,7 +338,81 @@
   "fabric": {},
   "stock": {},
   "reports": {},
-  "settings": {},
+  "settings": {
+    "page": {
+      "eyebrow": "Ajustes"
+    },
+    "list": {
+      "title": "Ajustes",
+      "sub": "Configure sua conta, equipe e integrações."
+    },
+    "nav": {
+      "company": "Empresa",
+      "members": "Membros",
+      "roles": "Funções",
+      "billing": "Cobrança",
+      "audit": "Auditoria",
+      "integrations": "Integrações",
+      "profile": "Perfil",
+      "notifications": "Notificações"
+    },
+    "company": {
+      "title": "Identidade da empresa",
+      "sub": "Como sua empresa aparece para a equipe e em documentos.",
+      "labels": {
+        "name": "Nome da empresa",
+        "subdomain": "Subdomínio",
+        "mainColor": "Cor principal"
+      },
+      "helpers": {
+        "subdomainImmutable": "Não pode ser alterado nesta versão."
+      },
+      "save": "Salvar alterações",
+      "savedToast": "Empresa atualizada",
+      "errorToast": "Não foi possível salvar a empresa.",
+      "validation": {
+        "nameRequired": "Nome é obrigatório",
+        "colorInvalid": "Cor inválida"
+      }
+    },
+    "profile": {
+      "title": "Seu perfil",
+      "sub": "Estas informações ficam visíveis para seus colegas.",
+      "labels": {
+        "name": "Nome de exibição",
+        "email": "E-mail",
+        "job": "Cargo",
+        "role": "Função de acesso"
+      },
+      "helpers": {
+        "emailImmutable": "Vinculado à sua conta de acesso.",
+        "roleImmutable": "Peça a um administrador para alterar sua função."
+      },
+      "save": "Salvar alterações",
+      "savedToast": "Perfil atualizado",
+      "errorToast": "Não foi possível salvar o perfil.",
+      "validation": {
+        "nameRequired": "Nome é obrigatório"
+      }
+    },
+    "colorPresets": {
+      "indigo": "Índigo",
+      "terracotta": "Terracota",
+      "teal": "Verde-petróleo",
+      "aubergine": "Berinjela",
+      "amber": "Âmbar",
+      "ink": "Tinta"
+    },
+    "placeholders": {
+      "empty": {
+        "title": "Em breve",
+        "body": "Esta seção será lançada em uma versão futura."
+      }
+    },
+    "forbidden": {
+      "company": "Você não tem acesso aos ajustes da empresa."
+    }
+  },
   "members": {},
   "roles": {},
   "audit": {},

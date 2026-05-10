@@ -104,6 +104,11 @@ export const qk = {
     one: (slug: string, params?: Readonly<Record<string, unknown>>) =>
       tuple("reports", slug, params ?? {}),
   },
+  settings: {
+    all: () => tuple("settings"),
+    company: () => tuple("settings", "company"),
+    profile: () => tuple("settings", "profile"),
+  },
 } as const;
 
 export type QueryKey = ReturnType<

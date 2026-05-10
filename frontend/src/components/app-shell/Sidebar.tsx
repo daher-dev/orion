@@ -78,7 +78,13 @@ export function Sidebar() {
         } as CSSProperties
       }
     >
-      <SidebarHeader className="h-14 border-b border-white/5 p-0">
+      {/*
+       * Brand band — design source: distinctly darker tone than the gradient
+       * sidebar body (see Underground header in /docs/design/screenshots).
+       * Solid #15110b matches the sidebar border-right value, gives the visual
+       * separation between the company-switcher band and the nav.
+       */}
+      <SidebarHeader className="h-14 border-b border-white/5 bg-[#15110b] p-0">
         <CompanySwitcher />
       </SidebarHeader>
 

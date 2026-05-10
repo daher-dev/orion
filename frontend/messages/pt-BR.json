@@ -69,7 +69,73 @@
     "title": "Painel"
   },
   "orders": {},
-  "clients": {},
+  "clients": {
+    "page": {
+      "eyebrow": "Vendas"
+    },
+    "list": {
+      "title": "Clientes",
+      "sub": "Diretório de clientes através de todos os canais.",
+      "empty": {
+        "title": "Nenhum cliente ainda",
+        "body": "Acompanhe cada comprador em um só lugar — comece criando seu primeiro cliente.",
+        "cta": "Novo cliente"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Procurar cliente…"
+    },
+    "table": {
+      "columns": {
+        "name": "Cliente",
+        "email": "E-mail",
+        "phone": "Telefone",
+        "address": "Endereço",
+        "created": "Criado em",
+        "actions": "Ações"
+      }
+    },
+    "actions": {
+      "create": "Novo cliente",
+      "edit": "Editar",
+      "delete": "Excluir",
+      "confirmDelete": "Excluir este cliente? Esta ação não pode ser desfeita."
+    },
+    "form": {
+      "title": {
+        "new": "Novo cliente",
+        "edit": "Editar cliente"
+      },
+      "sections": {
+        "identity": "Identificação",
+        "contact": "Contato"
+      },
+      "labels": {
+        "name": "Nome",
+        "email": "E-mail",
+        "phone": "Telefone",
+        "address": "Endereço"
+      },
+      "placeholders": {
+        "name": "Nome completo",
+        "email": "nome@exemplo.com",
+        "phone": "(11) 99999-0000",
+        "address": "Rua, número, cidade"
+      },
+      "validation": {
+        "nameRequired": "Nome é obrigatório",
+        "emailInvalid": "E-mail inválido"
+      },
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "toasts": {
+        "created": "Cliente criado",
+        "updated": "Cliente atualizado",
+        "deleted": "Cliente excluído",
+        "error": "Não foi possível salvar o cliente."
+      }
+    }
+  },
   "ads": {},
   "products": {},
   "specs": {},

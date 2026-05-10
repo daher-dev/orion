@@ -69,7 +69,73 @@
     "title": "Dashboard"
   },
   "orders": {},
-  "clients": {},
+  "clients": {
+    "page": {
+      "eyebrow": "Sales"
+    },
+    "list": {
+      "title": "Clients",
+      "sub": "Directory of clients across all channels.",
+      "empty": {
+        "title": "No clients yet",
+        "body": "Track every buyer in one place — start by adding your first client.",
+        "cta": "New client"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search client…"
+    },
+    "table": {
+      "columns": {
+        "name": "Client",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address",
+        "created": "Created",
+        "actions": "Actions"
+      }
+    },
+    "actions": {
+      "create": "New client",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete this client? This cannot be undone."
+    },
+    "form": {
+      "title": {
+        "new": "New client",
+        "edit": "Edit client"
+      },
+      "sections": {
+        "identity": "Identification",
+        "contact": "Contact"
+      },
+      "labels": {
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address"
+      },
+      "placeholders": {
+        "name": "Full name",
+        "email": "name@example.com",
+        "phone": "(11) 99999-0000",
+        "address": "Street, number, city"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "emailInvalid": "Invalid email"
+      },
+      "save": "Save",
+      "cancel": "Cancel",
+      "toasts": {
+        "created": "Client created",
+        "updated": "Client updated",
+        "deleted": "Client deleted",
+        "error": "Could not save the client."
+      }
+    }
+  },
   "ads": {},
   "products": {},
   "specs": {},

@@ -64,7 +64,7 @@ export function Sidebar() {
           isActive={active}
           tooltip={t(item.labelKey)}
           style={style}
-          className="relative data-[active=true]:before:absolute data-[active=true]:before:-left-2 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r-sm data-[active=true]:before:bg-[var(--sub-color)] data-[active=true]:before:content-[''] group-data-[collapsible=icon]:data-[active=true]:before:hidden"
+          className="relative hover:!bg-white/[0.04] hover:!text-sidebar-foreground data-[active=true]:!bg-white/[0.06] data-[active=true]:!text-[#f5efe0] data-[active=true]:before:absolute data-[active=true]:before:-left-2 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r-sm data-[active=true]:before:bg-[var(--sub-color)] data-[active=true]:before:content-[''] group-data-[collapsible=icon]:data-[active=true]:before:hidden"
         >
           <Link href={item.href}>
             <Icon />

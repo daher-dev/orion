@@ -35,7 +35,10 @@ export function Topbar() {
 
   return (
     <header
-      // .topbar — height 56, bg surface (#fbf8f2), border-bottom line, padding 0 18, gap 14
+      data-orion-paper
+      // .topbar — height 56, bg surface (#fbf8f2) + paper grain via the
+      // shared --orion-grain layer (see globals.css), border-bottom line,
+      // padding 0 18, gap 14.
       className="sticky top-0 z-30 flex h-14 items-center gap-3.5 border-b border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[18px]"
     >
       <button

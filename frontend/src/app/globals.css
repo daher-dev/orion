@@ -226,11 +226,18 @@
     --orion-grain: radial-gradient(rgba(31, 27, 21, 0.08) 1px, transparent 1.5px);
     --orion-grain-size: 4px 4px;
   }
+  /*
+   * Every cream surface in the app gets the paper grain. Selector list
+   * covers: page body, the shadcn SidebarInset (main content frame), and
+   * any header tagged data-orion-paper (the Topbar — which uses
+   * --orion-surface, a different cream from --background, so it would
+   * otherwise paint solid over the body grain).
+   */
   body,
-  [data-slot="sidebar-inset"] {
+  [data-slot="sidebar-inset"],
+  [data-orion-paper] {
     background-image: var(--orion-grain);
     background-size: var(--orion-grain-size);
-    background-color: var(--background);
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);

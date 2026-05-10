@@ -3,52 +3,130 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Orion design tokens.
+ * The base palette is warm and "characterful": cream paper background,
+ * inked typography, and a small set of brand accents per sub-product.
+ *
+ * shadcn variables (--background, --foreground, --primary, ...) are
+ * mapped onto Orion's warm palette. Brand sub-product tokens
+ * (--brand-sales, --brand-catalog, ...) are exposed via @theme inline
+ * so Tailwind utility classes (e.g. text-brand-sales) work out of the box.
+ *
+ * Color values use OKLCH (Tailwind v4 / @theme inline preferred format).
+ * Reference hex values are commented for traceability.
+ */
+
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* Orion warm raw tokens (light) */
+  --orion-bg: oklch(0.953 0.014 80);            /* #f5f0e8 — paper cream */
+  --orion-surface: oklch(0.971 0.011 85);       /* #fbf8f2 — card surface */
+  --orion-surface-2: oklch(0.926 0.014 82);     /* #efe9dd — hover/raised */
+  --orion-line: oklch(0.881 0.018 82);          /* #e3dbcb — divider */
+  --orion-line-soft: oklch(0.913 0.020 86);     /* #ece5d4 */
+  --orion-ink: oklch(0.211 0.012 60);           /* #1f1b15 — primary text */
+  --orion-ink-2: oklch(0.346 0.014 60);         /* #4a4337 — secondary text */
+  --orion-ink-3: oklch(0.516 0.018 70);         /* #7a7160 — muted text */
+  --orion-ink-inv: oklch(0.971 0.011 85);       /* #fbf8f2 — inverted text */
+
+  /* shadcn semantic mapping (light) */
+  --background: var(--orion-bg);
+  --foreground: var(--orion-ink);
+  --card: var(--orion-surface);
+  --card-foreground: var(--orion-ink);
+  --popover: var(--orion-surface);
+  --popover-foreground: var(--orion-ink);
+  --primary: var(--orion-ink);
+  --primary-foreground: var(--orion-ink-inv);
+  --secondary: var(--orion-surface-2);
+  --secondary-foreground: var(--orion-ink);
+  --muted: var(--orion-surface-2);
+  --muted-foreground: var(--orion-ink-3);
+  --accent: var(--orion-surface-2);
+  --accent-foreground: var(--orion-ink);
+  --destructive: oklch(0.504 0.190 27);          /* #b91c1c */
+  --destructive-foreground: var(--orion-ink-inv);
+  --border: var(--orion-line);
+  --input: var(--orion-line);
+  --ring: oklch(0.633 0.166 250);                /* indigo-blue accent ring */
   --radius: 0.625rem;
+
+  /* Sidebar palette (light) — warm dark sidebar even in light mode */
+  --sidebar: oklch(0.221 0.012 60);              /* #1c1812 */
+  --sidebar-foreground: oklch(0.881 0.018 82);   /* #d9d2c2 */
+  --sidebar-primary: oklch(0.633 0.166 250);     /* indigo accent */
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.293 0.014 60);       /* slightly lighter than sidebar */
+  --sidebar-accent-foreground: oklch(0.971 0.011 85);
+  --sidebar-border: oklch(0.181 0.012 60);       /* #15110b */
+  --sidebar-ring: oklch(0.633 0.166 250);
+
+  /* Brand sub-product accents — exposed via @theme inline */
+  --brand-sales: oklch(0.561 0.184 41);          /* #c2410c — terracotta */
+  --brand-catalog: oklch(0.563 0.226 295);       /* #7e5bef — aubergine */
+  --brand-prod: oklch(0.498 0.094 178);          /* #0f766e — teal */
+  --brand-inv: oklch(0.566 0.149 60);            /* #b45309 — amber */
+  --brand-reports: oklch(0.402 0.171 263);       /* #1e40af — deep blue */
+  --brand-settings: oklch(0.348 0.005 70);       /* #44403c — stone */
+
+  /* Status semantics (kept as raw tokens for status pill components) */
+  --status-ok: oklch(0.529 0.143 150);           /* #15803d */
+  --status-warn: oklch(0.566 0.149 60);          /* #b45309 */
+  --status-err: oklch(0.504 0.190 27);           /* #b91c1c */
+  --status-info: oklch(0.402 0.171 263);         /* #1e40af */
+
+  /* Typography (Inter Tight body, Fraunces display, JetBrains Mono code) */
+  --font-body: var(--font-body, "Inter Tight", "Inter", system-ui, -apple-system, sans-serif);
+  --font-display: var(--font-display, "Fraunces", "Source Serif 4", Georgia, serif);
+  --font-mono: var(--font-mono, "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  /* Orion warm raw tokens (dark) — anchored on a soft dark warm background */
+  --orion-bg: oklch(0.198 0.012 60);             /* #1c1812 */
+  --orion-surface: oklch(0.241 0.013 62);        /* #221d15 — slightly raised */
+  --orion-surface-2: oklch(0.293 0.014 62);      /* hover */
+  --orion-line: oklch(0.346 0.014 62);
+  --orion-line-soft: oklch(0.293 0.014 62);
+  --orion-ink: oklch(0.945 0.012 85);            /* #f5efe0 — inverted text */
+  --orion-ink-2: oklch(0.881 0.018 82);
+  --orion-ink-3: oklch(0.711 0.020 80);
+  --orion-ink-inv: oklch(0.198 0.012 60);
+
+  /* shadcn semantic mapping (dark) */
+  --background: var(--orion-bg);
+  --foreground: var(--orion-ink);
+  --card: var(--orion-surface);
+  --card-foreground: var(--orion-ink);
+  --popover: var(--orion-surface);
+  --popover-foreground: var(--orion-ink);
+  --primary: var(--orion-ink);
+  --primary-foreground: var(--orion-ink-inv);
+  --secondary: var(--orion-surface-2);
+  --secondary-foreground: var(--orion-ink);
+  --muted: var(--orion-surface-2);
+  --muted-foreground: var(--orion-ink-3);
+  --accent: var(--orion-surface-2);
+  --accent-foreground: var(--orion-ink);
+  --destructive: oklch(0.504 0.190 27);
+  --destructive-foreground: var(--orion-ink);
+  --border: var(--orion-line);
+  --input: var(--orion-line);
+  --ring: oklch(0.633 0.166 250);
+
+  /* Sidebar palette (dark) — same warm dark surface as bg, subtly differentiated */
+  --sidebar: oklch(0.181 0.012 60);
+  --sidebar-foreground: oklch(0.881 0.018 82);
+  --sidebar-primary: oklch(0.633 0.166 250);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.241 0.013 62);
+  --sidebar-accent-foreground: oklch(0.945 0.012 85);
+  --sidebar-border: oklch(0.151 0.012 60);
+  --sidebar-ring: oklch(0.633 0.166 250);
 }
 
 @theme inline {
+  /* shadcn color tokens */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -68,10 +146,41 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Sidebar tokens */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Orion brand sub-product tokens */
+  --color-brand-sales: var(--brand-sales);
+  --color-brand-catalog: var(--brand-catalog);
+  --color-brand-prod: var(--brand-prod);
+  --color-brand-inv: var(--brand-inv);
+  --color-brand-reports: var(--brand-reports);
+  --color-brand-settings: var(--brand-settings);
+
+  /* Orion status tokens */
+  --color-status-ok: var(--status-ok);
+  --color-status-warn: var(--status-warn);
+  --color-status-err: var(--status-err);
+  --color-status-info: var(--status-info);
+
+  /* Radius */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Font families */
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-display);
+  --font-mono: var(--font-mono);
 }
 
 @layer base {
@@ -80,5 +189,14 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  code, kbd, samp, pre {
+    font-family: var(--font-mono);
   }
 }

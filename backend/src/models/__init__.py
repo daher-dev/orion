@@ -24,6 +24,7 @@ from models.enums import (
     TrimType,
 )
 from models.fabric_roll import FabricRoll
+from models.invite import Invite
 from models.order import Order
 from models.print_design import PrintDesign
 from models.product import Product, ProductVariation
@@ -48,6 +49,7 @@ __all__ = [
     "FabricRoll",
     "FabricRollKind",
     "FabricType",
+    "Invite",
     "Order",
     "OrderStatus",
     "Permission",

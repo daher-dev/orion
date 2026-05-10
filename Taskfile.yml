@@ -48,6 +48,12 @@ tasks:
     cmds:
       - uv run alembic revision --autogenerate -m "{{.CLI_ARGS}}"
 
+  db:seed:
+    desc: Seed local DB with demo data
+    dir: backend
+    cmds:
+      - uv run python scripts/seed_dev.py
+
   dev:
     desc: Start both frontend and backend dev servers
     deps: [dev:backend, dev:frontend]

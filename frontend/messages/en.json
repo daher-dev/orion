@@ -1,6 +1,91 @@
 {
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "create": "Create",
+    "edit": "Edit",
+    "search": "Search...",
+    "actions": "Actions",
+    "back": "Back",
+    "next": "Next",
+    "yes": "Yes",
+    "no": "No",
+    "noResults": "No results"
+  },
+  "appShell": {
+    "loading": "Loading"
+  },
+  "topbar": {
+    "search": "Search",
+    "searchPlaceholder": "Search Orion...",
+    "switchCompany": "Switch company",
+    "noCompany": "Select company",
+    "noMemberships": "No memberships yet",
+    "notifications": "Notifications",
+    "openUserMenu": "Open user menu",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "noName": "Unnamed user"
+  },
+  "nav": {
+    "sections": {
+      "sales": "Sales",
+      "catalog": "Catalog",
+      "production": "Production",
+      "inventory": "Inventory",
+      "insights": "Insights",
+      "settings": "Settings"
+    },
+    "orders": "Orders",
+    "clients": "Clients",
+    "ads": "Ads",
+    "products": "Products",
+    "specs": "Specs",
+    "prints": "Prints",
+    "cutting": "Cutting",
+    "sewing": "Sewing",
+    "contractors": "Contractors",
+    "fabric": "Fabric",
+    "stock": "Stock",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "auth": {
+    "title": "Sign in to Orion",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "google": "Continue with Google",
+    "comingSoon": "Authentication will be wired up in the next release.",
+    "onboardingTitle": "Welcome to Orion",
+    "onboardingSubtitle": "The onboarding wizard is coming soon."
+  },
+  "dashboard": {
+    "title": "Dashboard"
+  },
+  "orders": {},
+  "clients": {},
+  "ads": {},
+  "products": {},
+  "specs": {},
+  "prints": {},
+  "cutting": {},
+  "sewing": {},
+  "contractors": {},
+  "fabric": {},
+  "stock": {},
+  "reports": {},
+  "settings": {},
+  "members": {},
+  "roles": {},
+  "audit": {},
   "home": {
-    "title": "Orion",
-    "subtitle": "Welcome."
+    "title": "Welcome to Orion",
+    "subtitle": "Pick a section from the sidebar to get started."
   }
 }

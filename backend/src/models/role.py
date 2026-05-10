@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import Column, ForeignKey, Uuid
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
 from models.base import BaseModel
 
@@ -12,6 +12,13 @@ class Role(BaseModel, table=True):
     code: str = Field(max_length=50, unique=True, index=True)
     name: str = Field(max_length=100)
     description: str | None = Field(default=None, max_length=255)
+
+    permissions: list[Permission] = Relationship(
+        sa_relationship_kwargs={
+            "secondary": "role_permissions",
+            "lazy": "selectin",
+        },
+    )
 
 
 class Permission(BaseModel, table=True):

@@ -1,9 +1,10 @@
 import uuid
 
 from sqlalchemy import Column, ForeignKey, UniqueConstraint, Uuid, text
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
 
 from models.base import CompanyModel
+from models.role import Role
 
 
 class User(CompanyModel, table=True):
@@ -30,3 +31,5 @@ class User(CompanyModel, table=True):
             index=True,
         ),
     )
+
+    role: Role = Relationship(sa_relationship_kwargs={"lazy": "joined"})

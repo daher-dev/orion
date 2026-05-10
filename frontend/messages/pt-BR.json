@@ -1,6 +1,91 @@
 {
+  "common": {
+    "loading": "Carregando...",
+    "error": "Algo deu errado",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "create": "Criar",
+    "edit": "Editar",
+    "search": "Buscar...",
+    "actions": "Ações",
+    "back": "Voltar",
+    "next": "Próximo",
+    "yes": "Sim",
+    "no": "Não",
+    "noResults": "Nenhum resultado"
+  },
+  "appShell": {
+    "loading": "Carregando"
+  },
+  "topbar": {
+    "search": "Buscar",
+    "searchPlaceholder": "Buscar no Orion...",
+    "switchCompany": "Trocar de empresa",
+    "noCompany": "Selecionar empresa",
+    "noMemberships": "Nenhuma empresa vinculada",
+    "notifications": "Notificações",
+    "openUserMenu": "Abrir menu do usuário",
+    "profile": "Perfil",
+    "settings": "Ajustes",
+    "signOut": "Sair",
+    "noName": "Usuário sem nome"
+  },
+  "nav": {
+    "sections": {
+      "sales": "Vendas",
+      "catalog": "Catálogo",
+      "production": "Produção",
+      "inventory": "Estoque",
+      "insights": "Indicadores",
+      "settings": "Ajustes"
+    },
+    "orders": "Pedidos",
+    "clients": "Clientes",
+    "ads": "Anúncios",
+    "products": "Produtos",
+    "specs": "Fichas técnicas",
+    "prints": "Estampas",
+    "cutting": "Corte",
+    "sewing": "Costura",
+    "contractors": "Bancas",
+    "fabric": "Bobinas",
+    "stock": "Estoque",
+    "reports": "Relatórios",
+    "settings": "Ajustes"
+  },
+  "auth": {
+    "title": "Entrar no Orion",
+    "signIn": "Entrar",
+    "signUp": "Criar conta",
+    "email": "E-mail",
+    "password": "Senha",
+    "google": "Continuar com Google",
+    "comingSoon": "A autenticação será conectada na próxima entrega.",
+    "onboardingTitle": "Bem-vindo ao Orion",
+    "onboardingSubtitle": "O assistente de onboarding chegará em breve."
+  },
+  "dashboard": {
+    "title": "Painel"
+  },
+  "orders": {},
+  "clients": {},
+  "ads": {},
+  "products": {},
+  "specs": {},
+  "prints": {},
+  "cutting": {},
+  "sewing": {},
+  "contractors": {},
+  "fabric": {},
+  "stock": {},
+  "reports": {},
+  "settings": {},
+  "members": {},
+  "roles": {},
+  "audit": {},
   "home": {
-    "title": "Orion",
-    "subtitle": "Bem-vindo."
+    "title": "Bem-vindo ao Orion",
+    "subtitle": "Escolha uma seção no menu lateral para começar."
   }
 }

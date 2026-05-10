@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -31,18 +30,15 @@ export function CompanyForm() {
   const { data, isPending, isError, error } = useMyCompany();
   const updateCompany = useUpdateCompany();
 
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-
   const form = useForm<FormValues>({
+    // Pulling from `data` via `values` keeps the form synced with the server
+    // response — no extra useEffect/setState needed when /me refetches.
+    values: data ? { name: data.name, main_color: data.main_color } : undefined,
     defaultValues: { name: "", main_color: "" },
   });
-
-  useEffect(() => {
-    if (data) {
-      form.reset({ name: data.name, main_color: data.main_color });
-      setSelectedColor(data.main_color);
-    }
-  }, [data, form]);
+  // Live color value drives the swatch highlight; read directly from RHF so
+  // there's no parallel state to keep in sync.
+  const selectedColor = form.watch("main_color");
 
   if (!canRead) {
     return (
@@ -175,10 +171,9 @@ export function CompanyForm() {
                   data-color={preset.id}
                   data-active={active || undefined}
                   disabled={!canWrite}
-                  onClick={() => {
-                    setSelectedColor(preset.hex);
-                    form.setValue("main_color", preset.hex, { shouldDirty: true });
-                  }}
+                  onClick={() =>
+                    form.setValue("main_color", preset.hex, { shouldDirty: true })
+                  }
                   // Design: 36×36 rounded-8 swatch buttons. Active gets 2px
                   // surface ring + 4px brand ring.
                   className="size-9 rounded-lg border-0 transition-shadow data-[active]:shadow-[0_0_0_2px_var(--orion-surface),0_0_0_4px_currentColor] disabled:cursor-not-allowed disabled:opacity-50"

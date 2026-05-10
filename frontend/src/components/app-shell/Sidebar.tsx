@@ -83,8 +83,11 @@ export function Sidebar() {
       </SidebarHeader>
 
       <SidebarContent
-        // .sb-scroll — padding 12px 10px, thin scrollbar
-        className="px-2.5 py-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent"
+        // .sb-scroll — padding 12px 10px, no gap between sections (design
+        // controls vertical rhythm via `.sb-section` top-padding). Override
+        // shadcn's default `gap-2` which would inject an extra 8px between
+        // sections and make the menu feel loose.
+        className="!gap-0 px-2.5 py-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent"
       >
         {/* Top-level: Início */}
         {hasPermission(dashboardItem) ? (

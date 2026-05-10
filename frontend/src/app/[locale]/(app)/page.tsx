@@ -11,11 +11,12 @@ export default function HomePage() {
 
   return (
     <header className="flex max-w-[640px] flex-col gap-1.5">
-      {/* .page-title — design source: font-display 30px, weight 500, tracking -.01em */}
-      <h1 className="font-serif text-[30px] font-medium leading-[1.1] tracking-[-0.01em] text-[color:var(--orion-ink)]">
+      {/* .page-title — design source: font-display 30px, weight 400, tracking -.025em, lh 1.05 */}
+      <h1 className="font-serif text-[30px] font-normal leading-[1.05] tracking-[-0.025em] text-[color:var(--orion-ink)]">
         {t("title")}
       </h1>
-      <p className="text-[14px] leading-[1.5] text-[color:var(--orion-ink-3)]">{t("subtitle")}</p>
+      {/* .page-sub — design source: ink-3, 13px, max-w 60ch */}
+      <p className="max-w-[60ch] text-[13px] leading-[1.5] text-[color:var(--orion-ink-3)]">{t("subtitle")}</p>
     </header>
   );
 }

@@ -2,16 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { CompanySwitcher } from "./CompanySwitcher";
 import { CommandPalette } from "./CommandPalette";
-import { UserMenu } from "./UserMenu";
 
 /**
- * Top app bar. Layout: sidebar trigger, company switcher, search trigger
- * (opens the command palette), notifications stub, user avatar menu.
+ * Top app bar. Per design: sidebar trigger on the left, an inviting search
+ * pill in the middle ("O que vamos fazer agora?"), and nothing else.
+ * Company switcher + user menu + notifications all live in the sidebar.
  */
 export function Topbar() {
   const t = useTranslations("topbar");
@@ -30,27 +29,20 @@ export function Topbar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background px-3">
-      <SidebarTrigger className="-ml-1" />
-      <CompanySwitcher />
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-card px-4">
+      <SidebarTrigger className="-ml-1 text-foreground/70 hover:text-foreground" />
       <Button
         variant="outline"
-        size="sm"
         onClick={() => setPaletteOpen(true)}
-        className="ml-2 h-9 flex-1 justify-start gap-2 text-muted-foreground sm:max-w-md"
+        className="h-9 max-w-[520px] flex-1 justify-start gap-2 bg-background text-muted-foreground hover:border-ring/40"
       >
         <Search className="size-4" />
-        <span className="text-xs sm:text-sm">{t("searchPlaceholder")}</span>
-        <kbd className="ml-auto hidden rounded border px-1.5 font-mono text-[10px] sm:inline-block">
+        <span className="text-sm">{t("searchPlaceholder")}</span>
+        <kbd className="ml-auto rounded border border-border bg-card px-1.5 font-mono text-[10.5px] text-muted-foreground">
           ⌘K
         </kbd>
       </Button>
-      <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="size-9" aria-label={t("notifications")}>
-          <Bell className="size-4" />
-        </Button>
-        <UserMenu />
-      </div>
+      <div className="flex-1" />
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </header>
   );

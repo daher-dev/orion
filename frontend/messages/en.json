@@ -16,11 +16,8 @@
     "noResults": "No results"
   },
   "appShell": {
-    "loading": "Loading"
-  },
-  "topbar": {
-    "search": "Search",
-    "searchPlaceholder": "Search Orion...",
+    "loading": "Loading",
+    "poweredBy": "by Orion",
     "switchCompany": "Switch company",
     "noCompany": "Select company",
     "noMemberships": "No memberships yet",
@@ -31,25 +28,28 @@
     "signOut": "Sign out",
     "noName": "Unnamed user"
   },
+  "topbar": {
+    "search": "Search",
+    "searchPlaceholder": "What are we doing now?"
+  },
   "nav": {
     "sections": {
       "sales": "Sales",
       "catalog": "Catalog",
       "production": "Production",
-      "inventory": "Inventory",
-      "insights": "Insights",
-      "settings": "Settings"
+      "inventory": "Inventory"
     },
+    "dashboard": "Home",
     "orders": "Orders",
     "clients": "Clients",
     "ads": "Ads",
     "products": "Products",
-    "specs": "Specs",
+    "specs": "Tech specs",
     "prints": "Prints",
     "cutting": "Cutting",
     "sewing": "Sewing",
-    "contractors": "Contractors",
-    "fabric": "Fabric",
+    "contractors": "Workshops",
+    "fabric": "Fabrics",
     "stock": "Stock",
     "reports": "Reports",
     "settings": "Settings"

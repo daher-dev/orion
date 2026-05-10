@@ -1,10 +1,12 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/routing";
 import {
   Sidebar as ShadSidebar,
   SidebarContent,
+  SidebarFooter as ShadSidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -13,13 +15,32 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { navSections } from "./NavConfig";
+import { bottomItems, dashboardItem, navSections, type NavItem } from "./NavConfig";
+import { CompanySwitcher } from "./CompanySwitcher";
+import { SidebarFooter } from "./SidebarFooter";
 import { useMe } from "@/hooks/use-me";
 
 /**
- * Left navigation. Items the user lacks permission for are hidden entirely
- * (per the design spec — "hidden items don't render"). Settings sub-tree
- * enforces its own visibility deeper.
+ * Left navigation. Mirrors the design source:
+ *
+ *   ┌───────────────────────────────┐
+ *   │ CompanySwitcher               │  ← header (with chevron + "por Orion")
+ *   ├───────────────────────────────┤
+ *   │ Início                        │  ← dashboardItem (top-level)
+ *   │                                │
+ *   │ VENDAS                         │
+ *   │   ▸ Pedidos / Clientes / Anúncios
+ *   │ CATÁLOGO                       │
+ *   │   ▸ Produtos / Fichas / Estampas
+ *   │ ...                            │
+ *   │                                │
+ *   │ Relatórios / Ajustes          │  ← bottomItems (top-level, separated)
+ *   ├───────────────────────────────┤
+ *   │ Avatar  Nome / Cargo    🔔3   │  ← footer
+ *   └───────────────────────────────┘
+ *
+ * Active items render a 3px colored bar on the left, using the item's
+ * sub-product color (`--sub-color`).
  */
 export function Sidebar() {
   const t = useTranslations();
@@ -27,54 +48,73 @@ export function Sidebar() {
   const { data } = useMe();
   const permissions = data?.permissions ?? [];
 
+  const hasPermission = (item: NavItem) => !item.permission || permissions.includes(item.permission);
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+  function renderItem(item: NavItem) {
+    const Icon = item.icon;
+    const active = isActive(item.href);
+    // Expose the per-item sub-color so the menu button can render the
+    // 3px left bar via ::before when active.
+    const style = { "--sub-color": item.subColor ?? "var(--sidebar-primary)" } as CSSProperties;
+    return (
+      <SidebarMenuItem key={item.href}>
+        <SidebarMenuButton
+          asChild
+          isActive={active}
+          tooltip={t(item.labelKey)}
+          style={style}
+          className="relative data-[active=true]:before:absolute data-[active=true]:before:-left-2 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r-sm data-[active=true]:before:bg-[var(--sub-color)] data-[active=true]:before:content-[''] group-data-[collapsible=icon]:data-[active=true]:before:hidden"
+        >
+          <Link href={item.href}>
+            <Icon className="text-[var(--sub-color)]" />
+            <span>{t(item.labelKey)}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
+
   return (
     <ShadSidebar collapsible="icon">
-      <SidebarHeader className="border-b">
-        <Link
-          href="/"
-          className="flex items-center gap-2 px-2 py-2 text-sidebar-foreground"
-        >
-          <div className="grid h-8 w-8 place-items-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-serif text-lg">
-            O
-          </div>
-          <div className="flex flex-col leading-none group-data-[collapsible=icon]:hidden">
-            <span className="font-serif text-base">Orion</span>
-          </div>
-        </Link>
+      <SidebarHeader className="border-b border-white/5 p-2">
+        <CompanySwitcher />
       </SidebarHeader>
 
       <SidebarContent>
+        {hasPermission(dashboardItem) ? (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>{renderItem(dashboardItem)}</SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
+
         {navSections.map((section) => {
-          const visible = section.items.filter(
-            (item) => !item.permission || permissions.includes(item.permission),
-          );
+          const visible = section.items.filter(hasPermission);
           if (visible.length === 0) return null;
           return (
             <SidebarGroup key={section.titleKey}>
-              <SidebarGroupLabel>{t(section.titleKey)}</SidebarGroupLabel>
+              <SidebarGroupLabel className="text-[10.5px] uppercase tracking-[0.12em] text-sidebar-foreground/45">
+                {t(section.titleKey)}
+              </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {visible.map((item) => {
-                    const Icon = item.icon;
-                    const active =
-                      pathname === item.href || pathname.startsWith(`${item.href}/`);
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton asChild isActive={active} tooltip={t(item.labelKey)}>
-                          <Link href={item.href}>
-                            <Icon />
-                            <span>{t(item.labelKey)}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
+                <SidebarMenu>{visible.map(renderItem)}</SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           );
         })}
+
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>{bottomItems.filter(hasPermission).map(renderItem)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
+
+      <ShadSidebarFooter className="p-0">
+        <SidebarFooter />
+      </ShadSidebarFooter>
     </ShadSidebar>
   );
 }

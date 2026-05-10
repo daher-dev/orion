@@ -16,11 +16,8 @@
     "noResults": "Nenhum resultado"
   },
   "appShell": {
-    "loading": "Carregando"
-  },
-  "topbar": {
-    "search": "Buscar",
-    "searchPlaceholder": "Buscar no Orion...",
+    "loading": "Carregando",
+    "poweredBy": "por Orion",
     "switchCompany": "Trocar de empresa",
     "noCompany": "Selecionar empresa",
     "noMemberships": "Nenhuma empresa vinculada",
@@ -31,15 +28,18 @@
     "signOut": "Sair",
     "noName": "Usuário sem nome"
   },
+  "topbar": {
+    "search": "Buscar",
+    "searchPlaceholder": "O que vamos fazer agora?"
+  },
   "nav": {
     "sections": {
       "sales": "Vendas",
       "catalog": "Catálogo",
       "production": "Produção",
-      "inventory": "Estoque",
-      "insights": "Indicadores",
-      "settings": "Ajustes"
+      "inventory": "Estoque"
     },
+    "dashboard": "Início",
     "orders": "Pedidos",
     "clients": "Clientes",
     "ads": "Anúncios",
@@ -49,7 +49,7 @@
     "cutting": "Corte",
     "sewing": "Costura",
     "contractors": "Bancas",
-    "fabric": "Bobinas",
+    "fabric": "Tecidos",
     "stock": "Estoque",
     "reports": "Relatórios",
     "settings": "Ajustes"

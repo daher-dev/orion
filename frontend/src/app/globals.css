@@ -75,10 +75,15 @@
   --status-err: oklch(0.504 0.190 27);           /* #b91c1c */
   --status-info: oklch(0.402 0.171 263);         /* #1e40af */
 
-  /* Typography (Inter Tight body, Fraunces display, JetBrains Mono code) */
-  --font-body: var(--font-body, "Inter Tight", "Inter", system-ui, -apple-system, sans-serif);
-  --font-display: var(--font-display, "Fraunces", "Source Serif 4", Georgia, serif);
-  --font-mono: var(--font-mono, "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace);
+  /*
+   * Typography is wired by next/font (src/app/layout.tsx) which exposes
+   *   --font-body     ← Inter Tight
+   *   --font-display  ← Fraunces
+   *   --font-mono     ← JetBrains Mono
+   * on the <html> element via .className. Do NOT redefine those here — a
+   * self-referential `--font-body: var(--font-body, ...)` cascades over
+   * next/font's value and falls back to system fonts.
+   */
 }
 
 .dark {
@@ -187,14 +192,25 @@
   * {
     @apply border-border;
   }
+  /*
+   * Design source: body { font-family: var(--font-body); font-size: 14px; }
+   * The 14px base is load-bearing — every component spec is sized in absolute
+   * px units relative to a 14px body, not a 16px one. Bumping the base would
+   * make the whole UI look "looser" than the design intends.
+   */
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     font-weight: 500;
     letter-spacing: -0.01em;
+    line-height: 1.1;
   }
   code, kbd, samp, pre {
     font-family: var(--font-mono);

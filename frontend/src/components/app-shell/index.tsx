@@ -69,7 +69,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Sidebar />
       <SidebarInset>
         <Topbar />
-        <main className="flex-1 p-4 sm:p-6">{children}</main>
+        {/* .page from design: padding 22 28 64, max-w 1480, centered */}
+        <main className="flex-1 px-7 pt-[22px] pb-16">
+          <div className="mx-auto max-w-[1480px]">{children}</div>
+        </main>
         <Toaster richColors position="top-right" />
       </SidebarInset>
     </SidebarProvider>

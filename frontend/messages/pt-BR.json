@@ -335,7 +335,130 @@
       "forbidden": "Você não tem acesso às bancas."
     }
   },
-  "fabric": {},
+  "fabric": {
+    "page": {
+      "eyebrow": "Estoque"
+    },
+    "list": {
+      "title": "Bobinas",
+      "titleEm": "de tecido",
+      "sub": "Cada bobina recebida e o quanto resta. Saldo é abatido a cada corte.",
+      "empty": {
+        "title": "Nenhuma bobina cadastrada",
+        "body": "Registre a primeira bobina recebida para começar a acompanhar o saldo de tecido.",
+        "cta": "Receber primeira bobina"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar por fornecedor, cor ou tecido…",
+      "kind": "Tipo",
+      "kindAll": "Todas",
+      "fabricType": "Tecido",
+      "fabricTypeAll": "Todos os tecidos"
+    },
+    "table": {
+      "columns": {
+        "supplier": "Fornecedor",
+        "kind": "Tipo",
+        "fabricType": "Tecido",
+        "color": "Cor",
+        "receivedAt": "Recebida",
+        "initialWeight": "Peso inicial",
+        "currentWeight": "Saldo",
+        "usage": "Uso",
+        "pricePerKg": "Preço/kg",
+        "actions": "Ações"
+      }
+    },
+    "fabricRollKinds": {
+      "body": "Corpo",
+      "rib": "Ribana"
+    },
+    "fabricTypes": {
+      "jersey": "Malha jersey",
+      "fleece": "Moletom",
+      "french_terry": "Moletinho",
+      "mesh": "Tela",
+      "rib": "Ribana"
+    },
+    "actions": {
+      "create": "Receber tecido",
+      "edit": "Editar bobina",
+      "delete": "Excluir bobina",
+      "confirmDelete": "Tem certeza? Esta ação não pode ser desfeita.",
+      "confirmDeleteBody": "A bobina será removida permanentemente.",
+      "back": "Voltar para bobinas",
+      "openDetail": "Abrir página"
+    },
+    "detail": {
+      "burndownTitle": "Saldo ao longo do tempo",
+      "burndownEmpty": "Nenhum consumo registrado ainda.",
+      "consumersTitle": "Cortes que consumiram esta bobina",
+      "consumersEmpty": "Nenhum corte registrado contra esta bobina ainda.",
+      "stats": {
+        "consumed": "Consumido",
+        "remaining": "Restante",
+        "initialWeight": "Peso inicial",
+        "supplier": "Fornecedor",
+        "receivedAt": "Recebida em",
+        "pricePerKg": "Preço por kg"
+      }
+    },
+    "form": {
+      "title": {
+        "new": "Receber bobina",
+        "edit": "Editar bobina",
+        "newSub": "Registre uma bobina recebida",
+        "editSub": "Atualizar dados da bobina"
+      },
+      "sections": {
+        "identity": "Identificação",
+        "fabric": "Detalhes do tecido",
+        "weight": "Peso",
+        "pricing": "Preço"
+      },
+      "labels": {
+        "kind": "Tipo da bobina",
+        "fabricType": "Tipo de tecido",
+        "color": "Cor",
+        "supplier": "Fornecedor",
+        "receivedAt": "Recebida em",
+        "initialWeight": "Peso inicial (kg)",
+        "currentWeight": "Peso atual (kg)",
+        "pricePerKg": "Preço por kg (R$)"
+      },
+      "placeholders": {
+        "color": "Ex: Off-white",
+        "supplier": "Ex: Malharia Estrela",
+        "weight": "20.0",
+        "price": "38,00"
+      },
+      "validation": {
+        "required": "Obrigatório",
+        "numeric": "Deve ser um número",
+        "supplierRequired": "Fornecedor é obrigatório",
+        "colorRequired": "Cor é obrigatória",
+        "receivedAtRequired": "Data de recebimento é obrigatória",
+        "initialWeightPositive": "Peso inicial deve ser maior que zero",
+        "currentWeightNonNegative": "Peso atual não pode ser negativo",
+        "currentExceedsInitial": "Peso atual não pode exceder o peso inicial",
+        "pricePositive": "Preço não pode ser negativo",
+        "deletionBlocked": "Não é possível excluir — esta bobina está vinculada a uma ordem de corte."
+      },
+      "save": "Salvar alterações",
+      "cancel": "Cancelar",
+      "submitNew": "Registrar bobina"
+    },
+    "toast": {
+      "created": "Bobina cadastrada",
+      "updated": "Bobina atualizada",
+      "deleted": "Bobina excluída",
+      "error": "Operação falhou"
+    },
+    "fallback": {
+      "forbidden": "Você não tem acesso às bobinas."
+    }
+  },
   "stock": {},
   "reports": {},
   "settings": {},

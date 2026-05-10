@@ -335,7 +335,130 @@
       "forbidden": "You don't have access to workshops."
     }
   },
-  "fabric": {},
+  "fabric": {
+    "page": {
+      "eyebrow": "Inventory"
+    },
+    "list": {
+      "title": "Rolls",
+      "titleEm": "of fabric",
+      "sub": "Every roll received and how much remains. Balance is decremented at each cut.",
+      "empty": {
+        "title": "No rolls registered yet",
+        "body": "Register your first incoming roll to start tracking fabric balance.",
+        "cta": "Receive first roll"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search by supplier, color or fabric type…",
+      "kind": "Kind",
+      "kindAll": "All",
+      "fabricType": "Fabric",
+      "fabricTypeAll": "All fabrics"
+    },
+    "table": {
+      "columns": {
+        "supplier": "Supplier",
+        "kind": "Kind",
+        "fabricType": "Fabric",
+        "color": "Color",
+        "receivedAt": "Received",
+        "initialWeight": "Initial",
+        "currentWeight": "Current",
+        "usage": "Usage",
+        "pricePerKg": "Price/kg",
+        "actions": "Actions"
+      }
+    },
+    "fabricRollKinds": {
+      "body": "Body",
+      "rib": "Rib"
+    },
+    "fabricTypes": {
+      "jersey": "Jersey",
+      "fleece": "Fleece",
+      "french_terry": "French Terry",
+      "mesh": "Mesh",
+      "rib": "Rib"
+    },
+    "actions": {
+      "create": "Receive roll",
+      "edit": "Edit roll",
+      "delete": "Delete roll",
+      "confirmDelete": "Are you sure? This cannot be undone.",
+      "confirmDeleteBody": "The roll will be permanently removed.",
+      "back": "Back to rolls",
+      "openDetail": "Open page"
+    },
+    "detail": {
+      "burndownTitle": "Weight burn-down",
+      "burndownEmpty": "No consumption recorded yet.",
+      "consumersTitle": "Cuts that consumed this roll",
+      "consumersEmpty": "No cut has been registered against this roll yet.",
+      "stats": {
+        "consumed": "Consumed",
+        "remaining": "Remaining",
+        "initialWeight": "Initial weight",
+        "supplier": "Supplier",
+        "receivedAt": "Received on",
+        "pricePerKg": "Price / kg"
+      }
+    },
+    "form": {
+      "title": {
+        "new": "Receive roll",
+        "edit": "Edit roll",
+        "newSub": "Register an incoming fabric roll",
+        "editSub": "Update roll details"
+      },
+      "sections": {
+        "identity": "Identification",
+        "fabric": "Fabric details",
+        "weight": "Weight",
+        "pricing": "Pricing"
+      },
+      "labels": {
+        "kind": "Roll kind",
+        "fabricType": "Fabric type",
+        "color": "Color",
+        "supplier": "Supplier",
+        "receivedAt": "Received on",
+        "initialWeight": "Initial weight (kg)",
+        "currentWeight": "Current weight (kg)",
+        "pricePerKg": "Price per kg (R$)"
+      },
+      "placeholders": {
+        "color": "e.g. Off-white",
+        "supplier": "e.g. Malharia Estrela",
+        "weight": "20.0",
+        "price": "38.00"
+      },
+      "validation": {
+        "required": "Required",
+        "numeric": "Must be a number",
+        "supplierRequired": "Supplier is required",
+        "colorRequired": "Color is required",
+        "receivedAtRequired": "Received date is required",
+        "initialWeightPositive": "Initial weight must be greater than zero",
+        "currentWeightNonNegative": "Current weight cannot be negative",
+        "currentExceedsInitial": "Current weight cannot exceed initial weight",
+        "pricePositive": "Price must be zero or greater",
+        "deletionBlocked": "Cannot delete — this roll is referenced by a cutting order."
+      },
+      "save": "Save changes",
+      "cancel": "Cancel",
+      "submitNew": "Register roll"
+    },
+    "toast": {
+      "created": "Roll registered",
+      "updated": "Roll updated",
+      "deleted": "Roll deleted",
+      "error": "Operation failed"
+    },
+    "fallback": {
+      "forbidden": "You don't have access to fabric rolls."
+    }
+  },
   "stock": {},
   "reports": {},
   "settings": {

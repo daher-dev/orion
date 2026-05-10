@@ -67,7 +67,7 @@ export function Sidebar() {
           className="relative data-[active=true]:before:absolute data-[active=true]:before:-left-2 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r-sm data-[active=true]:before:bg-[var(--sub-color)] data-[active=true]:before:content-[''] group-data-[collapsible=icon]:data-[active=true]:before:hidden"
         >
           <Link href={item.href}>
-            <Icon className="text-[var(--sub-color)]" />
+            <Icon />
             <span>{t(item.labelKey)}</span>
           </Link>
         </SidebarMenuButton>

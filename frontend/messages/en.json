@@ -338,7 +338,81 @@
   "fabric": {},
   "stock": {},
   "reports": {},
-  "settings": {},
+  "settings": {
+    "page": {
+      "eyebrow": "Settings"
+    },
+    "list": {
+      "title": "Settings",
+      "sub": "Configure your account, team and integrations."
+    },
+    "nav": {
+      "company": "Company",
+      "members": "Members",
+      "roles": "Roles",
+      "billing": "Billing",
+      "audit": "Audit",
+      "integrations": "Integrations",
+      "profile": "Profile",
+      "notifications": "Notifications"
+    },
+    "company": {
+      "title": "Company identity",
+      "sub": "How your company appears for the team and on documents.",
+      "labels": {
+        "name": "Company name",
+        "subdomain": "Subdomain",
+        "mainColor": "Main color"
+      },
+      "helpers": {
+        "subdomainImmutable": "Cannot be changed in this version."
+      },
+      "save": "Save changes",
+      "savedToast": "Company updated",
+      "errorToast": "Could not save the company.",
+      "validation": {
+        "nameRequired": "Name is required",
+        "colorInvalid": "Invalid color"
+      }
+    },
+    "profile": {
+      "title": "Your profile",
+      "sub": "This information is visible to your teammates.",
+      "labels": {
+        "name": "Display name",
+        "email": "Email",
+        "job": "Role / Job",
+        "role": "Access role"
+      },
+      "helpers": {
+        "emailImmutable": "Tied to your sign-in account.",
+        "roleImmutable": "Ask an admin to change your role."
+      },
+      "save": "Save changes",
+      "savedToast": "Profile updated",
+      "errorToast": "Could not save the profile.",
+      "validation": {
+        "nameRequired": "Name is required"
+      }
+    },
+    "colorPresets": {
+      "indigo": "Indigo",
+      "terracotta": "Terracotta",
+      "teal": "Teal",
+      "aubergine": "Aubergine",
+      "amber": "Amber",
+      "ink": "Ink"
+    },
+    "placeholders": {
+      "empty": {
+        "title": "Coming soon",
+        "body": "This section will launch in a future release."
+      }
+    },
+    "forbidden": {
+      "company": "You don't have access to company settings."
+    }
+  },
   "members": {},
   "roles": {},
   "audit": {},

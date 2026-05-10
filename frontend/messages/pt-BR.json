@@ -262,7 +262,73 @@
       "no": "Não"
     }
   },
-  "prints": {},
+  "prints": {
+    "page": {
+      "eyebrow": "Catálogo"
+    },
+    "list": {
+      "title": "Estampas",
+      "titleEm": "& artes",
+      "sub": "Catálogo de artes aplicadas — DTF, silk, sublimação.",
+      "empty": {
+        "title": "Nenhuma estampa cadastrada",
+        "body": "Adicione a primeira arte para começar a vincular aos produtos.",
+        "cta": "Nova estampa"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Procurar estampa…"
+    },
+    "table": {
+      "columns": {
+        "code": "Código",
+        "name": "Nome",
+        "costPerUnit": "Custo/un",
+        "actions": "Ações"
+      }
+    },
+    "actions": {
+      "create": "Nova estampa",
+      "edit": "Editar",
+      "delete": "Excluir",
+      "confirmDelete": "Excluir esta estampa? Esta ação não pode ser desfeita."
+    },
+    "form": {
+      "title": {
+        "new": "Nova estampa",
+        "edit": "Editar estampa"
+      },
+      "labels": {
+        "code": "Código",
+        "name": "Nome da estampa",
+        "imageUrl": "URL da arte",
+        "costPerUnit": "Custo por peça (R$)"
+      },
+      "placeholders": {
+        "code": "EST-001",
+        "name": "Ex: Aurora — Sol nascente",
+        "imageUrl": "https://…/arte.png",
+        "costPerUnit": "0,00"
+      },
+      "helpers": {
+        "imageUrl": "Cole o link público da arte final."
+      },
+      "validation": {
+        "codeRequired": "Código é obrigatório",
+        "nameRequired": "Nome é obrigatório",
+        "required": "Campo obrigatório",
+        "numeric": "Use apenas números"
+      },
+      "save": "Salvar estampa",
+      "cancel": "Cancelar",
+      "toasts": {
+        "created": "Estampa criada",
+        "updated": "Estampa atualizada",
+        "deleted": "Estampa excluída",
+        "error": "Não foi possível salvar a estampa."
+      }
+    }
+  },
   "cutting": {},
   "sewing": {},
   "contractors": {

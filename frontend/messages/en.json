@@ -262,7 +262,73 @@
       "no": "No"
     }
   },
-  "prints": {},
+  "prints": {
+    "page": {
+      "eyebrow": "Catalog"
+    },
+    "list": {
+      "title": "Prints",
+      "titleEm": "& art",
+      "sub": "Catalog of applied artwork — DTF, silk, sublimation.",
+      "empty": {
+        "title": "No prints yet",
+        "body": "Add your first artwork to start linking it to products.",
+        "cta": "New print"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search print…"
+    },
+    "table": {
+      "columns": {
+        "code": "Code",
+        "name": "Name",
+        "costPerUnit": "Cost/unit",
+        "actions": "Actions"
+      }
+    },
+    "actions": {
+      "create": "New print",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete this print? This cannot be undone."
+    },
+    "form": {
+      "title": {
+        "new": "New print",
+        "edit": "Edit print"
+      },
+      "labels": {
+        "code": "Code",
+        "name": "Print name",
+        "imageUrl": "Artwork URL",
+        "costPerUnit": "Cost per piece ($)"
+      },
+      "placeholders": {
+        "code": "PRT-001",
+        "name": "e.g. Aurora — Sunrise",
+        "imageUrl": "https://…/artwork.png",
+        "costPerUnit": "0.00"
+      },
+      "helpers": {
+        "imageUrl": "Paste the public URL of the final artwork."
+      },
+      "validation": {
+        "codeRequired": "Code is required",
+        "nameRequired": "Name is required",
+        "required": "Required",
+        "numeric": "Numbers only"
+      },
+      "save": "Save print",
+      "cancel": "Cancel",
+      "toasts": {
+        "created": "Print created",
+        "updated": "Print updated",
+        "deleted": "Print deleted",
+        "error": "Could not save the print."
+      }
+    }
+  },
   "cutting": {},
   "sewing": {},
   "contractors": {

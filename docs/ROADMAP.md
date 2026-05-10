@@ -17,13 +17,13 @@ Features created through the `/pm` workflow are tracked here. Add a line when a 
 
 | ID | Title | Status | Phase | Branch |
 |----|-------|--------|-------|--------|
-| F-000 | Foundation: app shell, auth, design tokens | in-progress | 0 | `foundation/app-shell-and-auth` |
+| F-000 | Foundation: app shell, auth, design tokens | done | 0 | `foundation/app-shell-and-auth` |
 | F-001 | Auth & Onboarding (login, signup, accept-invite, onboarding wizard) | planned | 1 | `feature/001-auth` |
 | F-002 | Members & Roles (invite flow, role assignment, permission matrix UI) | planned | 2 | `feature/002-members-roles` |
 | F-003 | Catalog: Specs (fichas técnicas) | in-progress | 1 | `feature/003-specs` |
-| F-004 | Catalog: Prints (estampas) | planned | 1 | `feature/004-prints` |
+| F-004 | Catalog: Prints (estampas) | in-progress | 1 | `feature/004-prints` |
 | F-005 | Catalog: Products + Variations | planned | 2 | `feature/005-products` |
-| F-006 | Inventory: Fabric (bobinas) | planned | 1 | `feature/006-fabric` |
+| F-006 | Inventory: Fabric (bobinas) | in-progress | 1 | `feature/006-fabric` |
 | F-007 | Production: Cutting | planned | 3 | `feature/007-cutting` |
 | F-008 | Production: Bancas (contractors) | in-progress | 1 | `feature/008-contractors` |
 | F-009 | Production: Sewing (shipments) | planned | 3 | `feature/009-sewing` |
@@ -33,7 +33,7 @@ Features created through the `/pm` workflow are tracked here. Add a line when a 
 | F-013 | Sales: Orders (manual + view) | planned | 4 | `feature/013-orders` |
 | F-014 | Sales: Orders import (LLM PDF + CSV + webhooks) | planned | 5 | `feature/014-orders-import` |
 | F-015 | Dashboard + Reports | planned | 5 | `feature/015-dashboard-reports` |
-| F-016 | Settings: Company + Profile | planned | 1 | `feature/016-settings-basics` |
+| F-016 | Settings: Company + Profile | in-progress | 1 | `feature/016-settings-basics` |
 | F-018 | Settings: Audit Log Viewer | planned | 2 | `feature/018-audit-log` |
 | F-019 | Settings: Integrations (webhook tokens, channel auth) | planned | 6 | `feature/019-integrations` |
 | F-020 | Settings: Notifications | planned | 6 | `feature/020-notifications` |

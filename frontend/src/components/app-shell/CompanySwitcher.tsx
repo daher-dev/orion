@@ -15,12 +15,15 @@ import { useMe } from "@/hooks/use-me";
 import { useCompany } from "@/providers/company-provider";
 
 /**
- * Sidebar-header company switcher. Renders the active company's monogram +
- * name + "por Orion" sub-line and reveals memberships in a dropdown. Selecting
- * a row stores the id in CompanyProvider, which clears the query cache and
- * triggers a refresh.
+ * Sidebar-header company switcher — faithful port of `.sb-brand` / `.sb-co-picker`
+ * from /docs/design/source/styles.css:
  *
- * Styled for the dark warm sidebar (vs the previous tone-light topbar pill).
+ *   .sb-brand        height 56px, padding 14px 16px, gap 10px, border-bottom
+ *   .sb-brand-mark   32×32, radius 8, accent bg, serif 17 / weight 600
+ *   .sb-brand-name   serif 17 / weight 500 / tracking -.01em, #f5efe0
+ *   .sb-brand-sub    serif 10.5 italic, tracking .06em, #f5efe0/60, orbit icon
+ *
+ * Clickable to swap companies.
  */
 export function CompanySwitcher() {
   const t = useTranslations("appShell");
@@ -30,8 +33,6 @@ export function CompanySwitcher() {
   const memberships = data?.companies ?? [];
   const current = data?.company ?? null;
 
-  // Bootstrap: if context has no companyId yet, latch onto the current one
-  // returned by /v1/auth/me so the API client starts sending the header.
   useEffect(() => {
     if (!companyId && current?.id) {
       setCompanyId(current.id);
@@ -48,26 +49,37 @@ export function CompanySwitcher() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="group/co-picker flex h-12 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-sidebar-foreground transition-colors hover:bg-white/5 focus-visible:bg-white/5 focus-visible:outline-none group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+          aria-label={t("switchCompany")}
+          className={
+            // .sb-brand — height 56px, padding 14px 16px, gap 10px, hover transition.
+            "flex h-14 w-full items-center gap-2.5 px-4 py-3.5 text-left transition-colors " +
+            "hover:bg-white/[0.04] focus-visible:bg-white/[0.04] focus-visible:outline-none " +
+            "group-data-[collapsible=icon]:h-14 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+          }
         >
+          {/* .sb-brand-mark */}
           <div
-            className="grid size-8 shrink-0 place-items-center rounded-md bg-sidebar-primary font-serif text-[17px] font-semibold text-sidebar-primary-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1),0_4px_12px_-4px_var(--sidebar-primary)]"
             aria-hidden
+            className={
+              "grid size-8 shrink-0 place-items-center rounded-lg font-serif text-[17px] font-semibold leading-none text-white " +
+              "[box-shadow:inset_0_0_0_1px_rgba(255,255,255,.1),0_4px_12px_-4px_#2563eb] " +
+              "bg-[#2563eb]"
+            }
           >
             {monogram}
           </div>
-          <div className="flex min-w-0 flex-1 flex-col leading-none group-data-[collapsible=icon]:hidden">
-            <span className="truncate font-serif text-[16px] font-medium tracking-tight text-sidebar-foreground">
+          <div className="flex min-w-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
+            <span className="truncate font-serif text-[17px] font-medium leading-none tracking-[-0.01em] text-[#f5efe0]">
               {activeName}
             </span>
-            <span className="mt-1 flex items-center gap-1.5 font-serif text-[10.5px] italic tracking-[0.06em] text-sidebar-foreground/60">
-              <Orbit className="size-[9px] text-sidebar-primary" aria-hidden />
+            <span className="mt-1 inline-flex items-center gap-[5px] font-serif text-[10.5px] italic leading-none tracking-[0.06em] text-[#f5efe0]/60">
+              <Orbit className="size-[9px] text-[#2563eb]" strokeWidth={1.8} aria-hidden />
               <span>{t("poweredBy")}</span>
             </span>
           </div>
           <ChevronsUpDown
-            className="size-3.5 shrink-0 text-sidebar-foreground/55 group-data-[collapsible=icon]:hidden"
             aria-hidden
+            className="size-3.5 shrink-0 text-[#f5efe0]/55 group-data-[collapsible=icon]:hidden"
           />
         </button>
       </DropdownMenuTrigger>

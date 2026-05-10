@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { Bell, LogOut, Settings as SettingsIcon, User as UserIcon } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,10 +15,14 @@ import { useMe } from "@/hooks/use-me";
 import { useRouter } from "@/i18n/routing";
 
 /**
- * Sidebar footer per design: avatar + name + role on the left, notifications
- * bell with badge on the right. Clicking the avatar block opens a small
- * dropdown with profile / settings / sign out. Collapses to icon-only when
- * the sidebar is collapsed.
+ * Sidebar footer — faithful port of `.sb-foot` / `.sb-bell` /
+ * `.sb-foot-name` / `.sb-foot-role` from the design source.
+ *
+ *   .sb-foot         padding 12, gap 10, border-top white/5
+ *   .sb-foot-name    12.5px, color #f5efe0, line-height 1.2
+ *   .sb-foot-role    10.5px, uppercase, tracking .04em, cream/.55
+ *   .sb-bell         32×32, radius 8, transparent until hover
+ *   .sb-bell-badge   accent bg, 10px mono on white, top-right of bell
  */
 export function SidebarFooter() {
   const t = useTranslations("appShell");
@@ -44,24 +47,24 @@ export function SidebarFooter() {
   }
 
   return (
-    <div className="flex items-center gap-2.5 border-t border-white/5 px-3 py-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+    <div className="flex items-center gap-2.5 p-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md p-1 text-left text-sidebar-foreground transition-colors hover:bg-white/5 focus-visible:bg-white/5 focus-visible:outline-none group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:p-0"
+            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md p-1 text-left transition-colors hover:bg-white/[0.04] focus-visible:bg-white/[0.04] focus-visible:outline-none group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:p-0"
           >
-            <Avatar className="size-8 shrink-0 ring-1 ring-white/10">
-              {user?.photoURL ? <AvatarImage src={user.photoURL} alt={displayName} /> : null}
-              <AvatarFallback className="bg-sidebar-primary text-[11px] font-semibold text-sidebar-primary-foreground">
-                {initials || "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex min-w-0 flex-1 flex-col leading-tight group-data-[collapsible=icon]:hidden">
-              <span className="truncate text-[12.5px] text-sidebar-foreground">
+            <div
+              aria-hidden
+              className="grid size-7 shrink-0 place-items-center rounded-full bg-[#2563eb] font-serif text-[11px] font-semibold leading-none text-white [box-shadow:inset_0_0_0_1px_rgba(255,255,255,.1)]"
+            >
+              {initials || "?"}
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
+              <span className="truncate text-[12.5px] leading-[1.2] text-[#f5efe0]">
                 {displayName || t("noName")}
               </span>
-              <span className="mt-0.5 truncate text-[10.5px] uppercase tracking-[0.04em] text-sidebar-foreground/55">
+              <span className="mt-[2px] truncate text-[10.5px] uppercase leading-none tracking-[0.04em] text-[rgb(217_210_194_/_0.55)]">
                 {roleName || email}
               </span>
             </div>
@@ -92,10 +95,10 @@ export function SidebarFooter() {
       <button
         type="button"
         aria-label={t("notifications")}
-        className="relative grid size-8 shrink-0 place-items-center rounded-md border border-transparent text-sidebar-foreground/70 transition-colors hover:border-white/10 hover:bg-white/5 hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+        className="relative grid size-8 shrink-0 place-items-center rounded-lg border border-transparent text-[rgb(245_239_224_/_0.7)] transition-colors hover:border-white/[0.08] hover:bg-white/[0.06] hover:text-[#f5efe0] group-data-[collapsible=icon]:hidden"
       >
-        <Bell className="size-[15px]" />
-        <span className="absolute right-0.5 top-0.5 grid min-w-[14px] place-items-center rounded-full bg-sidebar-primary px-1 font-mono text-[10px] font-semibold leading-none text-sidebar-primary-foreground">
+        <Bell className="size-[15px]" strokeWidth={1.75} />
+        <span className="absolute right-[3px] top-[3px] grid h-[14px] min-w-[14px] place-items-center rounded-full bg-[#2563eb] px-1 font-mono text-[10px] font-semibold leading-none text-white">
           3
         </span>
       </button>

@@ -72,7 +72,130 @@
   "clients": {},
   "ads": {},
   "products": {},
-  "specs": {},
+  "specs": {
+    "page": {
+      "eyebrow": "Catalog"
+    },
+    "list": {
+      "title": "Tech specs",
+      "sub": "Production recipes: fabric, grammage, ribana and CMT cost.",
+      "empty": {
+        "title": "No specs yet",
+        "body": "Specs describe how a product is made. Create your first to start cutting and sewing.",
+        "cta": "New spec"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search specs…",
+      "fabricType": "Fabric type",
+      "all": "All"
+    },
+    "table": {
+      "columns": {
+        "code": "Code",
+        "name": "Name",
+        "fabricType": "Fabric",
+        "gsm": "GSM",
+        "laborCost": "Labor cost",
+        "salePrice": "Sale price",
+        "ribana": "Ribana",
+        "updatedAt": "Last edit",
+        "actions": "Actions"
+      }
+    },
+    "fabricTypes": {
+      "jersey": "Jersey",
+      "fleece": "Fleece",
+      "french_terry": "French Terry",
+      "mesh": "Mesh",
+      "rib": "Rib"
+    },
+    "trimTypes": {
+      "button": "Button",
+      "zipper": "Zipper",
+      "label": "Label",
+      "drawstring": "Drawstring",
+      "snap": "Snap",
+      "hook": "Hook",
+      "eyelet": "Eyelet",
+      "elastic": "Elastic"
+    },
+    "actions": {
+      "create": "New spec",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete this spec?",
+      "confirmDeleteBody": "This action cannot be undone.",
+      "addTrim": "Add trim",
+      "removeTrim": "Remove trim",
+      "save": "Save",
+      "cancel": "Cancel",
+      "back": "Back",
+      "noResults": "No specs match the current filters."
+    },
+    "form": {
+      "title": {
+        "new": "New spec",
+        "edit": "Edit spec"
+      },
+      "sections": {
+        "identity": "Identification",
+        "fabric": "Main fabric",
+        "ribana": "Ribana",
+        "cost": "Trims",
+        "pricing": "Cost & price",
+        "notes": "Notes"
+      },
+      "labels": {
+        "code": "Code",
+        "name": "Spec name",
+        "fabricType": "Fabric type",
+        "gsm": "Grammage (g/m²)",
+        "weightPerPiece": "Weight per piece (g)",
+        "hasRibana": "Uses ribana?",
+        "ribanaPct": "% weight",
+        "laborCost": "Labor cost",
+        "salePrice": "Sale price",
+        "notes": "Notes",
+        "trimType": "Trim",
+        "trimQty": "Qty",
+        "trimUnitPrice": "Unit price"
+      },
+      "placeholders": {
+        "code": "FT-001",
+        "name": "e.g. Cropped Oversized",
+        "notes": "Internal notes about this spec"
+      },
+      "validation": {
+        "required": "Required",
+        "ribanaPctRequired": "Inform the % weight of the ribana when “uses ribana” is on.",
+        "ribanaPctRange": "% weight must be between 0 and 100.",
+        "duplicateCode": "This code is already in use.",
+        "linkedProducts": "Cannot delete: products are using this spec."
+      }
+    },
+    "detail": {
+      "stats": {
+        "fabric": "Fabric",
+        "grammage": "Grammage",
+        "weight": "Weight",
+        "ribana": "Ribana",
+        "trims": "Trims",
+        "trimsSubtotal": "Trims subtotal",
+        "labor": "Labor",
+        "totalCost": "Total cost",
+        "sale": "Sale price",
+        "margin": "Gross margin",
+        "updated": "Last edit"
+      },
+      "yes": "Yes",
+      "no": "No"
+    },
+    "ribana": {
+      "yes": "Yes",
+      "no": "No"
+    }
+  },
   "prints": {},
   "cutting": {},
   "sewing": {},

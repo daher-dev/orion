@@ -20,7 +20,7 @@ Features created through the `/pm` workflow are tracked here. Add a line when a 
 | F-000 | Foundation: app shell, auth, design tokens | in-progress | 0 | `foundation/app-shell-and-auth` |
 | F-001 | Auth & Onboarding (login, signup, accept-invite, onboarding wizard) | planned | 1 | `feature/001-auth` |
 | F-002 | Members & Roles (invite flow, role assignment, permission matrix UI) | planned | 2 | `feature/002-members-roles` |
-| F-003 | Catalog: Specs (fichas técnicas) | planned | 1 | `feature/003-specs` |
+| F-003 | Catalog: Specs (fichas técnicas) | in-progress | 1 | `feature/003-specs` |
 | F-004 | Catalog: Prints (estampas) | planned | 1 | `feature/004-prints` |
 | F-005 | Catalog: Products + Variations | planned | 2 | `feature/005-products` |
 | F-006 | Inventory: Fabric (bobinas) | planned | 1 | `feature/006-fabric` |

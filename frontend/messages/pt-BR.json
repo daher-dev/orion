@@ -205,7 +205,97 @@
       }
     }
   },
-  "ads": {},
+  "ads": {
+    "page": {
+      "eyebrow": "Vendas"
+    },
+    "list": {
+      "title": "Anúncios",
+      "titleEm": "por canal",
+      "sub": "Gerencie suas listagens em ecommerces e redes sociais.",
+      "loadError": "Não foi possível carregar os anúncios.",
+      "noResults": "Nenhum anúncio encontrado para a busca.",
+      "empty": {
+        "title": "Nenhum anúncio cadastrado",
+        "body": "Publique seu primeiro anúncio para acompanhar listagens entre canais.",
+        "cta": "Novo anúncio"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Procurar anúncio…"
+    },
+    "table": {
+      "columns": {}
+    },
+    "channels": {
+      "shopee": "Shopee",
+      "mercado_livre": "Mercado Livre",
+      "shopify": "Shopify",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "other": "Outro"
+    },
+    "card": {
+      "noExternalId": "sem código externo"
+    },
+    "actions": {
+      "create": "Novo anúncio",
+      "edit": "Editar anúncio",
+      "delete": "Remover anúncio",
+      "confirmDelete": "O anúncio será removido. Esta ação não pode ser desfeita."
+    },
+    "fallback": {
+      "forbidden": "Você não tem acesso aos anúncios."
+    },
+    "form": {
+      "title": {
+        "new": "Novo anúncio",
+        "edit": "Editar anúncio",
+        "newSub": "Publique uma listagem em um ecommerce ou rede social",
+        "editSub": "Atualize um anúncio existente"
+      },
+      "sections": {
+        "channel": "Canal",
+        "details": "Detalhes"
+      },
+      "labels": {
+        "title": "Título do anúncio",
+        "product": "Produto vinculado",
+        "externalId": "Código externo da listagem"
+      },
+      "placeholders": {
+        "title": "Ex: Cropped Oversized — Verão 2026",
+        "product": "Selecione um produto…",
+        "searchProduct": "Procurar produtos…",
+        "externalId": {
+          "shopee": "Ex: SH-99812",
+          "mercado_livre": "Ex: MLB-3322114455",
+          "shopify": "Ex: shopify-handle",
+          "instagram": "Ex: id da postagem",
+          "whatsapp": "Ex: código do catálogo",
+          "other": "Código da listagem"
+        }
+      },
+      "hints": {
+        "externalIdOptional": "Opcional — deixe em branco se o canal não atribui código."
+      },
+      "noProducts": "Nenhum produto encontrado.",
+      "validation": {
+        "titleRequired": "Informe o título",
+        "titleTooLong": "Título muito longo",
+        "productRequired": "Selecione um produto"
+      },
+      "save": "Salvar alterações",
+      "submitNew": "Criar anúncio",
+      "cancel": "Cancelar",
+      "toasts": {
+        "created": "Anúncio criado",
+        "updated": "Anúncio atualizado",
+        "deleted": "Anúncio removido",
+        "error": "Operação falhou"
+      }
+    }
+  },
   "products": {
     "page": {
       "eyebrow": "Catálogo"
@@ -515,8 +605,197 @@
       }
     }
   },
-  "cutting": {},
-  "sewing": {},
+  "cutting": {
+    "page": {
+      "eyebrow": "Produção"
+    },
+    "list": {
+      "title": "Cortes",
+      "titleEm": "& planejamento",
+      "sub": "Planeje e registre lotes de corte contra suas bobinas de tecido.",
+      "loadError": "Não foi possível carregar as ordens de corte.",
+      "noResults": "Nenhuma ordem de corte encontrada.",
+      "empty": {
+        "title": "Nenhuma ordem de corte",
+        "body": "Planeje um lote contra uma bobina para começar a acompanhar o corte.",
+        "cta": "Nova OS de corte"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Procurar ordem…"
+    },
+    "table": {
+      "columns": {
+        "code": "Código",
+        "product": "Produto",
+        "bodyRoll": "Bobina corpo",
+        "ribRoll": "Bobina ribana",
+        "status": "Status",
+        "plannedTotal": "Planejado",
+        "actualTotal": "Cortado",
+        "cutAt": "Cortada em",
+        "actions": "Ações"
+      }
+    },
+    "status": {
+      "pending": "Pendente",
+      "cutting": "Cortando",
+      "done": "Concluído"
+    },
+    "actions": {
+      "create": "Nova OS de corte",
+      "edit": "Editar ordem",
+      "delete": "Remover ordem",
+      "confirmDelete": "A ordem de corte será removida. Esta ação não pode ser desfeita."
+    },
+    "fallback": {
+      "forbidden": "Você não tem acesso aos cortes."
+    },
+    "form": {
+      "title": {
+        "new": "Nova ordem de corte",
+        "edit": "Editar ordem de corte",
+        "newSub": "Planeje um novo lote contra uma bobina"
+      },
+      "sections": {
+        "product": "Produto",
+        "rolls": "Bobinas",
+        "plannedOutputs": "Peças por tamanho",
+        "schedule": "Programação"
+      },
+      "labels": {
+        "product": "Produto a cortar",
+        "bodyRoll": "Bobina corpo",
+        "ribRoll": "Bobina ribana",
+        "cutAt": "Data de corte"
+      },
+      "placeholders": {
+        "product": "Selecione um produto…",
+        "searchProduct": "Procurar produtos…",
+        "bodyRoll": "Selecione a bobina corpo…",
+        "ribRoll": "Selecione a ribana (opcional)…",
+        "searchRoll": "Procurar bobinas…"
+      },
+      "hints": {
+        "optional": "(opcional)",
+        "cutAtOptional": "Deixe em branco para manter a ordem pendente."
+      },
+      "noProducts": "Nenhum produto encontrado.",
+      "noRolls": "Nenhuma bobina disponível.",
+      "noRibRoll": "Sem ribana",
+      "validation": {
+        "productRequired": "Selecione um produto",
+        "bodyRollRequired": "Selecione a bobina corpo",
+        "rollsDiffer": "A ribana deve ser diferente do corpo",
+        "atLeastOneSize": "Informe ao menos uma peça"
+      },
+      "save": "Salvar alterações",
+      "submitNew": "Criar ordem",
+      "cancel": "Cancelar",
+      "toasts": {
+        "created": "Ordem de corte criada",
+        "updated": "Ordem atualizada",
+        "deleted": "Ordem removida",
+        "error": "Operação falhou"
+      }
+    }
+  },
+  "sewing": {
+    "page": {
+      "eyebrow": "Produção"
+    },
+    "list": {
+      "title": "Remessas",
+      "titleEm": "para bancas",
+      "sub": "Acompanhe remessas enviadas e recebidas das bancas terceirizadas.",
+      "loadError": "Não foi possível carregar as remessas.",
+      "noResults": "Nenhuma remessa encontrada.",
+      "empty": {
+        "title": "Nenhuma remessa enviada",
+        "body": "Envie o primeiro lote de peças cortadas para uma banca.",
+        "cta": "Nova remessa"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Procurar remessa…"
+    },
+    "table": {
+      "columns": {
+        "code": "Código",
+        "contractor": "Banca",
+        "cuttingOrder": "OS de corte",
+        "sentAt": "Enviada",
+        "receivedAt": "Recebida",
+        "status": "Status",
+        "totals": "Peças",
+        "actions": "Ações"
+      }
+    },
+    "status": {
+      "sent": "Enviado",
+      "received": "Recebido",
+      "partial": "Parcial",
+      "cancelled": "Cancelado"
+    },
+    "actions": {
+      "create": "Nova remessa",
+      "receive": "Receber",
+      "cancel": "Cancelar remessa",
+      "confirmReceive": "Confirmar recebimento"
+    },
+    "fallback": {
+      "forbidden": "Você não tem acesso às remessas."
+    },
+    "receive": {
+      "title": "Receber remessa",
+      "description": "Registre quantas peças voltaram em cada tamanho.",
+      "labels": {
+        "receivedAt": "Recebida em",
+        "sizes": "Peças recebidas"
+      }
+    },
+    "form": {
+      "title": {
+        "new": "Nova remessa",
+        "edit": "Editar remessa",
+        "newSub": "Envie peças cortadas para uma banca de costura"
+      },
+      "sections": {
+        "source": "Origem",
+        "schedule": "Programação",
+        "items": "Peças por tamanho"
+      },
+      "labels": {
+        "cuttingOrder": "OS de corte",
+        "contractor": "Banca",
+        "sentAt": "Enviada em"
+      },
+      "placeholders": {
+        "cuttingOrder": "Selecione uma OS…",
+        "contractor": "Selecione uma banca…",
+        "searchCutting": "Procurar OS de corte…",
+        "searchContractor": "Procurar bancas…"
+      },
+      "noCutting": "Nenhuma OS encontrada.",
+      "noContractors": "Nenhuma banca cadastrada.",
+      "validation": {
+        "cuttingOrderRequired": "Selecione uma OS",
+        "contractorRequired": "Selecione uma banca",
+        "sentAtRequired": "Informe a data de envio",
+        "receivedAtRequired": "Informe a data de recebimento",
+        "atLeastOneSize": "Informe ao menos uma peça"
+      },
+      "save": "Salvar alterações",
+      "submitNew": "Criar remessa",
+      "cancel": "Cancelar",
+      "toasts": {
+        "created": "Remessa criada",
+        "received": "Recebimento registrado",
+        "cancelled": "Remessa cancelada",
+        "error": "Operação falhou"
+      }
+    }
+  },
   "contractors": {
     "page": {
       "eyebrow": "Produção"

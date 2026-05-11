@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from routers.ads import router as ads_router
 from routers.audit_log import router as audit_log_router
 from routers.auth import router as auth_router
 from routers.clients import router as clients_router
@@ -17,6 +18,7 @@ from routers.user import router as user_router
 
 # Aggregate for all /v1/* endpoints. New feature routers get included here.
 api_router = APIRouter()
+api_router.include_router(ads_router)
 api_router.include_router(audit_log_router)
 api_router.include_router(auth_router)
 api_router.include_router(clients_router)
@@ -32,6 +34,7 @@ api_router.include_router(specs_router)
 api_router.include_router(user_router)
 
 __all__ = [
+    "ads_router",
     "api_router",
     "audit_log_router",
     "auth_router",

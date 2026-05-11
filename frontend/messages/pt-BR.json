@@ -990,7 +990,119 @@
       "forbidden": "Você não tem acesso às bobinas."
     }
   },
-  "stock": {},
+  "stock": {
+    "page": {
+      "eyebrow": "Estoque"
+    },
+    "list": {
+      "title": "Estoque",
+      "titleEm": "de peças prontas",
+      "sub": "Inventário de produtos acabados por SKU.",
+      "empty": {
+        "title": "Nenhum estoque cadastrado",
+        "body": "As entradas surgem quando uma remessa é recebida ou você lança um ajuste manual.",
+        "cta": "Lançar movimentação"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar por SKU, produto, cor…",
+      "lowStockOnly": "Apenas baixos",
+      "threshold": "Limite",
+      "product": "Produto",
+      "productAll": "Todos os produtos"
+    },
+    "table": {
+      "columns": {
+        "sku": "SKU",
+        "product": "Produto",
+        "size": "Tam.",
+        "color": "Cor",
+        "onHand": "Saldo",
+        "status": "Status",
+        "lastMovement": "Última mov.",
+        "actions": "Ações"
+      }
+    },
+    "statuses": {
+      "low": "Baixo",
+      "ok": "OK"
+    },
+    "actions": {
+      "adjustUp": "Adicionar entrada",
+      "adjustDown": "Adicionar saída",
+      "addEntry": "Nova entrada",
+      "addExit": "Nova saída",
+      "viewMovements": "Ver movimentações",
+      "viewFullLedger": "Livro completo",
+      "confirmAdjust": "Lançar movimentação"
+    },
+    "adjust": {
+      "title": "Lançar movimentação",
+      "labels": {
+        "direction": "Direção",
+        "variation": "Variação",
+        "quantity": "Quantidade",
+        "reason": "Motivo",
+        "source": "Origem",
+        "notes": "Observações"
+      },
+      "placeholders": {
+        "notes": "Observações (opcional)…",
+        "search": "Buscar variação…"
+      },
+      "validation": {
+        "quantityPositive": "Quantidade deve ser maior que zero",
+        "variationRequired": "Selecione uma variação",
+        "insufficientStock": "Saldo insuficiente — disponível: {available}"
+      },
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "toasts": {
+        "entryCreated": "Entrada lançada",
+        "exitCreated": "Saída lançada",
+        "error": "Operação falhou"
+      }
+    },
+    "movements": {
+      "title": "Movimentações",
+      "titleEm": "livro completo",
+      "sub": "Toda entrada e saída, ordenadas do mais recente.",
+      "columns": {
+        "when": "Quando",
+        "type": "Tipo",
+        "quantity": "Qtd",
+        "reasonOrSource": "Motivo",
+        "sku": "SKU",
+        "product": "Produto",
+        "notes": "Observações",
+        "sourceLink": "Origem"
+      },
+      "types": {
+        "entry": "Entrada",
+        "exit": "Saída",
+        "all": "Todas"
+      },
+      "sources": {
+        "shipment": "Remessa",
+        "adjustment": "Ajuste",
+        "return": "Devolução"
+      },
+      "reasons": {
+        "sale": "Venda",
+        "adjustment": "Ajuste",
+        "loss": "Avaria"
+      },
+      "empty": "Nenhuma movimentação registrada ainda."
+    },
+    "drawer": {
+      "title": "Histórico de movimentações",
+      "close": "Fechar",
+      "empty": "Esta variação ainda não teve movimentações."
+    },
+    "fallback": {
+      "forbidden": "Você não tem acesso ao estoque."
+    }
+  },
   "reports": {},
   "settings": {
     "page": {

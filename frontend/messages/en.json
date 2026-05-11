@@ -990,7 +990,119 @@
       "forbidden": "You don't have access to fabric rolls."
     }
   },
-  "stock": {},
+  "stock": {
+    "page": {
+      "eyebrow": "Inventory"
+    },
+    "list": {
+      "title": "Stock",
+      "titleEm": "of finished pieces",
+      "sub": "Finished-piece inventory by SKU.",
+      "empty": {
+        "title": "No stock registered yet",
+        "body": "Entries appear when a sewing shipment is received or you record a manual adjustment.",
+        "cta": "Record an adjustment"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search SKU, product, color…",
+      "lowStockOnly": "Low stock only",
+      "threshold": "Threshold",
+      "product": "Product",
+      "productAll": "All products"
+    },
+    "table": {
+      "columns": {
+        "sku": "SKU",
+        "product": "Product",
+        "size": "Size",
+        "color": "Color",
+        "onHand": "On hand",
+        "status": "Status",
+        "lastMovement": "Last move",
+        "actions": "Actions"
+      }
+    },
+    "statuses": {
+      "low": "Low",
+      "ok": "OK"
+    },
+    "actions": {
+      "adjustUp": "Add entry",
+      "adjustDown": "Add exit",
+      "addEntry": "New entry",
+      "addExit": "New exit",
+      "viewMovements": "View movements",
+      "viewFullLedger": "Full ledger",
+      "confirmAdjust": "Record movement"
+    },
+    "adjust": {
+      "title": "Record movement",
+      "labels": {
+        "direction": "Direction",
+        "variation": "Variation",
+        "quantity": "Quantity",
+        "reason": "Reason",
+        "source": "Source",
+        "notes": "Notes"
+      },
+      "placeholders": {
+        "notes": "Optional notes…",
+        "search": "Search variation…"
+      },
+      "validation": {
+        "quantityPositive": "Quantity must be greater than zero",
+        "variationRequired": "Select a variation",
+        "insufficientStock": "Insufficient stock — available: {available}"
+      },
+      "save": "Save",
+      "cancel": "Cancel",
+      "toasts": {
+        "entryCreated": "Entry recorded",
+        "exitCreated": "Exit recorded",
+        "error": "Operation failed"
+      }
+    },
+    "movements": {
+      "title": "Movements",
+      "titleEm": "full ledger",
+      "sub": "Every entry and exit, ordered from newest.",
+      "columns": {
+        "when": "When",
+        "type": "Type",
+        "quantity": "Qty",
+        "reasonOrSource": "Reason",
+        "sku": "SKU",
+        "product": "Product",
+        "notes": "Notes",
+        "sourceLink": "Source"
+      },
+      "types": {
+        "entry": "Entry",
+        "exit": "Exit",
+        "all": "All"
+      },
+      "sources": {
+        "shipment": "Shipment",
+        "adjustment": "Adjustment",
+        "return": "Return"
+      },
+      "reasons": {
+        "sale": "Sale",
+        "adjustment": "Adjustment",
+        "loss": "Loss"
+      },
+      "empty": "No movements recorded yet."
+    },
+    "drawer": {
+      "title": "Movement history",
+      "close": "Close",
+      "empty": "This variation hasn't moved yet."
+    },
+    "fallback": {
+      "forbidden": "You don't have access to stock."
+    }
+  },
   "reports": {},
   "settings": {
     "page": {

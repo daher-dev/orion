@@ -206,7 +206,124 @@
     }
   },
   "ads": {},
-  "products": {},
+  "products": {
+    "page": {
+      "eyebrow": "Catalog"
+    },
+    "list": {
+      "title": "Products",
+      "titleEm": "for sale",
+      "sub": "Combinations of tech spec + print, organized by size and color.",
+      "loadError": "Could not load products.",
+      "empty": {
+        "title": "No products yet",
+        "body": "Create your first product to start linking specs and prints.",
+        "cta": "New product"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search product…",
+      "productType": "Product type",
+      "all": "All",
+      "spec": "Tech spec",
+      "print": "Print",
+      "itemCount": "items"
+    },
+    "productTypes": {
+      "tshirt": "T-shirt",
+      "sweatshirt": "Sweatshirt",
+      "shorts": "Shorts",
+      "tanktop": "Tank top"
+    },
+    "table": {
+      "columns": {
+        "name": "Product",
+        "type": "Type",
+        "spec": "Spec",
+        "print": "Print",
+        "variations": "Variations",
+        "actions": "Actions"
+      }
+    },
+    "variations": {
+      "title": "Variations",
+      "body": "Each cell becomes a SKU. Drop a combination to remove it.",
+      "sizesTitle": "Available sizes",
+      "colorsTitle": "Available colors",
+      "sizes": {
+        "p": "P",
+        "m": "M",
+        "g": "G",
+        "gg": "GG"
+      },
+      "addColor": "Add color",
+      "removeColor": "Remove color",
+      "colorSwatch": "Pick color",
+      "colorNamePlaceholder": "Color name",
+      "preview": "Generated SKUs",
+      "cells": "cells",
+      "noPreview": "Pick at least one size and one color to preview SKUs.",
+      "noVariations": "No variations yet.",
+      "sku": "SKU"
+    },
+    "actions": {
+      "create": "New product",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete this product? This cannot be undone."
+    },
+    "form": {
+      "title": {
+        "new": "New product",
+        "edit": "Edit product"
+      },
+      "sections": {
+        "identity": "Identification",
+        "recipe": "Recipe",
+        "variations": "Variations"
+      },
+      "labels": {
+        "name": "Product name",
+        "productType": "Product type",
+        "spec": "Tech spec",
+        "print": "Print"
+      },
+      "placeholders": {
+        "name": "e.g. Cropped Oversized",
+        "spec": "Pick a tech spec",
+        "print": "Pick a print (optional)",
+        "searchSpec": "Search spec by code or name…",
+        "searchPrint": "Search print by code or name…"
+      },
+      "printNone": "No print",
+      "noResults": "No matches.",
+      "validation": {
+        "nameRequired": "Name is required",
+        "specRequired": "Pick a tech spec",
+        "variationsRequired": "Pick at least one size and one color",
+        "colorCodeFormat": "Use 3 uppercase letters",
+        "duplicatePair": "A product already exists for this spec + print combination."
+      },
+      "save": "Save product",
+      "cancel": "Cancel",
+      "toasts": {
+        "created": "Product created",
+        "updated": "Product updated",
+        "deleted": "Product deleted",
+        "error": "Could not save the product."
+      }
+    },
+    "detail": {
+      "back": "Back to products",
+      "notFound": "Product not found",
+      "meta": {
+        "totalVariations": "Variations",
+        "spec": "Tech spec",
+        "print": "Print",
+        "noPrint": "No print"
+      }
+    }
+  },
   "specs": {
     "page": {
       "eyebrow": "Catalog"

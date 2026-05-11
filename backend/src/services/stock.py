@@ -54,9 +54,7 @@ async def _get_variation(
     company_id: uuid.UUID,
     variation_id: uuid.UUID,
 ) -> ProductVariation:
-    stmt = scoped(select(ProductVariation), ProductVariation, company_id).where(
-        ProductVariation.id == variation_id
-    )
+    stmt = scoped(select(ProductVariation), ProductVariation, company_id).where(ProductVariation.id == variation_id)
     result = await db.exec(stmt)
     variation = result.first()
     if variation is None:
@@ -75,13 +73,11 @@ async def _compute_on_hand(
     `coalesce(sum(quantity), 0)` because empty ledgers yield NULL otherwise.
     """
 
-    entries_stmt = (
-        scoped(select(func.coalesce(func.sum(StockEntry.quantity), 0)), StockEntry, company_id)
-        .where(StockEntry.variation_id == variation_id)
+    entries_stmt = scoped(select(func.coalesce(func.sum(StockEntry.quantity), 0)), StockEntry, company_id).where(
+        StockEntry.variation_id == variation_id
     )
-    exits_stmt = (
-        scoped(select(func.coalesce(func.sum(StockExit.quantity), 0)), StockExit, company_id)
-        .where(StockExit.variation_id == variation_id)
+    exits_stmt = scoped(select(func.coalesce(func.sum(StockExit.quantity), 0)), StockExit, company_id).where(
+        StockExit.variation_id == variation_id
     )
     entries_total = int((await db.exec(entries_stmt)).first() or 0)
     exits_total = int((await db.exec(exits_stmt)).first() or 0)
@@ -126,10 +122,7 @@ async def list_stock_levels(
         .subquery()
     )
 
-    on_hand_expr = (
-        func.coalesce(entries_agg.c.entries_total, 0)
-        - func.coalesce(exits_agg.c.exits_total, 0)
-    )
+    on_hand_expr = func.coalesce(entries_agg.c.entries_total, 0) - func.coalesce(exits_agg.c.exits_total, 0)
     last_move_expr = func.greatest(
         func.coalesce(entries_agg.c.last_entry_at, exits_agg.c.last_exit_at),
         func.coalesce(exits_agg.c.last_exit_at, entries_agg.c.last_entry_at),
@@ -171,11 +164,7 @@ async def list_stock_levels(
     total_result = await db.exec(select(func.count()).select_from(base.subquery()))
     total = int(total_result.one() or 0)
 
-    rows_stmt = (
-        base.order_by(ProductVariation.sku.asc())
-        .offset(page.offset)
-        .limit(page.page_size)
-    )
+    rows_stmt = base.order_by(ProductVariation.sku.asc()).offset(page.offset).limit(page.page_size)
     result = await db.exec(rows_stmt)
     rows = []
     for row in result.all():
@@ -258,12 +247,8 @@ async def list_movements(
         value = filters.reason_or_source.strip().lower()
         # Match the raw enum value on either side; only one half matches
         # for a given row but the OR composes cleanly.
-        entry_stmt = entry_stmt.where(
-            func.lower(cast(StockEntry.source, String)) == value
-        )
-        exit_stmt = exit_stmt.where(
-            func.lower(cast(StockExit.reason, String)) == value
-        )
+        entry_stmt = entry_stmt.where(func.lower(cast(StockEntry.source, String)) == value)
+        exit_stmt = exit_stmt.where(func.lower(cast(StockExit.reason, String)) == value)
 
     movements: list[StockMovementRead] = []
     if filters.type != "exit":
@@ -332,10 +317,7 @@ async def create_entry(
         user_id=user_id,
         resource_type=_ENTRY_RESOURCE,
         resource_id=entry.id,
-        message=(
-            f"Adjusted stock for SKU {variation.sku}: +{entry.quantity} "
-            f"({entry.source.value})"
-        ),
+        message=(f"Adjusted stock for SKU {variation.sku}: +{entry.quantity} ({entry.source.value})"),
     )
     await db.commit()
     await db.refresh(entry)
@@ -376,10 +358,7 @@ async def create_exit(
         user_id=user_id,
         resource_type=_EXIT_RESOURCE,
         resource_id=exit_row.id,
-        message=(
-            f"Adjusted stock for SKU {variation.sku}: -{exit_row.quantity} "
-            f"({exit_row.reason.value})"
-        ),
+        message=(f"Adjusted stock for SKU {variation.sku}: -{exit_row.quantity} ({exit_row.reason.value})"),
     )
     await db.commit()
     await db.refresh(exit_row)

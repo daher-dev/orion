@@ -49,9 +49,7 @@ _RESOURCE = "orders"
 # A single loaded read row: the Order + its ad + variation + product +
 # spec.code + client. Keep this as a plain tuple so the SQLModel rows stay
 # pristine and the router builds the wire DTO.
-OrderWithRelations = tuple[
-    Order, Ad, ProductVariation, Product, str | None, Client
-]
+OrderWithRelations = tuple[Order, Ad, ProductVariation, Product, str | None, Client]
 
 
 # --------------------------------------------------------------------- helpers
@@ -97,9 +95,7 @@ def _apply_filters(stmt, filters: OrderFilters):
 # ------------------------------------------------------- reference checks
 
 
-async def _ensure_ad(
-    db: AsyncSession, *, company_id: uuid.UUID, ad_id: uuid.UUID
-) -> Ad:
+async def _ensure_ad(db: AsyncSession, *, company_id: uuid.UUID, ad_id: uuid.UUID) -> Ad:
     stmt = scoped(select(Ad), Ad, company_id).where(Ad.id == ad_id)
     ad = (await db.exec(stmt)).first()
     if ad is None:
@@ -107,21 +103,15 @@ async def _ensure_ad(
     return ad
 
 
-async def _ensure_variation(
-    db: AsyncSession, *, company_id: uuid.UUID, variation_id: uuid.UUID
-) -> ProductVariation:
-    stmt = scoped(select(ProductVariation), ProductVariation, company_id).where(
-        ProductVariation.id == variation_id
-    )
+async def _ensure_variation(db: AsyncSession, *, company_id: uuid.UUID, variation_id: uuid.UUID) -> ProductVariation:
+    stmt = scoped(select(ProductVariation), ProductVariation, company_id).where(ProductVariation.id == variation_id)
     variation = (await db.exec(stmt)).first()
     if variation is None:
         raise ValidationError(detail="Variation not found for this company")
     return variation
 
 
-async def _ensure_client(
-    db: AsyncSession, *, company_id: uuid.UUID, client_id: uuid.UUID
-) -> Client:
+async def _ensure_client(db: AsyncSession, *, company_id: uuid.UUID, client_id: uuid.UUID) -> Client:
     stmt = scoped(select(Client), Client, company_id).where(Client.id == client_id)
     client = (await db.exec(stmt)).first()
     if client is None:
@@ -226,9 +216,7 @@ async def create_order(
     payload: OrderCreate,
 ) -> OrderWithRelations:
     ad = await _ensure_ad(db, company_id=company_id, ad_id=payload.ad_id)
-    variation = await _ensure_variation(
-        db, company_id=company_id, variation_id=payload.variation_id
-    )
+    variation = await _ensure_variation(db, company_id=company_id, variation_id=payload.variation_id)
     await _ensure_client(db, company_id=company_id, client_id=payload.client_id)
 
     # The variation must belong to the same product the ad points at. This
@@ -315,11 +303,7 @@ async def _apply_status_side_effects(
     """
 
     if target == OrderStatus.SHIPPED:
-        existing = await db.exec(
-            select(func.count())
-            .select_from(StockExit)
-            .where(StockExit.order_id == order.id)
-        )
+        existing = await db.exec(select(func.count()).select_from(StockExit).where(StockExit.order_id == order.id))
         if int(existing.first() or 0) > 0:
             return
         db.add(
@@ -335,11 +319,7 @@ async def _apply_status_side_effects(
     elif target == OrderStatus.RETURNED:
         # If the order never shipped (cancelled-from-paid path) there is
         # nothing to reverse and we skip the StockEntry.
-        had_exit = await db.exec(
-            select(func.count())
-            .select_from(StockExit)
-            .where(StockExit.order_id == order.id)
-        )
+        had_exit = await db.exec(select(func.count()).select_from(StockExit).where(StockExit.order_id == order.id))
         if int(had_exit.first() or 0) <= 0:
             return
         db.add(
@@ -393,10 +373,7 @@ async def transition_status(
         user_id=user_id,
         resource_type=_RESOURCE,
         resource_id=order.id,
-        message=(
-            f"Marked order {_short_code(order.id)} as {target.value.upper()}"
-            f" (was {previous.value.upper()})"
-        ),
+        message=(f"Marked order {_short_code(order.id)} as {target.value.upper()} (was {previous.value.upper()})"),
     )
     await db.commit()
     return await _load_with_relations(db, company_id=company_id, order_id=order.id)
@@ -429,8 +406,7 @@ async def update_order(
                 target=target,
             )
             audit_messages.append(
-                f"Marked order {_short_code(order.id)} as {target.value.upper()}"
-                f" (was {order.status.value.upper()})"
+                f"Marked order {_short_code(order.id)} as {target.value.upper()} (was {order.status.value.upper()})"
             )
             order.status = target
 
@@ -480,9 +456,7 @@ async def delete_order(
     if order is None:
         raise NotFoundError(detail="Order not found")
 
-    linked = await db.exec(
-        select(func.count()).select_from(StockExit).where(StockExit.order_id == order.id)
-    )
+    linked = await db.exec(select(func.count()).select_from(StockExit).where(StockExit.order_id == order.id))
     if int(linked.first() or 0) > 0:
         raise ConflictError(
             detail="Cannot delete order — stock has already moved",

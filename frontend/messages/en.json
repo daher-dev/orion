@@ -137,7 +137,150 @@
   "dashboard": {
     "title": "Dashboard"
   },
-  "orders": {},
+  "orders": {
+    "page": {
+      "eyebrow": "Sales"
+    },
+    "list": {
+      "title": "Orders",
+      "titleEm": "multi-channel",
+      "sub": "Track every order from every channel in one place.",
+      "loadError": "Could not load orders.",
+      "noResults": "No orders match these filters.",
+      "empty": {
+        "title": "No orders yet",
+        "body": "Create your first order or wait for a channel webhook to drop one in.",
+        "cta": "New order"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search order…",
+      "status": "Status",
+      "statusAll": "All",
+      "channel": "Channel",
+      "channelAll": "All channels",
+      "client": "Client",
+      "clientAll": "All clients"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "returned": "Returned"
+    },
+    "channels": {
+      "shopee": "Shopee",
+      "mercado_livre": "Mercado Livre",
+      "shopify": "Shopify",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "other": "Other"
+    },
+    "table": {
+      "columns": {
+        "code": "Order",
+        "channel": "Channel",
+        "client": "Client",
+        "product": "Product",
+        "qty": "Qty",
+        "value": "Value",
+        "status": "Status",
+        "orderedAt": "Date",
+        "actions": "Actions"
+      }
+    },
+    "actions": {
+      "create": "New order",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete this order? This cannot be undone.",
+      "markPaid": "Mark paid",
+      "markShipped": "Mark shipped",
+      "markDelivered": "Mark delivered",
+      "cancel": "Cancel order",
+      "returnOrder": "Return order",
+      "back": "Back to orders"
+    },
+    "detail": {
+      "customerBlock": "Customer",
+      "adBlock": "Ad",
+      "lineItem": "Item",
+      "statusTimeline": "Timeline",
+      "activityRail": "Activity",
+      "externalCode": "External code",
+      "unitPrice": "Unit price",
+      "total": "Total",
+      "placedOn": "Placed on {date}",
+      "lineItemHint": "Click to mark the phase"
+    },
+    "form": {
+      "title": {
+        "new": "New order",
+        "edit": "Edit order",
+        "newSub": "Register a manual order across any channel.",
+        "editSub": "Adjust price, date or external code."
+      },
+      "sections": {
+        "client": "Customer",
+        "items": "Items",
+        "details": "Details"
+      },
+      "labels": {
+        "client": "Client",
+        "ad": "Ad",
+        "variation": "Variation",
+        "quantity": "Quantity",
+        "salePrice": "Unit price",
+        "orderedAt": "Order date",
+        "externalOrderId": "External order ID"
+      },
+      "placeholders": {
+        "client": "Pick a client",
+        "ad": "Pick an ad",
+        "variation": "Pick a variation",
+        "externalOrderId": "Optional channel order id",
+        "searchClient": "Search client…",
+        "searchAd": "Search ad…",
+        "searchVariation": "Search variation…"
+      },
+      "noClients": "No clients found.",
+      "noAds": "No ads found.",
+      "noVariations": "No variations available for this ad.",
+      "validation": {
+        "clientRequired": "Client is required",
+        "adRequired": "Ad is required",
+        "variationRequired": "Variation is required",
+        "quantityPositive": "Quantity must be at least 1",
+        "pricePositive": "Price must be zero or greater",
+        "orderedAtRequired": "Order date is required"
+      },
+      "save": "Save changes",
+      "submitNew": "Create order",
+      "cancel": "Cancel",
+      "toasts": {
+        "created": "Order created",
+        "updated": "Order updated",
+        "deleted": "Order deleted",
+        "transitioned": "Order updated",
+        "error": "Could not save the order.",
+        "deleteBlocked": "This order already shipped — stock has moved."
+      }
+    },
+    "timeline": {
+      "pending": "Received",
+      "paid": "Paid",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "returned": "Returned"
+    },
+    "fallback": {
+      "forbidden": "You don't have access to orders.",
+      "notFound": "Order not found."
+    }
+  },
   "clients": {
     "page": {
       "eyebrow": "Sales"

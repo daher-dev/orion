@@ -1,0 +1,180 @@
+"""Orders (Pedidos) HTTP router.
+
+Thin layer over :mod:`services.order`. Every endpoint translates the
+joined service result into the wire :class:`OrderRead` shape. Permissions
+are enforced via a router-level ``orders.read`` dependency and an inline
+``orders.write`` dependency on every mutation.
+"""
+
+from __future__ import annotations
+
+import uuid
+from datetime import datetime
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
+
+from dependencies import DbSession, RequirePermission
+from models import Ad, Client, Ecommerce, OrderStatus, Product, ProductVariation, User
+from models.order import Order
+from schemas._common import PageParams
+from schemas.order import (
+    OrderAdRead,
+    OrderClientRead,
+    OrderCreate,
+    OrderFilters,
+    OrderPage,
+    OrderProductMini,
+    OrderRead,
+    OrderStatusTransition,
+    OrderUpdate,
+    OrderVariationRead,
+)
+from services import order as order_service
+
+router = APIRouter(
+    prefix="/orders",
+    tags=["Orders"],
+    dependencies=[Depends(RequirePermission("orders.read"))],
+)
+
+
+def _to_read(
+    order: Order,
+    ad: Ad,
+    variation: ProductVariation,
+    product: Product,
+    spec_code: str | None,
+    client: Client,
+) -> OrderRead:
+    return OrderRead(
+        id=order.id,
+        ad=OrderAdRead(id=ad.id, title=ad.title, ecommerce=ad.ecommerce),
+        variation=OrderVariationRead(
+            id=variation.id,
+            sku=variation.sku,
+            size=variation.size,
+            color=variation.color,
+            color_code=variation.color_code,
+            product=OrderProductMini(id=product.id, name=product.name, code=spec_code),
+        ),
+        client=OrderClientRead(id=client.id, name=client.name, email=client.email),
+        quantity=order.quantity,
+        sale_price=order.sale_price,
+        ordered_at=order.ordered_at,
+        status=order.status,
+        external_order_id=order.external_order_id,
+        created_at=order.created_at,
+        updated_at=order.updated_at,
+    )
+
+
+@router.get("", response_model=OrderPage)
+async def list_orders_endpoint(
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.read"))],
+    q: Annotated[str | None, Query(max_length=120)] = None,
+    status_filter: Annotated[OrderStatus | None, Query(alias="status")] = None,
+    channel: Annotated[Ecommerce | None, Query()] = None,
+    client_id: Annotated[uuid.UUID | None, Query()] = None,
+    ad_id: Annotated[uuid.UUID | None, Query()] = None,
+    date_from: Annotated[datetime | None, Query()] = None,
+    date_to: Annotated[datetime | None, Query()] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 50,
+) -> OrderPage:
+    params = PageParams(page=page, page_size=page_size)
+    filters = OrderFilters(
+        q=q,
+        status=status_filter,
+        channel=channel,
+        client_id=client_id,
+        ad_id=ad_id,
+        date_from=date_from,
+        date_to=date_to,
+    )
+    rows, total = await order_service.list_orders(
+        db,
+        company_id=user.company_id,
+        filters=filters,
+        page=params,
+    )
+    items = [_to_read(*row) for row in rows]
+    return OrderPage.build(items=items, total=total, params=params)
+
+
+@router.get("/{order_id}", response_model=OrderRead)
+async def get_order_endpoint(
+    order_id: uuid.UUID,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.read"))],
+) -> OrderRead:
+    row = await order_service.get_order(
+        db,
+        company_id=user.company_id,
+        order_id=order_id,
+    )
+    return _to_read(*row)
+
+
+@router.post("", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
+async def create_order_endpoint(
+    payload: OrderCreate,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+) -> OrderRead:
+    row = await order_service.create_order(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        payload=payload,
+    )
+    return _to_read(*row)
+
+
+@router.patch("/{order_id}", response_model=OrderRead)
+async def update_order_endpoint(
+    order_id: uuid.UUID,
+    payload: OrderUpdate,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+) -> OrderRead:
+    row = await order_service.update_order(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        order_id=order_id,
+        payload=payload,
+    )
+    return _to_read(*row)
+
+
+@router.post("/{order_id}/status", response_model=OrderRead)
+async def transition_order_status_endpoint(
+    order_id: uuid.UUID,
+    payload: OrderStatusTransition,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+) -> OrderRead:
+    row = await order_service.transition_status(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        order_id=order_id,
+        target=payload.status,
+    )
+    return _to_read(*row)
+
+
+@router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_order_endpoint(
+    order_id: uuid.UUID,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+) -> None:
+    await order_service.delete_order(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        order_id=order_id,
+    )

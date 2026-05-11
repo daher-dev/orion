@@ -137,7 +137,150 @@
   "dashboard": {
     "title": "Painel"
   },
-  "orders": {},
+  "orders": {
+    "page": {
+      "eyebrow": "Vendas"
+    },
+    "list": {
+      "title": "Pedidos",
+      "titleEm": "multi-canal",
+      "sub": "Acompanhe todos os pedidos em um só lugar.",
+      "loadError": "Não foi possível carregar os pedidos.",
+      "noResults": "Nenhum pedido corresponde aos filtros.",
+      "empty": {
+        "title": "Nenhum pedido ainda",
+        "body": "Crie seu primeiro pedido ou aguarde a chegada via canal.",
+        "cta": "Novo pedido"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Procurar pedido…",
+      "status": "Status",
+      "statusAll": "Todos",
+      "channel": "Canal",
+      "channelAll": "Todos os canais",
+      "client": "Cliente",
+      "clientAll": "Todos os clientes"
+    },
+    "statuses": {
+      "pending": "Pendente",
+      "paid": "Pago",
+      "shipped": "Enviado",
+      "delivered": "Entregue",
+      "cancelled": "Cancelado",
+      "returned": "Devolvido"
+    },
+    "channels": {
+      "shopee": "Shopee",
+      "mercado_livre": "Mercado Livre",
+      "shopify": "Shopify",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "other": "Outro"
+    },
+    "table": {
+      "columns": {
+        "code": "Pedido",
+        "channel": "Canal",
+        "client": "Cliente",
+        "product": "Produto",
+        "qty": "Qtd",
+        "value": "Valor",
+        "status": "Status",
+        "orderedAt": "Data",
+        "actions": "Ações"
+      }
+    },
+    "actions": {
+      "create": "Novo pedido",
+      "edit": "Editar",
+      "delete": "Excluir",
+      "confirmDelete": "Excluir este pedido? Não pode ser desfeito.",
+      "markPaid": "Marcar como pago",
+      "markShipped": "Marcar como enviado",
+      "markDelivered": "Marcar como entregue",
+      "cancel": "Cancelar pedido",
+      "returnOrder": "Devolver pedido",
+      "back": "Voltar para pedidos"
+    },
+    "detail": {
+      "customerBlock": "Cliente",
+      "adBlock": "Anúncio",
+      "lineItem": "Item",
+      "statusTimeline": "Linha do tempo",
+      "activityRail": "Atividade",
+      "externalCode": "Código externo",
+      "unitPrice": "Valor unitário",
+      "total": "Total",
+      "placedOn": "Realizado em {date}",
+      "lineItemHint": "Clique para marcar a fase"
+    },
+    "form": {
+      "title": {
+        "new": "Novo pedido",
+        "edit": "Editar pedido",
+        "newSub": "Registre um pedido manual em qualquer canal.",
+        "editSub": "Ajuste preço, data ou código externo."
+      },
+      "sections": {
+        "client": "Cliente",
+        "items": "Itens",
+        "details": "Detalhes"
+      },
+      "labels": {
+        "client": "Cliente",
+        "ad": "Anúncio",
+        "variation": "Variação",
+        "quantity": "Quantidade",
+        "salePrice": "Valor unitário",
+        "orderedAt": "Data do pedido",
+        "externalOrderId": "ID externo"
+      },
+      "placeholders": {
+        "client": "Selecione um cliente",
+        "ad": "Selecione um anúncio",
+        "variation": "Selecione uma variação",
+        "externalOrderId": "ID opcional do canal",
+        "searchClient": "Procurar cliente…",
+        "searchAd": "Procurar anúncio…",
+        "searchVariation": "Procurar variação…"
+      },
+      "noClients": "Nenhum cliente encontrado.",
+      "noAds": "Nenhum anúncio encontrado.",
+      "noVariations": "Sem variações disponíveis para este anúncio.",
+      "validation": {
+        "clientRequired": "Cliente obrigatório",
+        "adRequired": "Anúncio obrigatório",
+        "variationRequired": "Variação obrigatória",
+        "quantityPositive": "Quantidade deve ser ao menos 1",
+        "pricePositive": "Preço não pode ser negativo",
+        "orderedAtRequired": "Data do pedido obrigatória"
+      },
+      "save": "Salvar alterações",
+      "submitNew": "Criar pedido",
+      "cancel": "Cancelar",
+      "toasts": {
+        "created": "Pedido criado",
+        "updated": "Pedido atualizado",
+        "deleted": "Pedido excluído",
+        "transitioned": "Pedido atualizado",
+        "error": "Não foi possível salvar o pedido.",
+        "deleteBlocked": "Pedido já enviado — o estoque foi movimentado."
+      }
+    },
+    "timeline": {
+      "pending": "Recebido",
+      "paid": "Pago",
+      "shipped": "Enviado",
+      "delivered": "Entregue",
+      "cancelled": "Cancelado",
+      "returned": "Devolvido"
+    },
+    "fallback": {
+      "forbidden": "Você não tem acesso aos pedidos.",
+      "notFound": "Pedido não encontrado."
+    }
+  },
   "clients": {
     "page": {
       "eyebrow": "Vendas"

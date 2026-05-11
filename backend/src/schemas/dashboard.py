@@ -1,0 +1,101 @@
+"""Pydantic schemas for the Dashboard summary endpoint (FEATURE-015).
+
+The dashboard is a read-only "panorama" that aggregates over existing
+domain tables (orders, cutting orders, sewing shipments, stock movements,
+audit log). No mutation schemas — the only endpoint is
+``GET /v1/dashboard/summary``.
+"""
+
+from __future__ import annotations
+
+import uuid
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
+
+
+class Kpi(BaseModel):
+    """A single KPI card: label + value + optional delta + optional sparkline."""
+
+    label: str
+    value: float
+    delta_pct: float | None = None
+    sparkline: list[int] | None = None
+
+
+class DashboardKpis(BaseModel):
+    """All five KPI cards rendered on the dashboard strip."""
+
+    orders_pending: Kpi
+    orders_revenue_30d: Kpi
+    cutting_pending: Kpi
+    stock_low: Kpi
+    banca_active: Kpi
+
+
+class PipelineCounts(BaseModel):
+    """Five-stage production pipeline counters.
+
+    - ``total_pending_orders`` — orders with status=pending.
+    - ``in_cutting`` — cutting orders with status in {pending, cutting}.
+    - ``in_sewing`` — sewing shipments with status in {sent, partial}.
+    - ``in_stock`` — variations with on-hand > 0 (only those with any
+      ledger history are counted).
+    - ``shipped_30d`` — orders that transitioned to shipped in the last
+      30 days (approximated via orders.updated_at since we don't keep a
+      transition history table).
+    """
+
+    total_pending_orders: int
+    in_cutting: int
+    in_sewing: int
+    in_stock: int
+    shipped_30d: int
+
+
+class NeedsActionItem(BaseModel):
+    """A single line in the "needs action" list on the dashboard.
+
+    ``kind`` is a stable identifier the frontend uses to pick the right
+    icon + sub-product color (e.g. "orders_pending", "stock_low").
+    """
+
+    kind: str
+    message: str
+    link: str
+
+
+class ActivityItem(BaseModel):
+    """A single line in the activity feed (newest first).
+
+    Mirrors the audit-log row shape used in F-018 but kept narrower so the
+    feed payload stays tiny.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    when: datetime
+    who: str | None
+    message: str
+    resource_type: str
+    resource_id: uuid.UUID
+
+
+class DashboardSummary(BaseModel):
+    """Composite payload returned by ``GET /v1/dashboard/summary``."""
+
+    kpis: DashboardKpis
+    pipeline: PipelineCounts
+    needs_action: list[NeedsActionItem]
+    activity: list[ActivityItem]
+
+
+__all__ = [
+    "ActivityItem",
+    "DashboardKpis",
+    "DashboardSummary",
+    "Kpi",
+    "NeedsActionItem",
+    "PipelineCounts",
+]

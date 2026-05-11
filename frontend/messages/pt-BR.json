@@ -55,15 +55,84 @@
     "settings": "Ajustes"
   },
   "auth": {
-    "title": "Entrar no Orion",
     "signIn": "Entrar",
     "signUp": "Criar conta",
     "email": "E-mail",
     "password": "Senha",
     "google": "Continuar com Google",
-    "comingSoon": "A autenticação será conectada na próxima entrega.",
-    "onboardingTitle": "Bem-vindo ao Orion",
-    "onboardingSubtitle": "O assistente de onboarding chegará em breve."
+    "brand": {
+      "wordmark": "Orion",
+      "poweredBy": "por Underground",
+      "sigilLabel": "Underground"
+    },
+    "login": {
+      "title": "Entrar no Orion",
+      "sub": "Bem-vindo de volta. Escolha um método de login para continuar.",
+      "devBypassBanner": "Auth dev-bypass está ativo. Os campos são ignorados — clique em \"Entrar\" para acessar como o usuário dev configurado.",
+      "submit": "Entrar",
+      "submitting": "Entrando…",
+      "forgotPassword": "Esqueceu a senha?",
+      "noAccount": "Não tem conta?",
+      "createAccount": "Criar conta",
+      "errors": {
+        "invalidCredentials": "E-mail ou senha incorretos.",
+        "popupBlocked": "A janela foi bloqueada. Permita pop-ups e tente novamente.",
+        "generic": "Não foi possível entrar. Tente novamente."
+      }
+    },
+    "signup": {
+      "title": "Criar sua conta",
+      "comingSoon": "O cadastro autônomo chega em breve. Peça ao dono do time para te enviar um convite.",
+      "backToLogin": "Voltar para entrar"
+    },
+    "forgotPassword": {
+      "title": "Esqueceu a senha?",
+      "comingSoon": "Recuperação de senha chega em breve. Fale com o suporte para redefinir sua senha.",
+      "backToLogin": "Voltar para entrar"
+    },
+    "onboarding": {
+      "title": "Criar sua empresa",
+      "sub": "Só alguns dados para preparar seu workspace.",
+      "labels": {
+        "companyName": "Nome da empresa",
+        "subdomain": "Subdomínio",
+        "mainColor": "Cor principal"
+      },
+      "placeholders": {
+        "companyName": "ex. Underground Apparel",
+        "subdomain": "underground-apparel"
+      },
+      "helpers": {
+        "subdomainDerivation": "Usado na URL do seu workspace. Derivamos do nome da empresa — você pode alterar."
+      },
+      "validation": {
+        "nameRequired": "Nome da empresa é obrigatório",
+        "subdomainRequired": "Subdomínio é obrigatório",
+        "subdomainSlug": "Use apenas letras minúsculas, números e hifens.",
+        "subdomainTaken": "Este subdomínio já está em uso."
+      },
+      "submit": "Criar empresa",
+      "submitting": "Criando…",
+      "toasts": {
+        "created": "Empresa criada",
+        "error": "Não foi possível criar sua empresa."
+      }
+    },
+    "acceptInvite": {
+      "title": "Você foi convidado",
+      "body": "Você foi convidado para a empresa <strong>{companyName}</strong> como <strong>{roleName}</strong>.",
+      "accept": "Aceitar e entrar",
+      "accepting": "Aceitando…",
+      "decline": "Cancelar",
+      "errors": {
+        "invalid": "Esse convite não é mais válido.",
+        "expired": "Esse convite expirou.",
+        "alreadyAccepted": "Esse convite já foi aceito.",
+        "generic": "Não foi possível aceitar o convite."
+      },
+      "loading": "Carregando convite…",
+      "backToLogin": "Voltar para entrar"
+    }
   },
   "dashboard": {
     "title": "Painel"

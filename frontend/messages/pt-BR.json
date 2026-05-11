@@ -135,7 +135,46 @@
     }
   },
   "dashboard": {
-    "title": "Painel"
+    "eyebrow": "Início",
+    "title": "Painel",
+    "sub": "Visão geral da operação — vendas, produção e estoque.",
+    "loadError": "Não foi possível carregar o painel.",
+    "greetings": {
+      "morning": "Bom dia",
+      "afternoon": "Boa tarde",
+      "evening": "Boa noite",
+      "night": "Boa madrugada",
+      "morningWithName": "Bom dia, {name}",
+      "afternoonWithName": "Boa tarde, {name}",
+      "eveningWithName": "Boa noite, {name}",
+      "nightWithName": "Boa madrugada, {name}"
+    },
+    "kpis": {
+      "ordersPending": "Pedidos pendentes",
+      "ordersRevenue": "Receita 30d",
+      "cuttingPending": "OS de corte abertas",
+      "stockLow": "SKUs com saldo baixo",
+      "bancaActive": "Remessas em banca"
+    },
+    "pipeline": {
+      "title": "Pipeline de produção",
+      "stages": {
+        "pendingOrders": "Pedidos pendentes",
+        "inCutting": "Em corte",
+        "inSewing": "Em costura",
+        "inStock": "Em estoque",
+        "shipped30d": "Enviados 30d"
+      }
+    },
+    "needsAction": {
+      "title": "Precisa de atenção",
+      "empty": "Tudo em dia."
+    },
+    "activity": {
+      "title": "Atividade recente",
+      "empty": "Nenhuma atividade ainda.",
+      "system": "Sistema"
+    }
   },
   "orders": {
     "page": {

@@ -135,7 +135,46 @@
     }
   },
   "dashboard": {
-    "title": "Dashboard"
+    "eyebrow": "Home",
+    "title": "Dashboard",
+    "sub": "Operation overview — sales, production and inventory.",
+    "loadError": "Could not load the dashboard.",
+    "greetings": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "night": "Good night",
+      "morningWithName": "Good morning, {name}",
+      "afternoonWithName": "Good afternoon, {name}",
+      "eveningWithName": "Good evening, {name}",
+      "nightWithName": "Good night, {name}"
+    },
+    "kpis": {
+      "ordersPending": "Pending orders",
+      "ordersRevenue": "30d revenue",
+      "cuttingPending": "Open cutting jobs",
+      "stockLow": "Low-stock SKUs",
+      "bancaActive": "Shipments in workshop"
+    },
+    "pipeline": {
+      "title": "Production pipeline",
+      "stages": {
+        "pendingOrders": "Pending orders",
+        "inCutting": "In cutting",
+        "inSewing": "In sewing",
+        "inStock": "In stock",
+        "shipped30d": "Shipped 30d"
+      }
+    },
+    "needsAction": {
+      "title": "Needs attention",
+      "empty": "All caught up."
+    },
+    "activity": {
+      "title": "Recent activity",
+      "empty": "No activity yet.",
+      "system": "System"
+    }
   },
   "orders": {
     "page": {

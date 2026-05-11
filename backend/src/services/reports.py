@@ -146,11 +146,13 @@ async def sales_report(
         for status, count in (await db.exec(by_status_stmt)).all()
     ]
 
-    # by day
+    # by day — bind the date_trunc expression once so GROUP BY / ORDER BY
+    # share the same SQL node with the SELECT (asyncpg is strict).
+    sales_day_expr = func.date_trunc("day", Order.ordered_at)
     by_day_stmt = (
         scoped(
             select(
-                func.date_trunc("day", Order.ordered_at).label("day"),
+                sales_day_expr.label("day"),
                 func.count(Order.id).label("count"),
                 func.coalesce(func.sum(Order.sale_price * Order.quantity), 0).label("revenue"),
             ),
@@ -158,8 +160,8 @@ async def sales_report(
             company_id,
         )
         .where(Order.ordered_at >= lower, Order.ordered_at <= upper)
-        .group_by(func.date_trunc("day", Order.ordered_at))
-        .order_by(func.date_trunc("day", Order.ordered_at))
+        .group_by(sales_day_expr)
+        .order_by(sales_day_expr)
     )
     by_day = [
         SalesByDay(
@@ -207,10 +209,11 @@ async def production_report(
 
     lower, upper = _resolve_range(date_from, date_to)
 
+    cut_day_expr = func.date_trunc("day", CuttingOrder.cut_at)
     cutting_stmt = (
         scoped(
             select(
-                func.date_trunc("day", CuttingOrder.cut_at).label("day"),
+                cut_day_expr.label("day"),
                 func.coalesce(func.sum(CuttingOrderOutput.quantity), 0).label("pieces"),
             ),
             CuttingOrder,
@@ -222,8 +225,8 @@ async def production_report(
             CuttingOrder.cut_at >= lower,
             CuttingOrder.cut_at <= upper,
         )
-        .group_by(func.date_trunc("day", CuttingOrder.cut_at))
-        .order_by(func.date_trunc("day", CuttingOrder.cut_at))
+        .group_by(cut_day_expr)
+        .order_by(cut_day_expr)
     )
     cutting_throughput = [
         CuttingThroughputPoint(

@@ -73,10 +73,17 @@ async function buildHeaders(
   if (hasBody && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   headers.set("Accept", "application/json");
 
-  if (isDevBypassEnabled && options.devBypass?.uid) {
-    headers.set("X-Dev-Bypass-Uid", options.devBypass.uid);
-    if (options.devBypass.name) headers.set("X-Dev-Bypass-Name", options.devBypass.name);
-    if (options.devBypass.email) headers.set("X-Dev-Bypass-Email", options.devBypass.email);
+  if (isDevBypassEnabled) {
+    // In dev-bypass mode the X-Dev-Bypass-* headers are the only auth.
+    // Prefer the explicit devBypass option (carries name + email for the
+    // synthesized user), but fall back to the env-baked uid so requests
+    // fired before the AuthProvider has populated `user` still authenticate.
+    const uid = options.devBypass?.uid ?? process.env.NEXT_PUBLIC_DEV_BYPASS_UID;
+    if (uid) {
+      headers.set("X-Dev-Bypass-Uid", uid);
+      if (options.devBypass?.name) headers.set("X-Dev-Bypass-Name", options.devBypass.name);
+      if (options.devBypass?.email) headers.set("X-Dev-Bypass-Email", options.devBypass.email);
+    }
   } else if (options.getIdToken) {
     const token = await options.getIdToken();
     if (token) headers.set("Authorization", `Bearer ${token}`);

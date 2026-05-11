@@ -73,17 +73,24 @@ async def get_current_db_user(
     if not firebase_uid:
         raise AuthenticationError(detail="Missing user identifier")
 
-    stmt = (
+    base_stmt = (
         select(User)
         .where(User.firebase_uid == firebase_uid)
         .options(selectinload(User.role).selectinload(Role.permissions))
         .order_by(User.created_at.asc())  # type: ignore[attr-defined]
     )
-    if x_orion_company_id is not None:
-        stmt = stmt.where(User.company_id == x_orion_company_id)
 
-    result = await db.exec(stmt)
-    user = result.first()
+    user: User | None = None
+    if x_orion_company_id is not None:
+        scoped_stmt = base_stmt.where(User.company_id == x_orion_company_id)
+        user = (await db.exec(scoped_stmt)).first()
+
+    # If the requested company header didn't match (e.g. localStorage still
+    # carries an id from a previous tenant before a re-seed), or no header was
+    # sent, fall back to the user's first membership. This keeps the app
+    # usable after dev seeds without forcing the user to clear localStorage.
+    if user is None:
+        user = (await db.exec(base_stmt)).first()
 
     if user is None:
         # Allow onboarding/invite flows where no User row exists yet.

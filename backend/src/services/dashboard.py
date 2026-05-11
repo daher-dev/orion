@@ -206,17 +206,21 @@ async def _orders_revenue_sparkline(
 ) -> list[int]:
     """7-day daily revenue series ending today (rounded to the nearest BRL)."""
 
+    # asyncpg requires the GROUP BY expression to be the *same* expression
+    # tree as the SELECT one — repeating the date_trunc() call produces
+    # different SQL nodes. Bind it to a name and reuse.
+    day_expr = func.date_trunc("day", Order.ordered_at)
     rows = await db.exec(
         scoped(
             select(
-                func.date_trunc("day", Order.ordered_at).label("day"),
+                day_expr.label("day"),
                 func.coalesce(func.sum(Order.sale_price * Order.quantity), 0).label("revenue"),
             ),
             Order,
             company_id,
         )
         .where(Order.ordered_at >= _start_of_window(days - 1))
-        .group_by(func.date_trunc("day", Order.ordered_at))
+        .group_by(day_expr)
     )
     by_day: dict[date, int] = {}
     for day, revenue in rows.all():

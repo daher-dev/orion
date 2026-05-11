@@ -30,7 +30,7 @@ Features created through the `/pm` workflow are tracked here. Add a line when a 
 | F-010 | Inventory: Stock | in-progress | 4 | `feature/010-stock` |
 | F-011 | Sales: Clients | in-progress | 1 | `feature/011-clients` |
 | F-012 | Sales: Ads | in-progress | 3 | `feature/012-ads` |
-| F-013 | Sales: Orders (manual + view) | planned | 4 | `feature/013-orders` |
+| F-013 | Sales: Orders (manual + view) | in-progress | 4 | `feature/013-orders` |
 | F-014 | Sales: Orders import (LLM PDF + CSV + webhooks) | planned | 5 | `feature/014-orders-import` |
 | F-015 | Dashboard + Reports | planned | 5 | `feature/015-dashboard-reports` |
 | F-016 | Settings: Company + Profile | in-progress | 1 | `feature/016-settings-basics` |

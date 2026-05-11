@@ -668,11 +668,120 @@
       }
     },
     "forbidden": {
-      "company": "You don't have access to company settings."
+      "company": "You don't have access to company settings.",
+      "members": "You don't have access to members.",
+      "roles": "You don't have access to roles."
     }
   },
-  "members": {},
-  "roles": {},
+  "members": {
+    "list": {
+      "title": "Members",
+      "sub": "Everyone with access to this company.",
+      "empty": {
+        "title": "No members yet",
+        "body": "Send your first invite to onboard your team.",
+        "cta": "Invite member"
+      }
+    },
+    "table": {
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "joinedAt": "Joined",
+        "actions": "Actions"
+      }
+    },
+    "actions": {
+      "invite": "Invite member",
+      "changeRole": "Change role",
+      "remove": "Remove",
+      "cancel": "Cancel",
+      "confirmRemove": "Remove this member? They will lose access immediately."
+    },
+    "lastAdminGuard": "Cannot remove the last administrator.",
+    "toasts": {
+      "roleUpdated": "Role updated",
+      "removed": "Member removed",
+      "error": "Could not save the change."
+    }
+  },
+  "invite": {
+    "form": {
+      "title": "Invite member",
+      "sub": "We will send the invite link to this email.",
+      "labels": {
+        "email": "Email",
+        "role": "Role"
+      },
+      "placeholders": {
+        "email": "name@example.com",
+        "role": "Pick a role"
+      },
+      "validation": {
+        "emailRequired": "Email is required",
+        "emailInvalid": "Invalid email",
+        "roleRequired": "Pick a role"
+      },
+      "save": "Send invite",
+      "cancel": "Cancel",
+      "toasts": {
+        "created": "Invite sent",
+        "duplicate": "There is already a pending invite for this email.",
+        "error": "Could not send the invite."
+      }
+    },
+    "pending": {
+      "title": "Pending invites",
+      "empty": "No pending invites.",
+      "table": {
+        "columns": {
+          "email": "Email",
+          "role": "Role",
+          "sentAt": "Sent",
+          "expiresAt": "Expires",
+          "actions": "Actions"
+        }
+      },
+      "revoke": "Revoke",
+      "cancel": "Cancel",
+      "confirmRevoke": "Revoke this invite?",
+      "toasts": {
+        "revoked": "Invite revoked",
+        "error": "Could not revoke the invite."
+      }
+    }
+  },
+  "roles": {
+    "list": {
+      "title": "Roles & permissions",
+      "sub": "What each role can read or write."
+    },
+    "matrix": {
+      "domain": "Domain",
+      "actions": {
+        "read": "Read",
+        "write": "Write"
+      },
+      "none": "—",
+      "domains": {
+        "ads": "Ads",
+        "clients": "Clients",
+        "companies": "Company",
+        "contractors": "Workshops",
+        "cutting": "Cutting",
+        "fabric": "Fabric",
+        "orders": "Orders",
+        "prints": "Prints",
+        "products": "Products",
+        "roles": "Roles",
+        "sewing": "Sewing",
+        "specs": "Tech specs",
+        "stock": "Stock",
+        "users": "Users"
+      }
+    }
+  },
   "audit": {},
   "home": {
     "title": "Welcome to Orion",

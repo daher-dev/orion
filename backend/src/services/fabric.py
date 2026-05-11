@@ -211,8 +211,10 @@ async def update_fabric_roll(
 
 
 async def _assert_no_cutting_orders(db: AsyncSession, *, roll_id: uuid.UUID) -> None:
-    stmt = select(func.count()).select_from(CuttingOrder).where(
-        or_(CuttingOrder.body_roll_id == roll_id, CuttingOrder.rib_roll_id == roll_id)
+    stmt = (
+        select(func.count())
+        .select_from(CuttingOrder)
+        .where(or_(CuttingOrder.body_roll_id == roll_id, CuttingOrder.rib_roll_id == roll_id))
     )
     result = await db.exec(stmt)
     if int(result.first() or 0) > 0:

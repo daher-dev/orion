@@ -18,9 +18,7 @@ async def update_user_self(
 ) -> User:
     """Update the active user's editable profile fields (name, job)."""
 
-    result = await db.exec(
-        select(User).where(User.id == user_id, User.company_id == company_id)
-    )
+    result = await db.exec(select(User).where(User.id == user_id, User.company_id == company_id))
     user = result.first()
     if user is None:
         raise NotFoundError(detail="User not found")

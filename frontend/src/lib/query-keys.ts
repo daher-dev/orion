@@ -96,6 +96,12 @@ export const qk = {
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("roles", "list", filters),
     detail: (id: string) => tuple("roles", "detail", id),
   },
+  invites: {
+    all: () => tuple("invites"),
+    lists: () => tuple("invites", "list"),
+    list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("invites", "list", filters),
+    detail: (id: string) => tuple("invites", "detail", id),
+  },
   dashboard: {
     summary: (range?: Readonly<Record<string, unknown>>) => tuple("dashboard", "summary", range ?? {}),
   },

@@ -668,11 +668,120 @@
       }
     },
     "forbidden": {
-      "company": "Você não tem acesso aos ajustes da empresa."
+      "company": "Você não tem acesso aos ajustes da empresa.",
+      "members": "Você não tem acesso aos membros.",
+      "roles": "Você não tem acesso às funções."
     }
   },
-  "members": {},
-  "roles": {},
+  "members": {
+    "list": {
+      "title": "Membros",
+      "sub": "Todos com acesso a esta empresa.",
+      "empty": {
+        "title": "Nenhum membro ainda",
+        "body": "Envie seu primeiro convite para começar.",
+        "cta": "Convidar membro"
+      }
+    },
+    "table": {
+      "columns": {
+        "name": "Nome",
+        "email": "E-mail",
+        "role": "Função",
+        "joinedAt": "Entrou em",
+        "actions": "Ações"
+      }
+    },
+    "actions": {
+      "invite": "Convidar membro",
+      "changeRole": "Alterar função",
+      "remove": "Remover",
+      "cancel": "Cancelar",
+      "confirmRemove": "Remover este membro? O acesso será revogado imediatamente."
+    },
+    "lastAdminGuard": "Não é possível remover o último administrador.",
+    "toasts": {
+      "roleUpdated": "Função atualizada",
+      "removed": "Membro removido",
+      "error": "Não foi possível salvar a alteração."
+    }
+  },
+  "invite": {
+    "form": {
+      "title": "Convidar membro",
+      "sub": "O link do convite será enviado para este e-mail.",
+      "labels": {
+        "email": "E-mail",
+        "role": "Função"
+      },
+      "placeholders": {
+        "email": "nome@exemplo.com",
+        "role": "Escolha uma função"
+      },
+      "validation": {
+        "emailRequired": "E-mail obrigatório",
+        "emailInvalid": "E-mail inválido",
+        "roleRequired": "Escolha uma função"
+      },
+      "save": "Enviar convite",
+      "cancel": "Cancelar",
+      "toasts": {
+        "created": "Convite enviado",
+        "duplicate": "Já existe um convite pendente para este e-mail.",
+        "error": "Não foi possível enviar o convite."
+      }
+    },
+    "pending": {
+      "title": "Convites pendentes",
+      "empty": "Nenhum convite pendente.",
+      "table": {
+        "columns": {
+          "email": "E-mail",
+          "role": "Função",
+          "sentAt": "Enviado",
+          "expiresAt": "Expira",
+          "actions": "Ações"
+        }
+      },
+      "revoke": "Revogar",
+      "cancel": "Cancelar",
+      "confirmRevoke": "Revogar este convite?",
+      "toasts": {
+        "revoked": "Convite revogado",
+        "error": "Não foi possível revogar o convite."
+      }
+    }
+  },
+  "roles": {
+    "list": {
+      "title": "Funções e permissões",
+      "sub": "O que cada função pode ler ou escrever."
+    },
+    "matrix": {
+      "domain": "Domínio",
+      "actions": {
+        "read": "Leitura",
+        "write": "Escrita"
+      },
+      "none": "—",
+      "domains": {
+        "ads": "Anúncios",
+        "clients": "Clientes",
+        "companies": "Empresa",
+        "contractors": "Bancas",
+        "cutting": "Corte",
+        "fabric": "Tecido",
+        "orders": "Pedidos",
+        "prints": "Estampas",
+        "products": "Produtos",
+        "roles": "Funções",
+        "sewing": "Costura",
+        "specs": "Fichas",
+        "stock": "Estoque",
+        "users": "Usuários"
+      }
+    }
+  },
   "audit": {
     "page": {
       "eyebrow": "Ajustes"

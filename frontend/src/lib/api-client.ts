@@ -68,9 +68,14 @@ async function buildHeaders(
   options: ApiClientOptions,
   init: RequestOptions = {},
   hasBody = false,
+  isMultipart = false,
 ): Promise<Headers> {
   const headers = new Headers(init.headers ?? {});
-  if (hasBody && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  if (hasBody && !isMultipart && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  // For multipart uploads we intentionally let the browser pick the
+  // boundary by NOT setting Content-Type.
   headers.set("Accept", "application/json");
 
   if (isDevBypassEnabled) {
@@ -118,11 +123,17 @@ async function request<T>(
   const baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
   const url = buildUrl(baseUrl, path, reqOptions.query);
   const hasBody = body !== undefined && body !== null;
-  const headers = await buildHeaders(options, reqOptions, hasBody);
+  const isMultipart =
+    typeof FormData !== "undefined" && body instanceof FormData;
+  const headers = await buildHeaders(options, reqOptions, hasBody, isMultipart);
+  let payload: BodyInit | undefined;
+  if (hasBody) {
+    payload = isMultipart ? (body as FormData) : JSON.stringify(body);
+  }
   const response = await fetch(url, {
     method,
     headers,
-    body: hasBody ? JSON.stringify(body) : undefined,
+    body: payload,
     signal: reqOptions.signal,
     credentials: "omit",
   });

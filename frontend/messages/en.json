@@ -320,6 +320,89 @@
       "notFound": "Order not found."
     }
   },
+  "ordersImport": {
+    "page": {
+      "eyebrow": "Sales"
+    },
+    "list": {
+      "title": "Import",
+      "titleEm": "orders",
+      "sub": "Drop a PDF or CSV and let the AI extract orders. You confirm every field before they hit the catalog."
+    },
+    "actions": {
+      "backToOrders": "Back to orders"
+    },
+    "steps": {
+      "drop": "Drop file",
+      "review": "Review",
+      "commit": "Confirm"
+    },
+    "dropzone": {
+      "title": "Drop the file here",
+      "body": "Drag a payment receipt or a sales CSV. We will parse it and let you review the rows before saving.",
+      "acceptedTypes": "PDF or CSV — up to 5 MB",
+      "pickFile": "Choose file",
+      "ctaParse": "Analyze",
+      "removeFile": "Remove file",
+      "parsing": "Analyzing…",
+      "errorType": "Only PDF and CSV files are accepted.",
+      "errorSize": "File exceeds 5 MB limit."
+    },
+    "preview": {
+      "title": "Parsed orders",
+      "notes": "Parser notes:",
+      "editHint": "Click any cell to edit before saving.",
+      "totalRows": "{count, plural, one {# row} other {# rows}}",
+      "removeRow": "Remove row",
+      "empty": "No rows left to import. Go back and pick another file.",
+      "back": "Back",
+      "commit": "Save orders",
+      "columns": {
+        "rowIdx": "#",
+        "confidence": "Confidence",
+        "clientName": "Client",
+        "clientEmail": "Email",
+        "clientPhone": "Phone",
+        "productHint": "Product",
+        "quantity": "Qty",
+        "salePrice": "Price",
+        "orderedAt": "Date",
+        "rawExcerpt": "Source",
+        "actions": "Actions"
+      }
+    },
+    "confidence": {
+      "high": "High confidence",
+      "medium": "Medium confidence",
+      "low": "Low confidence",
+      "none": "Unknown"
+    },
+    "commit": {
+      "title": "Confirm import",
+      "body": "Save {count, plural, one {# order} other {# orders}}? Each row will become a real order in the catalog.",
+      "save": "Save orders",
+      "cancel": "Cancel",
+      "success": "Orders imported.",
+      "errorSomeFailed": "Some rows could not be saved.",
+      "errorAll": "No row could be saved."
+    },
+    "errors": {
+      "rowFailed": "Row #{index}: {message}",
+      "generic": "Some rows could not be imported.",
+      "parseFailed": "We could not parse this file. Try another one.",
+      "parseEmpty": "The parser did not find any orders in this file."
+    },
+    "toasts": {
+      "parseSuccess": "Found {count, plural, one {# order} other {# orders}} to review.",
+      "parseError": "Could not parse the file.",
+      "commitSuccess": "{count, plural, one {# order imported} other {# orders imported}}.",
+      "commitPartial": "{created} imported · {failed} failed.",
+      "commitError": "Could not import the orders."
+    },
+    "fallback": {
+      "forbidden": "You don't have access to import orders."
+    }
+  },
   "clients": {
     "page": {
       "eyebrow": "Sales"

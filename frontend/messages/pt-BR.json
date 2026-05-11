@@ -320,6 +320,89 @@
       "notFound": "Pedido não encontrado."
     }
   },
+  "ordersImport": {
+    "page": {
+      "eyebrow": "Vendas"
+    },
+    "list": {
+      "title": "Importar",
+      "titleEm": "pedidos",
+      "sub": "Solte um PDF ou CSV e deixe a IA extrair os pedidos. Você confirma cada campo antes de salvar."
+    },
+    "actions": {
+      "backToOrders": "Voltar para pedidos"
+    },
+    "steps": {
+      "drop": "Soltar arquivo",
+      "review": "Revisar",
+      "commit": "Confirmar"
+    },
+    "dropzone": {
+      "title": "Soltar arquivo aqui",
+      "body": "Arraste um comprovante em PDF ou um CSV de vendas. Vamos extrair as linhas e você revisa antes de salvar.",
+      "acceptedTypes": "PDF ou CSV — até 5 MB",
+      "pickFile": "Escolher arquivo",
+      "ctaParse": "Analisar",
+      "removeFile": "Remover arquivo",
+      "parsing": "Analisando…",
+      "errorType": "Somente arquivos PDF e CSV são aceitos.",
+      "errorSize": "Arquivo excede o limite de 5 MB."
+    },
+    "preview": {
+      "title": "Pedidos identificados",
+      "notes": "Observações do parser:",
+      "editHint": "Clique em qualquer célula para editar antes de salvar.",
+      "totalRows": "{count, plural, one {# linha} other {# linhas}}",
+      "removeRow": "Remover linha",
+      "empty": "Nenhuma linha para importar. Volte e escolha outro arquivo.",
+      "back": "Voltar",
+      "commit": "Salvar pedidos",
+      "columns": {
+        "rowIdx": "#",
+        "confidence": "Confiança",
+        "clientName": "Cliente",
+        "clientEmail": "E-mail",
+        "clientPhone": "Telefone",
+        "productHint": "Produto",
+        "quantity": "Qtd",
+        "salePrice": "Preço",
+        "orderedAt": "Data",
+        "rawExcerpt": "Trecho",
+        "actions": "Ações"
+      }
+    },
+    "confidence": {
+      "high": "Confiança alta",
+      "medium": "Confiança média",
+      "low": "Confiança baixa",
+      "none": "Sem dados"
+    },
+    "commit": {
+      "title": "Confirmar importação",
+      "body": "Salvar {count, plural, one {# pedido} other {# pedidos}}? Cada linha vira um pedido no catálogo.",
+      "save": "Salvar pedidos",
+      "cancel": "Cancelar",
+      "success": "Pedidos importados.",
+      "errorSomeFailed": "Algumas linhas não puderam ser salvas.",
+      "errorAll": "Nenhuma linha pôde ser salva."
+    },
+    "errors": {
+      "rowFailed": "Linha #{index}: {message}",
+      "generic": "Algumas linhas não puderam ser importadas.",
+      "parseFailed": "Não conseguimos interpretar este arquivo. Tente outro.",
+      "parseEmpty": "O parser não encontrou pedidos neste arquivo."
+    },
+    "toasts": {
+      "parseSuccess": "{count, plural, one {# pedido encontrado} other {# pedidos encontrados}} para revisão.",
+      "parseError": "Não foi possível interpretar o arquivo.",
+      "commitSuccess": "{count, plural, one {# pedido importado} other {# pedidos importados}}.",
+      "commitPartial": "{created} importados · {failed} falharam.",
+      "commitError": "Não foi possível importar os pedidos."
+    },
+    "fallback": {
+      "forbidden": "Você não tem acesso para importar pedidos."
+    }
+  },
   "clients": {
     "page": {
       "eyebrow": "Vendas"

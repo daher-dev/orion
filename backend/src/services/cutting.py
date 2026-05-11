@@ -251,9 +251,7 @@ async def get_cutting_order(
     company_id: uuid.UUID,
     order_id: uuid.UUID,
 ) -> CuttingRead:
-    order, product, spec, body, rib, outputs = await _load_with_relations(
-        db, company_id=company_id, order_id=order_id
-    )
+    order, product, spec, body, rib, outputs = await _load_with_relations(db, company_id=company_id, order_id=order_id)
     return _to_read(order, product=product, spec=spec, body_roll=body, rib_roll=rib, outputs=outputs)
 
 

@@ -14,6 +14,7 @@ from routers.members import router as members_router
 from routers.prints import router as prints_router
 from routers.products import router as products_router
 from routers.roles import router as roles_router
+from routers.sewing import router as sewing_router
 from routers.specs import router as specs_router
 from routers.user import router as user_router
 
@@ -32,6 +33,7 @@ api_router.include_router(members_router)
 api_router.include_router(prints_router)
 api_router.include_router(products_router)
 api_router.include_router(roles_router)
+api_router.include_router(sewing_router)
 api_router.include_router(specs_router)
 api_router.include_router(user_router)
 
@@ -51,6 +53,7 @@ __all__ = [
     "prints_router",
     "products_router",
     "roles_router",
+    "sewing_router",
     "specs_router",
     "user_router",
 ]

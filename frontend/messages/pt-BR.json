@@ -673,7 +673,76 @@
   },
   "members": {},
   "roles": {},
-  "audit": {},
+  "audit": {
+    "page": {
+      "eyebrow": "Ajustes"
+    },
+    "list": {
+      "title": "Log de auditoria",
+      "sub": "Cada alteração nos seus dados, com quem, quando e o quê.",
+      "empty": {
+        "title": "Nenhum evento corresponde",
+        "body": "Tente limpar os filtros ou expandir o intervalo de datas."
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar mensagem ou recurso…",
+      "resourceType": "Tipo de recurso",
+      "user": "Usuário",
+      "dateFrom": "De",
+      "dateTo": "Até",
+      "clear": "Limpar",
+      "allResources": "Todos os recursos",
+      "allUsers": "Todos os usuários"
+    },
+    "table": {
+      "columns": {
+        "when": "Quando",
+        "who": "Quem",
+        "resourceType": "Recurso",
+        "resourceId": "Alvo",
+        "message": "Detalhe"
+      },
+      "system": "Sistema"
+    },
+    "pagination": {
+      "first": "Primeiro",
+      "previous": "Anterior",
+      "next": "Próximo",
+      "last": "Último",
+      "of": "Página {page} de {total}"
+    },
+    "resourceTypes": {
+      "orders": "Pedidos",
+      "clients": "Clientes",
+      "ads": "Anúncios",
+      "products": "Produtos",
+      "product_variations": "Variações de produto",
+      "product_specs": "Fichas técnicas",
+      "spec_trims": "Aviamentos",
+      "print_designs": "Estampas",
+      "fabric_rolls": "Bobinas",
+      "cutting_orders": "OS de corte",
+      "cutting_order_outputs": "Saídas de corte",
+      "sewing_contractors": "Bancas",
+      "sewing_shipments": "Remessas",
+      "sewing_shipment_items": "Itens da remessa",
+      "stock_entries": "Entradas",
+      "stock_exits": "Saídas",
+      "companies": "Empresas",
+      "users": "Usuários",
+      "roles": "Funções",
+      "permissions": "Permissões",
+      "invites": "Convites"
+    },
+    "relativeTime": {
+      "justNow": "agora",
+      "secondsAgo": "há {n}s",
+      "minutesAgo": "há {n}m",
+      "hoursAgo": "há {n}h",
+      "daysAgo": "há {n}d"
+    }
+  },
   "home": {
     "title": "Bem-vindo ao Orion",
     "subtitle": "Escolha uma seção no menu lateral para começar."

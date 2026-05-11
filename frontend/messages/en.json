@@ -673,7 +673,76 @@
   },
   "members": {},
   "roles": {},
-  "audit": {},
+  "audit": {
+    "page": {
+      "eyebrow": "Settings"
+    },
+    "list": {
+      "title": "Audit log",
+      "sub": "Every change to your data, with who, when, and what.",
+      "empty": {
+        "title": "No audit entries match",
+        "body": "Try clearing the filters or expanding the date range."
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search message or resource…",
+      "resourceType": "Resource type",
+      "user": "User",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "clear": "Clear",
+      "allResources": "All resources",
+      "allUsers": "All users"
+    },
+    "table": {
+      "columns": {
+        "when": "When",
+        "who": "Who",
+        "resourceType": "Resource",
+        "resourceId": "Target",
+        "message": "Detail"
+      },
+      "system": "System"
+    },
+    "pagination": {
+      "first": "First",
+      "previous": "Previous",
+      "next": "Next",
+      "last": "Last",
+      "of": "Page {page} of {total}"
+    },
+    "resourceTypes": {
+      "orders": "Orders",
+      "clients": "Clients",
+      "ads": "Ads",
+      "products": "Products",
+      "product_variations": "Product variations",
+      "product_specs": "Specs",
+      "spec_trims": "Spec trims",
+      "print_designs": "Prints",
+      "fabric_rolls": "Fabric rolls",
+      "cutting_orders": "Cutting orders",
+      "cutting_order_outputs": "Cutting outputs",
+      "sewing_contractors": "Sewing contractors",
+      "sewing_shipments": "Sewing shipments",
+      "sewing_shipment_items": "Sewing items",
+      "stock_entries": "Stock entries",
+      "stock_exits": "Stock exits",
+      "companies": "Companies",
+      "users": "Users",
+      "roles": "Roles",
+      "permissions": "Permissions",
+      "invites": "Invites"
+    },
+    "relativeTime": {
+      "justNow": "just now",
+      "secondsAgo": "{n}s ago",
+      "minutesAgo": "{n}m ago",
+      "hoursAgo": "{n}h ago",
+      "daysAgo": "{n}d ago"
+    }
+  },
   "home": {
     "title": "Welcome to Orion",
     "subtitle": "Pick a section from the sidebar to get started."

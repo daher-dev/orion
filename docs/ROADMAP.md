@@ -24,12 +24,12 @@ Features created through the `/pm` workflow are tracked here. Add a line when a 
 | F-004 | Catalog: Prints (estampas) | in-progress | 1 | `feature/004-prints` |
 | F-005 | Catalog: Products + Variations | in-progress | 2 | `feature/005-products` |
 | F-006 | Inventory: Fabric (bobinas) | in-progress | 1 | `feature/006-fabric` |
-| F-007 | Production: Cutting | planned | 3 | `feature/007-cutting` |
+| F-007 | Production: Cutting | in-progress | 3 | `feature/007-cutting` |
 | F-008 | Production: Bancas (contractors) | in-progress | 1 | `feature/008-contractors` |
-| F-009 | Production: Sewing (shipments) | planned | 3 | `feature/009-sewing` |
+| F-009 | Production: Sewing (shipments) | in-progress | 3 | `feature/009-sewing` |
 | F-010 | Inventory: Stock | planned | 4 | `feature/010-stock` |
 | F-011 | Sales: Clients | in-progress | 1 | `feature/011-clients` |
-| F-012 | Sales: Ads | planned | 3 | `feature/012-ads` |
+| F-012 | Sales: Ads | in-progress | 3 | `feature/012-ads` |
 | F-013 | Sales: Orders (manual + view) | planned | 4 | `feature/013-orders` |
 | F-014 | Sales: Orders import (LLM PDF + CSV + webhooks) | planned | 5 | `feature/014-orders-import` |
 | F-015 | Dashboard + Reports | planned | 5 | `feature/015-dashboard-reports` |

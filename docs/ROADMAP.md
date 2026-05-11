@@ -22,7 +22,7 @@ Features created through the `/pm` workflow are tracked here. Add a line when a 
 | F-002 | Members & Roles (invite flow, role assignment, permission matrix UI) | planned | 2 | `feature/002-members-roles` |
 | F-003 | Catalog: Specs (fichas técnicas) | in-progress | 1 | `feature/003-specs` |
 | F-004 | Catalog: Prints (estampas) | in-progress | 1 | `feature/004-prints` |
-| F-005 | Catalog: Products + Variations | planned | 2 | `feature/005-products` |
+| F-005 | Catalog: Products + Variations | in-progress | 2 | `feature/005-products` |
 | F-006 | Inventory: Fabric (bobinas) | in-progress | 1 | `feature/006-fabric` |
 | F-007 | Production: Cutting | planned | 3 | `feature/007-cutting` |
 | F-008 | Production: Bancas (contractors) | in-progress | 1 | `feature/008-contractors` |

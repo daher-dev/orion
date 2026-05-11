@@ -206,7 +206,124 @@
     }
   },
   "ads": {},
-  "products": {},
+  "products": {
+    "page": {
+      "eyebrow": "Catálogo"
+    },
+    "list": {
+      "title": "Produtos",
+      "titleEm": "à venda",
+      "sub": "Combinações de ficha técnica + estampa, organizadas por tamanho e cor.",
+      "loadError": "Não foi possível carregar os produtos.",
+      "empty": {
+        "title": "Nenhum produto ainda",
+        "body": "Crie seu primeiro produto para começar a vincular fichas e estampas.",
+        "cta": "Novo produto"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Procurar produto…",
+      "productType": "Tipo de peça",
+      "all": "Todos",
+      "spec": "Ficha técnica",
+      "print": "Estampa",
+      "itemCount": "itens"
+    },
+    "productTypes": {
+      "tshirt": "Camiseta",
+      "sweatshirt": "Moletom",
+      "shorts": "Bermuda",
+      "tanktop": "Regata"
+    },
+    "table": {
+      "columns": {
+        "name": "Produto",
+        "type": "Tipo",
+        "spec": "Ficha",
+        "print": "Estampa",
+        "variations": "Variações",
+        "actions": "Ações"
+      }
+    },
+    "variations": {
+      "title": "Variações",
+      "body": "Cada célula vira um SKU. Remova combinações que não vão à venda.",
+      "sizesTitle": "Tamanhos disponíveis",
+      "colorsTitle": "Cores disponíveis",
+      "sizes": {
+        "p": "P",
+        "m": "M",
+        "g": "G",
+        "gg": "GG"
+      },
+      "addColor": "Adicionar cor",
+      "removeColor": "Remover cor",
+      "colorSwatch": "Escolher cor",
+      "colorNamePlaceholder": "Nome da cor",
+      "preview": "SKUs gerados",
+      "cells": "células",
+      "noPreview": "Selecione ao menos um tamanho e uma cor para gerar os SKUs.",
+      "noVariations": "Nenhuma variação ainda.",
+      "sku": "SKU"
+    },
+    "actions": {
+      "create": "Novo produto",
+      "edit": "Editar",
+      "delete": "Excluir",
+      "confirmDelete": "Excluir este produto? Não dá pra desfazer."
+    },
+    "form": {
+      "title": {
+        "new": "Novo produto",
+        "edit": "Editar produto"
+      },
+      "sections": {
+        "identity": "Identificação",
+        "recipe": "Receita",
+        "variations": "Variações"
+      },
+      "labels": {
+        "name": "Nome do produto",
+        "productType": "Tipo de peça",
+        "spec": "Ficha técnica",
+        "print": "Estampa"
+      },
+      "placeholders": {
+        "name": "Ex: Cropped Oversized",
+        "spec": "Escolha uma ficha técnica",
+        "print": "Escolha uma estampa (opcional)",
+        "searchSpec": "Buscar ficha por código ou nome…",
+        "searchPrint": "Buscar estampa por código ou nome…"
+      },
+      "printNone": "Sem estampa",
+      "noResults": "Nenhum resultado.",
+      "validation": {
+        "nameRequired": "O nome é obrigatório",
+        "specRequired": "Escolha uma ficha técnica",
+        "variationsRequired": "Selecione ao menos um tamanho e uma cor",
+        "colorCodeFormat": "Use 3 letras maiúsculas",
+        "duplicatePair": "Já existe um produto com essa combinação de ficha + estampa."
+      },
+      "save": "Salvar produto",
+      "cancel": "Cancelar",
+      "toasts": {
+        "created": "Produto criado",
+        "updated": "Produto atualizado",
+        "deleted": "Produto excluído",
+        "error": "Não foi possível salvar o produto."
+      }
+    },
+    "detail": {
+      "back": "Voltar para produtos",
+      "notFound": "Produto não encontrado",
+      "meta": {
+        "totalVariations": "Variações",
+        "spec": "Ficha técnica",
+        "print": "Estampa",
+        "noPrint": "Sem estampa"
+      }
+    }
+  },
   "specs": {
     "page": {
       "eyebrow": "Catálogo"

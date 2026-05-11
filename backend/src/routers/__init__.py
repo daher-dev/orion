@@ -7,6 +7,7 @@ from routers.contractors import router as contractors_router
 from routers.fabric import router as fabric_router
 from routers.healthcheck import router as healthcheck_router
 from routers.prints import router as prints_router
+from routers.products import router as products_router
 from routers.specs import router as specs_router
 from routers.user import router as user_router
 
@@ -18,6 +19,7 @@ api_router.include_router(company_router)
 api_router.include_router(contractors_router)
 api_router.include_router(fabric_router)
 api_router.include_router(prints_router)
+api_router.include_router(products_router)
 api_router.include_router(specs_router)
 api_router.include_router(user_router)
 
@@ -30,6 +32,7 @@ __all__ = [
     "fabric_router",
     "healthcheck_router",
     "prints_router",
+    "products_router",
     "specs_router",
     "user_router",
 ]

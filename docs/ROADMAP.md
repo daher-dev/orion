@@ -32,7 +32,7 @@ Features created through the `/pm` workflow are tracked here. Add a line when a 
 | F-012 | Sales: Ads | in-progress | 3 | `feature/012-ads` |
 | F-013 | Sales: Orders (manual + view) | in-progress | 4 | `feature/013-orders` |
 | F-014 | Sales: Orders import (LLM PDF + CSV + webhooks) | in-progress | 5 | `feature/014-orders-import` |
-| F-015 | Dashboard + Reports | planned | 5 | `feature/015-dashboard-reports` |
+| F-015 | Dashboard + Reports | in-progress | 5 | `feature/015-dashboard-reports` |
 | F-016 | Settings: Company + Profile | in-progress | 1 | `feature/016-settings-basics` |
 | F-018 | Settings: Audit Log Viewer | in-progress | 2 | `feature/018-audit-log` |
 | F-019 | Settings: Integrations (webhook tokens, channel auth) | planned | 6 | `feature/019-integrations` |

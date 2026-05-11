@@ -205,7 +205,97 @@
       }
     }
   },
-  "ads": {},
+  "ads": {
+    "page": {
+      "eyebrow": "Sales"
+    },
+    "list": {
+      "title": "Ads",
+      "titleEm": "by channel",
+      "sub": "Manage product listings across ecommerces and social channels.",
+      "loadError": "Could not load ads.",
+      "noResults": "No ads matched your search.",
+      "empty": {
+        "title": "No ads yet",
+        "body": "Publish your first ad to start tracking listings across channels.",
+        "cta": "New ad"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search ads…"
+    },
+    "table": {
+      "columns": {}
+    },
+    "channels": {
+      "shopee": "Shopee",
+      "mercado_livre": "Mercado Livre",
+      "shopify": "Shopify",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "other": "Other"
+    },
+    "card": {
+      "noExternalId": "no external code"
+    },
+    "actions": {
+      "create": "New ad",
+      "edit": "Edit ad",
+      "delete": "Delete ad",
+      "confirmDelete": "This ad will be removed. This cannot be undone."
+    },
+    "fallback": {
+      "forbidden": "You don't have access to ads."
+    },
+    "form": {
+      "title": {
+        "new": "New ad",
+        "edit": "Edit ad",
+        "newSub": "Publish a listing on an ecommerce or social channel",
+        "editSub": "Update an existing ad"
+      },
+      "sections": {
+        "channel": "Channel",
+        "details": "Details"
+      },
+      "labels": {
+        "title": "Ad title",
+        "product": "Linked product",
+        "externalId": "External listing code"
+      },
+      "placeholders": {
+        "title": "e.g. Cropped Oversized — Summer 2026",
+        "product": "Pick a product…",
+        "searchProduct": "Search products…",
+        "externalId": {
+          "shopee": "e.g. SH-99812",
+          "mercado_livre": "e.g. MLB-3322114455",
+          "shopify": "e.g. shopify-handle",
+          "instagram": "e.g. instagram-post-id",
+          "whatsapp": "e.g. catalog item code",
+          "other": "Channel listing code"
+        }
+      },
+      "hints": {
+        "externalIdOptional": "Optional — leave blank if the channel doesn't assign a code."
+      },
+      "noProducts": "No products found.",
+      "validation": {
+        "titleRequired": "Title is required",
+        "titleTooLong": "Title is too long",
+        "productRequired": "Pick a product"
+      },
+      "save": "Save changes",
+      "submitNew": "Create ad",
+      "cancel": "Cancel",
+      "toasts": {
+        "created": "Ad created",
+        "updated": "Ad updated",
+        "deleted": "Ad deleted",
+        "error": "Operation failed"
+      }
+    }
+  },
   "products": {
     "page": {
       "eyebrow": "Catalog"
@@ -515,8 +605,197 @@
       }
     }
   },
-  "cutting": {},
-  "sewing": {},
+  "cutting": {
+    "page": {
+      "eyebrow": "Production"
+    },
+    "list": {
+      "title": "Cutting",
+      "titleEm": "& planning",
+      "sub": "Plan and record cutting batches against your fabric rolls.",
+      "loadError": "Could not load cutting orders.",
+      "noResults": "No cutting orders matched your search.",
+      "empty": {
+        "title": "No cutting orders yet",
+        "body": "Plan a batch against a fabric roll to start tracking cutting.",
+        "cta": "New cutting order"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search cutting orders…"
+    },
+    "table": {
+      "columns": {
+        "code": "Code",
+        "product": "Product",
+        "bodyRoll": "Body roll",
+        "ribRoll": "Rib roll",
+        "status": "Status",
+        "plannedTotal": "Planned",
+        "actualTotal": "Cut",
+        "cutAt": "Cut at",
+        "actions": "Actions"
+      }
+    },
+    "status": {
+      "pending": "Pending",
+      "cutting": "Cutting",
+      "done": "Done"
+    },
+    "actions": {
+      "create": "New cutting order",
+      "edit": "Edit order",
+      "delete": "Delete order",
+      "confirmDelete": "The cutting order will be deleted. This cannot be undone."
+    },
+    "fallback": {
+      "forbidden": "You don't have access to cutting orders."
+    },
+    "form": {
+      "title": {
+        "new": "New cutting order",
+        "edit": "Edit cutting order",
+        "newSub": "Plan a new batch against a fabric roll"
+      },
+      "sections": {
+        "product": "Product",
+        "rolls": "Rolls",
+        "plannedOutputs": "Pieces by size",
+        "schedule": "Schedule"
+      },
+      "labels": {
+        "product": "Product to cut",
+        "bodyRoll": "Body roll",
+        "ribRoll": "Rib roll",
+        "cutAt": "Cut date"
+      },
+      "placeholders": {
+        "product": "Pick a product…",
+        "searchProduct": "Search products…",
+        "bodyRoll": "Pick a body roll…",
+        "ribRoll": "Pick a rib roll (optional)…",
+        "searchRoll": "Search rolls…"
+      },
+      "hints": {
+        "optional": "(optional)",
+        "cutAtOptional": "Leave blank to keep the order pending."
+      },
+      "noProducts": "No products found.",
+      "noRolls": "No fabric rolls found.",
+      "noRibRoll": "No rib roll",
+      "validation": {
+        "productRequired": "Pick a product",
+        "bodyRollRequired": "Pick a body roll",
+        "rollsDiffer": "Rib roll must be different from body roll",
+        "atLeastOneSize": "Enter at least one piece"
+      },
+      "save": "Save changes",
+      "submitNew": "Create order",
+      "cancel": "Cancel",
+      "toasts": {
+        "created": "Cutting order created",
+        "updated": "Cutting order updated",
+        "deleted": "Cutting order deleted",
+        "error": "Operation failed"
+      }
+    }
+  },
+  "sewing": {
+    "page": {
+      "eyebrow": "Production"
+    },
+    "list": {
+      "title": "Shipments",
+      "titleEm": "to workshops",
+      "sub": "Track shipments sent to and received from sewing workshops.",
+      "loadError": "Could not load shipments.",
+      "noResults": "No shipments matched your search.",
+      "empty": {
+        "title": "No shipments yet",
+        "body": "Send your first batch of cut pieces to a sewing workshop.",
+        "cta": "New shipment"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search shipments…"
+    },
+    "table": {
+      "columns": {
+        "code": "Code",
+        "contractor": "Workshop",
+        "cuttingOrder": "Cutting order",
+        "sentAt": "Sent",
+        "receivedAt": "Received",
+        "status": "Status",
+        "totals": "Pieces",
+        "actions": "Actions"
+      }
+    },
+    "status": {
+      "sent": "Sent",
+      "received": "Received",
+      "partial": "Partial",
+      "cancelled": "Cancelled"
+    },
+    "actions": {
+      "create": "New shipment",
+      "receive": "Receive",
+      "cancel": "Cancel shipment",
+      "confirmReceive": "Confirm receipt"
+    },
+    "fallback": {
+      "forbidden": "You don't have access to shipments."
+    },
+    "receive": {
+      "title": "Receive shipment",
+      "description": "Record how many pieces came back per size.",
+      "labels": {
+        "receivedAt": "Received on",
+        "sizes": "Pieces received"
+      }
+    },
+    "form": {
+      "title": {
+        "new": "New shipment",
+        "edit": "Edit shipment",
+        "newSub": "Send cut pieces to a sewing workshop"
+      },
+      "sections": {
+        "source": "Source",
+        "schedule": "Schedule",
+        "items": "Pieces by size"
+      },
+      "labels": {
+        "cuttingOrder": "Cutting order",
+        "contractor": "Workshop",
+        "sentAt": "Sent on"
+      },
+      "placeholders": {
+        "cuttingOrder": "Pick a cutting order…",
+        "contractor": "Pick a workshop…",
+        "searchCutting": "Search cutting orders…",
+        "searchContractor": "Search workshops…"
+      },
+      "noCutting": "No cutting orders found.",
+      "noContractors": "No workshops found.",
+      "validation": {
+        "cuttingOrderRequired": "Pick a cutting order",
+        "contractorRequired": "Pick a workshop",
+        "sentAtRequired": "Sent date is required",
+        "receivedAtRequired": "Received date is required",
+        "atLeastOneSize": "At least one size must have a piece"
+      },
+      "save": "Save changes",
+      "submitNew": "Create shipment",
+      "cancel": "Cancel",
+      "toasts": {
+        "created": "Shipment created",
+        "received": "Shipment receipt recorded",
+        "cancelled": "Shipment cancelled",
+        "error": "Operation failed"
+      }
+    }
+  },
   "contractors": {
     "page": {
       "eyebrow": "Production"

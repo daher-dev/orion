@@ -59,17 +59,26 @@ _SEED_TABLES: frozenset[str] = frozenset({"roles", "permissions", "role_permissi
 
 
 async def _truncate_all(session: AsyncSession) -> None:
-    """Truncate every user-created table, preserving seeded reference data."""
-    # Use the underlying connection to avoid SQLModel's execute() deprecation warning for raw SQL.
+    """Truncate every user-created table, preserving seeded reference data.
+
+    Tests may also add NEW rows to seeded tables (e.g. a "custom-no-fabric-*"
+    Role in test_fabric_router's permission-denied test). Those don't get
+    swept by the TRUNCATE block, so we clean them up explicitly after each
+    test by deleting any row whose code is NOT in the seeded set.
+    """
     conn = await session.connection()
     result = await conn.execute(
         text("SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'alembic_version'")
     )
     tables = [row[0] for row in result if row[0] not in _SEED_TABLES]
-    if not tables:
-        return
-    quoted = ", ".join(f'"{t}"' for t in tables)
-    await conn.execute(text(f"TRUNCATE {quoted} RESTART IDENTITY CASCADE"))
+    if tables:
+        quoted = ", ".join(f'"{t}"' for t in tables)
+        await conn.execute(text(f"TRUNCATE {quoted} RESTART IDENTITY CASCADE"))
+    # Sweep test-added Roles (any code outside the seeded triple). Cascades
+    # through role_permissions via the FK ondelete=CASCADE on RolePermission.
+    await conn.execute(
+        text("DELETE FROM roles WHERE code NOT IN ('admin', 'manager', 'operator')")
+    )
     await session.commit()
 
 

@@ -137,7 +137,7 @@
   "dashboard": {
     "eyebrow": "Início",
     "title": "Painel",
-    "sub": "Visão geral da operação — vendas, produção e estoque.",
+    "sub": "Aqui está o panorama da sua operação hoje, {day} de {month}.",
     "loadError": "Não foi possível carregar o painel.",
     "greetings": {
       "morning": "Bom dia",
@@ -169,7 +169,7 @@
       "footer": "Em média uma peça leva 7.2 dias para sair como pedido entregue."
     },
     "needsAction": {
-      "title": "Precisa de atenção",
+      "title": "Precisa da sua atenção",
       "empty": "Tudo em dia.",
       "viewAll": "Ver todas"
     },

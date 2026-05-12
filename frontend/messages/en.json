@@ -137,7 +137,7 @@
   "dashboard": {
     "eyebrow": "Home",
     "title": "Dashboard",
-    "sub": "Operation overview — sales, production and inventory.",
+    "sub": "Here's your operation overview for today, {month} {day}.",
     "loadError": "Could not load the dashboard.",
     "greetings": {
       "morning": "Good morning",
@@ -169,7 +169,7 @@
       "footer": "On average a piece takes 7.2 days from order to delivery."
     },
     "needsAction": {
-      "title": "Needs attention",
+      "title": "Needs your attention",
       "empty": "All caught up.",
       "viewAll": "View all"
     },

@@ -7,13 +7,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useReceiveShipment } from "@/hooks/use-sewing";
@@ -39,12 +39,6 @@ const FIELD_LABEL_CLASS =
 const FIELD_INPUT_CLASS =
   "h-auto rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-[11px] py-[8px] text-[13px] text-[color:var(--orion-ink)] shadow-none focus-visible:border-[color:var(--brand-prod)] focus-visible:ring-[3px] focus-visible:ring-[color:color-mix(in_oklab,var(--brand-prod)_16%,transparent)] focus-visible:outline-none";
 
-const CANCEL_BUTTON_CLASS =
-  "h-auto gap-[7px] rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] shadow-none hover:bg-[color:var(--orion-surface-2)]";
-
-const PRIMARY_BUTTON_CLASS =
-  "h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-prod)] px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:bg-[color-mix(in_oklab,var(--brand-prod)_88%,black)]";
-
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -53,9 +47,6 @@ export function ShipmentReceiveDialog({ open, shipment, onOpenChange }: Props) {
   const t = useTranslations("sewing");
   const receive = useReceiveShipment();
 
-  // Pre-fill the received qty with the requested qty so the operator only
-  // needs to adjust short deliveries — mirrors the receive flow in the
-  // design's `Sewing` sheet (production.jsx).
   const requestedBySize = shipment
     ? shipment.items.reduce<Record<Size, number>>(
         (acc, it) => {
@@ -74,8 +65,6 @@ export function ShipmentReceiveDialog({ open, shipment, onOpenChange }: Props) {
     },
   });
 
-  // Reset the form whenever the dialog opens for a different shipment so
-  // the per-size defaults track the current selection.
   useEffect(() => {
     if (open && shipment) {
       form.reset({
@@ -113,90 +102,95 @@ export function ShipmentReceiveDialog({ open, shipment, onOpenChange }: Props) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-serif text-[18px]">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full gap-0 border-l border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-0 shadow-[-8px_0_32px_-8px_rgba(31,27,21,0.18)] sm:max-w-[480px]"
+      >
+        <SheetHeader className="gap-1 border-b border-[color:var(--orion-line-soft)] px-[22px] py-[18px]">
+          <SheetTitle className="flex items-center gap-2 font-serif text-[18px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
             <PackageCheck
               size={16}
               strokeWidth={1.8}
               className="text-[color:var(--brand-prod)]"
             />
             {t("receive.title")}
-          </DialogTitle>
-          <DialogDescription className="text-[12px] text-[color:var(--orion-ink-3)]">
+          </SheetTitle>
+          <SheetDescription className="text-[12px] text-[color:var(--orion-ink-3)]">
             {t("receive.description")}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
-          className="flex flex-col gap-4"
+          className="flex flex-1 flex-col overflow-y-auto"
         >
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="receive-received_at" className={FIELD_LABEL_CLASS}>
-              {t("receive.labels.receivedAt")}
-            </label>
-            <Controller
-              control={form.control}
-              name="received_at"
-              render={({ field }) => (
-                <Input
-                  id="receive-received_at"
-                  type="date"
-                  className={FIELD_INPUT_CLASS}
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-            {errors.received_at?.message ? (
-              <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
-                {t(`form.${errors.received_at.message}` as never)}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className={FIELD_LABEL_CLASS}>{t("receive.labels.sizes")}</span>
-            <div className="rounded-[10px] border border-[color:var(--orion-line-soft)] overflow-hidden">
-              <div className="grid grid-cols-4 gap-px bg-[color:var(--orion-line-soft)]">
-                {SIZES.map((size) => (
-                  <div
-                    key={size}
-                    className="flex flex-col items-center gap-1.5 bg-[color:var(--orion-surface)] px-2 py-3"
-                  >
-                    <span className="font-mono text-[13px] font-medium text-[color:var(--orion-ink)]">
-                      {size.toUpperCase()}
-                    </span>
-                    <span className="text-[10px] text-[color:var(--orion-ink-3)]">
-                      / {requestedBySize[size]}
-                    </span>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={requestedBySize[size]}
-                      inputMode="numeric"
-                      className={cn(FIELD_INPUT_CLASS, "h-auto w-full max-w-[68px] text-center")}
-                      {...form.register(`sizes.${size}` as const, { valueAsNumber: true })}
-                    />
-                  </div>
-                ))}
-              </div>
+          <div className="flex flex-col gap-4 px-[22px] py-[18px]">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="receive-received_at" className={FIELD_LABEL_CLASS}>
+                {t("receive.labels.receivedAt")}
+              </label>
+              <Controller
+                control={form.control}
+                name="received_at"
+                render={({ field }) => (
+                  <Input
+                    id="receive-received_at"
+                    type="date"
+                    className={FIELD_INPUT_CLASS}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              {errors.received_at?.message ? (
+                <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
+                  {t(`form.${errors.received_at.message}` as never)}
+                </p>
+              ) : null}
             </div>
-            {errors.sizes?.p?.message ? (
-              <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
-                {t(`form.${errors.sizes.p.message}` as never)}
-              </p>
-            ) : null}
+
+            <div className="flex flex-col gap-1.5">
+              <span className={FIELD_LABEL_CLASS}>{t("receive.labels.sizes")}</span>
+              <div className="overflow-hidden rounded-[10px] border border-[color:var(--orion-line-soft)]">
+                <div className="grid grid-cols-4 gap-px bg-[color:var(--orion-line-soft)]">
+                  {SIZES.map((size) => (
+                    <div
+                      key={size}
+                      className="flex flex-col items-center gap-1.5 bg-[color:var(--orion-surface)] px-2 py-3"
+                    >
+                      <span className="font-mono text-[13px] font-medium text-[color:var(--orion-ink)]">
+                        {size.toUpperCase()}
+                      </span>
+                      <span className="text-[10px] text-[color:var(--orion-ink-3)]">
+                        / {requestedBySize[size]}
+                      </span>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={requestedBySize[size]}
+                        inputMode="numeric"
+                        className={cn(FIELD_INPUT_CLASS, "h-auto w-full max-w-[68px] text-center")}
+                        {...form.register(`sizes.${size}` as const, { valueAsNumber: true })}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {errors.sizes?.p?.message ? (
+                <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
+                  {t(`form.${errors.sizes.p.message}` as never)}
+                </p>
+              ) : null}
+            </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:justify-end">
+          <SheetFooter className="mt-auto border-t border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-[22px] py-[14px]">
             <Button
               type="button"
               variant="ghost"
-              className={CANCEL_BUTTON_CLASS}
+              className="h-auto gap-[7px] rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] shadow-none hover:bg-[color:var(--orion-surface-2)]"
               onClick={() => onOpenChange(false)}
               disabled={receive.isPending}
             >
@@ -204,16 +198,16 @@ export function ShipmentReceiveDialog({ open, shipment, onOpenChange }: Props) {
             </Button>
             <Button
               type="submit"
-              className={PRIMARY_BUTTON_CLASS}
+              className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-prod)] px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:bg-[color-mix(in_oklab,var(--brand-prod)_88%,black)]"
               style={{ borderColor: "color-mix(in oklab, var(--brand-prod) 70%, black)" }}
               disabled={receive.isPending}
             >
               <Check size={13} strokeWidth={2.2} />
               {t("actions.confirmReceive")}
             </Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

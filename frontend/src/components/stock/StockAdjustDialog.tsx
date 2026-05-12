@@ -1,17 +1,17 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ArrowDownCircle, ArrowUpCircle, Check } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Check, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ApiError } from "@/lib/api-client";
-import { useCreateStockEntry, useCreateStockExit } from "@/hooks/use-stock";
+import { useCreateStockEntry, useCreateStockExit, useStockLevels } from "@/hooks/use-stock";
 import {
   STOCK_EXIT_REASONS,
   STOCK_SOURCES,
@@ -44,9 +44,12 @@ const FIELD_INPUT_CLASS =
   "h-auto rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-[11px] py-[8px] text-[13px] text-[color:var(--orion-ink)] shadow-none focus-visible:border-[color:var(--brand-inv)] focus-visible:ring-[3px] focus-visible:ring-[color:color-mix(in_oklab,var(--brand-inv)_16%,transparent)] focus-visible:outline-none";
 
 /**
- * Dialog for recording a manual stock adjustment. The single dialog handles
+ * Sheet for recording a manual stock adjustment. The single sheet handles
  * both directions — picking `+` triggers POST /stock/entries, `-` triggers
- * POST /stock/exits. Mirrors AdjustStockBody from inventory.jsx.
+ * POST /stock/exits.
+ *
+ * When `variation` is null, a SKU search step is shown first so the operator
+ * can pick which variant to adjust (used when opened from the page header).
  */
 export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirection }: Props) {
   const t = useTranslations("stock.adjust");
@@ -62,17 +65,26 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
   const [serverError, setServerError] = useState<string | null>(null);
   const [quantityError, setQuantityError] = useState<string | null>(null);
 
+  // SKU picker state — used when sheet opened without a pre-selected variation.
+  const [skuSearch, setSkuSearch] = useState("");
+  const [pickedVariation, setPickedVariation] = useState<VariationStockRead | null>(null);
+
   const formId = useId();
   const createEntry = useCreateStockEntry();
   const createExit = useCreateStockExit();
   const isPending = createEntry.isPending || createExit.isPending;
 
-  // Reset state every time the dialog opens for a new variation. Using a
-  // tracked-key pattern: when the {open, variation_id} pair changes from
-  // closed→open, we reset all controlled-form state to defaults. The check
-  // happens during render (cheap, idempotent) so we don't run into the
-  // setState-in-effect lint rule.
-  const variationKey = `${open ? "1" : "0"}|${variation?.variation_id ?? ""}|${defaultDirection ?? "entry"}`;
+  // Fetch variations for the SKU picker only when no variation is pre-selected.
+  const skuPickerEnabled = open && variation === null;
+  const stockLevels = useStockLevels(
+    skuPickerEnabled ? { q: skuSearch || undefined, page_size: 20 } : undefined,
+  );
+
+  // The effective variation: pre-selected prop takes priority, then the picked one.
+  const activeVariation = variation ?? pickedVariation;
+
+  // Reset form state whenever the sheet opens for a new variation.
+  const variationKey = `${open ? "1" : "0"}|${activeVariation?.variation_id ?? ""}|${defaultDirection ?? "entry"}`;
   const [lastKey, setLastKey] = useState(variationKey);
   if (lastKey !== variationKey) {
     setLastKey(variationKey);
@@ -85,18 +97,27 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
     setQuantityError(null);
   }
 
-  if (!variation) return null;
+  function handleClose(nextOpen: boolean) {
+    if (!nextOpen) {
+      setPickedVariation(null);
+      setSkuSearch("");
+    }
+    onOpenChange(nextOpen);
+  }
 
   const parsedQty = Number(quantity);
   const qtyIsValid = Number.isInteger(parsedQty) && parsedQty > 0;
 
   const projected =
     direction === "entry"
-      ? variation.on_hand + (qtyIsValid ? parsedQty : 0)
-      : variation.on_hand - (qtyIsValid ? parsedQty : 0);
+      ? (activeVariation?.on_hand ?? 0) + (qtyIsValid ? parsedQty : 0)
+      : (activeVariation?.on_hand ?? 0) - (qtyIsValid ? parsedQty : 0);
 
   async function handleSubmit() {
-    if (!variation) return;
+    if (!activeVariation) {
+      setServerError(t("validation.variationRequired"));
+      return;
+    }
     if (!qtyIsValid) {
       setQuantityError(t("validation.quantityPositive"));
       return;
@@ -107,7 +128,7 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
     try {
       if (direction === "entry") {
         const payload: StockEntryCreate = {
-          variation_id: variation.variation_id,
+          variation_id: activeVariation.variation_id,
           quantity: parsedQty,
           source: source as StockEntryCreate["source"],
           notes: notes.trim() ? notes.trim() : null,
@@ -116,7 +137,7 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
         toast.success(t("toasts.entryCreated"));
       } else {
         const payload: StockExitCreate = {
-          variation_id: variation.variation_id,
+          variation_id: activeVariation.variation_id,
           quantity: parsedQty,
           reason: reason as StockExitCreate["reason"],
           notes: notes.trim() ? notes.trim() : null,
@@ -124,15 +145,12 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
         await createExit.mutateAsync(payload);
         toast.success(t("toasts.exitCreated"));
       }
-      onOpenChange(false);
+      handleClose(false);
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        // Extract the available count from the detail string when present.
         const match = /(\d+)/.exec(err.detail);
-        const available = match ? Number(match[1]) : variation.on_hand;
-        setServerError(
-          t("validation.insufficientStock", { available }),
-        );
+        const available = match ? Number(match[1]) : activeVariation.on_hand;
+        setServerError(t("validation.insufficientStock", { available }));
         return;
       }
       const detail = err instanceof Error ? err.message : "";
@@ -140,234 +158,302 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
     }
   }
 
+  const pickerItems = stockLevels.data?.items ?? [];
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
+    <Sheet open={open} onOpenChange={handleClose}>
+      <SheetContent
+        side="right"
         data-testid="stock-adjust-dialog"
-        className="gap-0 border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-0 sm:max-w-[480px]"
+        className="w-full gap-0 border-l border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-0 shadow-[-8px_0_32px_-8px_rgba(31,27,21,0.18)] sm:max-w-[480px]"
       >
-        <DialogHeader className="gap-1 border-b border-[color:var(--orion-line-soft)] px-[22px] py-[18px]">
-          <DialogTitle className="font-serif text-[18px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
+        <SheetHeader className="gap-1 border-b border-[color:var(--orion-line-soft)] px-[22px] py-[18px]">
+          <SheetTitle className="font-serif text-[18px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
             {t("title")}
-          </DialogTitle>
-          <DialogDescription className="text-[12.5px] text-[color:var(--orion-ink-3)]">
-            {variation.product.name} · {variation.color} · {variation.size.toUpperCase()}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetTitle>
+          {activeVariation ? (
+            <SheetDescription className="text-[12.5px] text-[color:var(--orion-ink-3)]">
+              {activeVariation.product.name} · {activeVariation.color} ·{" "}
+              {activeVariation.size.toUpperCase()}
+            </SheetDescription>
+          ) : (
+            <SheetDescription className="text-[12.5px] text-[color:var(--orion-ink-3)]">
+              {t("placeholders.search")}
+            </SheetDescription>
+          )}
+        </SheetHeader>
 
-        <form
-          id={formId}
-          className="flex max-h-[70vh] flex-col gap-[18px] overflow-y-auto px-[22px] py-[18px]"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void handleSubmit();
-          }}
-        >
-          <div
-            className="flex items-center justify-between gap-3 rounded-[10px] bg-[color:var(--orion-surface-2)] px-3 py-2 text-[12.5px]"
-            data-testid="stock-adjust-current"
-          >
-            <span className="text-[color:var(--orion-ink-3)]">
-              {t("labels.variation")}: <span className="font-mono">{variation.sku}</span>
-            </span>
-            <span className="font-medium text-[color:var(--orion-ink)]">
-              {variation.on_hand}
-            </span>
-          </div>
-
-          {/* Direction toggle — +/- buttons. */}
-          <div className="flex flex-col gap-1.5">
-            <span className={FIELD_LABEL_CLASS}>{t("labels.direction")}</span>
-            <div className="grid grid-cols-2 gap-2">
-              {(["entry", "exit"] as const).map((dir) => {
-                const active = direction === dir;
-                const tone = dir === "entry" ? "var(--status-ok)" : "var(--status-err)";
-                return (
-                  <button
-                    key={dir}
-                    type="button"
-                    data-testid={`stock-adjust-direction-${dir}`}
-                    onClick={() => setDirection(dir)}
-                    style={{
-                      border: active ? `1.5px solid ${tone}` : "1px solid var(--orion-line)",
-                      background: active
-                        ? `color-mix(in oklab, ${tone} 10%, var(--orion-surface))`
-                        : "var(--orion-surface)",
-                      color: active ? "var(--orion-ink)" : "var(--orion-ink-2)",
-                      borderRadius: 8,
-                      padding: "10px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      cursor: "pointer",
-                      fontSize: 13,
-                      fontWeight: active ? 500 : 400,
-                    }}
-                  >
-                    {dir === "entry" ? (
-                      <ArrowDownCircle size={14} style={{ color: tone }} />
-                    ) : (
-                      <ArrowUpCircle size={14} style={{ color: tone }} />
-                    )}
-                    {dir === "entry" ? tActions("adjustUp") : tActions("adjustDown")}
-                  </button>
-                );
-              })}
+        {/* Phase 1: SKU picker — shown when no variation is pre-selected or picked yet. */}
+        {!activeVariation ? (
+          <div className="flex flex-col gap-3 px-[22px] py-[18px]">
+            <div className="flex items-center gap-1.5 rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-2.5 py-[7px]">
+              <Search size={13} className="shrink-0 text-[color:var(--orion-ink-3)]" />
+              <Input
+                data-testid="stock-sku-search"
+                autoFocus
+                placeholder={t("placeholders.search")}
+                value={skuSearch}
+                onChange={(e) => setSkuSearch(e.target.value)}
+                className="h-auto border-0 bg-transparent p-0 text-[13px] text-[color:var(--orion-ink)] shadow-none placeholder:text-[color:var(--orion-ink-3)] focus-visible:ring-0"
+              />
             </div>
-          </div>
-
-          {/* Quantity */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={`${formId}-qty`} className={FIELD_LABEL_CLASS}>
-              {t("labels.quantity")}
-            </label>
-            <Input
-              id={`${formId}-qty`}
-              data-testid="stock-adjust-quantity"
-              inputMode="numeric"
-              value={quantity}
-              onChange={(e) => {
-                setQuantity(e.target.value.replace(/\D/g, ""));
-                setQuantityError(null);
-              }}
-              className={FIELD_INPUT_CLASS}
-              aria-invalid={!!quantityError}
-            />
-            {quantityError ? (
-              <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
-                {quantityError}
-              </p>
-            ) : null}
-          </div>
-
-          {/* Source / Reason */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={`${formId}-reason`} className={FIELD_LABEL_CLASS}>
-              {direction === "entry" ? t("labels.source") : t("labels.reason")}
-            </label>
-            <Select
-              value={direction === "entry" ? source : reason}
-              onValueChange={(v) => (direction === "entry" ? setSource(v) : setReason(v))}
+            <ul
+              className="max-h-[300px] overflow-y-auto rounded-[8px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)]"
+              data-testid="stock-sku-list"
             >
-              <SelectTrigger
-                id={`${formId}-reason`}
-                data-testid="stock-adjust-reason"
-                className={FIELD_INPUT_CLASS}
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {direction === "entry"
-                  ? STOCK_SOURCES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {tSources(s)}
-                      </SelectItem>
-                    ))
-                  : STOCK_EXIT_REASONS.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {tReasons(r)}
-                      </SelectItem>
-                    ))}
-              </SelectContent>
-            </Select>
+              {stockLevels.isPending ? (
+                <li className="px-3 py-8 text-center text-[12.5px] text-[color:var(--orion-ink-3)]">
+                  …
+                </li>
+              ) : pickerItems.length === 0 ? (
+                <li className="px-3 py-8 text-center text-[12.5px] text-[color:var(--orion-ink-3)]">
+                  {t("validation.variationRequired")}
+                </li>
+              ) : (
+                pickerItems.map((item) => (
+                  <li key={item.variation_id}>
+                    <button
+                      type="button"
+                      data-testid={`stock-sku-item-${item.variation_id}`}
+                      onClick={() => setPickedVariation(item)}
+                      className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[13px] hover:bg-[color:var(--orion-surface-2)] [&:not(:last-child)]:border-b [&:not(:last-child)]:border-[color:var(--orion-line-soft)]"
+                    >
+                      <span className="flex flex-col gap-0.5">
+                        <span className="font-medium text-[color:var(--orion-ink)]">
+                          {item.product.name}
+                        </span>
+                        <span className="font-mono text-[11.5px] text-[color:var(--orion-ink-3)]">
+                          {item.sku} · {item.color} · {item.size.toUpperCase()}
+                        </span>
+                      </span>
+                      <span className="shrink-0 tabular-nums text-[color:var(--orion-ink-2)]">
+                        {item.on_hand}
+                      </span>
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
           </div>
-
-          {/* Notes */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={`${formId}-notes`} className={FIELD_LABEL_CLASS}>
-              {t("labels.notes")}
-            </label>
-            <Input
-              id={`${formId}-notes`}
-              data-testid="stock-adjust-notes"
-              autoComplete="off"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={t("placeholders.notes")}
-              className={FIELD_INPUT_CLASS}
-            />
-          </div>
-
-          {/* Projected on-hand preview */}
-          <div
-            className="grid grid-cols-3 items-center gap-2 rounded-[10px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface-2)] px-3 py-3"
-            data-testid="stock-adjust-projected"
+        ) : (
+          /* Phase 2: Adjustment form — shown after a variation is selected. */
+          <form
+            id={formId}
+            className="flex flex-1 flex-col gap-[18px] overflow-y-auto px-[22px] py-[18px]"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSubmit();
+            }}
           >
-            <div className="text-center">
-              <div className="text-[10.5px] uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
-                {t("labels.variation")}
-              </div>
-              <div className="font-serif text-[24px] leading-none text-[color:var(--orion-ink)]">
-                {variation.on_hand}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-[10.5px] uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
-                {direction === "entry" ? "+" : "-"}
-              </div>
-              <div
-                className="font-serif text-[24px] leading-none"
-                style={{
-                  color: direction === "entry" ? "var(--status-ok)" : "var(--status-err)",
-                }}
-              >
-                {qtyIsValid ? parsedQty : 0}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-[10.5px] uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
-                =
-              </div>
-              <div
-                className="font-serif text-[24px] leading-none"
-                style={{
-                  color:
-                    projected < 0
-                      ? "var(--status-err)"
-                      : projected <= 5
-                        ? "var(--status-warn)"
-                        : "var(--orion-ink)",
-                }}
-              >
-                {projected}
-              </div>
-            </div>
-          </div>
-
-          {serverError ? (
             <div
-              role="alert"
-              data-testid="stock-adjust-server-error"
-              className="rounded-[8px] border border-[color:var(--status-err)] bg-[color:var(--status-err-bg)] px-3 py-2 text-[12px] text-[color:var(--status-err)]"
+              className="flex items-center justify-between gap-3 rounded-[10px] bg-[color:var(--orion-surface-2)] px-3 py-2 text-[12.5px]"
+              data-testid="stock-adjust-current"
             >
-              {serverError}
+              <span className="text-[color:var(--orion-ink-3)]">
+                {t("labels.variation")}:{" "}
+                <span className="font-mono">{activeVariation.sku}</span>
+              </span>
+              <span className="font-medium text-[color:var(--orion-ink)]">
+                {activeVariation.on_hand}
+              </span>
             </div>
-          ) : null}
-        </form>
 
-        <DialogFooter className="flex flex-row justify-end gap-2 border-t border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-[22px] py-[14px]">
+            {/* Direction toggle — +/- buttons. */}
+            <div className="flex flex-col gap-1.5">
+              <span className={FIELD_LABEL_CLASS}>{t("labels.direction")}</span>
+              <div className="grid grid-cols-2 gap-2">
+                {(["entry", "exit"] as const).map((dir) => {
+                  const active = direction === dir;
+                  const tone = dir === "entry" ? "var(--status-ok)" : "var(--status-err)";
+                  return (
+                    <button
+                      key={dir}
+                      type="button"
+                      data-testid={`stock-adjust-direction-${dir}`}
+                      onClick={() => setDirection(dir)}
+                      style={{
+                        border: active ? `1.5px solid ${tone}` : "1px solid var(--orion-line)",
+                        background: active
+                          ? `color-mix(in oklab, ${tone} 10%, var(--orion-surface))`
+                          : "var(--orion-surface)",
+                        color: active ? "var(--orion-ink)" : "var(--orion-ink-2)",
+                        borderRadius: 8,
+                        padding: "10px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: active ? 500 : 400,
+                      }}
+                    >
+                      {dir === "entry" ? (
+                        <ArrowDownCircle size={14} style={{ color: tone }} />
+                      ) : (
+                        <ArrowUpCircle size={14} style={{ color: tone }} />
+                      )}
+                      {dir === "entry" ? tActions("adjustUp") : tActions("adjustDown")}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Quantity */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={`${formId}-qty`} className={FIELD_LABEL_CLASS}>
+                {t("labels.quantity")}
+              </label>
+              <Input
+                id={`${formId}-qty`}
+                data-testid="stock-adjust-quantity"
+                inputMode="numeric"
+                value={quantity}
+                onChange={(e) => {
+                  setQuantity(e.target.value.replace(/\D/g, ""));
+                  setQuantityError(null);
+                }}
+                className={FIELD_INPUT_CLASS}
+                aria-invalid={!!quantityError}
+              />
+              {quantityError ? (
+                <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
+                  {quantityError}
+                </p>
+              ) : null}
+            </div>
+
+            {/* Source / Reason */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={`${formId}-reason`} className={FIELD_LABEL_CLASS}>
+                {direction === "entry" ? t("labels.source") : t("labels.reason")}
+              </label>
+              <Select
+                value={direction === "entry" ? source : reason}
+                onValueChange={(v) => (direction === "entry" ? setSource(v) : setReason(v))}
+              >
+                <SelectTrigger
+                  id={`${formId}-reason`}
+                  data-testid="stock-adjust-reason"
+                  className={FIELD_INPUT_CLASS}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {direction === "entry"
+                    ? STOCK_SOURCES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {tSources(s)}
+                        </SelectItem>
+                      ))
+                    : STOCK_EXIT_REASONS.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {tReasons(r)}
+                        </SelectItem>
+                      ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Notes */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={`${formId}-notes`} className={FIELD_LABEL_CLASS}>
+                {t("labels.notes")}
+              </label>
+              <Input
+                id={`${formId}-notes`}
+                data-testid="stock-adjust-notes"
+                autoComplete="off"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={t("placeholders.notes")}
+                className={FIELD_INPUT_CLASS}
+              />
+            </div>
+
+            {/* Projected on-hand preview */}
+            <div
+              className="grid grid-cols-3 items-center gap-2 rounded-[10px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface-2)] px-3 py-3"
+              data-testid="stock-adjust-projected"
+            >
+              <div className="text-center">
+                <div className="text-[10.5px] uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                  {t("labels.variation")}
+                </div>
+                <div className="font-serif text-[24px] leading-none text-[color:var(--orion-ink)]">
+                  {activeVariation.on_hand}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-[10.5px] uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                  {direction === "entry" ? "+" : "-"}
+                </div>
+                <div
+                  className="font-serif text-[24px] leading-none"
+                  style={{
+                    color: direction === "entry" ? "var(--status-ok)" : "var(--status-err)",
+                  }}
+                >
+                  {qtyIsValid ? parsedQty : 0}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-[10.5px] uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                  =
+                </div>
+                <div
+                  className="font-serif text-[24px] leading-none"
+                  style={{
+                    color:
+                      projected < 0
+                        ? "var(--status-err)"
+                        : projected <= 5
+                          ? "var(--status-warn)"
+                          : "var(--orion-ink)",
+                  }}
+                >
+                  {projected}
+                </div>
+              </div>
+            </div>
+
+            {serverError ? (
+              <div
+                role="alert"
+                data-testid="stock-adjust-server-error"
+                className="rounded-[8px] border border-[color:var(--status-err)] bg-[color:var(--status-err-bg)] px-3 py-2 text-[12px] text-[color:var(--status-err)]"
+              >
+                {serverError}
+              </div>
+            ) : null}
+          </form>
+        )}
+
+        <SheetFooter className="mt-auto border-t border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-[22px] py-[14px]">
           <Button
             type="button"
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleClose(false)}
             disabled={isPending}
             className="h-auto gap-[7px] rounded-[6px] border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] !px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] shadow-none hover:bg-[color:var(--orion-surface-2)]"
           >
             {t("cancel")}
           </Button>
-          <Button
-            type="submit"
-            form={formId}
-            disabled={isPending}
-            data-testid="stock-adjust-submit"
-            className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-inv)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
-            style={{ borderColor: "color-mix(in oklab, var(--brand-inv) 70%, black)" }}
-          >
-            <Check size={13} />
-            {t("save")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          {activeVariation ? (
+            <Button
+              type="submit"
+              form={formId}
+              disabled={isPending}
+              data-testid="stock-adjust-submit"
+              className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-inv)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
+              style={{ borderColor: "color-mix(in oklab, var(--brand-inv) 70%, black)" }}
+            >
+              <Check size={13} />
+              {t("save")}
+            </Button>
+          ) : null}
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

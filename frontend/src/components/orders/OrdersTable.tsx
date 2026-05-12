@@ -6,10 +6,12 @@ import {
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
+  type RowSelectionState,
 } from "@tanstack/react-table";
-import { ChevronRight, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Shirt, Trash2 } from "lucide-react";
+import Image from "next/image";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
-import { Link } from "@/i18n/routing";
+import { useRouter } from "@/i18n/routing";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -22,6 +24,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useDeleteOrder } from "@/hooks/use-orders";
 import { useCanAccess } from "@/hooks/use-permissions";
 import { ApiError } from "@/lib/api-client";
@@ -31,6 +41,7 @@ import { OrderStatusPill } from "./OrderStatusPill";
 
 type Props = {
   rows: Order[];
+  onView?: (order: Order) => void;
 };
 
 /** ORD-XXXXXXXX code rendered everywhere we surface an order id. */
@@ -38,13 +49,15 @@ export function shortOrderCode(id: string): string {
   return `ORD-${id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
 }
 
-export function OrdersTable({ rows }: Props) {
+export function OrdersTable({ rows, onView }: Props) {
   const t = useTranslations("orders");
   const format = useFormatter();
   const locale = useLocale();
   const canWrite = useCanAccess("orders.write");
   const [pendingDelete, setPendingDelete] = useState<Order | null>(null);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const deleteOrder = useDeleteOrder();
+  const router = useRouter();
 
   const currency = useMemo(
     () =>
@@ -57,13 +70,42 @@ export function OrdersTable({ rows }: Props) {
 
   const columns = useMemo<ColumnDef<Order>[]>(() => {
     const base: ColumnDef<Order>[] = [
+      // select — QA-014
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() ? "indeterminate" : false)
+            }
+            onCheckedChange={(v) => table.toggleAllPageRowsSelected(!!v)}
+            aria-label={t("table.selectAll")}
+            className="translate-y-px"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(v) => row.toggleSelected(!!v)}
+            aria-label={t("table.selectRow")}
+            onClick={(e) => e.stopPropagation()}
+            className="translate-y-px"
+          />
+        ),
+        enableSorting: false,
+      },
+      // code
       {
         id: "code",
         header: () => t("table.columns.code"),
         cell: ({ row }) => (
-          <Link
-            href={`/orders/${row.original.id}`}
-            className="flex flex-col gap-0.5 hover:underline focus-visible:outline-none focus-visible:underline"
+          <button
+            type="button"
+            onClick={() =>
+              onView ? onView(row.original) : router.push(`/orders/${row.original.id}`)
+            }
+            className="flex flex-col gap-0.5 hover:underline focus-visible:outline-none focus-visible:underline text-left"
             style={{ color: "var(--orion-ink)" }}
           >
             <span className="font-medium text-[13px]">
@@ -74,14 +116,10 @@ export function OrdersTable({ rows }: Props) {
                 {row.original.external_order_id}
               </span>
             ) : null}
-          </Link>
+          </button>
         ),
       },
-      {
-        id: "channel",
-        header: () => t("table.columns.channel"),
-        cell: ({ row }) => <OrderChannelChip channel={row.original.ad.ecommerce} />,
-      },
+      // client (before channel — QA-013)
       {
         id: "client",
         header: () => t("table.columns.client"),
@@ -91,18 +129,43 @@ export function OrdersTable({ rows }: Props) {
           </span>
         ),
       },
+      // channel
+      {
+        id: "channel",
+        header: () => t("table.columns.channel"),
+        cell: ({ row }) => <OrderChannelChip channel={row.original.ad.ecommerce} />,
+      },
+      // product — thumbnail from QA-016
       {
         id: "product",
         header: () => t("table.columns.product"),
         cell: ({ row }) => {
           const v = row.original.variation;
+          const imgSrc = v.product.image_url;
           return (
             <div className="flex min-w-0 items-center gap-2">
               <span
-                className="inline-block h-2.5 w-2.5 rounded-full border border-[color:var(--orion-line-soft)]"
-                style={{ background: hashColor(v.color_code) }}
+                className="relative inline-grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-[6px] border border-[color:var(--orion-line-soft)]"
+                style={{ background: "var(--orion-surface-2)" }}
                 aria-hidden="true"
-              />
+              >
+                {imgSrc ? (
+                  <Image
+                    src={imgSrc}
+                    alt=""
+                    fill
+                    sizes="32px"
+                    className="object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <Shirt
+                    size={14}
+                    strokeWidth={1.5}
+                    className="text-[color:var(--orion-ink-3)]"
+                  />
+                )}
+              </span>
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="truncate text-[13px] font-medium text-[color:var(--orion-ink)]">
                   {v.product.name}
@@ -120,6 +183,7 @@ export function OrdersTable({ rows }: Props) {
           );
         },
       },
+      // qty
       {
         id: "qty",
         header: () => t("table.columns.qty"),
@@ -132,6 +196,7 @@ export function OrdersTable({ rows }: Props) {
           </span>
         ),
       },
+      // value
       {
         id: "value",
         header: () => t("table.columns.value"),
@@ -148,11 +213,13 @@ export function OrdersTable({ rows }: Props) {
           );
         },
       },
+      // status
       {
         id: "status",
         header: () => t("table.columns.status"),
         cell: ({ row }) => <OrderStatusPill status={row.original.status} />,
       },
+      // orderedAt
       {
         id: "orderedAt",
         header: () => t("table.columns.orderedAt"),
@@ -171,51 +238,74 @@ export function OrdersTable({ rows }: Props) {
           );
         },
       },
+      // actions — ⋯ dropdown (QA-015) with View detail + Delete
       {
-        id: "chevron",
+        id: "actions",
         header: () => <span className="sr-only">{t("table.columns.actions")}</span>,
         cell: ({ row }) => (
-          <Link
-            href={`/orders/${row.original.id}`}
-            aria-label={t("actions.edit")}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)]"
-          >
-            <ChevronRight size={14} strokeWidth={1.8} />
-          </Link>
+          <div className="flex items-center justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t("actions.moreActions")}
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-7 w-7 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)]"
+                >
+                  <MoreHorizontal size={14} strokeWidth={1.8} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[150px]">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onView) {
+                      onView(row.original);
+                    } else {
+                      router.push(`/orders/${row.original.id}`);
+                    }
+                  }}
+                  className="gap-2 text-[13px]"
+                >
+                  <Eye size={13} />
+                  {t("actions.viewDetail")}
+                </DropdownMenuItem>
+                {canWrite ? (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPendingDelete(row.original);
+                      }}
+                      className="gap-2 text-[13px] text-[color:var(--status-err)] focus:text-[color:var(--status-err)]"
+                    >
+                      <Trash2 size={13} />
+                      {t("actions.delete")}
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         ),
       },
     ];
 
-    if (canWrite) {
-      base.push({
-        id: "actions",
-        header: () => <span className="sr-only">{t("table.columns.actions")}</span>,
-        cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t("actions.delete")}
-              onClick={(e) => {
-                e.stopPropagation();
-                setPendingDelete(row.original);
-              }}
-              className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--status-err)]"
-            >
-              <Trash2 size={13} strokeWidth={1.8} />
-            </Button>
-          </div>
-        ),
-      });
-    }
     return base;
-  }, [canWrite, currency, format, t]);
+  }, [canWrite, currency, format, onView, router, t]);
+
+  const selectedCount = Object.values(rowSelection).filter(Boolean).length;
 
   const table = useReactTable({
     data: rows,
     columns,
+    state: { rowSelection },
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
+    enableRowSelection: true,
   });
 
   async function handleConfirmDelete() {
@@ -237,6 +327,20 @@ export function OrdersTable({ rows }: Props) {
 
   return (
     <>
+      {selectedCount > 0 && (
+        <div className="flex items-center gap-3 border-b border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface-2)] px-4 py-2 text-[12.5px]">
+          <span className="font-medium text-[color:var(--orion-ink)]">
+            {t("table.selectedCount", { count: selectedCount })}
+          </span>
+          <button
+            type="button"
+            onClick={() => setRowSelection({})}
+            className="text-[color:var(--orion-ink-3)] hover:text-[color:var(--orion-ink)] underline-offset-2 hover:underline"
+          >
+            {t("table.clearSelection")}
+          </button>
+        </div>
+      )}
       <div className="overflow-x-auto">
         {/* .tbl — direct port of /docs/design/source/styles.css */}
         <table className="w-full border-separate border-spacing-0 text-[13px]">
@@ -246,12 +350,14 @@ export function OrdersTable({ rows }: Props) {
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className={`border-b border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-[14px] py-[10px] text-left text-[10.5px] font-semibold tracking-[0.08em] uppercase text-[color:var(--orion-ink-3)] ${
-                      header.column.id === "qty" || header.column.id === "value"
-                        ? "text-right"
-                        : header.column.id === "actions" || header.column.id === "chevron"
-                          ? "text-right"
-                          : ""
+                    className={`border-b border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] py-[10px] text-left text-[10.5px] font-semibold tracking-[0.08em] uppercase text-[color:var(--orion-ink-3)] ${
+                      header.column.id === "select"
+                        ? "w-10 px-[14px]"
+                        : header.column.id === "qty" || header.column.id === "value"
+                          ? "px-[14px] text-right"
+                          : header.column.id === "actions"
+                            ? "px-[14px] text-right"
+                            : "px-[14px]"
                     }`}
                   >
                     {header.isPlaceholder
@@ -279,7 +385,7 @@ export function OrdersTable({ rows }: Props) {
                     } ${
                       cell.column.id === "qty" || cell.column.id === "value"
                         ? "text-right"
-                        : cell.column.id === "actions" || cell.column.id === "chevron"
+                        : cell.column.id === "actions"
                           ? "text-right"
                           : ""
                     }`}

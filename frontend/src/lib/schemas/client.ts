@@ -33,6 +33,7 @@ export const clientReadSchema = z.object({
   address: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
+  order_count: z.number().int().default(0),
 });
 
 export const clientPageSchema = z.object({

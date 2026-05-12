@@ -1,15 +1,10 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { PipelineCounts } from "@/lib/schemas/dashboard";
 
 type Props = { pipeline: PipelineCounts };
 
-/**
- * Horizontal 5-stage production pipeline visual. Each stage is a card with
- * a stage label and a count. Stages are separated by a small chevron.
- */
 export function ProductionPipeline({ pipeline }: Props) {
   const t = useTranslations("dashboard.pipeline");
 
@@ -23,32 +18,38 @@ export function ProductionPipeline({ pipeline }: Props) {
 
   return (
     <section className="rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-5">
-      <h2 className="mb-3 font-serif text-[16px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
-        {t("title")}
-      </h2>
-      <div className="flex flex-wrap items-stretch gap-2">
-        {stages.map((stage, idx) => (
-          <div key={stage.key} className="flex items-center gap-2">
-            <div
-              className="flex min-w-[120px] flex-col gap-1 rounded-[10px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-3 py-2.5"
-              style={{ borderLeft: `3px solid ${stage.accent}` }}
+      <div className="mb-3">
+        <h2 className="font-serif text-[16px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
+          {t("title")}
+        </h2>
+        <p className="mt-0.5 text-[12px] text-[color:var(--orion-ink-3)]">
+          {t("sub")}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        {stages.map((stage) => (
+          <div
+            key={stage.key}
+            className="flex flex-col gap-2 rounded-[10px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-4 py-3"
+            style={{ borderTop: `3px solid ${stage.accent}` }}
+          >
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+              {stage.label}
+            </span>
+            <span
+              className="font-serif text-[26px] font-normal leading-none text-[color:var(--orion-ink)]"
+              style={{ fontVariantNumeric: "tabular-nums" }}
             >
-              <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
-                {stage.label}
-              </span>
-              <span
-                className="font-serif text-[22px] font-normal leading-none text-[color:var(--orion-ink)]"
-                style={{ fontVariantNumeric: "tabular-nums" }}
-              >
-                {pipeline[stage.key]}
-              </span>
-            </div>
-            {idx < stages.length - 1 ? (
-              <ChevronRight className="size-4 text-[color:var(--orion-ink-3)]" />
-            ) : null}
+              {pipeline[stage.key]}
+            </span>
           </div>
         ))}
       </div>
+
+      <p className="mt-3 text-[11.5px] italic text-[color:var(--orion-ink-3)]">
+        {t("footer")}
+      </p>
     </section>
   );
 }

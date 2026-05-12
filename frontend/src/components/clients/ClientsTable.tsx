@@ -137,6 +137,18 @@ export function ClientsTable({ rows, onEdit }: ClientsTableProps) {
         ),
       },
       {
+        accessorKey: "order_count",
+        header: () => t("table.columns.orders"),
+        cell: ({ row }) => (
+          <span
+            className={`${cellInkClasses} text-[12px]`}
+            style={{ fontVariantNumeric: "tabular-nums" }}
+          >
+            {row.original.order_count}
+          </span>
+        ),
+      },
+      {
         accessorKey: "created_at",
         header: () => t("table.columns.created"),
         cell: ({ row }) => (
@@ -163,7 +175,7 @@ export function ClientsTable({ rows, onEdit }: ClientsTableProps) {
               variant="ghost"
               size="icon-sm"
               aria-label={t("actions.edit")}
-              onClick={() => onEdit(row.original)}
+              onClick={(e) => { e.stopPropagation(); onEdit(row.original); }}
               className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
             >
               <Pencil className="size-3.5" />
@@ -173,7 +185,7 @@ export function ClientsTable({ rows, onEdit }: ClientsTableProps) {
               variant="ghost"
               size="icon-sm"
               aria-label={t("actions.delete")}
-              onClick={() => setPendingDelete(row.original)}
+              onClick={(e) => { e.stopPropagation(); setPendingDelete(row.original); }}
               className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
             >
               <Trash2 className="size-3.5" />
@@ -251,7 +263,8 @@ export function ClientsTable({ rows, onEdit }: ClientsTableProps) {
           {table.getRowModel().rows.map((row, idx, arr) => (
             <tr
               key={row.id}
-              className="group/tbl-row hover:[&_td]:bg-[color:var(--orion-bg)]"
+              className="group/tbl-row cursor-pointer hover:[&_td]:bg-[color:var(--orion-bg)]"
+              onClick={() => onEdit(row.original)}
             >
               {row.getVisibleCells().map((cell) => (
                 <td

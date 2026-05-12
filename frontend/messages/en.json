@@ -164,16 +164,32 @@
         "inSewing": "In sewing",
         "inStock": "In stock",
         "shipped30d": "Shipped 30d"
-      }
+      },
+      "sub": "Where your pieces are right now",
+      "footer": "On average a piece takes 7.2 days from order to delivery."
     },
     "needsAction": {
       "title": "Needs attention",
-      "empty": "All caught up."
+      "empty": "All caught up.",
+      "viewAll": "View all"
     },
     "activity": {
       "title": "Recent activity",
       "empty": "No activity yet.",
-      "system": "System"
+      "system": "System",
+      "auditLink": "Audit log"
+    },
+    "filters": {
+      "last7d": "Last 7 days",
+      "last30d": "Last 30 days",
+      "last90d": "Last 90 days"
+    },
+    "actions": {
+      "newOrder": "New order"
+    },
+    "revenueByChannel": {
+      "title": "Revenue by channel (30d)",
+      "empty": "No revenue data yet."
     }
   },
   "orders": {
@@ -228,7 +244,11 @@
         "status": "Status",
         "orderedAt": "Date",
         "actions": "Actions"
-      }
+      },
+      "selectAll": "Select all",
+      "selectRow": "Select row",
+      "selectedCount": "{count} selected",
+      "clearSelection": "Clear selection"
     },
     "actions": {
       "create": "New order",
@@ -240,7 +260,10 @@
       "markDelivered": "Mark delivered",
       "cancel": "Cancel order",
       "returnOrder": "Return order",
-      "back": "Back to orders"
+      "back": "Back to orders",
+      "viewDetail": "View detail",
+      "moreActions": "More actions",
+      "view": "View order"
     },
     "detail": {
       "customerBlock": "Customer",
@@ -273,7 +296,8 @@
         "quantity": "Quantity",
         "salePrice": "Unit price",
         "orderedAt": "Order date",
-        "externalOrderId": "External order ID"
+        "externalOrderId": "External order ID",
+        "canal": "Channel"
       },
       "placeholders": {
         "client": "Pick a client",
@@ -282,7 +306,8 @@
         "externalOrderId": "Optional channel order id",
         "searchClient": "Search client…",
         "searchAd": "Search ad…",
-        "searchVariation": "Search variation…"
+        "searchVariation": "Search variation…",
+        "canal": "All channels"
       },
       "noClients": "No clients found.",
       "noAds": "No ads found.",
@@ -426,7 +451,8 @@
         "phone": "Phone",
         "address": "Address",
         "created": "Created",
-        "actions": "Actions"
+        "actions": "Actions",
+        "orders": "Orders"
       }
     },
     "actions": {
@@ -442,7 +468,8 @@
       },
       "sections": {
         "identity": "Identification",
-        "contact": "Contact"
+        "contact": "Contact",
+        "orderHistory": "Order history"
       },
       "labels": {
         "name": "Name",
@@ -467,6 +494,10 @@
         "updated": "Client updated",
         "deleted": "Client deleted",
         "error": "Could not save the client."
+      },
+      "orderHistory": {
+        "empty": "No orders yet",
+        "loadError": "Could not load orders"
       }
     }
   },
@@ -625,7 +656,8 @@
       "create": "New product",
       "edit": "Edit",
       "delete": "Delete",
-      "confirmDelete": "Delete this product? This cannot be undone."
+      "confirmDelete": "Delete this product? This cannot be undone.",
+      "view": "View details"
     },
     "form": {
       "title": {
@@ -911,7 +943,8 @@
       "create": "New cutting order",
       "edit": "Edit order",
       "delete": "Delete order",
-      "confirmDelete": "The cutting order will be deleted. This cannot be undone."
+      "confirmDelete": "The cutting order will be deleted. This cannot be undone.",
+      "view": "View order"
     },
     "fallback": {
       "forbidden": "You don't have access to cutting orders."
@@ -963,6 +996,17 @@
         "deleted": "Cutting order deleted",
         "error": "Operation failed"
       }
+    },
+    "detail": {
+      "title": "Cutting order",
+      "product": "Product",
+      "bodyRoll": "Body roll",
+      "ribRoll": "Rib roll",
+      "status": "Status",
+      "plannedOutputs": "Planned pieces by size",
+      "actualOutputs": "Cut pieces by size",
+      "close": "Close",
+      "save": "Save"
     }
   },
   "sewing": {
@@ -1006,7 +1050,8 @@
       "create": "New shipment",
       "receive": "Receive",
       "cancel": "Cancel shipment",
-      "confirmReceive": "Confirm receipt"
+      "confirmReceive": "Confirm receipt",
+      "view": "View shipment"
     },
     "fallback": {
       "forbidden": "You don't have access to shipments."
@@ -1059,6 +1104,11 @@
         "cancelled": "Shipment cancelled",
         "error": "Operation failed"
       }
+    },
+    "detail": {
+      "size": "Size",
+      "requested": "Requested",
+      "received": "Received"
     }
   },
   "contractors": {
@@ -1368,7 +1418,61 @@
       "forbidden": "You don't have access to stock."
     }
   },
-  "reports": {},
+  "reports": {
+    "page": {
+      "eyebrow": "REPORTS"
+    },
+    "list": {
+      "title": "Reports",
+      "titleEm": "last 90 days",
+      "sub": "Track sales, production, inventory and costs."
+    },
+    "tabs": {
+      "sales": "Sales",
+      "production": "Production",
+      "inventory": "Inventory",
+      "costs": "Costs"
+    },
+    "dateRange": {
+      "last7d": "Last 7 days",
+      "last30d": "Last 30 days",
+      "last90d": "Last 90 days",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply"
+    },
+    "charts": {
+      "empty": "No data for this period.",
+      "loadError": "Could not load chart data."
+    },
+    "sales": {
+      "totalRevenue": "TOTAL REVENUE",
+      "totalOrders": "TOTAL ORDERS",
+      "byChannel": "By channel",
+      "byStatus": "By status",
+      "byDay": "By day"
+    },
+    "production": {
+      "scrapPct": "SCRAP %",
+      "piecesPerDay": "PIECES PER DAY",
+      "cuttingThroughput": "Cutting throughput",
+      "sewingThroughput": "Sewing throughput"
+    },
+    "inventory": {
+      "currentLevels": "Current stock levels",
+      "slowMovers": "Slow movers",
+      "sku": "SKU",
+      "daysIdle": "Days idle"
+    },
+    "costs": {
+      "specCosts": "Spec costs",
+      "specCode": "SPEC",
+      "laborCost": "LABOR COST",
+      "trimCost": "TRIM COST",
+      "total": "TOTAL",
+      "fabricCost": "Average fabric cost per kg"
+    }
+  },
   "settings": {
     "page": {
       "eyebrow": "Settings"

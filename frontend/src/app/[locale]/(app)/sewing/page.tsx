@@ -9,9 +9,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHead } from "@/components/page/PageHead";
 import { ShipmentTable } from "@/components/sewing/ShipmentTable";
 import { SewingEmptyState } from "@/components/sewing/SewingEmptyState";
+import { ShipmentDetailSheet } from "@/components/sewing/ShipmentDetailSheet";
 import { ShipmentFormSheet } from "@/components/sewing/ShipmentFormSheet";
 import { useShipments } from "@/hooks/use-sewing";
 import { useCanAccess } from "@/hooks/use-permissions";
+import type { Shipment } from "@/lib/schemas/sewing";
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -31,6 +33,7 @@ export default function SewingPage() {
   const canWrite = useCanAccess("sewing.write");
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
+  const [viewing, setViewing] = useState<Shipment | null>(null);
   const debouncedSearch = useDebouncedValue(search, 200);
 
   const { data, isPending, isError } = useShipments({
@@ -106,13 +109,21 @@ export default function SewingPage() {
             {t("list.noResults")}
           </p>
         ) : (
-          <ShipmentTable rows={rows} />
+          <ShipmentTable rows={rows} onView={(s) => setViewing(s)} />
         )}
       </div>
 
       {canWrite ? (
         <ShipmentFormSheet open={creating} onOpenChange={setCreating} />
       ) : null}
+
+      <ShipmentDetailSheet
+        shipment={viewing}
+        open={viewing !== null}
+        onOpenChange={(open) => {
+          if (!open) setViewing(null);
+        }}
+      />
     </div>
   );
 }

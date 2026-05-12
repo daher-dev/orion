@@ -7,7 +7,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { Factory, PackageCheck } from "lucide-react";
+import { ChevronRight, Factory, PackageCheck } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useCanAccess } from "@/hooks/use-permissions";
@@ -17,13 +17,14 @@ import { ShipmentReceiveDialog } from "./ShipmentReceiveDialog";
 
 type Props = {
   rows: Shipment[];
+  onView: (shipment: Shipment) => void;
 };
 
 function shortId(id: string): string {
   return id.replace(/-/g, "").slice(0, 8).toUpperCase();
 }
 
-export function ShipmentTable({ rows }: Props) {
+export function ShipmentTable({ rows, onView }: Props) {
   const t = useTranslations("sewing");
   const format = useFormatter();
   const canWrite = useCanAccess("sewing.write");
@@ -162,8 +163,29 @@ export function ShipmentTable({ rows }: Props) {
         },
       });
     }
+
+    base.push({
+      id: "chevron",
+      header: () => <span className="sr-only">{t("actions.view")}</span>,
+      cell: ({ row }) => (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t("actions.view")}
+          onClick={(e) => {
+            e.stopPropagation();
+            onView(row.original);
+          }}
+          className="h-7 w-7 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)]"
+        >
+          <ChevronRight size={14} strokeWidth={1.8} />
+        </Button>
+      ),
+    });
+
     return base;
-  }, [canWrite, format, t]);
+  }, [canWrite, format, onView, t]);
 
   const table = useReactTable({
     data: rows,
@@ -182,7 +204,7 @@ export function ShipmentTable({ rows }: Props) {
                   <th
                     key={header.id}
                     className={`border-b border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-[14px] py-[10px] text-left text-[10.5px] font-semibold tracking-[0.08em] uppercase text-[color:var(--orion-ink-3)] ${
-                      header.column.id === "actions" ? "text-right" : ""
+                      header.column.id === "actions" || header.column.id === "chevron" ? "text-right" : ""
                     }`}
                   >
                     {header.isPlaceholder
@@ -195,7 +217,11 @@ export function ShipmentTable({ rows }: Props) {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row, idx, arr) => (
-              <tr key={row.id} className="hover:[&_td]:bg-[color:var(--orion-bg)]">
+              <tr
+                key={row.id}
+                className="cursor-pointer hover:[&_td]:bg-[color:var(--orion-bg)]"
+                onClick={() => onView(row.original)}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
@@ -203,7 +229,7 @@ export function ShipmentTable({ rows }: Props) {
                       idx < arr.length - 1
                         ? "border-b border-[color:var(--orion-line-soft)]"
                         : ""
-                    } ${cell.column.id === "actions" ? "text-right" : ""}`}
+                    } ${cell.column.id === "actions" || cell.column.id === "chevron" ? "text-right" : ""}`}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>

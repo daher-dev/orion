@@ -11,6 +11,7 @@ from services.client import (
     create_client,
     delete_client,
     get_client,
+    get_order_counts,
     list_clients,
     update_client,
 )
@@ -22,8 +23,9 @@ router = APIRouter(
 )
 
 
-def _to_read(client) -> ClientRead:
-    return ClientRead.model_validate(client, from_attributes=True)
+def _to_read(client, order_count: int = 0) -> ClientRead:
+    r = ClientRead.model_validate(client, from_attributes=True)
+    return r.model_copy(update={"order_count": order_count})
 
 
 @router.get("", response_model=ClientPage)
@@ -37,7 +39,8 @@ async def list_clients_endpoint(
     filters = ClientFilters(q=q)
     params = PageParams(page=page, page_size=page_size)
     rows, total = await list_clients(db, user.company_id, filters, params)
-    return ClientPage.build([_to_read(r) for r in rows], total, params)
+    counts = await get_order_counts(db, user.company_id, [r.id for r in rows])
+    return ClientPage.build([_to_read(r, counts.get(r.id, 0)) for r in rows], total, params)
 
 
 @router.get("/{client_id}", response_model=ClientRead)
@@ -47,7 +50,8 @@ async def get_client_endpoint(
     user: Annotated[User, Depends(RequirePermission("clients.read"))],
 ) -> ClientRead:
     client = await get_client(db, user.company_id, client_id)
-    return _to_read(client)
+    counts = await get_order_counts(db, user.company_id, [client.id])
+    return _to_read(client, counts.get(client.id, 0))
 
 
 @router.post("", response_model=ClientRead, status_code=status.HTTP_201_CREATED)

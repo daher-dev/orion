@@ -44,6 +44,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
   const setCompanyId = useCallback(
     (id: string | null) => {
+      const prev = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
       if (typeof window !== "undefined") {
         if (id) window.localStorage.setItem(STORAGE_KEY, id);
         else window.localStorage.removeItem(STORAGE_KEY);
@@ -51,10 +52,14 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         // dispatch one so this tab's useSyncExternalStore subscribers wake up.
         window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }));
       }
-      // Clear all caches on tenant switch — query keys typically don't include
-      // the company id, so we wipe the cache and let pages refetch.
-      queryClient.clear();
-      router.refresh();
+      // Only clear caches on an actual tenant switch (prev id → new id).
+      // Skipping this during initial hydration (null → first id) prevents the
+      // useMe cache from being wiped before it can guard the AppShell, which
+      // was causing a spurious redirect to /onboarding during navigation.
+      if (prev && prev !== id) {
+        queryClient.clear();
+        router.refresh();
+      }
     },
     [queryClient, router],
   );

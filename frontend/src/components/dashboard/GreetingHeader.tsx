@@ -1,7 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { LayoutDashboard } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { PageHead } from "@/components/page/PageHead";
 import { useMe } from "@/hooks/use-me";
 
@@ -12,25 +13,32 @@ function periodKey(hour: number): "morning" | "afternoon" | "evening" | "night" 
   return "night";
 }
 
-export function GreetingHeader() {
+type Props = {
+  actions?: ReactNode;
+};
+
+export function GreetingHeader({ actions }: Props) {
   const t = useTranslations("dashboard");
+  const locale = useLocale();
   const { data } = useMe();
-  const firstName = (data?.user?.display_name ?? data?.user?.name ?? data?.user?.email ?? "")
+  const firstName = (data?.user?.display_name ?? data?.user?.email ?? "")
     .split(/\s+/)[0];
   const hour = new Date().getHours();
   const period = periodKey(hour);
+
+  const now = new Date();
+  const day = now.getDate();
+  const month = now.toLocaleDateString(locale, { month: "long" });
 
   return (
     <PageHead
       subColor="var(--sidebar-primary)"
       mark={<LayoutDashboard size={11} strokeWidth={2.2} />}
       eyebrow={t("eyebrow")}
-      title={
-        firstName
-          ? t(`greetings.${period}WithName`, { name: firstName })
-          : t(`greetings.${period}`)
-      }
-      sub={t("sub")}
+      title={firstName ? `${t(`greetings.${period}`)},` : t(`greetings.${period}`)}
+      titleEm={firstName || undefined}
+      sub={t("sub", { day, month })}
+      actions={actions}
     />
   );
 }

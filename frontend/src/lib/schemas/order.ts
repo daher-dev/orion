@@ -35,6 +35,7 @@ export const orderProductMiniSchema = z.object({
   id: z.string(),
   name: z.string(),
   code: z.string().nullable().optional(),
+  image_url: z.string().nullable().optional(),
 });
 
 export const orderVariationReadSchema = z.object({

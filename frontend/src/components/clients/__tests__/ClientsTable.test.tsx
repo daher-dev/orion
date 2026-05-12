@@ -24,6 +24,7 @@ const rows: ClientRead[] = [
     address: "São Paulo",
     created_at: "2026-05-10T12:00:00Z",
     updated_at: "2026-05-10T12:00:00Z",
+    order_count: 3,
   },
   {
     id: "22222222-2222-2222-2222-222222222222",
@@ -33,6 +34,7 @@ const rows: ClientRead[] = [
     address: null,
     created_at: "2026-05-09T12:00:00Z",
     updated_at: "2026-05-09T12:00:00Z",
+    order_count: 0,
   },
 ];
 

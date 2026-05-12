@@ -74,6 +74,7 @@ class OrderProductMini(BaseModel):
     name: str
     # spec.code — the canonical short identifier ("CAM01" et al).
     code: str | None = None
+    image_url: str | None = None
 
 
 class OrderVariationRead(BaseModel):

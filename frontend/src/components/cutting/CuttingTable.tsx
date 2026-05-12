@@ -7,7 +7,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { Trash2 } from "lucide-react";
+import { ChevronRight, Trash2 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -28,6 +28,7 @@ import { CuttingStatusPill } from "./CuttingStatusPill";
 
 type Props = {
   rows: CuttingOrder[];
+  onView: (order: CuttingOrder) => void;
 };
 
 function shortId(id: string): string {
@@ -37,7 +38,7 @@ function shortId(id: string): string {
   return id.replace(/-/g, "").slice(0, 8).toUpperCase();
 }
 
-export function CuttingTable({ rows }: Props) {
+export function CuttingTable({ rows, onView }: Props) {
   const t = useTranslations("cutting");
   const format = useFormatter();
   const canWrite = useCanAccess("cutting.write");
@@ -146,12 +147,12 @@ export function CuttingTable({ rows }: Props) {
       },
     ];
 
-    if (canWrite) {
-      base.push({
-        id: "actions",
-        header: () => <span className="sr-only">{t("table.columns.actions")}</span>,
-        cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
+    base.push({
+      id: "actions",
+      header: () => <span className="sr-only">{t("table.columns.actions")}</span>,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-1">
+          {canWrite ? (
             <Button
               type="button"
               variant="ghost"
@@ -165,12 +166,22 @@ export function CuttingTable({ rows }: Props) {
             >
               <Trash2 size={13} strokeWidth={1.8} />
             </Button>
-          </div>
-        ),
-      });
-    }
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("actions.view")}
+            onClick={(e) => { e.stopPropagation(); onView(row.original); }}
+            className="h-7 w-7 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)]"
+          >
+            <ChevronRight size={14} strokeWidth={1.8} />
+          </Button>
+        </div>
+      ),
+    });
     return base;
-  }, [canWrite, format, t]);
+  }, [canWrite, format, onView, t]);
 
   const table = useReactTable({
     data: rows,
@@ -215,7 +226,11 @@ export function CuttingTable({ rows }: Props) {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row, idx, arr) => (
-              <tr key={row.id} className="hover:[&_td]:bg-[color:var(--orion-bg)]">
+              <tr
+                key={row.id}
+                className="cursor-pointer hover:[&_td]:bg-[color:var(--orion-bg)]"
+                onClick={() => onView(row.original)}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}

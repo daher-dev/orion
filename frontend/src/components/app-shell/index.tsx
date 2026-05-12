@@ -41,7 +41,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     // the user see the empty state; the API client will surface them.)
     if (meLoading) return;
     if (isError) return;
-    if (!data?.user) {
+    // Only redirect when data has settled and explicitly has no user row.
+    // When data is undefined the query is still loading or was just cleared
+    // (e.g. after a cache invalidation) — never redirect in that transient state.
+    if (data !== undefined && !data.user) {
       // Signed in to Firebase but no User row anywhere → onboarding.
       if (!pathname.startsWith("/onboarding")) {
         router.replace("/onboarding");
@@ -49,7 +52,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }, [authLoading, user, meLoading, isError, data, router, pathname]);
 
-  if (authLoading || (user && meLoading)) {
+  if (authLoading || (user && (meLoading || data === undefined))) {
     return (
       <div className="flex min-h-screen items-center justify-center p-8">
         <div className="w-full max-w-md space-y-3" aria-label={t("loading")}>
@@ -62,7 +65,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   // Awaiting redirect — render nothing to avoid flicker.
-  if (!user || !data?.user) return null;
+  if (!user || (data !== undefined && !data.user)) return null;
 
   return (
     <SidebarProvider>

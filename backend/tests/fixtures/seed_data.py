@@ -390,14 +390,14 @@ STOCK_ENTRIES = [
         "variation": ("p-tshirt-box", Size.M, "WHT"),
         "quantity": 30,
         "source": StockSource.ADJUSTMENT,
-        "notes": "Initial stock-take",
+        "notes": "Ajuste inicial de estoque",
     },
     {
         "key": "se-2",
         "variation": ("p-cropped-flora", Size.M, "BLK"),
         "quantity": 20,
         "source": StockSource.ADJUSTMENT,
-        "notes": "Initial stock-take",
+        "notes": "Ajuste inicial de estoque",
     },
 ]
 

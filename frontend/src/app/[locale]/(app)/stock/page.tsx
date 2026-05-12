@@ -77,8 +77,7 @@ export default function StockPage() {
               <Button
                 type="button"
                 data-testid="stock-page-cta"
-                onClick={() => openAdjustFor(rows[0] ?? null)}
-                disabled={rows.length === 0}
+                onClick={() => openAdjustFor(null)}
                 className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-inv)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{
                   borderColor: "color-mix(in oklab, var(--brand-inv) 70%, black)",

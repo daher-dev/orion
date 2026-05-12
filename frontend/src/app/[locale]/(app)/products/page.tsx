@@ -62,6 +62,12 @@ export default function ProductsPage() {
     return out;
   }, [prints.data]);
 
+  const printImageById = useMemo(() => {
+    const out: Record<string, string | null> = {};
+    for (const p of prints.data?.items ?? []) out[p.id] = p.image_url ?? null;
+    return out;
+  }, [prints.data]);
+
   const rows = data?.items ?? [];
   const total = data?.total ?? 0;
   const isFiltering = !!debouncedSearch || productType !== "all";
@@ -149,6 +155,7 @@ export default function ProductsPage() {
             rows={rows}
             specCodeById={specCodeById}
             printCodeById={printCodeById}
+            printImageById={printImageById}
             onEdit={(p) => setEditing(p)}
           />
         )}

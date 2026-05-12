@@ -29,6 +29,7 @@ from models import (
     Client,
     Order,
     OrderStatus,
+    PrintDesign,
     Product,
     ProductSpec,
     ProductVariation,
@@ -129,7 +130,10 @@ _BASE_SELECT_COLS = (
     Product,
     ProductSpec.code,
     Client,
+    PrintDesign.image_url,
 )
+
+OrderWithRelations = tuple[Order, Ad, ProductVariation, Product, str | None, Client, str | None]
 
 
 def _base_select():
@@ -139,6 +143,7 @@ def _base_select():
         .join(ProductVariation, ProductVariation.id == Order.variation_id)
         .join(Product, Product.id == ProductVariation.product_id)
         .join(ProductSpec, ProductSpec.id == Product.spec_id, isouter=True)
+        .join(PrintDesign, PrintDesign.id == Product.print_id, isouter=True)
         .join(Client, Client.id == Order.client_id)
     )
 

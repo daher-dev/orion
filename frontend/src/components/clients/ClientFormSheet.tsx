@@ -1,7 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -12,11 +12,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ClientForm } from "@/components/clients/ClientForm";
+import { OrderStatusPill } from "@/components/orders/OrderStatusPill";
 import {
   useCreateClient,
   useUpdateClient,
 } from "@/hooks/use-clients";
+import { useOrders } from "@/hooks/use-orders";
 import type { ClientCreate, ClientRead } from "@/lib/schemas/client";
 
 /**
@@ -32,11 +35,16 @@ export type ClientFormSheetProps = {
 
 export function ClientFormSheet({ open, onOpenChange, initial }: ClientFormSheetProps) {
   const t = useTranslations("clients.form");
+  const format = useFormatter();
   const formId = useId();
   const isEdit = !!initial;
   const createClient = useCreateClient();
   const updateClient = useUpdateClient();
   const isPending = createClient.isPending || updateClient.isPending;
+
+  const ordersQuery = useOrders(
+    isEdit && initial ? { client_id: initial.id, page_size: 10 } : undefined,
+  );
 
   const handleSubmit = async (values: ClientCreate) => {
     try {
@@ -75,6 +83,57 @@ export function ClientFormSheet({ open, onOpenChange, initial }: ClientFormSheet
         {/* .sheet-body — flex 1, overflow-y, padding 18 22. */}
         <div className="flex-1 overflow-y-auto px-[22px] py-[18px]">
           <ClientForm formId={formId} initial={initial} onSubmit={handleSubmit} />
+
+          {isEdit && (
+            <section className="mt-6 border-t border-[color:var(--orion-line-soft)] pt-5">
+              <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                {t("sections.orderHistory")}
+              </h3>
+              {ordersQuery.isPending ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-9 rounded-[8px]" />
+                  <Skeleton className="h-9 rounded-[8px]" />
+                  <Skeleton className="h-9 rounded-[8px]" />
+                </div>
+              ) : ordersQuery.isError ? (
+                <p className="text-[12px] text-[color:var(--status-err)]">
+                  {t("orderHistory.loadError")}
+                </p>
+              ) : !ordersQuery.data?.items.length ? (
+                <p className="text-[12px] text-[color:var(--orion-ink-3)]">
+                  {t("orderHistory.empty")}
+                </p>
+              ) : (
+                <ol className="space-y-1">
+                  {ordersQuery.data.items.map((order) => (
+                    <li
+                      key={order.id}
+                      className="flex items-center justify-between gap-2 rounded-[8px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-[12.5px] font-medium text-[color:var(--orion-ink)]">
+                          {order.variation.product.name}
+                        </p>
+                        <p className="text-[11px] text-[color:var(--orion-ink-3)]">
+                          {format.dateTime(new Date(order.ordered_at), {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
+                          {" · "}
+                          {format.number(Number(order.sale_price), {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </p>
+                      </div>
+                      <OrderStatusPill status={order.status} />
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          )}
         </div>
 
         {/* .sheet-foot — bg=bg, line-soft border-t, padding 14 22, gap 8 right. */}

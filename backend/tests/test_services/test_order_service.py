@@ -229,13 +229,14 @@ async def test_get_order_returns_joined_data(db_session):
     )
 
     row = await get_order(db_session, company_id=company.id, order_id=order.id)
-    fetched_order, fetched_ad, fetched_variation, fetched_product, code, fetched_client = row
+    fetched_order, fetched_ad, fetched_variation, fetched_product, code, fetched_client, image_url = row
     assert fetched_order.id == order.id
     assert fetched_ad.id == ad.id
     assert fetched_variation.id == variation.id
     assert fetched_product.id == product.id
     assert fetched_client.id == client.id
     assert code  # spec code surfaced
+    assert image_url is None  # product has no print in scaffold
 
 
 async def test_get_order_raises_not_found(db_session):

@@ -20,6 +20,7 @@ import {
   Shirt,
   Trash2,
 } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -41,6 +42,7 @@ export type ProductsTableProps = {
   rows: Product[];
   specCodeById: Record<string, string>;
   printCodeById: Record<string, string>;
+  printImageById: Record<string, string | null>;
   onEdit: (product: Product) => void;
 };
 
@@ -57,7 +59,7 @@ const PRODUCT_TYPE_GLYPH: Record<ProductType, React.ReactNode> = {
  * Columns: small glyph cell (28×28 rounded-6 tinted from --accent) + name + spec
  * code (mono) + print code (mono) + variation count + actions.
  */
-export function ProductsTable({ rows, specCodeById, printCodeById, onEdit }: ProductsTableProps) {
+export function ProductsTable({ rows, specCodeById, printCodeById, printImageById, onEdit }: ProductsTableProps) {
   const t = useTranslations("products");
   const canWrite = useCanAccess("products.write");
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -71,18 +73,33 @@ export function ProductsTable({ rows, specCodeById, printCodeById, onEdit }: Pro
         header: () => null,
         size: 38,
         enableSorting: false,
-        cell: ({ row }) => (
-          <span
-            aria-hidden
-            className="grid size-7 place-items-center rounded-[6px] text-[color:var(--orion-ink-2)]"
-            style={{
-              background:
-                "linear-gradient(135deg, color-mix(in oklab, var(--brand-catalog) 22%, var(--orion-surface)), color-mix(in oklab, var(--brand-catalog) 6%, var(--orion-surface)))",
-            }}
-          >
-            {PRODUCT_TYPE_GLYPH[row.original.product_type]}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const printId = row.original.print_id;
+          const imgSrc = printId ? printImageById[printId] : null;
+          return (
+            <span
+              aria-hidden
+              className="relative grid size-8 shrink-0 place-items-center overflow-hidden rounded-[6px] text-[color:var(--orion-ink-2)]"
+              style={{
+                background:
+                  "linear-gradient(135deg, color-mix(in oklab, var(--brand-catalog) 22%, var(--orion-surface)), color-mix(in oklab, var(--brand-catalog) 6%, var(--orion-surface)))",
+              }}
+            >
+              {imgSrc ? (
+                <Image
+                  src={imgSrc}
+                  alt=""
+                  fill
+                  sizes="32px"
+                  className="object-cover"
+                  unoptimized
+                />
+              ) : (
+                PRODUCT_TYPE_GLYPH[row.original.product_type]
+              )}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "name",
@@ -142,41 +159,52 @@ export function ProductsTable({ rows, specCodeById, printCodeById, onEdit }: Pro
       },
     ];
 
-    if (canWrite) {
-      base.push({
-        id: "actions",
-        header: () => <span className="sr-only">{t("table.columns.actions")}</span>,
-        enableSorting: false,
-        cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t("actions.edit")}
-              onClick={() => onEdit(row.original)}
-              className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
-            >
-              <Pencil className="size-3.5" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t("actions.delete")}
-              onClick={() => setPendingDelete(row.original)}
-              className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
-            >
-              <Trash2 className="size-3.5" />
-            </Button>
-            <ChevronRight className="size-3.5 text-[color:var(--orion-ink-3)]" />
-          </div>
-        ),
-      });
-    }
+    base.push({
+      id: "actions",
+      header: () => <span className="sr-only">{t("table.columns.actions")}</span>,
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-1">
+          {canWrite ? (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("actions.edit")}
+                onClick={(e) => { e.stopPropagation(); onEdit(row.original); }}
+                className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
+              >
+                <Pencil className="size-3.5" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("actions.delete")}
+                onClick={(e) => { e.stopPropagation(); setPendingDelete(row.original); }}
+                className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
+              >
+                <Trash2 className="size-3.5" />
+              </Button>
+            </>
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("actions.view")}
+            onClick={(e) => { e.stopPropagation(); onEdit(row.original); }}
+            className="h-7 w-7 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)]"
+          >
+            <ChevronRight className="size-3.5" />
+          </Button>
+        </div>
+      ),
+    });
 
     return base;
-  }, [canWrite, onEdit, printCodeById, specCodeById, t]);
+  }, [canWrite, onEdit, printCodeById, printImageById, specCodeById, t]);
 
   const table = useReactTable({
     data: rows,
@@ -241,7 +269,11 @@ export function ProductsTable({ rows, specCodeById, printCodeById, onEdit }: Pro
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row, idx, arr) => (
-            <tr key={row.id} className="group/tbl-row hover:[&_td]:bg-[color:var(--orion-bg)]">
+            <tr
+              key={row.id}
+              className="group/tbl-row cursor-pointer hover:[&_td]:bg-[color:var(--orion-bg)]"
+              onClick={() => onEdit(row.original)}
+            >
               {row.getVisibleCells().map((cell) => (
                 <td
                   key={cell.id}

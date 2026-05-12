@@ -4,12 +4,33 @@ from sqlalchemy import func, or_
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from models import Client
+from models import Client, Order
 from schemas._common import PageParams
 from schemas.client import ClientCreate, ClientFilters, ClientUpdate
 from services._audit import write_audit
 from services._base import scoped
 from shared.exceptions import NotFoundError
+
+
+async def get_order_counts(
+    db: AsyncSession,
+    company_id: uuid.UUID,
+    client_ids: list[uuid.UUID],
+) -> dict[uuid.UUID, int]:
+    """Return a ``{client_id: order_count}`` map for the given clients."""
+    if not client_ids:
+        return {}
+    stmt = (
+        scoped(
+            select(Order.client_id, func.count().label("n")),
+            Order,
+            company_id,
+        )
+        .where(Order.client_id.in_(client_ids))  # type: ignore[attr-defined]
+        .group_by(Order.client_id)
+    )
+    rows = (await db.exec(stmt)).all()
+    return {cid: int(n) for cid, n in rows}
 
 
 def _apply_filters(stmt, filters: ClientFilters):

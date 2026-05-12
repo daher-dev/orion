@@ -82,6 +82,13 @@ class ActivityItem(BaseModel):
     resource_id: uuid.UUID
 
 
+class ChannelRevenue(BaseModel):
+    """Revenue figure for a single ecommerce channel."""
+
+    channel: str
+    revenue: float
+
+
 class DashboardSummary(BaseModel):
     """Composite payload returned by ``GET /v1/dashboard/summary``."""
 
@@ -89,10 +96,12 @@ class DashboardSummary(BaseModel):
     pipeline: PipelineCounts
     needs_action: list[NeedsActionItem]
     activity: list[ActivityItem]
+    revenue_by_channel: list[ChannelRevenue]
 
 
 __all__ = [
     "ActivityItem",
+    "ChannelRevenue",
     "DashboardKpis",
     "DashboardSummary",
     "Kpi",

@@ -7,6 +7,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -26,6 +33,7 @@ import {
   type OrderFormPayload,
   type OrderFormValues,
 } from "@/lib/schemas/order";
+import { ECOMMERCE_CHANNELS, type Ecommerce } from "@/lib/schemas/ad";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -57,6 +65,7 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
   const clients = useClients({ pageSize: 100 });
   const ads = useAds({ page_size: 100 });
 
+  const [channel, setChannel] = useState<Ecommerce | "all">("all");
   const [clientOpen, setClientOpen] = useState(false);
   const [adOpen, setAdOpen] = useState(false);
 
@@ -85,7 +94,11 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
   }
 
   const clientOptions = useMemo(() => clients.data?.items ?? [], [clients.data?.items]);
-  const adOptions = useMemo(() => ads.data?.items ?? [], [ads.data?.items]);
+  const allAdOptions = useMemo(() => ads.data?.items ?? [], [ads.data?.items]);
+  const adOptions = useMemo(
+    () => channel === "all" ? allAdOptions : allAdOptions.filter((a) => a.ecommerce === channel),
+    [allAdOptions, channel],
+  );
 
   const selectedClient = useMemo(
     () => clientOptions.find((c) => c.id === clientId),
@@ -191,6 +204,44 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
       </div>
 
       <div className={SECTION_HEADING_CLASS}>{t("sections.items")}</div>
+
+      {/* Channel filter — narrows the ad options shown below */}
+      <div className="mb-[14px] flex flex-col gap-1.5">
+        <label className={FIELD_LABEL_CLASS}>{t("labels.canal")}</label>
+        <Select
+          value={channel}
+          onValueChange={(v) => {
+            setChannel(v as Ecommerce | "all");
+            // Reset ad when channel changes so stale cross-channel id is cleared.
+            form.setValue("ad_id", "", { shouldValidate: false });
+            form.setValue("variation_id", "", { shouldValidate: false });
+          }}
+        >
+          <SelectTrigger className={FIELD_INPUT_CLASS}>
+            <SelectValue placeholder={t("placeholders.canal")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("placeholders.canal")}</SelectItem>
+            {ECOMMERCE_CHANNELS.map((c) => (
+              <SelectItem key={c} value={c}>
+                <span className="flex items-center gap-2">
+                  <span
+                    className="inline-grid h-[16px] w-[16px] place-items-center rounded-[3px] text-[8px] font-bold"
+                    style={{
+                      background: CHANNEL_THEME[c].color,
+                      color: CHANNEL_THEME[c].fg,
+                    }}
+                    aria-hidden="true"
+                  >
+                    {CHANNEL_THEME[c].short}
+                  </span>
+                  {tChannels(c)}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Ad combobox (cascades into product variations) */}
       <div className="mb-[14px] flex flex-col gap-1.5">

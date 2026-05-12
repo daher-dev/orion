@@ -10,8 +10,10 @@ import { PageHead } from "@/components/page/PageHead";
 import { CuttingTable } from "@/components/cutting/CuttingTable";
 import { CuttingEmptyState } from "@/components/cutting/CuttingEmptyState";
 import { CuttingFormSheet } from "@/components/cutting/CuttingFormSheet";
+import { CuttingDetailSheet } from "@/components/cutting/CuttingDetailSheet";
 import { useCuttingOrders } from "@/hooks/use-cutting";
 import { useCanAccess } from "@/hooks/use-permissions";
+import type { CuttingOrder } from "@/lib/schemas/cutting";
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -31,6 +33,7 @@ export default function CuttingPage() {
   const canWrite = useCanAccess("cutting.write");
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
+  const [viewing, setViewing] = useState<CuttingOrder | null>(null);
   const debouncedSearch = useDebouncedValue(search, 200);
 
   const { data, isPending, isError } = useCuttingOrders({
@@ -106,13 +109,18 @@ export default function CuttingPage() {
             {t("list.noResults")}
           </p>
         ) : (
-          <CuttingTable rows={rows} />
+          <CuttingTable rows={rows} onView={(o) => setViewing(o)} />
         )}
       </div>
 
       {canWrite ? (
         <CuttingFormSheet open={creating} onOpenChange={setCreating} />
       ) : null}
+      <CuttingDetailSheet
+        order={viewing}
+        open={viewing !== null}
+        onOpenChange={(o) => { if (!o) setViewing(null); }}
+      />
     </div>
   );
 }

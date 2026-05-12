@@ -164,16 +164,32 @@
         "inSewing": "Em costura",
         "inStock": "Em estoque",
         "shipped30d": "Enviados 30d"
-      }
+      },
+      "sub": "Onde estão suas peças neste momento",
+      "footer": "Em média uma peça leva 7.2 dias para sair como pedido entregue."
     },
     "needsAction": {
       "title": "Precisa de atenção",
-      "empty": "Tudo em dia."
+      "empty": "Tudo em dia.",
+      "viewAll": "Ver todas"
     },
     "activity": {
       "title": "Atividade recente",
       "empty": "Nenhuma atividade ainda.",
-      "system": "Sistema"
+      "system": "Sistema",
+      "auditLink": "Auditoria"
+    },
+    "filters": {
+      "last7d": "Últimos 7 dias",
+      "last30d": "Últimos 30 dias",
+      "last90d": "Últimos 90 dias"
+    },
+    "actions": {
+      "newOrder": "Novo pedido"
+    },
+    "revenueByChannel": {
+      "title": "Receita por canal (30d)",
+      "empty": "Nenhum dado de receita ainda."
     }
   },
   "orders": {
@@ -228,7 +244,11 @@
         "status": "Status",
         "orderedAt": "Data",
         "actions": "Ações"
-      }
+      },
+      "selectAll": "Selecionar todos",
+      "selectRow": "Selecionar linha",
+      "selectedCount": "{count} selecionados",
+      "clearSelection": "Limpar seleção"
     },
     "actions": {
       "create": "Novo pedido",
@@ -240,7 +260,10 @@
       "markDelivered": "Marcar como entregue",
       "cancel": "Cancelar pedido",
       "returnOrder": "Devolver pedido",
-      "back": "Voltar para pedidos"
+      "back": "Voltar para pedidos",
+      "viewDetail": "Ver detalhes",
+      "moreActions": "Mais ações",
+      "view": "Ver pedido"
     },
     "detail": {
       "customerBlock": "Cliente",
@@ -273,7 +296,8 @@
         "quantity": "Quantidade",
         "salePrice": "Valor unitário",
         "orderedAt": "Data do pedido",
-        "externalOrderId": "ID externo"
+        "externalOrderId": "ID externo",
+        "canal": "Canal"
       },
       "placeholders": {
         "client": "Selecione um cliente",
@@ -282,7 +306,8 @@
         "externalOrderId": "ID opcional do canal",
         "searchClient": "Procurar cliente…",
         "searchAd": "Procurar anúncio…",
-        "searchVariation": "Procurar variação…"
+        "searchVariation": "Procurar variação…",
+        "canal": "Todos os canais"
       },
       "noClients": "Nenhum cliente encontrado.",
       "noAds": "Nenhum anúncio encontrado.",
@@ -426,7 +451,8 @@
         "phone": "Telefone",
         "address": "Endereço",
         "created": "Criado em",
-        "actions": "Ações"
+        "actions": "Ações",
+        "orders": "Pedidos"
       }
     },
     "actions": {
@@ -442,7 +468,8 @@
       },
       "sections": {
         "identity": "Identificação",
-        "contact": "Contato"
+        "contact": "Contato",
+        "orderHistory": "Histórico de pedidos"
       },
       "labels": {
         "name": "Nome",
@@ -467,6 +494,10 @@
         "updated": "Cliente atualizado",
         "deleted": "Cliente excluído",
         "error": "Não foi possível salvar o cliente."
+      },
+      "orderHistory": {
+        "empty": "Nenhum pedido ainda",
+        "loadError": "Não foi possível carregar os pedidos"
       }
     }
   },
@@ -625,7 +656,8 @@
       "create": "Novo produto",
       "edit": "Editar",
       "delete": "Excluir",
-      "confirmDelete": "Excluir este produto? Não dá pra desfazer."
+      "confirmDelete": "Excluir este produto? Não dá pra desfazer.",
+      "view": "Ver detalhes"
     },
     "form": {
       "title": {
@@ -911,7 +943,8 @@
       "create": "Nova OS de corte",
       "edit": "Editar ordem",
       "delete": "Remover ordem",
-      "confirmDelete": "A ordem de corte será removida. Esta ação não pode ser desfeita."
+      "confirmDelete": "A ordem de corte será removida. Esta ação não pode ser desfeita.",
+      "view": "Ver ordem"
     },
     "fallback": {
       "forbidden": "Você não tem acesso aos cortes."
@@ -963,6 +996,17 @@
         "deleted": "Ordem removida",
         "error": "Operação falhou"
       }
+    },
+    "detail": {
+      "title": "Ordem de corte",
+      "product": "Produto",
+      "bodyRoll": "Bobina corpo",
+      "ribRoll": "Bobina ribana",
+      "status": "Status",
+      "plannedOutputs": "Peças planejadas por tamanho",
+      "actualOutputs": "Peças cortadas por tamanho",
+      "close": "Fechar",
+      "save": "Salvar"
     }
   },
   "sewing": {
@@ -1006,7 +1050,8 @@
       "create": "Nova remessa",
       "receive": "Receber",
       "cancel": "Cancelar remessa",
-      "confirmReceive": "Confirmar recebimento"
+      "confirmReceive": "Confirmar recebimento",
+      "view": "Ver remessa"
     },
     "fallback": {
       "forbidden": "Você não tem acesso às remessas."
@@ -1059,6 +1104,11 @@
         "cancelled": "Remessa cancelada",
         "error": "Operação falhou"
       }
+    },
+    "detail": {
+      "size": "Tamanho",
+      "requested": "Solicitado",
+      "received": "Recebido"
     }
   },
   "contractors": {
@@ -1368,7 +1418,61 @@
       "forbidden": "Você não tem acesso ao estoque."
     }
   },
-  "reports": {},
+  "reports": {
+    "page": {
+      "eyebrow": "RELATÓRIOS"
+    },
+    "list": {
+      "title": "Relatórios",
+      "titleEm": "nos últimos 90 dias",
+      "sub": "Acompanhe vendas, produção, estoque e custos."
+    },
+    "tabs": {
+      "sales": "Vendas",
+      "production": "Produção",
+      "inventory": "Estoque",
+      "costs": "Custos"
+    },
+    "dateRange": {
+      "last7d": "Últimos 7 dias",
+      "last30d": "Últimos 30 dias",
+      "last90d": "Últimos 90 dias",
+      "from": "De",
+      "to": "Até",
+      "apply": "Aplicar"
+    },
+    "charts": {
+      "empty": "Nenhum dado para este período.",
+      "loadError": "Não foi possível carregar os dados."
+    },
+    "sales": {
+      "totalRevenue": "RECEITA TOTAL",
+      "totalOrders": "TOTAL DE PEDIDOS",
+      "byChannel": "Por canal",
+      "byStatus": "Por status",
+      "byDay": "Por dia"
+    },
+    "production": {
+      "scrapPct": "% DESCARTE",
+      "piecesPerDay": "PEÇAS POR DIA",
+      "cuttingThroughput": "Throughput de corte",
+      "sewingThroughput": "Throughput de costura"
+    },
+    "inventory": {
+      "currentLevels": "Níveis atuais de estoque",
+      "slowMovers": "Peças paradas",
+      "sku": "SKU",
+      "daysIdle": "Dias parado"
+    },
+    "costs": {
+      "specCosts": "Custos por ficha",
+      "specCode": "FICHA",
+      "laborCost": "CUSTO MO",
+      "trimCost": "CUSTO AVIAMENTOS",
+      "total": "TOTAL",
+      "fabricCost": "Custo médio de tecido por kg"
+    }
+  },
   "settings": {
     "page": {
       "eyebrow": "Ajustes"

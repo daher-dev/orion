@@ -16,10 +16,11 @@ import {
 import { PageHead } from "@/components/page/PageHead";
 import { OrdersTable } from "@/components/orders/OrdersTable";
 import { OrdersEmptyState } from "@/components/orders/OrdersEmptyState";
+import { OrderDetailSheet } from "@/components/orders/OrderDetailSheet";
 import { OrderFormSheet } from "@/components/orders/OrderFormSheet";
 import { useOrders } from "@/hooks/use-orders";
 import { useCanAccess } from "@/hooks/use-permissions";
-import { ORDER_STATUSES, type OrderStatus } from "@/lib/schemas/order";
+import { ORDER_STATUSES, type Order, type OrderStatus } from "@/lib/schemas/order";
 import { ECOMMERCE_CHANNELS, type Ecommerce } from "@/lib/schemas/ad";
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
@@ -42,6 +43,7 @@ export default function OrdersPage() {
   const [status, setStatus] = useState<OrderStatus | "all">("all");
   const [channel, setChannel] = useState<Ecommerce | "all">("all");
   const [creating, setCreating] = useState(false);
+  const [viewing, setViewing] = useState<Order | null>(null);
   const debouncedSearch = useDebouncedValue(search, 200);
 
   const { data, isPending, isError } = useOrders({
@@ -159,13 +161,21 @@ export default function OrdersPage() {
             {t("list.noResults")}
           </p>
         ) : (
-          <OrdersTable rows={rows} />
+          <OrdersTable rows={rows} onView={(o) => setViewing(o)} />
         )}
       </div>
 
       {canWrite ? (
         <OrderFormSheet open={creating} onOpenChange={setCreating} navigateOnCreate />
       ) : null}
+
+      <OrderDetailSheet
+        order={viewing}
+        open={viewing !== null}
+        onOpenChange={(open) => {
+          if (!open) setViewing(null);
+        }}
+      />
     </div>
   );
 }

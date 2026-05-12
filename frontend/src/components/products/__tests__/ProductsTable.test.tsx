@@ -54,6 +54,7 @@ const fixture: Product[] = [
 
 const specCodeById = { "spec-1": "CAM01", "spec-2": "REG02" };
 const printCodeById = { "print-1": "FLR03" };
+const printImageById: Record<string, string | null> = { "print-1": null };
 
 describe("ProductsTable", () => {
   it("renders product name + spec code + print code", () => {
@@ -63,6 +64,7 @@ describe("ProductsTable", () => {
           rows={fixture}
           specCodeById={specCodeById}
           printCodeById={printCodeById}
+          printImageById={printImageById}
           onEdit={() => {}}
         />
       </TestProviders>,
@@ -80,6 +82,7 @@ describe("ProductsTable", () => {
           rows={fixture}
           specCodeById={specCodeById}
           printCodeById={printCodeById}
+          printImageById={printImageById}
           onEdit={() => {}}
         />
       </TestProviders>,
@@ -96,6 +99,7 @@ describe("ProductsTable", () => {
           rows={fixture}
           specCodeById={specCodeById}
           printCodeById={printCodeById}
+          printImageById={printImageById}
           onEdit={onEdit}
         />
       </TestProviders>,
@@ -111,6 +115,7 @@ describe("ProductsTable", () => {
           rows={fixture}
           specCodeById={specCodeById}
           printCodeById={printCodeById}
+          printImageById={printImageById}
           onEdit={() => {}}
         />
       </TestProviders>,
@@ -128,6 +133,7 @@ describe("ProductsTable", () => {
           rows={fixture}
           specCodeById={specCodeById}
           printCodeById={printCodeById}
+          printImageById={printImageById}
           onEdit={() => {}}
         />
       </TestProviders>,

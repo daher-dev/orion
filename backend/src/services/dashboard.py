@@ -27,6 +27,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from models import (
+    Ad,
     AuditLog,
     CuttingOrder,
     CuttingStatus,
@@ -41,6 +42,7 @@ from models import (
 )
 from schemas.dashboard import (
     ActivityItem,
+    ChannelRevenue,
     DashboardKpis,
     DashboardSummary,
     Kpi,
@@ -231,6 +233,53 @@ async def _orders_revenue_sparkline(
     return [by_day.get(today - timedelta(days=i), 0) for i in reversed(range(days))]
 
 
+async def _created_per_day_sparkline(
+    db: AsyncSession,
+    *,
+    model: type,
+    company_id: uuid.UUID,
+    days: int = SPARK_DAYS,
+) -> list[int]:
+    """Generic daily-creation sparkline for any CompanyModel."""
+    day_expr = func.date_trunc("day", model.created_at)
+    rows = await db.exec(
+        scoped(
+            select(
+                day_expr.label("day"),
+                func.count().label("cnt"),
+            ),
+            model,
+            company_id,
+        )
+        .where(model.created_at >= _start_of_window(days - 1))
+        .group_by(day_expr)
+    )
+    by_day: dict[date, int] = {}
+    for day, cnt in rows.all():
+        actual_day = day.date() if isinstance(day, datetime) else day
+        by_day[actual_day] = int(cnt or 0)
+    today = _utc_now().date()
+    return [by_day.get(today - timedelta(days=i), 0) for i in reversed(range(days))]
+
+
+async def _count_created_in_range(
+    db: AsyncSession,
+    *,
+    model: type,
+    company_id: uuid.UUID,
+    since: datetime,
+    until: datetime | None = None,
+) -> int:
+    stmt = scoped(
+        select(func.count()).select_from(model),
+        model,
+        company_id,
+    ).where(model.created_at >= since)
+    if until is not None:
+        stmt = stmt.where(model.created_at < until)
+    return int((await db.exec(stmt)).first() or 0)
+
+
 # --------------------------------------------------------------------------- needs action
 
 
@@ -243,10 +292,11 @@ async def _needs_action(
         db, company_id=company_id, status=OrderStatus.PENDING
     )
     if pending_orders > 0:
+        pedido = "pedido" if pending_orders == 1 else "pedidos"
         items.append(
             NeedsActionItem(
                 kind="orders_pending",
-                message=f"{pending_orders} orders pending payment",
+                message=f"{pending_orders} {pedido} pendente{'s' if pending_orders != 1 else ''} de pagamento",
                 link="/orders?status=pending",
             )
         )
@@ -257,7 +307,7 @@ async def _needs_action(
         items.append(
             NeedsActionItem(
                 kind="stock_low",
-                message=f"{low} SKUs running low",
+                message=f"{low} SKU{'s' if low != 1 else ''} com saldo baixo",
                 link="/stock",
             )
         )
@@ -274,10 +324,11 @@ async def _needs_action(
     )
     overdue = int((await db.exec(overdue_stmt)).first() or 0)
     if overdue > 0:
+        remessa = "remessa" if overdue == 1 else "remessas"
         items.append(
             NeedsActionItem(
                 kind="sewing_overdue",
-                message=f"{overdue} shipments overdue at banca",
+                message=f"{overdue} {remessa} em atraso na banca",
                 link="/sewing",
             )
         )
@@ -290,10 +341,11 @@ async def _needs_action(
     ).where(FabricRoll.current_weight_kg <= Decimal("5"))
     fabric_low = int((await db.exec(fabric_stmt)).first() or 0)
     if fabric_low > 0:
+        rolo = "rolo" if fabric_low == 1 else "rolos"
         items.append(
             NeedsActionItem(
                 kind="fabric_low",
-                message=f"{fabric_low} fabric rolls running low",
+                message=f"{fabric_low} {rolo} de tecido com estoque baixo",
                 link="/fabric",
             )
         )
@@ -330,6 +382,37 @@ async def _activity(
             )
         )
     return items
+
+
+# --------------------------------------------------------------------------- revenue by channel
+
+
+async def _revenue_by_channel(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    days: int = REVENUE_WINDOW_DAYS,
+) -> list[ChannelRevenue]:
+    """Revenue grouped by ecommerce channel for the last ``days`` days."""
+    since = _start_of_window(days)
+    stmt = (
+        scoped(
+            select(
+                Ad.ecommerce.label("channel"),
+                func.coalesce(func.sum(Order.sale_price * Order.quantity), 0).label("revenue"),
+            ).join(Ad, Order.ad_id == Ad.id),
+            Order,
+            company_id,
+        )
+        .where(Order.ordered_at >= since)
+        .group_by(Ad.ecommerce)
+        .order_by(func.sum(Order.sale_price * Order.quantity).desc())
+    )
+    rows = (await db.exec(stmt)).all()
+    return [
+        ChannelRevenue(channel=str(row.channel), revenue=float(row.revenue))
+        for row in rows
+    ]
 
 
 # --------------------------------------------------------------------------- public
@@ -381,17 +464,66 @@ async def get_summary(
 
     revenue_sparkline = await _orders_revenue_sparkline(db, company_id=company_id)
 
+    # Sparklines — daily creation count over last 7 days.
+    orders_spark = await _created_per_day_sparkline(db, model=Order, company_id=company_id)
+    cutting_spark = await _created_per_day_sparkline(
+        db, model=CuttingOrder, company_id=company_id
+    )
+    sewing_spark = await _created_per_day_sparkline(
+        db, model=SewingShipment, company_id=company_id
+    )
+
+    # Deltas — count of entities created in last 30d vs previous 30d.
+    orders_30d = await _count_created_in_range(
+        db, model=Order, company_id=company_id, since=revenue_since
+    )
+    orders_prev = await _count_created_in_range(
+        db, model=Order, company_id=company_id, since=previous_since, until=revenue_since
+    )
+    orders_pending_delta = _delta_pct(float(orders_30d), float(orders_prev))
+
+    cutting_30d = await _count_created_in_range(
+        db, model=CuttingOrder, company_id=company_id, since=revenue_since
+    )
+    cutting_prev = await _count_created_in_range(
+        db, model=CuttingOrder, company_id=company_id, since=previous_since, until=revenue_since
+    )
+    cutting_delta = _delta_pct(float(cutting_30d), float(cutting_prev))
+
+    sewing_30d = await _count_created_in_range(
+        db, model=SewingShipment, company_id=company_id, since=revenue_since
+    )
+    sewing_prev = await _count_created_in_range(
+        db, model=SewingShipment, company_id=company_id, since=previous_since, until=revenue_since
+    )
+    sewing_delta = _delta_pct(float(sewing_30d), float(sewing_prev))
+
     kpis = DashboardKpis(
-        orders_pending=Kpi(label="orders_pending", value=float(orders_pending)),
+        orders_pending=Kpi(
+            label="orders_pending",
+            value=float(orders_pending),
+            delta_pct=orders_pending_delta,
+            sparkline=orders_spark,
+        ),
         orders_revenue_30d=Kpi(
             label="orders_revenue_30d",
             value=revenue_30d_value,
             delta_pct=revenue_delta,
             sparkline=revenue_sparkline,
         ),
-        cutting_pending=Kpi(label="cutting_pending", value=float(cutting_pending)),
+        cutting_pending=Kpi(
+            label="cutting_pending",
+            value=float(cutting_pending),
+            delta_pct=cutting_delta,
+            sparkline=cutting_spark,
+        ),
         stock_low=Kpi(label="stock_low", value=float(stock_low)),
-        banca_active=Kpi(label="banca_active", value=float(banca_active)),
+        banca_active=Kpi(
+            label="banca_active",
+            value=float(banca_active),
+            delta_pct=sewing_delta,
+            sparkline=sewing_spark,
+        ),
     )
 
     # ----- Pipeline -----
@@ -407,12 +539,14 @@ async def get_summary(
     # ----- Lists -----
     needs = await _needs_action(db, company_id=company_id)
     activity = await _activity(db, company_id=company_id)
+    revenue_by_channel = await _revenue_by_channel(db, company_id=company_id)
 
     return DashboardSummary(
         kpis=kpis,
         pipeline=pipeline,
         needs_action=needs,
         activity=activity,
+        revenue_by_channel=revenue_by_channel,
     )
 
 

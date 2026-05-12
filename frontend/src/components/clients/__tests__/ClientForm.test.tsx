@@ -86,6 +86,7 @@ describe("ClientForm", () => {
             address: "X",
             created_at: "2026-05-10T12:00:00Z",
             updated_at: "2026-05-10T12:00:00Z",
+            order_count: 0,
           }}
           onSubmit={() => {}}
         />

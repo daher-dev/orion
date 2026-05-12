@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  ArrowRight,
   Boxes,
   Factory,
   Scissors,
@@ -37,9 +38,18 @@ export function NeedsActionList({ items }: Props) {
   }
   return (
     <section className="flex flex-col gap-3 rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-5">
-      <h2 className="font-serif text-[16px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
-        {t("title")}
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-serif text-[16px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
+          {t("title")}
+        </h2>
+        <Link
+          href="/orders?status=pending"
+          className="flex items-center gap-1 text-[11.5px] font-medium text-[color:var(--orion-ink-3)] hover:text-[color:var(--orion-ink)]"
+        >
+          {t("viewAll")}
+          <ArrowRight size={11} strokeWidth={2} />
+        </Link>
+      </div>
       <ul className="m-0 flex list-none flex-col gap-px p-0">
         {items.map((item, idx) => {
           const meta = KIND_META[item.kind] ?? { icon: AlertTriangle, accent: "var(--brand-reports)" };

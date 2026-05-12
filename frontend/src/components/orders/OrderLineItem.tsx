@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Shirt } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import type { Order } from "@/lib/schemas/order";
@@ -35,10 +36,21 @@ export function OrderLineItem({ order }: Props) {
       className="flex items-center gap-3 py-2.5"
     >
       <span
-        className="grid h-[42px] w-[42px] place-items-center rounded-[8px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface-2)] text-[color:var(--orion-ink-2)]"
+        className="relative grid h-[42px] w-[42px] shrink-0 place-items-center overflow-hidden rounded-[8px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface-2)] text-[color:var(--orion-ink-2)]"
         aria-hidden="true"
       >
-        <Shirt size={20} strokeWidth={1.4} />
+        {order.variation.product.image_url ? (
+          <Image
+            src={order.variation.product.image_url}
+            alt=""
+            fill
+            sizes="42px"
+            className="object-cover"
+            unoptimized
+          />
+        ) : (
+          <Shirt size={20} strokeWidth={1.4} />
+        )}
       </span>
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-medium text-[color:var(--orion-ink)]">

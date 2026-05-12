@@ -28,6 +28,7 @@ class ClientRead(BaseModel):
     address: str | None = None
     created_at: datetime
     updated_at: datetime
+    order_count: int = 0
 
 
 class ClientFilters(BaseModel):

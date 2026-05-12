@@ -152,18 +152,18 @@
     "kpis": {
       "ordersPending": "Pedidos pendentes",
       "ordersRevenue": "Receita 30d",
-      "cuttingPending": "OS de corte abertas",
-      "stockLow": "SKUs com saldo baixo",
-      "bancaActive": "Remessas em banca"
+      "cuttingPending": "Cortes em andamento",
+      "stockLow": "SKUs em ruptura",
+      "bancaActive": "Em bancas"
     },
     "pipeline": {
       "title": "Pipeline de produção",
       "stages": {
-        "pendingOrders": "Pedidos pendentes",
-        "inCutting": "Em corte",
-        "inSewing": "Em costura",
-        "inStock": "Em estoque",
-        "shipped30d": "Enviados 30d"
+        "pendingOrders": "Pedidos",
+        "inCutting": "Corte",
+        "inSewing": "Costura",
+        "inStock": "Estoque",
+        "shipped30d": "Enviadas"
       },
       "sub": "Onde estão suas peças neste momento",
       "footer": "Em média uma peça leva 7.2 dias para sair como pedido entregue."

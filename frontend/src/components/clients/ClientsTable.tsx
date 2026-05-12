@@ -83,9 +83,10 @@ function Avatar({ name, id }: { name: string; id: string }) {
 export type ClientsTableProps = {
   rows: ClientRead[];
   onEdit: (client: ClientRead) => void;
+  onView?: (client: ClientRead) => void;
 };
 
-export function ClientsTable({ rows, onEdit }: ClientsTableProps) {
+export function ClientsTable({ rows, onEdit, onView }: ClientsTableProps) {
   const t = useTranslations("clients");
   const locale = useLocale();
   const canWrite = useCanAccess("clients.write");
@@ -196,7 +197,7 @@ export function ClientsTable({ rows, onEdit }: ClientsTableProps) {
       });
     }
     return base;
-  }, [canWrite, dateFormatter, onEdit, t]);
+  }, [canWrite, dateFormatter, onEdit, onView, t]);
 
   const table = useReactTable({
     data: rows,
@@ -264,7 +265,7 @@ export function ClientsTable({ rows, onEdit }: ClientsTableProps) {
             <tr
               key={row.id}
               className="group/tbl-row cursor-pointer hover:[&_td]:bg-[color:var(--orion-bg)]"
-              onClick={() => onEdit(row.original)}
+              onClick={() => onView ? onView(row.original) : onEdit(row.original)}
             >
               {row.getVisibleCells().map((cell) => (
                 <td

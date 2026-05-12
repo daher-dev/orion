@@ -152,18 +152,18 @@
     "kpis": {
       "ordersPending": "Pending orders",
       "ordersRevenue": "30d revenue",
-      "cuttingPending": "Open cutting jobs",
-      "stockLow": "Low-stock SKUs",
-      "bancaActive": "Shipments in workshop"
+      "cuttingPending": "Cuts in progress",
+      "stockLow": "SKUs out of stock",
+      "bancaActive": "With contractors"
     },
     "pipeline": {
       "title": "Production pipeline",
       "stages": {
-        "pendingOrders": "Pending orders",
-        "inCutting": "In cutting",
-        "inSewing": "In sewing",
-        "inStock": "In stock",
-        "shipped30d": "Shipped 30d"
+        "pendingOrders": "Orders",
+        "inCutting": "Cutting",
+        "inSewing": "Sewing",
+        "inStock": "Stock",
+        "shipped30d": "Shipped"
       },
       "sub": "Where your pieces are right now",
       "footer": "On average a piece takes 7.2 days from order to delivery."

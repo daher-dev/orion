@@ -21,16 +21,6 @@ export function ActivityFeed({ items }: Props) {
   const locale = useLocale();
   const now = new Date();
 
-  if (items.length === 0) {
-    return (
-      <section className="flex h-full flex-col gap-2 rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-5">
-        <h2 className="font-serif text-[16px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
-          {t("title")}
-        </h2>
-        <p className="text-[13px] text-[color:var(--orion-ink-3)]">{t("empty")}</p>
-      </section>
-    );
-  }
   return (
     <section className="flex flex-col gap-3 rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-5">
       <div className="flex items-center justify-between">
@@ -45,6 +35,9 @@ export function ActivityFeed({ items }: Props) {
           <ArrowRight size={11} strokeWidth={2} />
         </Link>
       </div>
+      {items.length === 0 ? (
+        <p className="text-[13px] text-[color:var(--orion-ink-3)]">{t("empty")}</p>
+      ) : (
       <ul className="m-0 flex max-h-[420px] list-none flex-col gap-2 overflow-y-auto p-0">
         {items.map((item) => (
           <li
@@ -58,6 +51,7 @@ export function ActivityFeed({ items }: Props) {
           </li>
         ))}
       </ul>
+      )}
     </section>
   );
 }

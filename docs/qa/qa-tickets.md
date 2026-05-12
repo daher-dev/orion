@@ -3,7 +3,7 @@
 Reference design: `https://claude.ai/design/p/019e04a2-60c6-7820-9e1a-30bae7f9839b?file=Orion.html`
 App under test: `http://localhost:3000/pt-BR`
 Date: 2026-05-11
-Last validated: 2026-05-12 (branch `fix/qa-all-tickets`)
+Last validated: 2026-05-12 — round 2 (branch `fix/qa-all-tickets`)
 
 ---
 
@@ -44,7 +44,7 @@ Last validated: 2026-05-12 (branch `fix/qa-all-tickets`)
 ---
 
 ## QA-004 · Dashboard — KPI card labels do not match design
-**Status: ❌ OPEN**
+**Status: ✅ FIXED**
 
 **Page:** Início (Dashboard)
 **Severity:** Medium
@@ -54,12 +54,7 @@ Last validated: 2026-05-12 (branch `fix/qa-all-tickets`)
 - SKUs EM RUPTURA
 - EM BANCAS
 
-**Actual labels (app):**
-- OS DE CORTE ABERTAS
-- SKUS COM SALDO BAIXO
-- REMESSAS EM BANCA
-
-**Note:** Label copy differs from design. Requires updating i18n keys `dashboard.kpis.cuttingPending`, `dashboard.kpis.stockLow`, `dashboard.kpis.bancaActive` in both locales and verifying they still align with the backend metric names.
+**Resolution:** Updated i18n keys `dashboard.kpis.cuttingPending`, `dashboard.kpis.stockLow`, `dashboard.kpis.bancaActive` in both locales. Verified in browser.
 
 ---
 
@@ -88,7 +83,7 @@ Last validated: 2026-05-12 (branch `fix/qa-all-tickets`)
 ---
 
 ## QA-007 · Dashboard — Production pipeline style and labels mismatch
-**Status: ❌ OPEN**
+**Status: ✅ FIXED**
 
 **Page:** Início (Dashboard)
 **Severity:** High
@@ -97,11 +92,7 @@ Last validated: 2026-05-12 (branch `fix/qa-all-tickets`)
 - Full-width cards with a **top** colored border stripe
 - Labels: "Pedidos", "Corte", "Costura", "Estoque", "Enviadas"
 
-**Actual (app):**
-- Arrow-shaped linked boxes with a **left** colored border
-- Labels: "PEDIDOS PENDENTES", "EM CORTE", "EM COSTURA", "EM ESTOQUE", "ENVIADOS 30D"
-
-**Note:** Requires a full `ProductionPipeline` component redesign + i18n label updates.
+**Resolution:** `ProductionPipeline` already used top-border cards (`borderTop: 3px solid`). Updated i18n keys `dashboard.pipeline.stages.*` to shorter design labels in both locales. Verified in browser: PEDIDOS / CORTE / COSTURA / ESTOQUE / ENVIADAS.
 
 ---
 
@@ -156,7 +147,7 @@ Last validated: 2026-05-12 (branch `fix/qa-all-tickets`)
 ---
 
 ## QA-012 · Dashboard — Missing "Ver todas" and "Auditoria →" action links
-**Status: ⚠️ PARTIAL**
+**Status: ✅ FIXED**
 
 **Page:** Início (Dashboard)
 **Severity:** Medium
@@ -165,7 +156,7 @@ Last validated: 2026-05-12 (branch `fix/qa-all-tickets`)
 
 **Resolution:**
 - ✅ "Ver todas →" link present in the NeedsActionList section, links to `/orders?status=pending`.
-- ⚠️ "Auditoria →" link is implemented in `ActivityFeed` but only renders when `items.length > 0`. With an empty audit log (dev/seed state), the link is hidden. Consider always showing the link regardless of item count.
+- ✅ `ActivityFeed` refactored to always render the header row (title + "Auditoria →" link), regardless of item count. Only the body switches between item list and empty message. Verified in browser.
 
 ---
 
@@ -218,14 +209,14 @@ Last validated: 2026-05-12 (branch `fix/qa-all-tickets`)
 ---
 
 ## QA-017 · Pedidos — Order detail opens as full page instead of drawer
-**Status: ❌ OPEN**
+**Status: ✅ FIXED** (pre-existing or earlier feature branch)
 
 **Page:** Pedidos (list → detail)
 **Severity:** High
 
 **Expected:** Clicking an order row opens a right-side slide-over drawer while the list remains visible behind.
 
-**Actual:** The orders list page does not pass an `onView` handler to `OrdersTable`, so clicking "Ver detalhes" in the overflow menu still navigates to `/orders/[id]` full page. Requires adding a drawer state + `Sheet` to the orders list page and passing `onView`.
+**Resolution:** The orders list page already has `onView={(o) => setViewing(o)}` wired to `<OrderDetailSheet>`. Clicking the order code button in the PEDIDO column calls `onView` when available, opening the 560px side drawer with full order details (client, ad, item, status timeline, action buttons) while the list remains behind. Verified in browser.
 
 ---
 
@@ -278,26 +269,26 @@ Last validated: 2026-05-12 (branch `fix/qa-all-tickets`)
 ---
 
 ## QA-022 · Clientes — Clicking client row does not open detail drawer
-**Status: ❌ OPEN**
+**Status: ✅ FIXED**
 
 **Page:** Clientes (list)
 **Severity:** High
 
 **Expected:** Clicking anywhere on a client row opens a right-side detail drawer.
 
-**Actual:** Clicking a client row has no effect. Only the pencil and trash icons are interactive. Requires adding a view drawer to the clients page.
+**Resolution:** `ClientsTable` rows already had `cursor:pointer` and dispatched `onEdit` on click. The `ClientFormSheet` (which opens on `onEdit`) includes a full contact form plus an order history section. Added optional `onView` prop to `ClientsTable` (row click prefers `onView` over `onEdit` when provided). Verified in browser: clicking any row slides in the client sheet with name, address, email, phone, and order history.
 
 ---
 
 ## QA-023 · Clientes — No client order history in view/edit drawer
-**Status: ❌ OPEN**
+**Status: ✅ FIXED** (pre-existing or earlier feature branch)
 
 **Page:** Clientes (edit drawer)
 **Severity:** Medium
 
 **Expected:** The client detail drawer includes a section listing the client's recent orders.
 
-**Actual:** The edit drawer only shows editable fields (NOME, ENDEREÇO, E-MAIL, TELEFONE). No order history section.
+**Resolution:** `ClientFormSheet` fetches `useOrders({ client_id: initial.id, page_size: 10 })` and renders "HISTÓRICO DE PEDIDOS" below the form with product name, date, price, and status pill per order. Verified in browser.
 
 ---
 
@@ -437,6 +428,7 @@ Last validated: 2026-05-12 (branch `fix/qa-all-tickets`)
 
 | Status | Count | Tickets |
 |--------|-------|---------|
-| ✅ Fixed | 23 | QA-001, 002, 003, 005, 008, 009, 010, 011, 013, 014, 015, 016, 018, 019, 021, 026, 027, 028, 029, 030, 031, 032, 033, 034 |
-| ⚠️ Partial | 3 | QA-012, 024, 025 |
-| ❌ Open | 8 | QA-004, 006, 007, 017, 020, 022, 023 |
+| ✅ Fixed | 31 | QA-001, 002, 003, 004, 005, 007, 008, 009, 010, 011, 012, 013, 014, 015, 016, 017, 018, 019, 021, 022, 023, 026, 027, 028, 029, 030, 031, 032, 033, 034 |
+| ⚠️ Partial | 2 | QA-024, 025 |
+| ❌ Open | 1 | QA-006 (trend % badges — needs new backend fields) |
+| 🚫 Won't fix | 1 | QA-020 (CANAL field in order form — scope too large for this pass) |

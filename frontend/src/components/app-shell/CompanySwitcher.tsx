@@ -43,6 +43,10 @@ export function CompanySwitcher() {
   const activeName =
     memberships.find((m) => m.id === activeId)?.name ?? current?.name ?? t("noCompany");
   const monogram = activeName.slice(0, 1).toUpperCase();
+  // Drive the tile background + orbit dot from the company's saved main_color
+  // so the brand color picker in /settings/company is observable here. Falls
+  // back to indigo while /v1/auth/me is still loading.
+  const brandColor = current?.main_color ?? "#2563eb";
 
   return (
     <DropdownMenu>
@@ -60,11 +64,11 @@ export function CompanySwitcher() {
           {/* .sb-brand-mark */}
           <div
             aria-hidden
-            className={
-              "grid size-8 shrink-0 place-items-center rounded-lg font-serif text-[17px] font-semibold leading-none text-white " +
-              "[box-shadow:inset_0_0_0_1px_rgba(255,255,255,.1),0_4px_12px_-4px_#2563eb] " +
-              "bg-[#2563eb]"
-            }
+            className="grid size-8 shrink-0 place-items-center rounded-lg font-serif text-[17px] font-semibold leading-none text-white"
+            style={{
+              background: brandColor,
+              boxShadow: `inset 0 0 0 1px rgba(255,255,255,.1), 0 4px 12px -4px ${brandColor}`,
+            }}
           >
             {monogram}
           </div>
@@ -73,7 +77,12 @@ export function CompanySwitcher() {
               {activeName}
             </span>
             <span className="mt-1 inline-flex items-center gap-[5px] font-serif text-[10.5px] italic leading-none tracking-[0.06em] text-[#f5efe0]/60">
-              <Orbit className="size-[9px] text-[#2563eb]" strokeWidth={1.8} aria-hidden />
+              <Orbit
+                className="size-[9px]"
+                strokeWidth={1.8}
+                aria-hidden
+                style={{ color: brandColor }}
+              />
               <span>{t("poweredBy")}</span>
             </span>
           </div>

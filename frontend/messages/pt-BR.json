@@ -61,8 +61,8 @@
     "password": "Senha",
     "google": "Continuar com Google",
     "brand": {
-      "wordmark": "Orion",
-      "poweredBy": "por Underground",
+      "wordmark": "Underground",
+      "poweredBy": "por Orion",
       "sigilLabel": "Underground"
     },
     "login": {
@@ -1479,13 +1479,17 @@
     },
     "list": {
       "title": "Ajustes",
-      "sub": "Configure sua conta, equipe e integrações."
+      "sub": "Configure sua conta, equipe, integrações e como você quer ser avisado."
+    },
+    "groups": {
+      "organization": "Organização",
+      "account": "Conta"
     },
     "nav": {
       "company": "Empresa",
       "members": "Membros",
       "roles": "Funções",
-      "billing": "Cobrança",
+      "billing": "Assinatura",
       "audit": "Auditoria",
       "integrations": "Integrações",
       "profile": "Perfil",
@@ -1497,10 +1501,12 @@
       "labels": {
         "name": "Nome da empresa",
         "subdomain": "Subdomínio",
-        "mainColor": "Cor principal"
+        "mainColor": "Cor de destaque"
       },
       "helpers": {
-        "subdomainImmutable": "Não pode ser alterado nesta versão."
+        "subdomainImmutable": "Não pode ser alterado nesta versão.",
+        "displayedAs": "Exibido como <b>“{name} por Orion”</b>.",
+        "colorAppliedTo": "Aparece na sidebar, nos botões primários e nos relatórios em PDF."
       },
       "save": "Salvar alterações",
       "savedToast": "Empresa atualizada",
@@ -1508,6 +1514,21 @@
       "validation": {
         "nameRequired": "Nome é obrigatório",
         "colorInvalid": "Cor inválida"
+      },
+      "dangerZone": {
+        "title": "Zona crítica",
+        "sub": "Ações que afetam todos os dados da empresa.",
+        "export": {
+          "title": "Exportar todos os dados",
+          "body": "Pedidos, fichas, estoque e movimentações — formato CSV.",
+          "action": "Exportar"
+        },
+        "delete": {
+          "title": "Apagar empresa",
+          "body": "Remove todos os dados após 30 dias. Esta ação é irreversível.",
+          "action": "Solicitar exclusão"
+        },
+        "comingSoonToast": "Em breve."
       }
     },
     "profile": {
@@ -1542,6 +1563,18 @@
       "empty": {
         "title": "Em breve",
         "body": "Esta seção será lançada em uma versão futura."
+      },
+      "billing": {
+        "title": "Assinatura — em breve",
+        "body": "Planos, faturas e métodos de pagamento ficarão aqui."
+      },
+      "integrations": {
+        "title": "Integrações — em breve",
+        "body": "Conecte o Orion à sua loja, marketplace e ferramentas contábeis."
+      },
+      "notifications": {
+        "title": "Notificações — em breve",
+        "body": "Configure como você e seu time recebem alertas do Orion."
       }
     },
     "forbidden": {

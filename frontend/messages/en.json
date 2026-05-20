@@ -61,8 +61,8 @@
     "password": "Password",
     "google": "Continue with Google",
     "brand": {
-      "wordmark": "Orion",
-      "poweredBy": "by Underground",
+      "wordmark": "Underground",
+      "poweredBy": "by Orion",
       "sigilLabel": "Underground"
     },
     "login": {
@@ -1479,13 +1479,17 @@
     },
     "list": {
       "title": "Settings",
-      "sub": "Configure your account, team and integrations."
+      "sub": "Configure your account, team, integrations, and how you want to be notified."
+    },
+    "groups": {
+      "organization": "Organization",
+      "account": "Account"
     },
     "nav": {
       "company": "Company",
       "members": "Members",
       "roles": "Roles",
-      "billing": "Billing",
+      "billing": "Subscription",
       "audit": "Audit",
       "integrations": "Integrations",
       "profile": "Profile",
@@ -1497,10 +1501,12 @@
       "labels": {
         "name": "Company name",
         "subdomain": "Subdomain",
-        "mainColor": "Main color"
+        "mainColor": "Highlight color"
       },
       "helpers": {
-        "subdomainImmutable": "Cannot be changed in this version."
+        "subdomainImmutable": "Cannot be changed in this version.",
+        "displayedAs": "Displayed as <b>“{name} by Orion”</b>.",
+        "colorAppliedTo": "Appears in the sidebar, on primary buttons, and on PDF reports."
       },
       "save": "Save changes",
       "savedToast": "Company updated",
@@ -1508,6 +1514,21 @@
       "validation": {
         "nameRequired": "Name is required",
         "colorInvalid": "Invalid color"
+      },
+      "dangerZone": {
+        "title": "Critical zone",
+        "sub": "Actions that affect all of the company's data.",
+        "export": {
+          "title": "Export all data",
+          "body": "Orders, tech specs, stock and movements — CSV format.",
+          "action": "Export"
+        },
+        "delete": {
+          "title": "Delete company",
+          "body": "Removes all data after 30 days. This action is irreversible.",
+          "action": "Request deletion"
+        },
+        "comingSoonToast": "Coming soon."
       }
     },
     "profile": {
@@ -1542,6 +1563,18 @@
       "empty": {
         "title": "Coming soon",
         "body": "This section will launch in a future release."
+      },
+      "billing": {
+        "title": "Subscription — coming soon",
+        "body": "Plans, invoices, and payment methods will live here."
+      },
+      "integrations": {
+        "title": "Integrations — coming soon",
+        "body": "Connect Orion to your shop, marketplace, and accounting tools."
+      },
+      "notifications": {
+        "title": "Notifications — coming soon",
+        "body": "Configure how you and your team get alerts from Orion."
       }
     },
     "forbidden": {

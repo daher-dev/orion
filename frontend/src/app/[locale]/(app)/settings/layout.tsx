@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { Settings as SettingsIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { PageHead } from "@/components/page/PageHead";
 import { SettingsSidebar } from "@/components/settings/SettingsSidebar";
@@ -17,13 +18,16 @@ export default async function SettingsLayout({ children }: { children: ReactNode
   return (
     <div>
       <PageHead
-        mark="A"
+        mark={<SettingsIcon size={11} strokeWidth={2.2} />}
         eyebrow={t("page.eyebrow")}
         title={t("list.title")}
         sub={t("list.sub")}
         subColor="var(--brand-settings)"
       />
-      <div className="grid gap-[18px] md:grid-cols-[220px_1fr]">
+      {/* .settings-grid from /docs/design/source/styles.css —
+          232px sub-nav column, 22px gap, collapses to 200/18 at <1100px
+          and to a single column at <900px. */}
+      <div className="grid items-start gap-[14px] md:gap-[18px] md:grid-cols-[200px_1fr] xl:gap-[22px] xl:grid-cols-[232px_1fr]">
         <aside>
           <SettingsSidebar />
         </aside>

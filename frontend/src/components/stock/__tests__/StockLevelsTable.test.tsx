@@ -78,7 +78,13 @@ describe("StockLevelsTable", () => {
         <StockLevelsTable data={rows} threshold={5} onRowClick={onRowClick} />
       </TestProviders>,
     );
-    fireEvent.click(screen.getAllByTestId("stock-row")[0]);
-    expect(onRowClick).toHaveBeenCalledWith(rows[0]);
+    // Default sort is SKU ascending — CAM01-G-OFF sorts before CAM01-M-BLK.
+    // Click the row whose SKU we expect to be rendered first under that order.
+    const renderedRows = screen.getAllByTestId("stock-row");
+    fireEvent.click(renderedRows[0]);
+    const sortedFirst = [...rows].sort((a, b) =>
+      a.sku.localeCompare(b.sku, "pt-BR"),
+    )[0];
+    expect(onRowClick).toHaveBeenCalledWith(sortedFirst);
   });
 });

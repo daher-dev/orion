@@ -13,6 +13,10 @@ const mutateAsyncExit = vi.fn();
 vi.mock("@/hooks/use-stock", () => ({
   useCreateStockEntry: () => ({ mutateAsync: mutateAsyncEntry, isPending: false }),
   useCreateStockExit: () => ({ mutateAsync: mutateAsyncExit, isPending: false }),
+  // Used by the SKU-picker phase when `variation === null`. Tests always pass
+  // a pre-selected variation so the picker isn't rendered, but the mock still
+  // has to expose the export or the module mock errors at import time.
+  useStockLevels: () => ({ data: { items: [] }, isPending: false }),
 }));
 
 const sampleVariation: VariationStockRead = {

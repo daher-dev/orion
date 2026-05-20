@@ -244,3 +244,19 @@
     font-family: var(--font-mono);
   }
 }
+
+/*
+ * Progress bar pulses — direct port from /docs/design/source/styles.css.
+ * Applied on fabric usage bars in the Fabric table to draw the eye toward
+ * rolls that are nearly empty (danger < 25%) or running low (warn < 50%).
+ */
+@keyframes barDangerPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .55; }
+}
+.bar-danger-pulse { animation: barDangerPulse 1.1s ease-in-out infinite; }
+@keyframes barWarnPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .75; }
+}
+.bar-warn-pulse { animation: barWarnPulse 1.8s ease-in-out infinite; }

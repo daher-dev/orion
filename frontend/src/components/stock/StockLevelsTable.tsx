@@ -1,13 +1,19 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { ChevronRight } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronsUpDown,
+  ChevronUp,
+  FileText,
+} from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import type { VariationStockRead } from "@/lib/schemas/stock";
 import { StockStatusPill } from "@/components/stock/StockStatusPill";
@@ -17,6 +23,10 @@ type Props = {
   threshold: number;
   onRowClick: (row: VariationStockRead) => void;
 };
+
+type SortDir = "asc" | "desc";
+type SortKey = "sku" | "product" | "color" | "size" | "on_hand" | "last_movement_at";
+type SortState = { col: SortKey; dir: SortDir };
 
 /** Best-effort color-code → hex map. Matches the design's swatch palette. */
 function guessHex(code: string): string {
@@ -49,20 +59,144 @@ function parseDate(value: string | null | undefined): Date | null {
 }
 
 /**
+ * Sortable column header — direct port of `SortHeader` from
+ * /docs/design/source/pages/inventory.jsx. Click toggles asc/desc; active
+ * column shows a colored chevron, inactive shows `chevrons-up-down`.
+ */
+function SortableHeader({
+  active,
+  dir,
+  num,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  dir: SortDir;
+  num?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  let Icon: typeof ChevronsUpDown = ChevronsUpDown;
+  if (active) Icon = dir === "asc" ? ChevronUp : ChevronDown;
+  return (
+    <button
+      type="button"
+      data-testid={`sort-header-${String(children).toString().toLowerCase()}`}
+      onClick={onClick}
+      className="inline-flex w-full cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-left text-[10.5px] font-semibold uppercase tracking-[0.08em]"
+      style={{
+        color: active ? "var(--orion-ink)" : "var(--orion-ink-3)",
+        userSelect: "none",
+        justifyContent: num ? "flex-end" : "flex-start",
+      }}
+    >
+      {children}
+      <Icon
+        size={11}
+        style={{
+          color: active ? "var(--brand-inv)" : "var(--orion-ink-3)",
+          opacity: active ? 1 : 0.5,
+        }}
+      />
+    </button>
+  );
+}
+
+/**
  * Variation × on-hand table. Mirrors the inventory.jsx Stock section: SKU mono
  * column, product name + size pill + color swatch, on-hand quantity right-aligned
  * (red if 0, amber if low), status pill, last-movement date.
+ *
+ * Sort is client-side (the dataset is already small enough). Default order is
+ * SKU ascending, matching the design.
  */
 export function StockLevelsTable({ data, threshold, onRowClick }: Props) {
   const t = useTranslations("stock.table.columns");
   const tSizes = useTranslations("products.variations.sizes");
   const format = useFormatter();
+  const [sort, setSort] = useState<SortState>({ col: "sku", dir: "asc" });
+
+  const sortedData = useMemo(() => {
+    const rows = data.slice();
+    const dir = sort.dir === "asc" ? 1 : -1;
+    rows.sort((a, b) => {
+      let av: string | number | null | undefined;
+      let bv: string | number | null | undefined;
+      switch (sort.col) {
+        case "sku":
+          av = a.sku;
+          bv = b.sku;
+          break;
+        case "product":
+          av = a.product.name;
+          bv = b.product.name;
+          break;
+        case "color":
+          av = a.color;
+          bv = b.color;
+          break;
+        case "size":
+          av = a.size;
+          bv = b.size;
+          break;
+        case "on_hand":
+          av = a.on_hand;
+          bv = b.on_hand;
+          break;
+        case "last_movement_at":
+          av = a.last_movement_at ?? "";
+          bv = b.last_movement_at ?? "";
+          break;
+      }
+      if (typeof av === "string" && typeof bv === "string") {
+        return av.localeCompare(bv, "pt-BR") * dir;
+      }
+      return (((av as number) ?? 0) - ((bv as number) ?? 0)) * dir;
+    });
+    return rows;
+  }, [data, sort]);
+
+  function toggleSort(col: SortKey) {
+    setSort((prev) =>
+      prev.col === col
+        ? { col, dir: prev.dir === "asc" ? "desc" : "asc" }
+        : { col, dir: "asc" },
+    );
+  }
 
   const columns = useMemo<ColumnDef<VariationStockRead>[]>(
     () => [
+      // .tbl col 1 — Leading 28×28 surface-2 glyph cell (was missing).
+      // Design pulls a per-garment glyph from GARMENT_GLYPHS; we don't carry
+      // that field on the variation row, so we use a neutral spec/file glyph.
+      {
+        id: "glyph",
+        header: () => null,
+        size: 36,
+        cell: () => (
+          <span
+            aria-hidden
+            className="grid h-7 w-7 place-items-center rounded-[6px]"
+            style={{
+              background: "var(--orion-surface-2)",
+              color: "var(--orion-ink-2)",
+            }}
+          >
+            <FileText size={13} strokeWidth={1.4} />
+          </span>
+        ),
+      },
       {
         accessorKey: "sku",
-        header: t("sku"),
+        header: () => (
+          <SortableHeader
+            active={sort.col === "sku"}
+            dir={sort.dir}
+            onClick={() => toggleSort("sku")}
+          >
+            {t("sku")}
+          </SortableHeader>
+        ),
         size: 160,
         cell: (info) => (
           <span className="font-mono text-[12px] text-[color:var(--orion-ink)]">
@@ -72,7 +206,15 @@ export function StockLevelsTable({ data, threshold, onRowClick }: Props) {
       },
       {
         id: "product",
-        header: t("product"),
+        header: () => (
+          <SortableHeader
+            active={sort.col === "product"}
+            dir={sort.dir}
+            onClick={() => toggleSort("product")}
+          >
+            {t("product")}
+          </SortableHeader>
+        ),
         cell: (info) => (
           <span className="font-medium text-[color:var(--orion-ink)]">
             {info.row.original.product.name}
@@ -80,21 +222,16 @@ export function StockLevelsTable({ data, threshold, onRowClick }: Props) {
         ),
       },
       {
-        id: "size",
-        header: t("size"),
-        size: 80,
-        cell: (info) => (
-          <span
-            className="inline-flex items-center justify-center rounded-full bg-[color:var(--orion-surface-2)] px-2 py-[2px] text-[11.5px] font-semibold tracking-[0.04em]"
-            style={{ fontFamily: "var(--font-mono)", minWidth: 28 }}
-          >
-            {tSizes(info.row.original.size as never)}
-          </span>
-        ),
-      },
-      {
         id: "color",
-        header: t("color"),
+        header: () => (
+          <SortableHeader
+            active={sort.col === "color"}
+            dir={sort.dir}
+            onClick={() => toggleSort("color")}
+          >
+            {t("color")}
+          </SortableHeader>
+        ),
         cell: (info) => (
           <span className="inline-flex items-center gap-2">
             <span
@@ -112,9 +249,45 @@ export function StockLevelsTable({ data, threshold, onRowClick }: Props) {
           </span>
         ),
       },
+      // Size pill — `.pill` styles + font-mono + 600 weight + .04em tracking,
+      // 28px min-width centered. Matches inventory.jsx exactly.
+      {
+        id: "size",
+        header: () => (
+          <SortableHeader
+            active={sort.col === "size"}
+            dir={sort.dir}
+            onClick={() => toggleSort("size")}
+          >
+            {t("size")}
+          </SortableHeader>
+        ),
+        size: 80,
+        cell: (info) => (
+          <span
+            className="inline-flex items-center justify-center rounded-full border bg-[color:var(--orion-surface-2)] px-2 py-[2px] text-[11.5px] font-semibold tracking-[0.04em] text-[color:var(--orion-ink-2)]"
+            style={{
+              fontFamily: "var(--font-mono)",
+              minWidth: 28,
+              borderColor: "var(--orion-line-soft)",
+            }}
+          >
+            {tSizes(info.row.original.size as never)}
+          </span>
+        ),
+      },
       {
         accessorKey: "on_hand",
-        header: () => <span className="block text-right">{t("onHand")}</span>,
+        header: () => (
+          <SortableHeader
+            active={sort.col === "on_hand"}
+            dir={sort.dir}
+            num
+            onClick={() => toggleSort("on_hand")}
+          >
+            {t("onHand")}
+          </SortableHeader>
+        ),
         size: 100,
         cell: (info) => {
           const value = info.getValue() as number;
@@ -137,7 +310,11 @@ export function StockLevelsTable({ data, threshold, onRowClick }: Props) {
       },
       {
         id: "status",
-        header: t("status"),
+        header: () => (
+          <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+            {t("status")}
+          </span>
+        ),
         size: 90,
         cell: (info) => (
           <StockStatusPill onHand={info.row.original.on_hand} threshold={threshold} />
@@ -145,7 +322,15 @@ export function StockLevelsTable({ data, threshold, onRowClick }: Props) {
       },
       {
         id: "last_movement_at",
-        header: t("lastMovement"),
+        header: () => (
+          <SortableHeader
+            active={sort.col === "last_movement_at"}
+            dir={sort.dir}
+            onClick={() => toggleSort("last_movement_at")}
+          >
+            {t("lastMovement")}
+          </SortableHeader>
+        ),
         size: 110,
         cell: (info) => {
           const date = parseDate(info.row.original.last_movement_at);
@@ -168,11 +353,11 @@ export function StockLevelsTable({ data, threshold, onRowClick }: Props) {
         ),
       },
     ],
-    [t, tSizes, format, threshold],
+    [t, tSizes, format, threshold, sort],
   );
 
   const table = useReactTable({
-    data,
+    data: sortedData,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -190,15 +375,13 @@ export function StockLevelsTable({ data, threshold, onRowClick }: Props) {
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="text-left text-[10.5px] font-semibold uppercase"
+                  className="text-left"
                   style={{
                     padding: "10px 14px",
-                    letterSpacing: "0.08em",
-                    color: "var(--orion-ink-3)",
                     background: "var(--orion-bg)",
                     borderBottom: "1px solid var(--orion-line)",
                     width:
-                      header.id === "chevron"
+                      header.id === "chevron" || header.id === "glyph"
                         ? 36
                         : header.column.columnDef.size
                           ? header.column.columnDef.size

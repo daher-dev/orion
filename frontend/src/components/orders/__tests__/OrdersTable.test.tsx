@@ -92,18 +92,17 @@ describe("OrdersTable", () => {
     expect(screen.getByText("EXT-1")).toBeInTheDocument();
   });
 
-  it("exposes the `More actions` dropdown trigger on each row", () => {
-    render(
+  it("renders only a chevron in the row-end actions column", () => {
+    const { container } = render(
       <TestProviders>
         <OrdersTable rows={[baseOrder]} />
       </TestProviders>,
     );
-    // QA-015 moved the per-row actions behind the `⋯` overflow menu, so the
-    // table now exposes a `More actions` trigger instead of inline buttons.
-    // Radix DropdownMenu portals its content outside the test DOM in jsdom,
-    // so we only assert the trigger exists — the dialog flow is covered by
-    // the e2e suite.
-    expect(screen.getByLabelText("More actions")).toBeInTheDocument();
+    // Design directive: tables show a `>` to open the drawer — no ⋯ menu,
+    // no trash. Delete moved to OrderDetailSheet. Asserts both the absence
+    // of the old overflow trigger and the presence of a chevron-right svg.
+    expect(screen.queryByLabelText("More actions")).toBeNull();
+    expect(container.querySelector("svg.lucide-chevron-right")).not.toBeNull();
   });
 
   it("renders a different channel chip per row", () => {

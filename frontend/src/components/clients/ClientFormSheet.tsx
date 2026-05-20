@@ -1,8 +1,19 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
+import { Trash2 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Sheet,
   SheetContent,
@@ -17,6 +28,7 @@ import { ClientForm } from "@/components/clients/ClientForm";
 import { OrderStatusPill } from "@/components/orders/OrderStatusPill";
 import {
   useCreateClient,
+  useDeleteClient,
   useUpdateClient,
 } from "@/hooks/use-clients";
 import { useOrders } from "@/hooks/use-orders";
@@ -33,14 +45,22 @@ export type ClientFormSheetProps = {
   initial?: ClientRead;
 };
 
+// Footer delete button — same .btn footprint as Cancel, --status-err text.
+const DELETE_BUTTON_CLASS =
+  "h-auto gap-[7px] rounded-[6px] border bg-[color:var(--orion-surface)] !px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--status-err)] shadow-none hover:bg-[color:color-mix(in_oklab,var(--status-err)_8%,var(--orion-surface))]";
+
 export function ClientFormSheet({ open, onOpenChange, initial }: ClientFormSheetProps) {
   const t = useTranslations("clients.form");
+  const tActions = useTranslations("clients.actions");
   const format = useFormatter();
   const formId = useId();
   const isEdit = !!initial;
   const createClient = useCreateClient();
   const updateClient = useUpdateClient();
-  const isPending = createClient.isPending || updateClient.isPending;
+  const deleteClient = useDeleteClient();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const isPending =
+    createClient.isPending || updateClient.isPending || deleteClient.isPending;
 
   const ordersQuery = useOrders(
     isEdit && initial ? { client_id: initial.id, page_size: 10 } : undefined,
@@ -55,6 +75,19 @@ export function ClientFormSheet({ open, onOpenChange, initial }: ClientFormSheet
         await createClient.mutateAsync(values);
         toast.success(t("toasts.created"));
       }
+      onOpenChange(false);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : "";
+      toast.error(t("toasts.error"), detail ? { description: detail } : undefined);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isEdit || !initial) return;
+    try {
+      await deleteClient.mutateAsync(initial.id);
+      toast.success(t("toasts.deleted"));
+      setConfirmDelete(false);
       onOpenChange(false);
     } catch (err) {
       const detail = err instanceof Error ? err.message : "";
@@ -136,33 +169,74 @@ export function ClientFormSheet({ open, onOpenChange, initial }: ClientFormSheet
           )}
         </div>
 
-        {/* .sheet-foot — bg=bg, line-soft border-t, padding 14 22, gap 8 right. */}
-        <SheetFooter className="flex-row justify-end gap-2 border-t border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-[22px] py-[14px]">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-            // .btn — 7px 13px padding, 13px text, weight 500, radius 6px,
-            // border line, bg surface
-            className="h-auto gap-[7px] rounded-[6px] border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] !px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] shadow-none hover:bg-[color:var(--orion-surface-2)]"
-          >
-            {t("cancel")}
-          </Button>
-          <Button
-            type="submit"
-            form={formId}
-            disabled={isPending}
-            // .btn-primary — accent bg, white ink, accent-edge border, inset+outer shadow
-            className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-sales)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
-            style={{
-              borderColor: "color-mix(in oklab, var(--brand-sales) 70%, black)",
-            }}
-          >
-            {t("save")}
-          </Button>
+        {/* .sheet-foot — bg=bg, line-soft border-t, padding 14 22, gap 8.
+            Edit mode anchors the destructive action on the left, save/cancel
+            on the right; new-record mode hides the left slot. */}
+        <SheetFooter className="flex-row items-center gap-2 border-t border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-[22px] py-[14px] sm:justify-between">
+          {isEdit ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className={DELETE_BUTTON_CLASS}
+              onClick={() => setConfirmDelete(true)}
+              disabled={isPending}
+            >
+              <Trash2 size={13} strokeWidth={1.8} />
+              {tActions("delete")}
+            </Button>
+          ) : (
+            <span aria-hidden />
+          )}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+              className="h-auto gap-[7px] rounded-[6px] border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] !px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] shadow-none hover:bg-[color:var(--orion-surface-2)]"
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              type="submit"
+              form={formId}
+              disabled={isPending}
+              className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-sales)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
+              style={{
+                borderColor: "color-mix(in oklab, var(--brand-sales) 70%, black)",
+              }}
+            >
+              {t("save")}
+            </Button>
+          </div>
         </SheetFooter>
       </SheetContent>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tActions("delete")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {tActions("confirmDelete")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteClient.isPending}>
+              {t("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleteClient.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
+            >
+              {tActions("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }

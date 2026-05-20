@@ -8,33 +8,11 @@ import {
   type ColumnDef,
   type RowSelectionState,
 } from "@tanstack/react-table";
-import { Eye, MoreHorizontal, Shirt, Trash2 } from "lucide-react";
+import { ChevronRight, Shirt } from "lucide-react";
 import Image from "next/image";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useDeleteOrder } from "@/hooks/use-orders";
-import { useCanAccess } from "@/hooks/use-permissions";
-import { ApiError } from "@/lib/api-client";
 import type { Order } from "@/lib/schemas/order";
 import { variantColor } from "@/lib/variant-color";
 import { OrderChannelChip } from "./OrderChannelChip";
@@ -54,10 +32,7 @@ export function OrdersTable({ rows, onView }: Props) {
   const t = useTranslations("orders");
   const format = useFormatter();
   const locale = useLocale();
-  const canWrite = useCanAccess("orders.write");
-  const [pendingDelete, setPendingDelete] = useState<Order | null>(null);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const deleteOrder = useDeleteOrder();
   const router = useRouter();
 
   const currency = useMemo(
@@ -239,64 +214,26 @@ export function OrdersTable({ rows, onView }: Props) {
           );
         },
       },
-      // actions — ⋯ dropdown (QA-015) with View detail + Delete
+      // Row-end chevron — the entire row is the click target; delete and
+      // any other row operations live on the detail drawer that opens.
       {
-        id: "actions",
-        header: () => <span className="sr-only">{t("table.columns.actions")}</span>,
-        cell: ({ row }) => (
+        id: "chevron",
+        header: () => null,
+        cell: () => (
           <div className="flex items-center justify-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t("actions.moreActions")}
-                  onClick={(e) => e.stopPropagation()}
-                  className="h-7 w-7 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)]"
-                >
-                  <MoreHorizontal size={14} strokeWidth={1.8} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[150px]">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onView) {
-                      onView(row.original);
-                    } else {
-                      router.push(`/orders/${row.original.id}`);
-                    }
-                  }}
-                  className="gap-2 text-[13px]"
-                >
-                  <Eye size={13} />
-                  {t("actions.viewDetail")}
-                </DropdownMenuItem>
-                {canWrite ? (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPendingDelete(row.original);
-                      }}
-                      className="gap-2 text-[13px] text-[color:var(--status-err)] focus:text-[color:var(--status-err)]"
-                    >
-                      <Trash2 size={13} />
-                      {t("actions.delete")}
-                    </DropdownMenuItem>
-                  </>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ChevronRight
+              aria-hidden
+              size={14}
+              strokeWidth={1.8}
+              className="text-[color:var(--orion-ink-3)]"
+            />
           </div>
         ),
       },
     ];
 
     return base;
-  }, [canWrite, currency, format, onView, router, t]);
+  }, [currency, format, t]);
 
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
 
@@ -308,23 +245,6 @@ export function OrdersTable({ rows, onView }: Props) {
     getCoreRowModel: getCoreRowModel(),
     enableRowSelection: true,
   });
-
-  async function handleConfirmDelete() {
-    if (!pendingDelete) return;
-    try {
-      await deleteOrder.mutateAsync(pendingDelete.id);
-      toast.success(t("form.toasts.deleted"));
-      setPendingDelete(null);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        toast.error(t("form.toasts.deleteBlocked"));
-      } else {
-        const detail = err instanceof Error ? err.message : "";
-        toast.error(t("form.toasts.error"), detail ? { description: detail } : undefined);
-      }
-      setPendingDelete(null);
-    }
-  }
 
   return (
     <>
@@ -408,35 +328,6 @@ export function OrdersTable({ rows, onView }: Props) {
           </tbody>
         </table>
       </div>
-
-      <AlertDialog
-        open={pendingDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingDelete(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("actions.delete")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("actions.confirmDelete")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteOrder.isPending}>
-              {t("form.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={deleteOrder.isPending}
-              onClick={(e) => {
-                e.preventDefault();
-                void handleConfirmDelete();
-              }}
-            >
-              {t("actions.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

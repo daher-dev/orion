@@ -1,9 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Layers, Rows3, Scissors } from "lucide-react";
+import { Check, Layers, Rows3, Scissors, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Sheet,
   SheetContent,
@@ -20,8 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useUpdateCuttingOrder } from "@/hooks/use-cutting";
+import { NumberInput } from "@/components/ui/number-input";
+import { useDeleteCuttingOrder, useUpdateCuttingOrder } from "@/hooks/use-cutting";
 import {
   CUTTING_STATUSES,
   sumOutputs,
@@ -47,9 +57,16 @@ const SECTION_CLASS =
 const SHEET_CLASS =
   "flex h-full w-[480px] max-w-full flex-col gap-0 border-l border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-0 shadow-[-8px_0_32px_-8px_rgba(31,27,21,0.18)] sm:max-w-none";
 
+// Footer delete button — matches Cancel's .btn footprint, painted in
+// --status-err so it reads destructive. Anchors the left of the footer.
+const DELETE_BUTTON_CLASS =
+  "h-auto gap-[7px] rounded-[6px] border bg-[color:var(--orion-surface)] px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--status-err)] shadow-none hover:bg-[color:color-mix(in_oklab,var(--status-err)_8%,var(--orion-surface))]";
+
 export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
   const t = useTranslations("cutting");
   const update = useUpdateCuttingOrder();
+  const remove = useDeleteCuttingOrder();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const [status, setStatus] = useState<CuttingStatus>(order?.status ?? "pending");
   const [actualMap, setActualMap] = useState<Record<string, number>>(
@@ -78,6 +95,19 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
         },
       });
       toast.success(t("form.toasts.updated"));
+      onOpenChange(false);
+    } catch (err) {
+      const detail = err instanceof ApiError ? err.detail : (err instanceof Error ? err.message : "");
+      toast.error(t("form.toasts.error"), detail ? { description: detail } : undefined);
+    }
+  }
+
+  async function handleDelete() {
+    if (!order) return;
+    try {
+      await remove.mutateAsync(order.id);
+      toast.success(t("form.toasts.deleted"));
+      setConfirmDelete(false);
       onOpenChange(false);
     } catch (err) {
       const detail = err instanceof ApiError ? err.detail : (err instanceof Error ? err.message : "");
@@ -284,19 +314,20 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
                         <span className="font-mono text-[13px] font-medium text-[color:var(--orion-ink)]">
                           {s.toUpperCase()}
                         </span>
-                        <Input
-                          type="number"
+                        <NumberInput
+                          tone="prod"
+                          step={1}
                           min={0}
-                          inputMode="numeric"
-                          value={actual}
+                          decimals={0}
+                          align="center"
                           aria-label={`${s.toUpperCase()} ${t("detail.actualOutputs")}`}
-                          onChange={(e) =>
+                          value={actual}
+                          onChange={(next) =>
                             setActualMap((prev) => ({
                               ...prev,
-                              [s]: Math.max(0, Number(e.target.value) || 0),
+                              [s]: next === "" ? 0 : Math.max(0, Number(next) || 0),
                             }))
                           }
-                          className={`${FIELD_INPUT_CLASS} h-auto w-full max-w-[68px] text-center`}
                         />
                         {/* Mini per-size progress bar mirrors the design row's
                             inline progress. */}
@@ -330,29 +361,71 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
         </div>
 
         <SheetFooter
-          className="flex-row items-center gap-2 border-t border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] p-0 sm:justify-end"
+          className="flex-row items-center gap-2 border-t border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] p-0 sm:justify-between"
           style={{ padding: "14px 22px" }}
         >
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            className="h-auto gap-[7px] rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] shadow-none hover:bg-[color:var(--orion-surface-2)]"
-          >
-            {t("detail.close")}
-          </Button>
-          <Button
-            type="button"
-            disabled={update.isPending}
-            onClick={() => void handleSave()}
-            className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-prod)] px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
-            style={{ borderColor: "color-mix(in oklab, var(--brand-prod) 70%, black)" }}
-          >
-            <Check size={13} strokeWidth={2.2} />
-            {t("detail.save")}
-          </Button>
+          {order ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className={DELETE_BUTTON_CLASS}
+              onClick={() => setConfirmDelete(true)}
+              disabled={update.isPending || remove.isPending}
+            >
+              <Trash2 size={13} strokeWidth={1.8} />
+              {t("actions.delete")}
+            </Button>
+          ) : (
+            <span aria-hidden />
+          )}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className="h-auto gap-[7px] rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] shadow-none hover:bg-[color:var(--orion-surface-2)]"
+            >
+              {t("detail.close")}
+            </Button>
+            <Button
+              type="button"
+              disabled={update.isPending || remove.isPending}
+              onClick={() => void handleSave()}
+              className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-prod)] px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
+              style={{ borderColor: "color-mix(in oklab, var(--brand-prod) 70%, black)" }}
+            >
+              <Check size={13} strokeWidth={2.2} />
+              {t("detail.save")}
+            </Button>
+          </div>
         </SheetFooter>
       </SheetContent>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("actions.delete")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("actions.confirmDelete")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={remove.isPending}>
+              {t("form.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={remove.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
+            >
+              {t("actions.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }

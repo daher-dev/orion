@@ -15,25 +15,9 @@ import {
   ChevronsUpDown,
   ChevronUp,
   Palette,
-  Pencil,
-  Trash2,
 } from "lucide-react";
 import Image from "next/image";
 import { useFormatter, useTranslations } from "next-intl";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { useDeletePrint } from "@/hooks/use-prints";
-import { useCanAccess } from "@/hooks/use-permissions";
 import type { Print } from "@/lib/schemas/print";
 
 const cellInk = "text-[color:var(--orion-ink-2)]";
@@ -97,10 +81,7 @@ export type PrintsTableProps = {
 export function PrintsTable({ rows, onEdit }: PrintsTableProps) {
   const t = useTranslations("prints");
   const format = useFormatter();
-  const canWrite = useCanAccess("prints.write");
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [pendingDelete, setPendingDelete] = useState<Print | null>(null);
-  const deletePrint = useDeletePrint();
 
   const columns = useMemo<ColumnDef<Print>[]>(() => {
     const base: ColumnDef<Print>[] = [
@@ -140,50 +121,22 @@ export function PrintsTable({ rows, onEdit }: PrintsTableProps) {
       },
     ];
 
+    // Row-end chevron — entire row is the click target. Delete lives in
+    // the edit drawer that opens on click.
     base.push({
-      id: "actions",
-      header: () => <span className="sr-only">{t("table.columns.actions")}</span>,
+      id: "chevron",
+      header: () => null,
       enableSorting: false,
-      size: 100,
-      cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1">
-          {canWrite ? (
-            <>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label={t("actions.edit")}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(row.original);
-                }}
-                className="h-7 w-7 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
-              >
-                <Pencil className="size-3.5" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label={t("actions.delete")}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPendingDelete(row.original);
-                }}
-                className="h-7 w-7 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
-            </>
-          ) : null}
+      size: 36,
+      cell: () => (
+        <div className="flex items-center justify-end">
           <ChevronRight aria-hidden className="size-3.5 text-[color:var(--orion-ink-3)]" />
         </div>
       ),
     });
 
     return base;
-  }, [canWrite, format, onEdit, t]);
+  }, [format, t]);
 
   const table = useReactTable({
     data: rows,
@@ -194,21 +147,8 @@ export function PrintsTable({ rows, onEdit }: PrintsTableProps) {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  const handleConfirmDelete = async () => {
-    if (!pendingDelete) return;
-    try {
-      await deletePrint.mutateAsync(pendingDelete.id);
-      toast.success(t("form.toasts.deleted"));
-      setPendingDelete(null);
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : "";
-      toast.error(t("form.toasts.error"), detail ? { description: detail } : undefined);
-    }
-  };
-
   return (
-    <>
-      <table className="w-full border-separate border-spacing-0 text-[13px]">
+    <table className="w-full border-separate border-spacing-0 text-[13px]">
         <thead>
           {table.getHeaderGroups().map((hg) => (
             <tr key={hg.id}>
@@ -279,38 +219,5 @@ export function PrintsTable({ rows, onEdit }: PrintsTableProps) {
           ))}
         </tbody>
       </table>
-
-      <AlertDialog
-        open={pendingDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingDelete(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Palette className="size-4 text-[color:var(--brand-catalog)]" />
-              {t("actions.delete")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>{t("actions.confirmDelete")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletePrint.isPending}>
-              {t("form.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={deletePrint.isPending}
-              onClick={(e) => {
-                e.preventDefault();
-                void handleConfirmDelete();
-              }}
-            >
-              {t("actions.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   );
 }

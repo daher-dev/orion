@@ -91,7 +91,7 @@ describe("ProductsTable", () => {
     expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("invokes onEdit when the edit button is clicked", () => {
+  it("invokes onEdit when a row is clicked (whole row is the trigger)", () => {
     const onEdit = vi.fn();
     render(
       <TestProviders>
@@ -104,12 +104,17 @@ describe("ProductsTable", () => {
         />
       </TestProviders>,
     );
-    fireEvent.click(screen.getAllByLabelText("Edit")[0]);
+    // Tables consolidated their actions to a single row-end chevron — the
+    // whole row opens the edit drawer; delete moved into that drawer.
+    const tbody = screen.getByTestId("products-table").querySelector("tbody");
+    const firstRow = tbody?.querySelectorAll("tr")[0];
+    expect(firstRow).toBeDefined();
+    fireEvent.click(firstRow!);
     expect(onEdit).toHaveBeenCalledWith(fixture[0]);
   });
 
-  it("opens the confirm-delete dialog when delete is clicked", () => {
-    render(
+  it("does not render inline edit / delete buttons", () => {
+    const { container } = render(
       <TestProviders>
         <ProductsTable
           rows={fixture}
@@ -120,10 +125,12 @@ describe("ProductsTable", () => {
         />
       </TestProviders>,
     );
-    fireEvent.click(screen.getAllByLabelText("Delete")[0]);
+    expect(screen.queryByLabelText("Edit")).toBeNull();
+    expect(screen.queryByLabelText("Delete")).toBeNull();
+    // …only the chevron-right marker at the row end.
     expect(
-      screen.getByText("Delete this product? This cannot be undone."),
-    ).toBeInTheDocument();
+      container.querySelectorAll("svg.lucide-chevron-right").length,
+    ).toBeGreaterThan(0);
   });
 
   it("renders the variation count column", () => {

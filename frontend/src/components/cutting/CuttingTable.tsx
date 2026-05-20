@@ -1,28 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { ChevronRight, Trash2 } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { useDeleteCuttingOrder } from "@/hooks/use-cutting";
-import { useCanAccess } from "@/hooks/use-permissions";
 import { sumOutputs, type CuttingOrder } from "@/lib/schemas/cutting";
 import { CuttingStatusPill } from "./CuttingStatusPill";
 
@@ -41,9 +27,6 @@ function shortId(id: string): string {
 export function CuttingTable({ rows, onView }: Props) {
   const t = useTranslations("cutting");
   const format = useFormatter();
-  const canWrite = useCanAccess("cutting.write");
-  const [pendingDelete, setPendingDelete] = useState<CuttingOrder | null>(null);
-  const deleteOrder = useDeleteCuttingOrder();
 
   const columns = useMemo<ColumnDef<CuttingOrder>[]>(() => {
     const base: ColumnDef<CuttingOrder>[] = [
@@ -147,41 +130,24 @@ export function CuttingTable({ rows, onView }: Props) {
       },
     ];
 
+    // Row-end chevron — the whole row is the click target; delete lives
+    // in the detail drawer that opens on click.
     base.push({
-      id: "actions",
-      header: () => <span className="sr-only">{t("table.columns.actions")}</span>,
-      cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1">
-          {canWrite ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t("actions.delete")}
-              onClick={(e) => {
-                e.stopPropagation();
-                setPendingDelete(row.original);
-              }}
-              className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--status-err)]"
-            >
-              <Trash2 size={13} strokeWidth={1.8} />
-            </Button>
-          ) : null}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t("actions.view")}
-            onClick={(e) => { e.stopPropagation(); onView(row.original); }}
-            className="h-7 w-7 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)]"
-          >
-            <ChevronRight size={14} strokeWidth={1.8} />
-          </Button>
+      id: "chevron",
+      header: () => null,
+      cell: () => (
+        <div className="flex items-center justify-end">
+          <ChevronRight
+            aria-hidden
+            size={14}
+            strokeWidth={1.8}
+            className="text-[color:var(--orion-ink-3)]"
+          />
         </div>
       ),
     });
     return base;
-  }, [canWrite, format, onView, t]);
+  }, [format, t]);
 
   const table = useReactTable({
     data: rows,
@@ -189,21 +155,8 @@ export function CuttingTable({ rows, onView }: Props) {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  async function handleConfirmDelete() {
-    if (!pendingDelete) return;
-    try {
-      await deleteOrder.mutateAsync(pendingDelete.id);
-      toast.success(t("form.toasts.deleted"));
-      setPendingDelete(null);
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : "";
-      toast.error(t("form.toasts.error"), detail ? { description: detail } : undefined);
-    }
-  }
-
   return (
-    <>
-      <div className="overflow-x-auto">
+    <div className="overflow-x-auto">
         {/* .tbl — direct port of /docs/design/source/styles.css */}
         <table className="w-full border-separate border-spacing-0 text-[13px]">
           <thead>
@@ -248,35 +201,5 @@ export function CuttingTable({ rows, onView }: Props) {
           </tbody>
         </table>
       </div>
-
-      <AlertDialog
-        open={pendingDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingDelete(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("actions.delete")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("actions.confirmDelete")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteOrder.isPending}>
-              {t("form.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={deleteOrder.isPending}
-              onClick={(e) => {
-                e.preventDefault();
-                void handleConfirmDelete();
-              }}
-            >
-              {t("actions.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   );
 }

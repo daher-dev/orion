@@ -7,12 +7,14 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InviteSheet } from "@/components/settings/members/InviteSheet";
+import { MemberDetailSheet } from "@/components/settings/members/MemberDetailSheet";
 import { MembersTable } from "@/components/settings/members/MembersTable";
 import { PendingInvitesList } from "@/components/settings/members/PendingInvitesList";
 import { useInvites } from "@/hooks/use-invites";
 import { useMembers } from "@/hooks/use-members";
 import { useCanAccess } from "@/hooks/use-permissions";
 import { useRoles } from "@/hooks/use-roles";
+import type { MemberRead } from "@/lib/schemas/member";
 
 export default function SettingsMembersPage() {
   const t = useTranslations("members");
@@ -24,6 +26,7 @@ export default function SettingsMembersPage() {
   const invites = useInvites();
   const roles = useRoles();
   const [openInvite, setOpenInvite] = useState(false);
+  const [viewing, setViewing] = useState<MemberRead | null>(null);
 
   if (!canRead) {
     return (
@@ -69,7 +72,7 @@ export default function SettingsMembersPage() {
             <Skeleton className="h-9" />
           </div>
         ) : members.data && members.data.items.length > 0 ? (
-          <MembersTable rows={members.data.items} roles={roles.data ?? []} />
+          <MembersTable rows={members.data.items} onView={setViewing} />
         ) : (
           <div className="px-6 py-14 text-center text-[color:var(--orion-ink-3)]" data-testid="members-empty">
             <h3 className="mb-1.5 font-serif text-[17px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
@@ -113,6 +116,14 @@ export default function SettingsMembersPage() {
       </section>
 
       <InviteSheet open={openInvite} onOpenChange={setOpenInvite} />
+      <MemberDetailSheet
+        member={viewing}
+        open={viewing !== null}
+        onOpenChange={(o) => {
+          if (!o) setViewing(null);
+        }}
+        roles={roles.data ?? []}
+      />
     </div>
   );
 }

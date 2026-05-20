@@ -4,22 +4,9 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MembersTable } from "@/components/settings/members/MembersTable";
 import { TestProviders } from "@/__tests__/test-utils";
 import type { MemberRead } from "@/lib/schemas/member";
-import type { RoleList } from "@/lib/schemas/role";
 
 vi.mock("@/hooks/use-permissions", () => ({
   useCanAccess: () => true,
-}));
-
-const mutateAsync = vi.fn().mockResolvedValue(undefined);
-const removeMutate = vi.fn().mockResolvedValue(undefined);
-
-vi.mock("@/hooks/use-members", () => ({
-  useUpdateMemberRole: () => ({ mutateAsync, isPending: false }),
-  useRemoveMember: () => ({ mutateAsync: removeMutate, isPending: false }),
-}));
-
-vi.mock("@/hooks/use-roles", () => ({
-  useRoles: () => ({ data: undefined, isPending: false }),
 }));
 
 const adminRole = {
@@ -36,7 +23,6 @@ const managerRole = {
   description: "",
   permissions: [],
 };
-const roles: RoleList = [adminRole, managerRole];
 
 const rows: MemberRead[] = [
   {
@@ -61,9 +47,10 @@ const rows: MemberRead[] = [
 
 describe("MembersTable", () => {
   it("renders members and their emails", () => {
+    const onView = vi.fn();
     render(
       <TestProviders>
-        <MembersTable rows={rows} roles={roles} />
+        <MembersTable rows={rows} onView={onView} />
       </TestProviders>,
     );
     expect(screen.getByText("Alfa Admin")).toBeInTheDocument();
@@ -71,26 +58,39 @@ describe("MembersTable", () => {
     expect(screen.getByText("Beta Manager")).toBeInTheDocument();
   });
 
-  it("opens remove confirmation when the trash icon is clicked", () => {
+  it("renders the role name in the row instead of a select", () => {
+    const onView = vi.fn();
     render(
       <TestProviders>
-        <MembersTable rows={rows} roles={roles} />
+        <MembersTable rows={rows} onView={onView} />
       </TestProviders>,
     );
-    const removeButtons = screen.getAllByTestId("member-remove");
-    fireEvent.click(removeButtons[0]);
-    expect(
-      screen.getByText(/Remove this member/i),
-    ).toBeInTheDocument();
+    // Role select moved into MemberDetailSheet; the row now shows the name.
+    expect(screen.getByText("Administrator")).toBeInTheDocument();
+    expect(screen.getByText("Manager")).toBeInTheDocument();
+    expect(screen.queryByTestId("role-select-trigger")).toBeNull();
   });
 
-  it("renders a role select trigger per row", () => {
+  it("calls onView with the clicked member", () => {
+    const onView = vi.fn();
     render(
       <TestProviders>
-        <MembersTable rows={rows} roles={roles} />
+        <MembersTable rows={rows} onView={onView} />
       </TestProviders>,
     );
-    const triggers = screen.getAllByTestId("role-select-trigger");
-    expect(triggers.length).toBe(2);
+    const rowsRendered = screen.getAllByTestId("members-row");
+    fireEvent.click(rowsRendered[0]);
+    expect(onView).toHaveBeenCalledWith(rows[0]);
+  });
+
+  it("does not render an inline trash / remove button", () => {
+    const onView = vi.fn();
+    render(
+      <TestProviders>
+        <MembersTable rows={rows} onView={onView} />
+      </TestProviders>,
+    );
+    // Delete moved into the detail drawer; the row only shows a chevron.
+    expect(screen.queryByTestId("member-remove")).toBeNull();
   });
 });

@@ -61,29 +61,33 @@ describe("ClientsTable", () => {
     expect(dashes.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("invokes onEdit when the edit button is clicked", () => {
+  it("opens the edit drawer when a row is clicked (whole row is the trigger)", () => {
     const onEdit = vi.fn();
     render(
       <TestProviders>
         <ClientsTable rows={rows} onEdit={onEdit} />
       </TestProviders>,
     );
-    const editButtons = screen.getAllByLabelText("Edit");
-    fireEvent.click(editButtons[0]);
+    // Tables consolidated their actions to a single row-end chevron —
+    // delete moved to ClientFormSheet. Row click opens the drawer.
+    const tbody = document.querySelector("tbody");
+    const firstRow = tbody?.querySelectorAll("tr")[0];
+    expect(firstRow).toBeDefined();
+    fireEvent.click(firstRow!);
     expect(onEdit).toHaveBeenCalledWith(rows[0]);
   });
 
-  it("opens the delete confirmation when delete is clicked", () => {
-    render(
+  it("does not render inline edit / delete buttons", () => {
+    const { container } = render(
       <TestProviders>
         <ClientsTable rows={rows} onEdit={() => {}} />
       </TestProviders>,
     );
-    const deleteButtons = screen.getAllByLabelText("Delete");
-    fireEvent.click(deleteButtons[0]);
+    expect(screen.queryByLabelText("Edit")).toBeNull();
+    expect(screen.queryByLabelText("Delete")).toBeNull();
     expect(
-      screen.getByText("Delete this client? This cannot be undone."),
-    ).toBeInTheDocument();
+      container.querySelectorAll("svg.lucide-chevron-right").length,
+    ).toBeGreaterThan(0);
   });
 
   it("renders sortable header that toggles direction", () => {

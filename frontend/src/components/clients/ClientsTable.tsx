@@ -11,28 +11,13 @@ import {
 } from "@tanstack/react-table";
 import {
   ChevronDown,
+  ChevronRight,
   ChevronsUpDown,
   ChevronUp,
-  Pencil,
-  Trash2,
   Users as UsersIcon,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { useDeleteClient } from "@/hooks/use-clients";
-import { useCanAccess } from "@/hooks/use-permissions";
 import type { ClientRead } from "@/lib/schemas/client";
-import { toast } from "sonner";
 
 /**
  * Table mirroring `.tbl` from /docs/design/source/styles.css:
@@ -98,10 +83,7 @@ export type ClientsTableProps = {
 export function ClientsTable({ rows, onEdit, onView }: ClientsTableProps) {
   const t = useTranslations("clients");
   const locale = useLocale();
-  const canWrite = useCanAccess("clients.write");
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [pendingDelete, setPendingDelete] = useState<ClientRead | null>(null);
-  const deleteClient = useDeleteClient();
 
   const dateFormatter = useMemo(
     () =>
@@ -172,41 +154,23 @@ export function ClientsTable({ rows, onEdit, onView }: ClientsTableProps) {
       },
     ];
 
-    if (canWrite) {
-      base.push({
-        id: "actions",
-        header: () => (
-          <span className="sr-only">{t("table.columns.actions")}</span>
-        ),
-        cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t("actions.edit")}
-              onClick={(e) => { e.stopPropagation(); onEdit(row.original); }}
-              className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
-            >
-              <Pencil className="size-3.5" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t("actions.delete")}
-              onClick={(e) => { e.stopPropagation(); setPendingDelete(row.original); }}
-              className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
-            >
-              <Trash2 className="size-3.5" />
-            </Button>
-          </div>
-        ),
-        enableSorting: false,
-      });
-    }
+    // Row-end chevron — entire row is the click target; edit + delete both
+    // live in the form sheet that opens on click.
+    base.push({
+      id: "chevron",
+      header: () => null,
+      cell: () => (
+        <div className="flex items-center justify-end">
+          <ChevronRight
+            aria-hidden
+            className="size-3.5 text-[color:var(--orion-ink-3)]"
+          />
+        </div>
+      ),
+      enableSorting: false,
+    });
     return base;
-  }, [canWrite, dateFormatter, onEdit, onView, t]);
+  }, [dateFormatter, t]);
 
   const table = useReactTable({
     data: rows,
@@ -217,22 +181,9 @@ export function ClientsTable({ rows, onEdit, onView }: ClientsTableProps) {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  const handleConfirmDelete = async () => {
-    if (!pendingDelete) return;
-    try {
-      await deleteClient.mutateAsync(pendingDelete.id);
-      toast.success(t("form.toasts.deleted"));
-      setPendingDelete(null);
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : "";
-      toast.error(t("form.toasts.error"), detail ? { description: detail } : undefined);
-    }
-  };
-
   return (
-    <>
-      {/* .tbl — full width, separate borders, 13px body. */}
-      <table className="w-full border-separate border-spacing-0 text-[13px]">
+    /* .tbl — full width, separate borders, 13px body. */
+    <table className="w-full border-separate border-spacing-0 text-[13px]">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
@@ -294,40 +245,5 @@ export function ClientsTable({ rows, onEdit, onView }: ClientsTableProps) {
           ))}
         </tbody>
       </table>
-
-      <AlertDialog
-        open={pendingDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingDelete(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <UsersIcon className="size-4 text-[color:var(--brand-sales)]" />
-              {t("actions.delete")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("actions.confirmDelete")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteClient.isPending}>
-              {t("form.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={deleteClient.isPending}
-              onClick={(e) => {
-                e.preventDefault();
-                void handleConfirmDelete();
-              }}
-            >
-              {t("actions.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   );
 }

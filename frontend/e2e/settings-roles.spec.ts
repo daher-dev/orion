@@ -3,42 +3,78 @@ import { test, expect, type Page } from "@playwright/test";
 /**
  * E2E coverage for FEATURE-002 — Settings: Members & Roles (roles tab).
  *
- * The roles page is read-only and renders the permission matrix from the
- * seeded `admin / manager / operator` roles. We only need a working backend
- * and the dev-bypass auth path to drive these specs.
+ * The roles page is read-only and renders the design-aligned permission
+ * matrix from the seeded `admin / manager / operator` roles. It also renders
+ * a 3-up grid of role tiles above the matrix, and a legend strip below.
+ *
+ * We only need a working backend and the dev-bypass auth path to drive these
+ * specs.
  */
 
 async function gotoRoles(page: Page) {
   await page.goto("/pt-BR/settings/roles");
-  await expect(page.getByText("Funções e permissões", { exact: true })).toBeVisible();
+  // The matrix card head shows the design's PT-BR title.
+  await expect(page.getByText("Matriz de permissões", { exact: true })).toBeVisible();
 }
 
-test.describe("Settings: Roles matrix", () => {
-  test("renders all three seeded roles as columns", async ({ page }) => {
+test.describe("Settings: Roles design", () => {
+  test("renders one tile per seeded role with friendly i18n name", async ({ page }) => {
     await gotoRoles(page);
-    await expect(page.getByText("Administrator", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("Manager", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("Operator", { exact: true }).first()).toBeVisible();
+    const tiles = page.getByTestId("role-tile");
+    await expect(tiles).toHaveCount(3);
+    // PT-BR friendly names from roles.tiles.byCode.<code>.name.
+    await expect(page.locator('[data-role-code="admin"]').first()).toContainText("Admin");
+    await expect(page.locator('[data-role-code="manager"]').first()).toContainText("Gestor");
+    await expect(page.locator('[data-role-code="operator"]').first()).toContainText("Operador");
   });
 
-  test("renders one row per permission domain", async ({ page }) => {
+  test("renders the five capability groups from the design source", async ({ page }) => {
+    await gotoRoles(page);
+    await expect(page.getByTestId("matrix-group")).toHaveCount(5);
+    // Group labels are the PT-BR strings from roles.matrix.groups.*.
+    await expect(page.getByText("Vendas", { exact: true })).toBeVisible();
+    await expect(page.getByText("Catálogo", { exact: true })).toBeVisible();
+    await expect(page.getByText("Produção", { exact: true })).toBeVisible();
+    await expect(page.getByText("Sistema", { exact: true })).toBeVisible();
+  });
+
+  test("renders 16 capability rows from the design source", async ({ page }) => {
     await gotoRoles(page);
     const rows = page.getByTestId("matrix-row");
-    await expect(rows).toHaveCount(14);
+    await expect(rows).toHaveCount(16);
   });
 
-  test("admin column has read+write checks for users domain", async ({ page }) => {
+  test("admin column resolves every capability to the 'all' (check) state", async ({ page }) => {
     await gotoRoles(page);
-    const adminUsersCell = page.locator(
-      'td[data-role-code="admin"][data-domain="users"]',
+    // Order create+edit capability is a sentinel — admin has orders.write.
+    const cell = page.locator(
+      '[data-capability="ordersWrite"] [data-role-code="admin"]',
     );
-    await expect(adminUsersCell.getByTestId("cell-read")).toBeVisible();
-    await expect(adminUsersCell.getByTestId("cell-write")).toBeVisible();
+    await expect(cell).toHaveAttribute("data-cell-kind", "all");
   });
 
-  test("operator column has empty cell on orders domain", async ({ page }) => {
+  test("operator column shows 'none' on orders create+edit", async ({ page }) => {
     await gotoRoles(page);
-    const cell = page.locator('td[data-role-code="operator"][data-domain="orders"]');
-    await expect(cell.getByTestId("cell-empty")).toBeVisible();
+    const cell = page.locator(
+      '[data-capability="ordersWrite"] [data-role-code="operator"]',
+    );
+    await expect(cell).toHaveAttribute("data-cell-kind", "none");
+  });
+
+  test("manager column shows 'view' on team management (users.read only)", async ({ page }) => {
+    await gotoRoles(page);
+    const cell = page.locator(
+      '[data-capability="teamManage"] [data-role-code="manager"]',
+    );
+    await expect(cell).toHaveAttribute("data-cell-kind", "view");
+  });
+
+  test("legend strip renders three labelled chips", async ({ page }) => {
+    await gotoRoles(page);
+    const legend = page.getByTestId("permission-legend");
+    await expect(legend).toBeVisible();
+    await expect(legend).toContainText("Pode editar");
+    await expect(legend).toContainText("Apenas visualiza");
+    await expect(legend).toContainText("Sem acesso");
   });
 });

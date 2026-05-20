@@ -1767,15 +1767,62 @@
   "roles": {
     "list": {
       "title": "Funções e permissões",
-      "sub": "O que cada função pode ler ou escrever."
+      "sub": "O que cada função pode fazer no sistema."
+    },
+    "tiles": {
+      "memberCount": "{count, plural, one {# pessoa} other {# pessoas}}",
+      "byCode": {
+        "admin": {
+          "name": "Admin",
+          "desc": "Acesso total — equipe, cobrança e integrações."
+        },
+        "manager": {
+          "name": "Gestor",
+          "desc": "Opera vendas, catálogo, produção e estoque."
+        },
+        "operator": {
+          "name": "Operador",
+          "desc": "Foca no dia a dia da produção e estoque."
+        }
+      }
     },
     "matrix": {
-      "domain": "Domínio",
-      "actions": {
-        "read": "Leitura",
-        "write": "Escrita"
+      "title": "Matriz de permissões",
+      "sub": "O que cada função pode fazer no sistema.",
+      "createCustom": "Criar função personalizada",
+      "columns": {
+        "capability": "Capacidade"
       },
-      "none": "—",
+      "cell": {
+        "all": "Pode editar",
+        "view": "Apenas visualiza",
+        "none": "Sem acesso"
+      },
+      "groups": {
+        "sales": "Vendas",
+        "catalog": "Catálogo",
+        "production": "Produção",
+        "stock": "Estoque",
+        "system": "Sistema"
+      },
+      "capabilities": {
+        "ordersView": "Ver pedidos",
+        "ordersWrite": "Criar e editar pedidos",
+        "ordersCancel": "Cancelar pedidos",
+        "clientsView": "Ver dados do cliente",
+        "specsWrite": "Editar fichas técnicas",
+        "productsPrice": "Definir preço de venda",
+        "productsPublish": "Publicar produtos",
+        "cuttingOpen": "Abrir ordem de corte",
+        "stockOutputs": "Registrar saída de peças",
+        "contractorsManage": "Gerenciar bancas",
+        "fabricReceive": "Receber tecido",
+        "stockAdjust": "Ajuste de inventário",
+        "reportsView": "Ver relatórios",
+        "teamManage": "Gerenciar equipe",
+        "billing": "Cobrança e plano",
+        "integrations": "Integrações"
+      },
       "domains": {
         "ads": "Anúncios",
         "clients": "Clientes",
@@ -1792,6 +1839,11 @@
         "stock": "Estoque",
         "users": "Usuários"
       }
+    },
+    "legend": {
+      "all": "Pode editar",
+      "view": "Apenas visualiza",
+      "none": "Sem acesso"
     }
   },
   "audit": {

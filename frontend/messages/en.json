@@ -1767,15 +1767,62 @@
   "roles": {
     "list": {
       "title": "Roles & permissions",
-      "sub": "What each role can read or write."
+      "sub": "What each role can do in the system."
+    },
+    "tiles": {
+      "memberCount": "{count, plural, one {# person} other {# people}}",
+      "byCode": {
+        "admin": {
+          "name": "Admin",
+          "desc": "Full access — team, billing and integrations."
+        },
+        "manager": {
+          "name": "Manager",
+          "desc": "Runs sales, catalog, production and stock."
+        },
+        "operator": {
+          "name": "Operator",
+          "desc": "Focused on day-to-day production and stock."
+        }
+      }
     },
     "matrix": {
-      "domain": "Domain",
-      "actions": {
-        "read": "Read",
-        "write": "Write"
+      "title": "Permissions matrix",
+      "sub": "What each role can do in the system.",
+      "createCustom": "Create custom role",
+      "columns": {
+        "capability": "Capability"
       },
-      "none": "—",
+      "cell": {
+        "all": "Can edit",
+        "view": "View only",
+        "none": "No access"
+      },
+      "groups": {
+        "sales": "Sales",
+        "catalog": "Catalog",
+        "production": "Production",
+        "stock": "Stock",
+        "system": "System"
+      },
+      "capabilities": {
+        "ordersView": "View orders",
+        "ordersWrite": "Create and edit orders",
+        "ordersCancel": "Cancel orders",
+        "clientsView": "View customer data",
+        "specsWrite": "Edit tech specs",
+        "productsPrice": "Set sale price",
+        "productsPublish": "Publish products",
+        "cuttingOpen": "Open cutting orders",
+        "stockOutputs": "Register parts output",
+        "contractorsManage": "Manage workshops",
+        "fabricReceive": "Receive fabric",
+        "stockAdjust": "Inventory adjustments",
+        "reportsView": "View reports",
+        "teamManage": "Manage team",
+        "billing": "Billing & plan",
+        "integrations": "Integrations"
+      },
       "domains": {
         "ads": "Ads",
         "clients": "Clients",
@@ -1792,6 +1839,11 @@
         "stock": "Stock",
         "users": "Users"
       }
+    },
+    "legend": {
+      "all": "Can edit",
+      "view": "View only",
+      "none": "No access"
     }
   },
   "audit": {

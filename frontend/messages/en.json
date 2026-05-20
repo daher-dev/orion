@@ -165,16 +165,32 @@
         "inStock": "Stock",
         "shipped30d": "Shipped"
       },
+      "stageSubs": {
+        "pendingOrders": "Awaiting production",
+        "inCutting": "Cutting or queued",
+        "inSewing": "With contractors",
+        "inStock": "Ready to ship",
+        "shipped30d": "Last 7 days"
+      },
       "sub": "Where your pieces are right now",
-      "footer": "On average a piece takes 7.2 days from order to delivery."
+      "footer": "On average a piece takes <b>7.2 days</b> from order to delivery.",
+      "updated": "Updated {minutes} min ago",
+      "viewDetails": "View details"
     },
     "needsAction": {
       "title": "Needs your attention",
+      "sub": "{count, plural, =0 {No pending items} one {# pending item} other {# pending items}}",
       "empty": "All caught up.",
-      "viewAll": "View all"
+      "viewAll": "View all",
+      "since": {
+        "minutes": "{count} min ago",
+        "hours": "{count, plural, one {# hour ago} other {# hours ago}}",
+        "days": "{count, plural, one {# day ago} other {# days ago}}"
+      }
     },
     "activity": {
       "title": "Recent activity",
+      "sub": "{count, plural, =0 {No actions yet} one {Latest action} other {Latest # actions}}",
       "empty": "No activity yet.",
       "system": "System",
       "auditLink": "Audit log"
@@ -185,10 +201,12 @@
       "last90d": "Last 90 days"
     },
     "actions": {
-      "newOrder": "New order"
+      "newOrder": "New order",
+      "period": "Period"
     },
     "revenueByChannel": {
-      "title": "Revenue by channel (30d)",
+      "title": "Revenue by channel",
+      "sub": "Last 30 days",
       "empty": "No revenue data yet."
     }
   },

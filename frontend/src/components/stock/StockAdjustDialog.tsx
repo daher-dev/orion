@@ -1,16 +1,23 @@
 "use client";
 
+import { useFormatter, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import {
-  ArrowDownCircle,
-  ArrowUpCircle,
+  ArrowDown,
+  ArrowUp,
+  AlertTriangle,
   Boxes,
   Check,
+  Gift,
   Minus,
+  PackageCheck,
   Plus,
+  PlusCircle,
   Search,
+  ShoppingBag,
+  Undo2,
+  type LucideIcon,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -22,22 +29,19 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ApiError } from "@/lib/api-client";
-import { useCreateStockEntry, useCreateStockExit, useStockLevels } from "@/hooks/use-stock";
+import {
+  useCreateStockEntry,
+  useCreateStockExit,
+  useStockLevels,
+  useStockMovements,
+} from "@/hooks/use-stock";
 import { StockStatusPill } from "@/components/stock/StockStatusPill";
 import {
-  STOCK_EXIT_REASONS,
-  STOCK_SOURCES,
-  type VariationStockRead,
   type StockEntryCreate,
   type StockExitCreate,
+  type StockMovementRead,
+  type VariationStockRead,
 } from "@/lib/schemas/stock";
 
 type Props = {
@@ -53,6 +57,50 @@ const FIELD_INPUT_CLASS =
   "h-auto rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-[11px] py-[8px] text-[13px] text-[color:var(--orion-ink)] shadow-none focus-visible:border-[color:var(--brand-inv)] focus-visible:ring-[3px] focus-visible:ring-[color:color-mix(in_oklab,var(--brand-inv)_16%,transparent)] focus-visible:outline-none";
 
 /**
+ * Direct port of `MOVE_TYPES` from `/docs/design/source/pages/inventory.jsx`.
+ *
+ * The design surfaces six tiles in a 2-col grid that fold direction + reason
+ * into a single picker. Backend currently models direction (entry/exit) and
+ * reason/source as separate enums, so each tile here knows which mutation to
+ * call and which reason/source code to persist:
+ *
+ *   entry  shipment    →  "Receipt"     pieces back from sewing
+ *   entry  return      →  "Return"      customer return
+ *   entry  adjustment  →  "Adjust (+)"  inventory correction
+ *   exit   sale        →  "Order"       shipped to customer
+ *   exit   loss        →  "Damage"      damaged piece
+ *   exit   adjustment  →  "Adjust (−)"  inventory correction (re-labelled
+ *                                       from the design's "Brinde" since the
+ *                                       backend has no `gift` reason yet)
+ */
+type MoveType = {
+  /** Stable id used as map key + data-testid suffix. */
+  id: string;
+  /** Mutation direction — picks entry vs exit endpoint. */
+  direction: "entry" | "exit";
+  /** Backend enum value persisted as `source` (entry) or `reason` (exit). */
+  code: StockEntryCreate["source"] | StockExitCreate["reason"];
+  /** i18n leaf under `stock.adjust.moveTypes` for { label, desc }. */
+  i18nKey:
+    | "shipment"
+    | "return"
+    | "entryAdjustment"
+    | "sale"
+    | "loss"
+    | "exitAdjustment";
+  icon: LucideIcon;
+};
+
+const MOVE_TYPES: readonly MoveType[] = [
+  { id: "entrada-banca", direction: "entry", code: "shipment", i18nKey: "shipment", icon: PackageCheck },
+  { id: "entrada-devol", direction: "entry", code: "return", i18nKey: "return", icon: Undo2 },
+  { id: "entrada-ajuste", direction: "entry", code: "adjustment", i18nKey: "entryAdjustment", icon: PlusCircle },
+  { id: "saida-pedido", direction: "exit", code: "sale", i18nKey: "sale", icon: ShoppingBag },
+  { id: "saida-avaria", direction: "exit", code: "loss", i18nKey: "loss", icon: AlertTriangle },
+  { id: "saida-brinde", direction: "exit", code: "adjustment", i18nKey: "exitAdjustment", icon: Gift },
+] as const;
+
+/**
  * Sheet for recording a manual stock adjustment. The single sheet handles
  * both directions — picking `+` triggers POST /stock/entries, `-` triggers
  * POST /stock/exits.
@@ -60,16 +108,24 @@ const FIELD_INPUT_CLASS =
  * When `variation` is null, a SKU search step is shown first so the operator
  * can pick which variant to adjust (used when opened from the page header).
  */
+function defaultMoveTypeFor(direction?: "entry" | "exit"): MoveType {
+  return MOVE_TYPES.find((m) => m.direction === (direction ?? "entry")) ?? MOVE_TYPES[0];
+}
+
+function moveTypeLabel(t: ReturnType<typeof useTranslations>, key: MoveType["i18nKey"]) {
+  return t(`moveTypes.${key}.label`);
+}
+
+function moveTypeDesc(t: ReturnType<typeof useTranslations>, key: MoveType["i18nKey"]) {
+  return t(`moveTypes.${key}.desc`);
+}
+
 export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirection }: Props) {
   const t = useTranslations("stock.adjust");
-  const tActions = useTranslations("stock.actions");
-  const tSources = useTranslations("stock.movements.sources");
-  const tReasons = useTranslations("stock.movements.reasons");
+  const format = useFormatter();
 
-  const [direction, setDirection] = useState<"entry" | "exit">(defaultDirection ?? "entry");
+  const [moveType, setMoveType] = useState<MoveType>(defaultMoveTypeFor(defaultDirection));
   const [quantity, setQuantity] = useState<string>("1");
-  const [source, setSource] = useState<string>("adjustment");
-  const [reason, setReason] = useState<string>("adjustment");
   const [notes, setNotes] = useState<string>("");
   const [serverError, setServerError] = useState<string | null>(null);
   const [quantityError, setQuantityError] = useState<string | null>(null);
@@ -92,15 +148,22 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
   // The effective variation: pre-selected prop takes priority, then the picked one.
   const activeVariation = variation ?? pickedVariation;
 
+  // Recent movements list — the design source's "Últimas movimentações"
+  // section. We pull the latest 3 entries for the active SKU so the operator
+  // has context for the adjustment they're about to make.
+  const recentMovements = useStockMovements(
+    open && activeVariation
+      ? { variation_id: activeVariation.variation_id, page_size: 3 }
+      : undefined,
+  );
+
   // Reset form state whenever the sheet opens for a new variation.
   const variationKey = `${open ? "1" : "0"}|${activeVariation?.variation_id ?? ""}|${defaultDirection ?? "entry"}`;
   const [lastKey, setLastKey] = useState(variationKey);
   if (lastKey !== variationKey) {
     setLastKey(variationKey);
-    setDirection(defaultDirection ?? "entry");
+    setMoveType(defaultMoveTypeFor(defaultDirection));
     setQuantity("1");
-    setSource("adjustment");
-    setReason("adjustment");
     setNotes("");
     setServerError(null);
     setQuantityError(null);
@@ -116,6 +179,7 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
 
   const parsedQty = Number(quantity);
   const qtyIsValid = Number.isInteger(parsedQty) && parsedQty > 0;
+  const direction = moveType.direction;
 
   const projected =
     direction === "entry"
@@ -139,7 +203,7 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
         const payload: StockEntryCreate = {
           variation_id: activeVariation.variation_id,
           quantity: parsedQty,
-          source: source as StockEntryCreate["source"],
+          source: moveType.code as StockEntryCreate["source"],
           notes: notes.trim() ? notes.trim() : null,
         };
         await createEntry.mutateAsync(payload);
@@ -148,7 +212,7 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
         const payload: StockExitCreate = {
           variation_id: activeVariation.variation_id,
           quantity: parsedQty,
-          reason: reason as StockExitCreate["reason"],
+          reason: moveType.code as StockExitCreate["reason"],
           notes: notes.trim() ? notes.trim() : null,
         };
         await createExit.mutateAsync(payload);
@@ -320,41 +384,60 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
               </div>
             </div>
 
-            {/* Direction toggle — +/- buttons. */}
+            {/* Movement-type tile grid — direct port of `MOVE_TYPES` from
+                /docs/design/source/pages/inventory.jsx (lines ~256 + ~474-503).
+                Six tiles in a 2-col grid. Each tile shows: 32×32 tinted icon
+                (status-ok for entries / status-err for exits), label, 11px
+                description. Active tile gets a 1.5px coloured border + 8%
+                surface mix. Picking a tile bakes both direction + reason into
+                the single move-type state. */}
             <div className="flex flex-col gap-1.5">
-              <span className={FIELD_LABEL_CLASS}>{t("labels.direction")}</span>
+              <span className={FIELD_LABEL_CLASS}>{t("labels.moveType")}</span>
               <div className="grid grid-cols-2 gap-2">
-                {(["entry", "exit"] as const).map((dir) => {
-                  const active = direction === dir;
-                  const tone = dir === "entry" ? "var(--status-ok)" : "var(--status-err)";
+                {MOVE_TYPES.map((m) => {
+                  const active = m.id === moveType.id;
+                  const tone =
+                    m.direction === "entry"
+                      ? "var(--status-ok)"
+                      : "var(--status-err)";
+                  const Icon = m.icon;
                   return (
                     <button
-                      key={dir}
+                      key={m.id}
                       type="button"
-                      data-testid={`stock-adjust-direction-${dir}`}
-                      onClick={() => setDirection(dir)}
+                      data-testid={`stock-adjust-movetype-${m.id}`}
+                      data-active={active || undefined}
+                      onClick={() => setMoveType(m)}
+                      className="group/movetype flex items-center gap-3 rounded-[10px] border bg-[color:var(--orion-surface)] px-[14px] py-[12px] text-left transition-colors hover:bg-[color:var(--orion-surface-2)]"
                       style={{
-                        border: active ? `1.5px solid ${tone}` : "1px solid var(--orion-line)",
+                        borderColor: active ? tone : "var(--orion-line)",
+                        borderWidth: active ? 1.5 : 1,
                         background: active
-                          ? `color-mix(in oklab, ${tone} 10%, var(--orion-surface))`
-                          : "var(--orion-surface)",
-                        color: active ? "var(--orion-ink)" : "var(--orion-ink-2)",
-                        borderRadius: 8,
-                        padding: "10px 12px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        cursor: "pointer",
-                        fontSize: 13,
-                        fontWeight: active ? 500 : 400,
+                          ? `color-mix(in oklab, ${tone} 8%, var(--orion-surface))`
+                          : undefined,
                       }}
                     >
-                      {dir === "entry" ? (
-                        <ArrowDownCircle size={14} style={{ color: tone }} />
-                      ) : (
-                        <ArrowUpCircle size={14} style={{ color: tone }} />
-                      )}
-                      {dir === "entry" ? tActions("adjustUp") : tActions("adjustDown")}
+                      <span
+                        aria-hidden
+                        className="grid size-8 flex-shrink-0 place-items-center rounded-[8px]"
+                        style={{
+                          background: `color-mix(in oklab, ${tone} 14%, var(--orion-surface))`,
+                          color: tone,
+                        }}
+                      >
+                        <Icon size={16} strokeWidth={1.8} />
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span
+                          className="text-[13px] text-[color:var(--orion-ink)]"
+                          style={{ fontWeight: active ? 600 : 500 }}
+                        >
+                          {moveTypeLabel(t, m.i18nKey)}
+                        </span>
+                        <span className="mt-[1px] text-[11px] text-[color:var(--orion-ink-3)]">
+                          {moveTypeDesc(t, m.i18nKey)}
+                        </span>
+                      </span>
                     </button>
                   );
                 })}
@@ -420,38 +503,6 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
                   {quantityError}
                 </p>
               ) : null}
-            </div>
-
-            {/* Source / Reason */}
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor={`${formId}-reason`} className={FIELD_LABEL_CLASS}>
-                {direction === "entry" ? t("labels.source") : t("labels.reason")}
-              </label>
-              <Select
-                value={direction === "entry" ? source : reason}
-                onValueChange={(v) => (direction === "entry" ? setSource(v) : setReason(v))}
-              >
-                <SelectTrigger
-                  id={`${formId}-reason`}
-                  data-testid="stock-adjust-reason"
-                  className={FIELD_INPUT_CLASS}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {direction === "entry"
-                    ? STOCK_SOURCES.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {tSources(s)}
-                        </SelectItem>
-                      ))
-                    : STOCK_EXIT_REASONS.map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {tReasons(r)}
-                        </SelectItem>
-                      ))}
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Notes */}
@@ -554,6 +605,45 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
                 {serverError}
               </div>
             ) : null}
+
+            {/* Recent movements — direct port of "Últimas movimentações"
+                from /docs/design/source/pages/inventory.jsx (lines ~543-558).
+                Section divider (line-soft border-top + section-title label)
+                followed by rows: 26×26 colored circular badge with arrow,
+                reason + date stack, signed quantity in display font on the
+                right (--status-ok for entries, --status-err for exits). */}
+            <div
+              className="border-t border-[color:var(--orion-line-soft)] pt-3.5"
+              data-testid="stock-adjust-recent"
+            >
+              <span className={FIELD_LABEL_CLASS}>{t("labels.recent")}</span>
+              <div className="mt-1.5">
+                {recentMovements.isPending ? (
+                  <p className="py-3 text-center text-[12px] text-[color:var(--orion-ink-3)]">
+                    …
+                  </p>
+                ) : recentMovements.data?.items.length ? (
+                  recentMovements.data.items.map((m, i, arr) => (
+                    <RecentMovementRow
+                      key={m.id}
+                      movement={m}
+                      last={i === arr.length - 1}
+                      formatDate={(iso) =>
+                        format.dateTime(new Date(iso), {
+                          day: "2-digit",
+                          month: "2-digit",
+                        })
+                      }
+                      labelFor={(reason) => t(`moveTypes.${reason}.label`)}
+                    />
+                  ))
+                ) : (
+                  <p className="py-3 text-[12px] text-[color:var(--orion-ink-3)]">
+                    {t("noRecent")}
+                  </p>
+                )}
+              </div>
+            </div>
           </form>
         )}
 
@@ -583,5 +673,86 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
         </SheetFooter>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/**
+ * One row of the "Recent movements" footer list — port of the inline rows
+ * in inventory.jsx (lines ~547-557). Entries get a downward arrow + ok tint;
+ * exits get an upward arrow + err tint. Quantity is rendered with a leading
+ * sign in the display font on the right rail.
+ */
+function RecentMovementRow({
+  movement,
+  last,
+  formatDate,
+  labelFor,
+}: {
+  movement: StockMovementRead;
+  last: boolean;
+  formatDate: (iso: string) => string;
+  labelFor: (
+    key:
+      | "shipment"
+      | "return"
+      | "entryAdjustment"
+      | "sale"
+      | "loss"
+      | "exitAdjustment",
+  ) => string;
+}) {
+  const isEntry = movement.type === "entry";
+  const tone = isEntry ? "var(--status-ok)" : "var(--status-err)";
+  // Map the persisted enum back to the i18n key the move-type tile uses,
+  // so the recent rows stay in sync with the picker labels.
+  const i18nKey: Parameters<typeof labelFor>[0] = isEntry
+    ? movement.source === "adjustment"
+      ? "entryAdjustment"
+      : movement.source === "shipment"
+        ? "shipment"
+        : "return"
+    : movement.reason === "adjustment"
+      ? "exitAdjustment"
+      : movement.reason === "sale"
+        ? "sale"
+        : "loss";
+
+  return (
+    <div
+      className="flex items-center gap-2.5 py-2"
+      style={{
+        borderBottom: last ? "none" : "1px solid var(--orion-line-soft)",
+      }}
+    >
+      <span
+        aria-hidden
+        className="grid size-[26px] flex-shrink-0 place-items-center rounded-full"
+        style={{
+          background: `color-mix(in oklab, ${tone} 14%, var(--orion-surface))`,
+          color: tone,
+        }}
+      >
+        {isEntry ? (
+          <ArrowDown size={13} strokeWidth={2} />
+        ) : (
+          <ArrowUp size={13} strokeWidth={2} />
+        )}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-[12.5px] text-[color:var(--orion-ink)]">
+          {labelFor(i18nKey)}
+        </span>
+        <span className="text-[11px] text-[color:var(--orion-ink-3)]">
+          {formatDate(movement.created_at)}
+        </span>
+      </div>
+      <span
+        className="font-serif text-[16px] tabular-nums"
+        style={{ color: tone }}
+      >
+        {isEntry ? "+" : "−"}
+        {movement.quantity}
+      </span>
+    </div>
   );
 }

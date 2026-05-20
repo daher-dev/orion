@@ -1425,8 +1425,18 @@
         "quantity": "Quantity",
         "reason": "Reason",
         "source": "Source",
+        "moveType": "Movement type",
         "notes": "Notes",
-        "preview": "Preview"
+        "preview": "Preview",
+        "recent": "Recent movements"
+      },
+      "moveTypes": {
+        "shipment": { "label": "Receipt", "desc": "Pieces back from sewing" },
+        "return": { "label": "Return", "desc": "Customer return" },
+        "entryAdjustment": { "label": "Adjust (+)", "desc": "Inventory correction" },
+        "sale": { "label": "Order", "desc": "Shipped to customer" },
+        "loss": { "label": "Damage", "desc": "Damaged piece" },
+        "exitAdjustment": { "label": "Adjust (−)", "desc": "Inventory correction" }
       },
       "preview": {
         "current": "Current",
@@ -1447,6 +1457,7 @@
       },
       "save": "Save",
       "cancel": "Cancel",
+      "noRecent": "No movements recorded yet for this SKU.",
       "toasts": {
         "entryCreated": "Entry recorded",
         "exitCreated": "Exit recorded",

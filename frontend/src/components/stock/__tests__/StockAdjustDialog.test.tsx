@@ -17,6 +17,10 @@ vi.mock("@/hooks/use-stock", () => ({
   // a pre-selected variation so the picker isn't rendered, but the mock still
   // has to expose the export or the module mock errors at import time.
   useStockLevels: () => ({ data: { items: [] }, isPending: false }),
+  // Used by the "Recent movements" section under the form — the dialog calls
+  // it with the active variation to fetch the latest 3 entries/exits. Tests
+  // can keep this empty since they don't exercise the history list yet.
+  useStockMovements: () => ({ data: { items: [] }, isPending: false }),
 }));
 
 const sampleVariation: VariationStockRead = {
@@ -63,7 +67,9 @@ describe("StockAdjustDialog", () => {
     expect(mutateAsyncEntry.mock.calls[0][0]).toMatchObject({
       variation_id: sampleVariation.variation_id,
       quantity: 12,
-      source: "adjustment",
+      // First entry tile in the design's MOVE_TYPES grid is "Receipt /
+      // entrada-banca", persisted as the backend's `shipment` source.
+      source: "shipment",
     });
   });
 
@@ -89,7 +95,9 @@ describe("StockAdjustDialog", () => {
     expect(mutateAsyncExit.mock.calls[0][0]).toMatchObject({
       variation_id: sampleVariation.variation_id,
       quantity: 3,
-      reason: "adjustment",
+      // First exit tile in the design's MOVE_TYPES grid is "Order /
+      // saida-pedido", persisted as the backend's `sale` exit reason.
+      reason: "sale",
     });
   });
 

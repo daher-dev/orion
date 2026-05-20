@@ -1425,8 +1425,18 @@
         "quantity": "Quantidade",
         "reason": "Motivo",
         "source": "Origem",
+        "moveType": "Tipo de movimentação",
         "notes": "Observações",
-        "preview": "Pré-visualização"
+        "preview": "Pré-visualização",
+        "recent": "Últimas movimentações"
+      },
+      "moveTypes": {
+        "shipment": { "label": "Recebimento", "desc": "Peças vindas da costura" },
+        "return": { "label": "Devolução", "desc": "Retorno de cliente" },
+        "entryAdjustment": { "label": "Ajuste (+)", "desc": "Correção de inventário" },
+        "sale": { "label": "Pedido", "desc": "Despacho para cliente" },
+        "loss": { "label": "Avaria", "desc": "Peça danificada" },
+        "exitAdjustment": { "label": "Ajuste (−)", "desc": "Correção de inventário" }
       },
       "preview": {
         "current": "Atual",
@@ -1447,6 +1457,7 @@
       },
       "save": "Salvar",
       "cancel": "Cancelar",
+      "noRecent": "Nenhuma movimentação registrada ainda para este SKU.",
       "toasts": {
         "entryCreated": "Entrada lançada",
         "exitCreated": "Saída lançada",

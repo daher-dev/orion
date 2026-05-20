@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useDeferredValue } from "react";
-import { FileText, Plus, Search } from "lucide-react";
+import { FileText, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { useSpecs } from "@/hooks/use-specs";
@@ -57,7 +57,7 @@ export default function SpecsListPage() {
               }}
             >
               <Link href="/specs/new">
-                <Plus className="size-3.5" strokeWidth={2.2} /> {t("specs.actions.create")}
+                <FileText className="size-3.5" strokeWidth={1.8} /> {t("specs.actions.create")}
               </Link>
             </Button>
           </Can>

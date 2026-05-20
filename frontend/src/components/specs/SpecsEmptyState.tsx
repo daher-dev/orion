@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Plus } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ export function SpecsEmptyState() {
           style={{ borderColor: "color-mix(in oklab, var(--brand-catalog) 70%, black)" }}
         >
           <Link href="/specs/new">
-            <Plus size={14} strokeWidth={2.2} /> {t("cta")}
+            <FileText size={14} strokeWidth={1.8} /> {t("cta")}
           </Link>
         </Button>
       </Can>

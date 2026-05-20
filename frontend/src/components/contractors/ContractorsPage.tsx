@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Factory, Plus, Search } from "lucide-react";
+import { Factory, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,7 +91,7 @@ export function ContractorsPage() {
               style={{ borderColor: "color-mix(in oklab, var(--brand-prod) 70%, black)" }}
               onClick={handleOpenCreate}
             >
-              <Plus size={14} strokeWidth={2.2} />
+              <Factory size={14} strokeWidth={1.8} />
               {t("actions.create")}
             </Button>
           ) : null

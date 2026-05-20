@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Shirt } from "lucide-react";
+import { Shirt } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
@@ -36,7 +36,7 @@ export function ProductsEmptyState({ onCreate }: Props) {
           className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-catalog)] px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
           style={{ borderColor: "color-mix(in oklab, var(--brand-catalog) 70%, black)" }}
         >
-          <Plus size={14} strokeWidth={2.2} />
+          <Shirt size={14} strokeWidth={1.8} />
           {t("cta")}
         </Button>
       ) : null}

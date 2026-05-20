@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { UserPlus } from "lucide-react";
+import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,7 @@ export default function SettingsMembersPage() {
               className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-settings)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
               style={{ borderColor: "color-mix(in oklab, var(--brand-settings) 70%, black)" }}
             >
-              <UserPlus className="size-3.5" strokeWidth={1.75} />
+              <Users className="size-3.5" strokeWidth={1.75} />
               {t("actions.invite")}
             </Button>
           ) : null}
@@ -85,7 +85,7 @@ export default function SettingsMembersPage() {
                 className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-settings)] !px-[13px] py-[7px] text-[13px] font-medium text-white"
                 style={{ borderColor: "color-mix(in oklab, var(--brand-settings) 70%, black)" }}
               >
-                <UserPlus className="size-3.5" strokeWidth={1.75} />
+                <Users className="size-3.5" strokeWidth={1.75} />
                 {t("list.empty.cta")}
               </Button>
             ) : null}

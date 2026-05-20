@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, Shirt } from "lucide-react";
+import { Search, Shirt } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { PageHead } from "@/components/page/PageHead";
 import { ProductFormSheet } from "@/components/products/ProductFormSheet";
@@ -93,7 +93,7 @@ export default function ProductsPage() {
                 borderColor: "color-mix(in oklab, var(--brand-catalog) 70%, black)",
               }}
             >
-              <Plus className="size-3.5" strokeWidth={2.2} />
+              <Shirt className="size-3.5" strokeWidth={1.8} />
               {t("actions.create")}
             </Button>
           ) : null

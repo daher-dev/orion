@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Layers, Plus, Search } from "lucide-react";
+import { Layers, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -135,7 +135,7 @@ export default function FabricPage() {
                 borderColor: "color-mix(in oklab, var(--brand-inv) 70%, black)",
               }}
             >
-              <Plus className="size-3.5" strokeWidth={2.2} />
+              <Layers className="size-3.5" strokeWidth={1.8} />
               {t("list.empty.cta")}
             </Button>
           ) : null

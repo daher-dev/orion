@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
-import { Plus } from "lucide-react";
+import { Scissors } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -138,7 +138,7 @@ export function CuttingKanban({ rows, onView, onCreate }: Props) {
                   aria-label={t("actions.create")}
                   className="h-auto rounded-[5px] px-2 py-1 text-[12px] text-[color:var(--orion-ink-2)] hover:bg-[color:var(--orion-surface-2)]"
                 >
-                  <Plus size={12} strokeWidth={2.2} />
+                  <Scissors size={12} strokeWidth={1.8} />
                 </Button>
               ) : null}
             </div>

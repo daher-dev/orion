@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Palette, Plus, Search } from "lucide-react";
+import { Palette, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -55,7 +55,7 @@ export default function PrintsPage() {
                 borderColor: "color-mix(in oklab, var(--brand-catalog) 70%, black)",
               }}
             >
-              <Plus className="size-3.5" strokeWidth={2.2} />
+              <Palette className="size-3.5" strokeWidth={1.8} />
               {t("actions.create")}
             </Button>
           ) : null

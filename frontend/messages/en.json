@@ -1324,10 +1324,8 @@
         "editSub": "Update roll details"
       },
       "sections": {
-        "identity": "Identification",
-        "fabric": "Fabric details",
-        "weight": "Weight",
-        "pricing": "Pricing"
+        "identity": "Type",
+        "fabric": "Roll details"
       },
       "labels": {
         "kind": "Roll kind",

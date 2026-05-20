@@ -1324,10 +1324,8 @@
         "editSub": "Atualizar dados da bobina"
       },
       "sections": {
-        "identity": "Identificação",
-        "fabric": "Detalhes do tecido",
-        "weight": "Peso",
-        "pricing": "Preço"
+        "identity": "Tipo",
+        "fabric": "Detalhes da bobina"
       },
       "labels": {
         "kind": "Tipo da bobina",

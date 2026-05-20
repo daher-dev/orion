@@ -5,6 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { Rows3, Shirt } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
   SelectContent,
@@ -160,45 +161,95 @@ export function FabricRollForm({ formId, defaultValues, serverError, onSubmit }:
         />
       </div>
 
+      {/* "Detalhes da bobina" — direct port of the second section of
+          inventory.jsx NewFabricSheet (lines ~214-251). 2-col Gramatura/Peso
+          equivalent at the top, then color pills, supplier, received date,
+          price. We carry more fields than the design (no GSM column in the
+          backend yet, but we do have current weight + price) so they fold
+          into the same section instead of getting their own dividers. */}
       <div className={SECTION_HEADING_CLASS}>{t("sections.fabric")}</div>
-      <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
+
+      <div className="mb-[14px] grid grid-cols-1 gap-[14px] sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${formId}-supplier_name`} className={FIELD_LABEL_CLASS}>
-            {t("labels.supplier")}
+          <label htmlFor={`${formId}-initial_weight_kg`} className={FIELD_LABEL_CLASS}>
+            {t("labels.initialWeight")}
           </label>
-          <Input
-            id={`${formId}-supplier_name`}
-            autoComplete="off"
-            placeholder={t("placeholders.supplier")}
-            className={FIELD_INPUT_CLASS}
-            aria-invalid={!!errors.supplier_name}
-            {...form.register("supplier_name")}
+          {/* NumField primitive — matches `.numfield` in the design source
+              (kg suffix + stepper, decimal-comma pt-BR formatting). */}
+          <Controller
+            control={form.control}
+            name="initial_weight_kg"
+            render={({ field }) => (
+              <NumberInput
+                id={`${formId}-initial_weight_kg`}
+                tone="inv"
+                step={0.1}
+                min={0}
+                decimals={3}
+                suffix="kg"
+                placeholder={t("placeholders.weight")}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                aria-invalid={!!errors.initial_weight_kg}
+              />
+            )}
           />
-          {errors.supplier_name?.message ? (
+          {errors.initial_weight_kg?.message ? (
             <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
-              {translateError(errors.supplier_name.message as string)}
+              {translateError(errors.initial_weight_kg.message as string)}
             </p>
           ) : null}
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${formId}-color`} className={FIELD_LABEL_CLASS}>
-            {t("labels.color")}
+          <label htmlFor={`${formId}-current_weight_kg`} className={FIELD_LABEL_CLASS}>
+            {t("labels.currentWeight")}
           </label>
-          <Input
-            id={`${formId}-color`}
-            autoComplete="off"
-            placeholder={t("placeholders.color")}
-            className={FIELD_INPUT_CLASS}
-            aria-invalid={!!errors.color}
-            {...form.register("color")}
-          />
-          {/* Preset color swatches — clicking fills the input. Matches the
-              pill-style color chooser from inventory.jsx NewFabricSheet. */}
           <Controller
             control={form.control}
-            name="color"
+            name="current_weight_kg"
             render={({ field }) => (
-              <div className="mt-1 flex flex-wrap gap-1.5">
+              <NumberInput
+                id={`${formId}-current_weight_kg`}
+                tone="inv"
+                step={0.1}
+                min={0}
+                decimals={3}
+                suffix="kg"
+                placeholder={t("placeholders.weight")}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                aria-invalid={!!errors.current_weight_kg || !!serverError}
+              />
+            )}
+          />
+          {errors.current_weight_kg?.message ? (
+            <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
+              {translateError(errors.current_weight_kg.message as string)}
+            </p>
+          ) : null}
+          {serverError && !errors.current_weight_kg ? (
+            <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
+              {serverError}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Color — pill-style chooser from inventory.jsx (lines ~228-245).
+          The free-text Input is kept as a fallback so the operator can type
+          custom colours; the swatch row prefills it. */}
+      <div className="mb-[14px] flex flex-col gap-1.5">
+        <label htmlFor={`${formId}-color`} className={FIELD_LABEL_CLASS}>
+          {t("labels.color")}
+        </label>
+        <Controller
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <>
+              <div className="flex flex-wrap gap-1.5">
                 {COLOR_PRESETS.map((c) => {
                   const active =
                     field.value?.trim().toLowerCase() === c.name.toLowerCase();
@@ -207,9 +258,7 @@ export function FabricRollForm({ formId, defaultValues, serverError, onSubmit }:
                       key={c.name}
                       type="button"
                       data-testid={`fabric-color-preset-${c.name}`}
-                      onClick={() =>
-                        field.onChange(active ? "" : c.name)
-                      }
+                      onClick={() => field.onChange(active ? "" : c.name)}
                       className="inline-flex cursor-pointer items-center gap-1.5 rounded-full font-[inherit]"
                       style={{
                         padding: "5px 10px 5px 6px",
@@ -237,15 +286,46 @@ export function FabricRollForm({ formId, defaultValues, serverError, onSubmit }:
                   );
                 })}
               </div>
-            )}
+              <Input
+                id={`${formId}-color`}
+                autoComplete="off"
+                placeholder={t("placeholders.color")}
+                className={FIELD_INPUT_CLASS}
+                aria-invalid={!!errors.color}
+                value={field.value ?? ""}
+                onChange={(e) => field.onChange(e.target.value)}
+                onBlur={field.onBlur}
+              />
+            </>
+          )}
+        />
+        {errors.color?.message ? (
+          <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
+            {translateError(errors.color.message as string)}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="mb-[14px] grid grid-cols-1 gap-[14px] sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${formId}-supplier_name`} className={FIELD_LABEL_CLASS}>
+            {t("labels.supplier")}
+          </label>
+          <Input
+            id={`${formId}-supplier_name`}
+            autoComplete="off"
+            placeholder={t("placeholders.supplier")}
+            className={FIELD_INPUT_CLASS}
+            aria-invalid={!!errors.supplier_name}
+            {...form.register("supplier_name")}
           />
-          {errors.color?.message ? (
+          {errors.supplier_name?.message ? (
             <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
-              {translateError(errors.color.message as string)}
+              {translateError(errors.supplier_name.message as string)}
             </p>
           ) : null}
         </div>
-        <div className="flex flex-col gap-1.5 sm:col-span-2">
+        <div className="flex flex-col gap-1.5">
           <label htmlFor={`${formId}-received_at`} className={FIELD_LABEL_CLASS}>
             {t("labels.receivedAt")}
           </label>
@@ -264,63 +344,28 @@ export function FabricRollForm({ formId, defaultValues, serverError, onSubmit }:
         </div>
       </div>
 
-      <div className={SECTION_HEADING_CLASS}>{t("sections.weight")}</div>
-      <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${formId}-initial_weight_kg`} className={FIELD_LABEL_CLASS}>
-            {t("labels.initialWeight")}
-          </label>
-          <Input
-            id={`${formId}-initial_weight_kg`}
-            inputMode="decimal"
-            placeholder={t("placeholders.weight")}
-            className={FIELD_INPUT_CLASS}
-            aria-invalid={!!errors.initial_weight_kg}
-            {...form.register("initial_weight_kg")}
-          />
-          {errors.initial_weight_kg?.message ? (
-            <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
-              {translateError(errors.initial_weight_kg.message as string)}
-            </p>
-          ) : null}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${formId}-current_weight_kg`} className={FIELD_LABEL_CLASS}>
-            {t("labels.currentWeight")}
-          </label>
-          <Input
-            id={`${formId}-current_weight_kg`}
-            inputMode="decimal"
-            placeholder={t("placeholders.weight")}
-            className={FIELD_INPUT_CLASS}
-            aria-invalid={!!errors.current_weight_kg || !!serverError}
-            {...form.register("current_weight_kg")}
-          />
-          {errors.current_weight_kg?.message ? (
-            <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
-              {translateError(errors.current_weight_kg.message as string)}
-            </p>
-          ) : null}
-          {serverError && !errors.current_weight_kg ? (
-            <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
-              {serverError}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className={SECTION_HEADING_CLASS}>{t("sections.pricing")}</div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor={`${formId}-price_per_kg`} className={FIELD_LABEL_CLASS}>
           {t("labels.pricePerKg")}
         </label>
-        <Input
-          id={`${formId}-price_per_kg`}
-          inputMode="decimal"
-          placeholder={t("placeholders.price")}
-          className={FIELD_INPUT_CLASS}
-          aria-invalid={!!errors.price_per_kg}
-          {...form.register("price_per_kg")}
+        <Controller
+          control={form.control}
+          name="price_per_kg"
+          render={({ field }) => (
+            <NumberInput
+              id={`${formId}-price_per_kg`}
+              tone="inv"
+              step={0.5}
+              min={0}
+              decimals={2}
+              prefix="R$"
+              placeholder={t("placeholders.price")}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              aria-invalid={!!errors.price_per_kg}
+            />
+          )}
         />
         {errors.price_per_kg?.message ? (
           <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">

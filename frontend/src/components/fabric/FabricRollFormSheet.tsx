@@ -1,9 +1,19 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Check } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { FabricRollForm } from "@/components/fabric/FabricRollForm";
 import {
   useCreateFabricRoll,
+  useDeleteFabricRoll,
   useUpdateFabricRoll,
 } from "@/hooks/use-fabric";
 import type {
@@ -29,6 +40,11 @@ export type FabricRollFormSheetProps = {
   onOpenChange: (open: boolean) => void;
   initial?: FabricRoll;
 };
+
+// Footer delete affordance — matches Cancel's .btn footprint, --status-err
+// text. Anchors the left of the footer so save/cancel stay on the right.
+const DELETE_BUTTON_CLASS =
+  "h-auto gap-[7px] rounded-[6px] border bg-[color:var(--orion-surface)] !px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--status-err)] shadow-none hover:bg-[color:color-mix(in_oklab,var(--status-err)_8%,var(--orion-surface))]";
 
 function toDefaults(roll?: FabricRoll): Partial<FabricRollFormValues> | undefined {
   if (!roll) return undefined;
@@ -46,26 +62,44 @@ function toDefaults(roll?: FabricRoll): Partial<FabricRollFormValues> | undefine
 
 export function FabricRollFormSheet({ open, onOpenChange, initial }: FabricRollFormSheetProps) {
   const t = useTranslations("fabric.form");
+  const tActions = useTranslations("fabric.actions");
+  const tToast = useTranslations("fabric.toast");
   const tTypes = useTranslations("fabric.fabricTypes");
   const formId = useId();
   const isEdit = !!initial;
   const createRoll = useCreateFabricRoll();
   const updateRoll = useUpdateFabricRoll();
-  const isPending = createRoll.isPending || updateRoll.isPending;
+  const deleteRoll = useDeleteFabricRoll();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const isPending =
+    createRoll.isPending || updateRoll.isPending || deleteRoll.isPending;
 
   const handleSubmit = async (values: FabricRollFormPayload) => {
     try {
       if (isEdit && initial) {
         await updateRoll.mutateAsync({ id: initial.id, payload: values });
-        toast.success(t("toasts.updated"));
+        toast.success(tToast("updated"));
       } else {
         await createRoll.mutateAsync(values);
-        toast.success(t("toasts.created"));
+        toast.success(tToast("created"));
       }
       onOpenChange(false);
     } catch (err) {
       const detail = err instanceof Error ? err.message : "";
-      toast.error(t("toasts.error"), detail ? { description: detail } : undefined);
+      toast.error(tToast("error"), detail ? { description: detail } : undefined);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isEdit || !initial) return;
+    try {
+      await deleteRoll.mutateAsync(initial.id);
+      toast.success(tToast("deleted"));
+      setConfirmDelete(false);
+      onOpenChange(false);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : "";
+      toast.error(tToast("error"), detail ? { description: detail } : undefined);
     }
   };
 
@@ -103,30 +137,75 @@ export function FabricRollFormSheet({ open, onOpenChange, initial }: FabricRollF
           />
         </div>
 
-        <SheetFooter className="flex-row justify-end gap-2 border-t border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-[22px] py-[14px]">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-            className="h-auto gap-[7px] rounded-[6px] border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] !px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] shadow-none hover:bg-[color:var(--orion-surface-2)]"
-          >
-            {t("cancel")}
-          </Button>
-          <Button
-            type="submit"
-            form={formId}
-            disabled={isPending}
-            className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-inv)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
-            style={{
-              borderColor: "color-mix(in oklab, var(--brand-inv) 70%, black)",
-            }}
-          >
-            <Check size={13} strokeWidth={2.2} />
-            {isEdit ? t("save") : t("submitNew")}
-          </Button>
+        {/* .sheet-foot — bg=bg, line-soft border-t, padding 14 22, gap 8.
+            Edit mode anchors the destructive action on the left, save/cancel
+            on the right; new-record mode hides the left slot entirely. */}
+        <SheetFooter className="flex-row items-center gap-2 border-t border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-[22px] py-[14px] sm:justify-between">
+          {isEdit ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className={DELETE_BUTTON_CLASS}
+              onClick={() => setConfirmDelete(true)}
+              disabled={isPending}
+            >
+              <Trash2 size={13} strokeWidth={1.8} />
+              {tActions("delete")}
+            </Button>
+          ) : (
+            <span aria-hidden />
+          )}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+              className="h-auto gap-[7px] rounded-[6px] border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] !px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] shadow-none hover:bg-[color:var(--orion-surface-2)]"
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              type="submit"
+              form={formId}
+              disabled={isPending}
+              className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-inv)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
+              style={{
+                borderColor: "color-mix(in oklab, var(--brand-inv) 70%, black)",
+              }}
+            >
+              <Check size={13} strokeWidth={2.2} />
+              {isEdit ? t("save") : t("submitNew")}
+            </Button>
+          </div>
         </SheetFooter>
       </SheetContent>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tActions("delete")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {tActions("confirmDelete")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteRoll.isPending}>
+              {t("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleteRoll.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
+            >
+              {tActions("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }

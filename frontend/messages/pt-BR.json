@@ -521,7 +521,13 @@
       "searchPlaceholder": "Procurar anúncio…"
     },
     "table": {
-      "columns": {}
+      "columns": {
+        "code": "Código",
+        "title": "Título",
+        "channel": "Canal",
+        "product": "Produto",
+        "actions": "Ações"
+      }
     },
     "channels": {
       "shopee": "Shopee",

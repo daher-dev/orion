@@ -40,7 +40,7 @@ export default function ClientsPage() {
     <div>
       <PageHead
         subColor="var(--brand-sales)"
-        mark="V"
+        mark={<Users size={11} strokeWidth={2.2} />}
         eyebrow={t("page.eyebrow")}
         title={t("list.title")}
         sub={t("list.sub")}

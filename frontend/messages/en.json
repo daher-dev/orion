@@ -521,7 +521,13 @@
       "searchPlaceholder": "Search ads…"
     },
     "table": {
-      "columns": {}
+      "columns": {
+        "code": "Code",
+        "title": "Title",
+        "channel": "Channel",
+        "product": "Product",
+        "actions": "Actions"
+      }
     },
     "channels": {
       "shopee": "Shopee",

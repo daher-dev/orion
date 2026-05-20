@@ -47,18 +47,26 @@ import { toast } from "sonner";
 const cellInkClasses = "text-[color:var(--orion-ink-2)]";
 const cellLinkInkClasses = "font-medium text-[color:var(--orion-ink)]";
 
+/**
+ * Direct port of design's `clientColor` from
+ * /docs/design/source/pages/sales.jsx line 437:
+ *
+ *   const clientColor = (id) =>
+ *     ['#c2410c','#0f766e','#7e5bef','#1e40af','#b45309'][parseInt(id.slice(-1)) % 5];
+ *
+ * The design seeds on the last id char interpreted as a digit — when the
+ * char is non-numeric (typical for our UUIDs) we fall back to a stable
+ * char-code hash so the swatch is still deterministic.
+ */
+const CLIENT_PALETTE = ["#c2410c", "#0f766e", "#7e5bef", "#1e40af", "#b45309"] as const;
+
 const avBg = (id: string) => {
-  // Same palette idea as design's clientColor in sales.jsx — pick from a
-  // deterministic list seeded by the last char of the id.
-  const palette = [
-    "var(--brand-sales)",
-    "var(--brand-prod)",
-    "var(--brand-catalog)",
-    "var(--brand-reports)",
-    "var(--brand-inv)",
-  ];
-  const last = id.length > 0 ? id.charCodeAt(id.length - 1) : 0;
-  return palette[last % palette.length];
+  const last = id.slice(-1);
+  const numeric = Number.parseInt(last, 10);
+  const idx = Number.isNaN(numeric)
+    ? last.charCodeAt(0) % CLIENT_PALETTE.length
+    : numeric % CLIENT_PALETTE.length;
+  return CLIENT_PALETTE[idx];
 };
 
 function Avatar({ name, id }: { name: string; id: string }) {
@@ -69,6 +77,7 @@ function Avatar({ name, id }: { name: string; id: string }) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+  // Design `.av` — 28×28, rounded-full, 11px serif weight 600, white text.
   return (
     <span
       className="inline-grid h-7 w-7 place-items-center rounded-full font-serif text-[11px] font-semibold text-white"
@@ -154,7 +163,7 @@ export function ClientsTable({ rows, onEdit, onView }: ClientsTableProps) {
         header: () => t("table.columns.created"),
         cell: ({ row }) => (
           <span
-            className={`${cellInkClasses} font-variant-numeric: tabular-nums text-[12px]`}
+            className={`${cellInkClasses} text-[12px]`}
             style={{ fontVariantNumeric: "tabular-nums" }}
           >
             {dateFormatter.format(new Date(row.original.created_at))}

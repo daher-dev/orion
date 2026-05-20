@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHead } from "@/components/page/PageHead";
-import { AdsGrid } from "@/components/ads/AdsGrid";
+import { AdsTable } from "@/components/ads/AdsTable";
 import { AdsEmptyState } from "@/components/ads/AdsEmptyState";
 import { AdFormSheet } from "@/components/ads/AdFormSheet";
 import { useAds } from "@/hooks/use-ads";
@@ -93,12 +93,10 @@ export default function AdsPage() {
         </div>
 
         {isPending ? (
-          <div className="flex flex-col gap-3 p-6">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-[120px] rounded-[12px]" />
-              ))}
-            </div>
+          <div className="space-y-2 p-6">
+            <Skeleton className="h-9" />
+            <Skeleton className="h-9" />
+            <Skeleton className="h-9" />
           </div>
         ) : isError ? (
           <p className="px-6 py-12 text-center text-[13px] text-[color:var(--status-err)]">
@@ -111,7 +109,7 @@ export default function AdsPage() {
             {t("list.noResults")}
           </p>
         ) : (
-          <AdsGrid rows={rows} onEdit={(ad) => setEditing(ad)} />
+          <AdsTable rows={rows} onEdit={(ad) => setEditing(ad)} />
         )}
       </div>
 

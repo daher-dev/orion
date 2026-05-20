@@ -656,6 +656,8 @@
         "type": "Tipo",
         "spec": "Ficha",
         "print": "Estampa",
+        "colors": "Cores",
+        "sizes": "Tamanhos",
         "variations": "Variações",
         "actions": "Ações"
       }
@@ -756,7 +758,8 @@
     "filters": {
       "searchPlaceholder": "Procurar ficha…",
       "fabricType": "Tipo de tecido",
-      "all": "Todas"
+      "all": "Todas",
+      "itemCount": "fichas"
     },
     "table": {
       "columns": {
@@ -879,7 +882,8 @@
       }
     },
     "filters": {
-      "searchPlaceholder": "Procurar estampa…"
+      "searchPlaceholder": "Procurar estampa…",
+      "itemCount": "estampas"
     },
     "table": {
       "columns": {

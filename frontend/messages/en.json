@@ -656,6 +656,8 @@
         "type": "Type",
         "spec": "Spec",
         "print": "Print",
+        "colors": "Colors",
+        "sizes": "Sizes",
         "variations": "Variations",
         "actions": "Actions"
       }
@@ -756,7 +758,8 @@
     "filters": {
       "searchPlaceholder": "Search specs…",
       "fabricType": "Fabric type",
-      "all": "All"
+      "all": "All",
+      "itemCount": "specs"
     },
     "table": {
       "columns": {
@@ -879,7 +882,8 @@
       }
     },
     "filters": {
-      "searchPlaceholder": "Search print…"
+      "searchPlaceholder": "Search print…",
+      "itemCount": "prints"
     },
     "table": {
       "columns": {

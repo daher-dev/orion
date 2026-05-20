@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, use } from "react";
-import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, FileText, Pencil, Trash2 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
 import { useDeleteSpec, useSpec, useUpdateSpec } from "@/hooks/use-specs";
@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Can } from "@/components/Can";
-import { SpecDetailHeader } from "@/components/specs/SpecDetailHeader";
+import { PageHead } from "@/components/page/PageHead";
 import { SpecForm, type SpecFormSubmit } from "@/components/specs/SpecForm";
 
 export default function SpecDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -95,7 +95,9 @@ export default function SpecDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div data-testid="spec-detail-page">
-      <SpecDetailHeader
+      <PageHead
+        subColor="var(--brand-catalog)"
+        mark={<FileText size={11} strokeWidth={2.2} />}
         eyebrow={t("specs.page.eyebrow")}
         title={spec.name}
         sub={

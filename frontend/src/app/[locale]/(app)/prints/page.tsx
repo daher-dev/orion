@@ -71,8 +71,14 @@ export default function PrintsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="h-auto border-0 bg-transparent p-0 text-[12.5px] text-[color:var(--orion-ink)] shadow-none placeholder:text-[color:var(--orion-ink-3)] focus-visible:ring-0"
+              data-testid="prints-search"
             />
           </div>
+          {data ? (
+            <span className="ml-auto text-[12px] tabular-nums text-[color:var(--orion-ink-3)]">
+              {total} {t("filters.itemCount")}
+            </span>
+          ) : null}
         </div>
 
         {isPending ? (

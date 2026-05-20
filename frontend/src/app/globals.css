@@ -260,3 +260,35 @@
   50%      { opacity: .75; }
 }
 .bar-warn-pulse { animation: barWarnPulse 1.8s ease-in-out infinite; }
+
+/*
+ * Ribana range slider thumb — direct port of `.ribana-slider` from
+ * /docs/design/source/styles.css. The track is a custom CSS gradient that
+ * lives on the input's background-image (set inline by SpecForm), so the
+ * native thumb is the only piece we need to style here.
+ */
+.ribana-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--orion-surface);
+  border: 2px solid var(--brand-catalog);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+.ribana-slider::-webkit-slider-thumb:hover { transform: scale(1.12); }
+.ribana-slider::-webkit-slider-thumb:active { transform: scale(1.2); }
+.ribana-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--orion-surface);
+  border: 2px solid var(--brand-catalog);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+.ribana-slider::-webkit-slider-runnable-track { background: transparent; }
+.ribana-slider::-moz-range-track { background: transparent; }

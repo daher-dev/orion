@@ -108,12 +108,12 @@ export function VariationsBuilder({ value, onChange, specCode, printCode }: Prop
                 onClick={() => toggleSize(size)}
                 data-testid={`size-toggle-${size}`}
                 aria-pressed={active}
-                className="grid h-11 w-11 place-items-center rounded-[8px] border text-[13px] font-display"
+                className="grid h-11 w-11 place-items-center rounded-[8px] border font-serif text-[13px]"
                 style={{
                   borderColor: active ? "var(--brand-catalog)" : "var(--orion-line)",
                   borderWidth: active ? 1.5 : 1,
                   background: active
-                    ? "color-mix(in oklab, var(--brand-catalog) 8%, var(--orion-surface))"
+                    ? "color-mix(in oklab, var(--brand-catalog) 14%, var(--orion-surface))"
                     : "var(--orion-surface)",
                   color: active ? "var(--orion-ink)" : "var(--orion-ink-3)",
                   fontWeight: active ? 600 : 400,

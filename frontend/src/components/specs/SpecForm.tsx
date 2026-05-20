@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { ApiError } from "@/lib/api-client";
 import {
   FABRIC_TYPES,
@@ -97,8 +97,22 @@ export function SpecForm({
   apiError?: ApiError | null;
 }) {
   const t = useTranslations();
+  const format = useFormatter();
   const [state, setState] = useState<FormState>(() => initialFromSpec(initial));
   const [error, setError] = useState<string | null>(null);
+
+  // Live cost preview — direct port of design source's NewSpecSheet bottom card.
+  const { trimsTotal, totalCost, margin } = useMemo(() => {
+    const trimsSum = state.trims.reduce(
+      (sum, trim) => sum + Number(trim.unit_price || 0) * (trim.quantity || 0),
+      0,
+    );
+    const labor = Number(state.labor_cost || 0);
+    const total = trimsSum + labor;
+    const sale = Number(state.sale_price || 0);
+    const grossMargin = sale > 0 ? ((sale - total) / sale) * 100 : 0;
+    return { trimsTotal: trimsSum, totalCost: total, margin: grossMargin };
+  }, [state.labor_cost, state.sale_price, state.trims]);
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -351,6 +365,55 @@ export function SpecForm({
             />
           </FormField>
         </div>
+        {/*
+         * Live cost preview block — direct port from /docs/design/source/pages/catalog.jsx
+         * (`NewSpecSheet`, "Custo total estimado" card). Surface-2 background, serif
+         * 16px total, and a margin line that goes green / ink / warn depending on the
+         * percentage.
+         */}
+        <div
+          className="mt-1 flex items-center justify-between gap-3 rounded-[8px] bg-[color:var(--orion-surface-2)] px-[14px] py-[10px] text-[12.5px]"
+          data-testid="spec-form-cost-summary"
+        >
+          <span className="text-[color:var(--orion-ink-2)]">
+            {t("specs.detail.stats.totalCost")}{" "}
+            <span className="text-[11px] text-[color:var(--orion-ink-3)]">
+              (
+              {t("specs.form.labels.laborCost").toLowerCase()} +{" "}
+              {t("specs.form.sections.cost").toLowerCase()})
+            </span>
+          </span>
+          <span
+            className="font-serif text-[16px] text-[color:var(--orion-ink)]"
+            data-testid="spec-form-cost-total"
+          >
+            {format.number(totalCost, { style: "currency", currency: "BRL" })}
+          </span>
+        </div>
+        {Number(state.sale_price || 0) > 0 ? (
+          <div
+            className="mt-2 flex items-center justify-between px-[14px] text-[12px] text-[color:var(--orion-ink-3)]"
+            data-testid="spec-form-margin"
+          >
+            <span>{t("specs.detail.stats.margin")}</span>
+            <span
+              className="font-medium tabular-nums"
+              style={{
+                color:
+                  margin > 50
+                    ? "var(--status-ok)"
+                    : margin > 30
+                      ? "var(--orion-ink-2)"
+                      : "var(--status-warn)",
+              }}
+            >
+              {margin.toFixed(1)}%
+            </span>
+          </div>
+        ) : null}
+        <span className="sr-only" data-testid="spec-form-trims-subtotal">
+          {trimsTotal.toFixed(2)}
+        </span>
       </FormSection>
 
       {/* NOTES */}
@@ -378,11 +441,25 @@ export function SpecForm({
 
       <footer className="flex items-center justify-end gap-2 border-t border-[color:var(--orion-line-soft)] pt-4">
         {onCancel ? (
-          <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={submitting}
+            className="h-auto gap-[7px] rounded-[6px] border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] !px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] shadow-none hover:bg-[color:var(--orion-surface-2)]"
+          >
             {t("specs.actions.cancel")}
           </Button>
         ) : null}
-        <Button type="submit" disabled={submitting} data-testid="spec-form-submit">
+        <Button
+          type="submit"
+          disabled={submitting}
+          data-testid="spec-form-submit"
+          className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-catalog)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
+          style={{
+            borderColor: "color-mix(in oklab, var(--brand-catalog) 70%, black)",
+          }}
+        >
           {t("specs.actions.save")}
         </Button>
       </footer>

@@ -37,6 +37,13 @@ export type NavItem = {
   labelKey: string;
   permission?: string;
   subColor?: string;
+  /**
+   * Optional pill count rendered next to the label (e.g. open orders).
+   * Renders the `.sb-count` chip from the design source when set. Leave
+   * undefined to hide. Counts are intended to be wired to live data via
+   * lightweight hooks; the NavConfig itself doesn't know how to fetch.
+   */
+  count?: number;
 };
 
 export type NavSection = {
@@ -60,21 +67,21 @@ export const navSections: NavSection[] = [
         icon: ShoppingBag,
         labelKey: "nav.orders",
         permission: "orders.read",
-        subColor: "var(--color-brand-sales)",
+        subColor: "var(--brand-sales)",
       },
       {
         href: "/clients",
         icon: Users,
         labelKey: "nav.clients",
         permission: "clients.read",
-        subColor: "var(--color-brand-sales)",
+        subColor: "var(--brand-sales)",
       },
       {
         href: "/ads",
         icon: Megaphone,
         labelKey: "nav.ads",
         permission: "ads.read",
-        subColor: "var(--color-brand-sales)",
+        subColor: "var(--brand-sales)",
       },
     ],
   },
@@ -86,21 +93,21 @@ export const navSections: NavSection[] = [
         icon: Shirt,
         labelKey: "nav.products",
         permission: "products.read",
-        subColor: "var(--color-brand-catalog)",
+        subColor: "var(--brand-catalog)",
       },
       {
         href: "/specs",
         icon: FileText,
         labelKey: "nav.specs",
         permission: "specs.read",
-        subColor: "var(--color-brand-catalog)",
+        subColor: "var(--brand-catalog)",
       },
       {
         href: "/prints",
         icon: Palette,
         labelKey: "nav.prints",
         permission: "prints.read",
-        subColor: "var(--color-brand-catalog)",
+        subColor: "var(--brand-catalog)",
       },
     ],
   },
@@ -112,21 +119,21 @@ export const navSections: NavSection[] = [
         icon: Scissors,
         labelKey: "nav.cutting",
         permission: "cutting.read",
-        subColor: "var(--color-brand-prod)",
+        subColor: "var(--brand-prod)",
       },
       {
         href: "/sewing",
         icon: Send,
         labelKey: "nav.sewing",
         permission: "sewing.read",
-        subColor: "var(--color-brand-prod)",
+        subColor: "var(--brand-prod)",
       },
       {
         href: "/contractors",
         icon: Factory,
         labelKey: "nav.contractors",
         permission: "contractors.read",
-        subColor: "var(--color-brand-prod)",
+        subColor: "var(--brand-prod)",
       },
     ],
   },
@@ -138,14 +145,14 @@ export const navSections: NavSection[] = [
         icon: Layers,
         labelKey: "nav.fabric",
         permission: "fabric.read",
-        subColor: "var(--color-brand-inv)",
+        subColor: "var(--brand-inv)",
       },
       {
         href: "/stock",
         icon: Boxes,
         labelKey: "nav.stock",
         permission: "stock.read",
-        subColor: "var(--color-brand-inv)",
+        subColor: "var(--brand-inv)",
       },
     ],
   },
@@ -162,7 +169,7 @@ export const bottomItems: NavItem[] = [
     href: "/reports",
     icon: BarChart3,
     labelKey: "nav.reports",
-    subColor: "var(--color-brand-reports)",
+    subColor: "var(--brand-reports)",
   },
   {
     // Settings is always visible — sub-routes inside settings enforce their
@@ -170,6 +177,6 @@ export const bottomItems: NavItem[] = [
     href: "/settings",
     icon: Settings,
     labelKey: "nav.settings",
-    subColor: "var(--color-brand-settings)",
+    subColor: "var(--brand-settings)",
   },
 ];

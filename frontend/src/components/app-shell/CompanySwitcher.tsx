@@ -61,10 +61,14 @@ export function CompanySwitcher() {
             "group-data-[collapsible=icon]:h-14 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
           }
         >
-          {/* .sb-brand-mark */}
+          {/*
+           * .sb-brand-mark — explicit 32×32 tile, border-radius 8 (NOT
+           * --radius-sm; design source pins 8px). Inset white/.1 hairline +
+           * coloured drop shadow keep the chip readable on the dark sidebar.
+           */}
           <div
             aria-hidden
-            className="grid size-8 shrink-0 place-items-center rounded-lg font-serif text-[17px] font-semibold leading-none text-white"
+            className="grid size-8 shrink-0 place-items-center rounded-[8px] font-serif text-[17px] font-semibold leading-none text-white"
             style={{
               background: brandColor,
               boxShadow: `inset 0 0 0 1px rgba(255,255,255,.1), 0 4px 12px -4px ${brandColor}`,

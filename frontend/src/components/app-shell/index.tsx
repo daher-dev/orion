@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -67,8 +67,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Awaiting redirect — render nothing to avoid flicker.
   if (!user || (data !== undefined && !data.user)) return null;
 
+  // Override shadcn's defaults so the sidebar matches the design source:
+  //   --sb-w             256px (shadcn default already 16rem ✓)
+  //   --sb-w-collapsed   68px  (shadcn default 3rem / 48px — override)
+  // shadcn reads --sidebar-width-icon for the collapsed (icon-only) state.
+  const shellStyle = {
+    "--sidebar-width": "16rem",
+    "--sidebar-width-icon": "68px",
+  } as CSSProperties;
+
   return (
-    <SidebarProvider>
+    <SidebarProvider style={shellStyle}>
       <Sidebar />
       <SidebarInset>
         <Topbar />

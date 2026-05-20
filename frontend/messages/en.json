@@ -921,6 +921,13 @@
     "filters": {
       "searchPlaceholder": "Search cutting orders…"
     },
+    "view": {
+      "kanban": "Kanban",
+      "table": "Table"
+    },
+    "kanban": {
+      "pieces": "pieces"
+    },
     "table": {
       "columns": {
         "code": "Code",
@@ -1001,8 +1008,11 @@
       "title": "Cutting order",
       "product": "Product",
       "bodyRoll": "Body roll",
+      "bodyRollLabel": "Body roll",
       "ribRoll": "Rib roll",
       "status": "Status",
+      "progress": "Progress",
+      "complete": "complete",
       "plannedOutputs": "Planned pieces by size",
       "actualOutputs": "Cut pieces by size",
       "close": "Close",
@@ -1026,7 +1036,8 @@
       }
     },
     "filters": {
-      "searchPlaceholder": "Search shipments…"
+      "searchPlaceholder": "Search shipments…",
+      "statusAll": "All"
     },
     "table": {
       "columns": {
@@ -1108,7 +1119,14 @@
     "detail": {
       "size": "Size",
       "requested": "Requested",
-      "received": "Received"
+      "received": "Received",
+      "itemsTitle": "Pieces by size"
+    },
+    "timeline": {
+      "title": "Timeline",
+      "production": "In production",
+      "inProgress": "in progress",
+      "cancelled": "Shipment cancelled — no further steps."
     }
   },
   "contractors": {
@@ -1116,9 +1134,9 @@
       "eyebrow": "Production"
     },
     "list": {
-      "title": "Sewing workshops",
+      "title": "Workshops",
       "titleEm": "partners",
-      "sub": "Sewing workshop directory.",
+      "sub": "Sewing workshop directory and metrics.",
       "empty": {
         "title": "No workshops yet",
         "body": "Register your first sewing partner to start tracking shipments.",
@@ -1142,6 +1160,21 @@
       "edit": "Edit workshop",
       "delete": "Delete workshop",
       "confirmDelete": "Are you sure? This cannot be undone."
+    },
+    "metrics": {
+      "active": "Active",
+      "ontime": "On time"
+    },
+    "detail": {
+      "metrics": "Metrics",
+      "activeShipments": "Active shipments",
+      "onTime": "On-time delivery",
+      "totalPieces": "Pieces received",
+      "history": "Shipment history",
+      "noHistory": "No shipments yet.",
+      "sentAt": "Sent",
+      "receivedAt": "received",
+      "piecesUnit": "pcs"
     },
     "form": {
       "title": {

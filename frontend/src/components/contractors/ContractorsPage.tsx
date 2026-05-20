@@ -10,7 +10,8 @@ import { useCanAccess } from "@/hooks/use-permissions";
 import { useContractors } from "@/hooks/use-contractors";
 import type { Contractor } from "@/lib/schemas/contractor";
 import { PageHead } from "@/components/page/PageHead";
-import { ContractorsTable } from "./ContractorsTable";
+import { ContractorsGrid } from "./ContractorsGrid";
+import { ContractorDetailSheet } from "./ContractorDetailSheet";
 import { ContractorsEmptyState } from "./ContractorsEmptyState";
 import { ContractorFormSheet } from "./ContractorFormSheet";
 
@@ -26,6 +27,7 @@ export function ContractorsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Contractor | null>(null);
+  const [viewing, setViewing] = useState<Contractor | null>(null);
 
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search.trim()), 250);
@@ -50,6 +52,10 @@ export function ContractorsPage() {
   function handleOpenEdit(contractor: Contractor) {
     setEditing(contractor);
     setSheetOpen(true);
+  }
+
+  function handleView(contractor: Contractor) {
+    setViewing(contractor);
   }
 
   function handleSheetChange(next: boolean) {
@@ -92,46 +98,44 @@ export function ContractorsPage() {
         }
       />
 
-      <div
-        data-testid="contractors-card"
-        className="overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)]"
-      >
+      {/* Search row — outside the grid since each card is its own surface. */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <div
-          className="flex flex-wrap items-center gap-2 border-b border-[color:var(--orion-line-soft)]"
-          style={{ padding: "12px 16px" }}
+          className="flex min-w-[220px] items-center gap-1.5 rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)]"
+          style={{ padding: "5px 10px" }}
         >
-          <div
-            className="flex min-w-[220px] items-center gap-1.5 rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)]"
-            style={{ padding: "5px 10px" }}
-          >
-            <Search size={13} strokeWidth={1.8} style={{ color: "var(--orion-ink-3)" }} />
-            <Input
-              data-testid="contractors-search"
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={t("filters.searchPlaceholder")}
-              className="h-auto border-0 bg-transparent px-0 py-0 text-[12.5px] text-[color:var(--orion-ink)] shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
-          </div>
+          <Search size={13} strokeWidth={1.8} style={{ color: "var(--orion-ink-3)" }} />
+          <Input
+            data-testid="contractors-search"
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t("filters.searchPlaceholder")}
+            className="h-auto border-0 bg-transparent px-0 py-0 text-[12.5px] text-[color:var(--orion-ink)] shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          />
         </div>
-
-        {isError ? (
-          <p className="text-center text-[13px] text-[color:var(--status-err)]" style={{ padding: "32px 16px" }}>
-            {t("toast.error")}
-          </p>
-        ) : isPending ? (
-          <div className="flex flex-col gap-2" style={{ padding: 16 }}>
-            <Skeleton className="h-9 w-full rounded-[6px]" />
-            <Skeleton className="h-9 w-full rounded-[6px]" />
-            <Skeleton className="h-9 w-full rounded-[6px]" />
-          </div>
-        ) : hasItems ? (
-          <ContractorsTable data={items} onRowClick={handleOpenEdit} />
-        ) : (
-          <ContractorsEmptyState onCreate={handleOpenCreate} />
-        )}
       </div>
+
+      {isError ? (
+        <p
+          className="rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] text-center text-[13px] text-[color:var(--status-err)]"
+          style={{ padding: "32px 16px" }}
+        >
+          {t("toast.error")}
+        </p>
+      ) : isPending ? (
+        <div className="grid" style={{ gap: 14, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-[140px] w-full rounded-[14px]" />
+          ))}
+        </div>
+      ) : hasItems ? (
+        <ContractorsGrid data={items} onView={handleView} />
+      ) : (
+        <div className="overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)]">
+          <ContractorsEmptyState onCreate={handleOpenCreate} />
+        </div>
+      )}
 
       {canWrite ? (
         <ContractorFormSheet
@@ -140,6 +144,18 @@ export function ContractorsPage() {
           onOpenChange={handleSheetChange}
         />
       ) : null}
+
+      <ContractorDetailSheet
+        contractor={viewing}
+        open={viewing !== null}
+        onOpenChange={(o) => {
+          if (!o) setViewing(null);
+        }}
+        onEdit={(c) => {
+          setViewing(null);
+          handleOpenEdit(c);
+        }}
+      />
     </div>
   );
 }

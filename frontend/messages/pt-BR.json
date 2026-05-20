@@ -907,7 +907,7 @@
       "eyebrow": "Produção"
     },
     "list": {
-      "title": "Cortes",
+      "title": "Corte",
       "titleEm": "& planejamento",
       "sub": "Planeje e registre lotes de corte contra suas bobinas de tecido.",
       "loadError": "Não foi possível carregar as ordens de corte.",
@@ -920,6 +920,13 @@
     },
     "filters": {
       "searchPlaceholder": "Procurar ordem…"
+    },
+    "view": {
+      "kanban": "Kanban",
+      "table": "Tabela"
+    },
+    "kanban": {
+      "pieces": "peças"
     },
     "table": {
       "columns": {
@@ -1001,8 +1008,11 @@
       "title": "Ordem de corte",
       "product": "Produto",
       "bodyRoll": "Bobina corpo",
+      "bodyRollLabel": "Bobina",
       "ribRoll": "Bobina ribana",
       "status": "Status",
+      "progress": "Progresso",
+      "complete": "completo",
       "plannedOutputs": "Peças planejadas por tamanho",
       "actualOutputs": "Peças cortadas por tamanho",
       "close": "Fechar",
@@ -1026,7 +1036,8 @@
       }
     },
     "filters": {
-      "searchPlaceholder": "Procurar remessa…"
+      "searchPlaceholder": "Procurar remessa…",
+      "statusAll": "Todas"
     },
     "table": {
       "columns": {
@@ -1108,7 +1119,14 @@
     "detail": {
       "size": "Tamanho",
       "requested": "Solicitado",
-      "received": "Recebido"
+      "received": "Recebido",
+      "itemsTitle": "Itens da remessa"
+    },
+    "timeline": {
+      "title": "Linha do tempo",
+      "production": "Em produção",
+      "inProgress": "em curso",
+      "cancelled": "Remessa cancelada — sem próximas etapas."
     }
   },
   "contractors": {
@@ -1118,7 +1136,7 @@
     "list": {
       "title": "Bancas",
       "titleEm": "parceiras",
-      "sub": "Diretório de bancas de costura.",
+      "sub": "Diretório de bancas de costura e suas métricas.",
       "empty": {
         "title": "Nenhuma banca cadastrada",
         "body": "Cadastre sua primeira banca para acompanhar remessas.",
@@ -1142,6 +1160,21 @@
       "edit": "Editar banca",
       "delete": "Excluir banca",
       "confirmDelete": "Tem certeza? Esta ação não pode ser desfeita."
+    },
+    "metrics": {
+      "active": "Ativas",
+      "ontime": "No prazo"
+    },
+    "detail": {
+      "metrics": "Métricas",
+      "activeShipments": "Remessas ativas",
+      "onTime": "Entrega no prazo",
+      "totalPieces": "Peças recebidas",
+      "history": "Histórico de remessas",
+      "noHistory": "Nenhuma remessa registrada.",
+      "sentAt": "Enviada",
+      "receivedAt": "recebida",
+      "piecesUnit": "pç"
     },
     "form": {
       "title": {

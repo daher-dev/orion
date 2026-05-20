@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Shirt } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import type { Order } from "@/lib/schemas/order";
+import { variantColor } from "@/lib/variant-color";
 
 /**
  * Single variation card on the detail page — modelled on the design's
@@ -58,9 +59,14 @@ export function OrderLineItem({ order }: Props) {
         </div>
         <div className="mt-1 flex items-center gap-2 text-[11.5px] text-[color:var(--orion-ink-2)]">
           <span className="inline-flex items-center gap-1.5">
+            {/* Design: 10×10 swatch using the variant's hex (mirrors `v.hex`
+                in /docs/design/source/pages/sales.jsx line 377). */}
             <span
               className="inline-block h-2.5 w-2.5 rounded-full border border-[color:var(--orion-line-soft)]"
-              style={{ background: "var(--orion-ink-2)" }}
+              style={{
+                background: variantColor(order.variation.color_code),
+                boxShadow: "inset 0 0 0 1px rgba(0,0,0,.04)",
+              }}
               aria-hidden="true"
             />
             <span>{order.variation.color}</span>

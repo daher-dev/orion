@@ -36,6 +36,7 @@ import { useDeleteOrder } from "@/hooks/use-orders";
 import { useCanAccess } from "@/hooks/use-permissions";
 import { ApiError } from "@/lib/api-client";
 import type { Order } from "@/lib/schemas/order";
+import { variantColor } from "@/lib/variant-color";
 import { OrderChannelChip } from "./OrderChannelChip";
 import { OrderStatusPill } from "./OrderStatusPill";
 
@@ -95,20 +96,13 @@ export function OrdersTable({ rows, onView }: Props) {
         ),
         enableSorting: false,
       },
-      // code
+      // code — design: just text (the surrounding row handles the click).
       {
         id: "code",
         header: () => t("table.columns.code"),
         cell: ({ row }) => (
-          <button
-            type="button"
-            onClick={() =>
-              onView ? onView(row.original) : router.push(`/orders/${row.original.id}`)
-            }
-            className="flex flex-col gap-0.5 hover:underline focus-visible:outline-none focus-visible:underline text-left"
-            style={{ color: "var(--orion-ink)" }}
-          >
-            <span className="font-medium text-[13px]">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[13px] font-medium text-[color:var(--orion-ink)]">
               {shortOrderCode(row.original.id)}
             </span>
             {row.original.external_order_id ? (
@@ -116,7 +110,7 @@ export function OrdersTable({ rows, onView }: Props) {
                 {row.original.external_order_id}
               </span>
             ) : null}
-          </button>
+          </div>
         ),
       },
       // client (before channel — QA-013)
@@ -170,7 +164,14 @@ export function OrdersTable({ rows, onView }: Props) {
                 <span className="truncate text-[13px] font-medium text-[color:var(--orion-ink)]">
                   {v.product.name}
                 </span>
+                {/* Design: real color hex from `parseVariant`, sized 9×9 with a
+                    1px soft outline. Falls back to a hashed HSL for unknown codes. */}
                 <span className="flex items-center gap-1.5 text-[11px] text-[color:var(--orion-ink-3)]">
+                  <span
+                    className="inline-block h-[9px] w-[9px] shrink-0 rounded-full border border-[color:var(--orion-line-soft)]"
+                    style={{ background: variantColor(v.color_code) }}
+                    aria-hidden="true"
+                  />
                   <span>{v.color}</span>
                   <span
                     className="inline-block rounded-[3px] border border-[color:var(--orion-line-soft)] px-1 py-px font-mono text-[10px] leading-[1.2]"
@@ -370,10 +371,19 @@ export function OrdersTable({ rows, onView }: Props) {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row, idx, arr) => (
+              // Design: full-row click opens the detail sheet — mirrors
+              // `<tr onClick={() => setOpen(o)}>` in sales.jsx line 94.
+              // The checkbox + actions cells stop propagation so they keep
+              // their own behaviour.
               <tr
                 key={row.id}
                 data-testid={`order-row-${row.original.id}`}
-                className="hover:[&_td]:bg-[color:var(--orion-bg)]"
+                onClick={() =>
+                  onView
+                    ? onView(row.original)
+                    : router.push(`/orders/${row.original.id}`)
+                }
+                className="cursor-pointer hover:[&_td]:bg-[color:var(--orion-bg)]"
               >
                 {row.getVisibleCells().map((cell) => (
                   <td
@@ -429,31 +439,4 @@ export function OrdersTable({ rows, onView }: Props) {
       </AlertDialog>
     </>
   );
-}
-
-/**
- * Tiny deterministic hash that turns a 3-char color code into a CSS color.
- * The Orders model only stores the human label + the 3-letter code (BLK,
- * GRN, etc.), so we surface a representative swatch using a small lookup
- * with a fallback hash. The exact palette ties back to the design's
- * `COLOR_HEX` in `/docs/design/source/pages/sales.jsx`.
- */
-function hashColor(code: string): string {
-  const palette: Record<string, string> = {
-    BLK: "#1f1f1f",
-    WHT: "#f4f1ea",
-    OFW: "#efe6d3",
-    BRN: "#7a4b2a",
-    SND: "#cfb98e",
-    GRN: "#3a4a3d",
-    CRU: "#efe6d3",
-    BEI: "#c9b9a3",
-    RED: "#b03a2e",
-  };
-  if (palette[code]) return palette[code];
-  // Fallback — derive a CSS color from char codes for unknown variants.
-  let hash = 0;
-  for (let i = 0; i < code.length; i++) hash = code.charCodeAt(i) + ((hash << 5) - hash);
-  const hue = ((hash % 360) + 360) % 360;
-  return `hsl(${hue}, 40%, 55%)`;
 }

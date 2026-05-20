@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { OrdersTable } from "@/components/orders/OrdersTable";
 import { TestProviders } from "@/__tests__/test-utils";
 import type { Order } from "@/lib/schemas/order";
@@ -10,6 +10,7 @@ vi.mock("@/i18n/routing", () => ({
       {children}
     </a>
   ),
+  useRouter: () => ({ push: () => {}, replace: () => {} }),
 }));
 
 vi.mock("@/hooks/use-permissions", () => ({
@@ -91,17 +92,18 @@ describe("OrdersTable", () => {
     expect(screen.getByText("EXT-1")).toBeInTheDocument();
   });
 
-  it("opens the delete confirmation when delete is clicked", () => {
+  it("exposes the `More actions` dropdown trigger on each row", () => {
     render(
       <TestProviders>
         <OrdersTable rows={[baseOrder]} />
       </TestProviders>,
     );
-    const deleteButtons = screen.getAllByLabelText("Delete");
-    fireEvent.click(deleteButtons[0]);
-    expect(
-      screen.getByText("Delete this order? This cannot be undone."),
-    ).toBeInTheDocument();
+    // QA-015 moved the per-row actions behind the `⋯` overflow menu, so the
+    // table now exposes a `More actions` trigger instead of inline buttons.
+    // Radix DropdownMenu portals its content outside the test DOM in jsdom,
+    // so we only assert the trigger exists — the dialog flow is covered by
+    // the e2e suite.
+    expect(screen.getByLabelText("More actions")).toBeInTheDocument();
   });
 
   it("renders a different channel chip per row", () => {

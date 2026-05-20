@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHead } from "@/components/page/PageHead";
 import { ProductFormSheet } from "@/components/products/ProductFormSheet";
 import { VariationMatrix } from "@/components/products/VariationMatrix";
 import { useCanAccess } from "@/hooks/use-permissions";
@@ -59,39 +60,29 @@ export default function ProductDetailPage({ params }: Props) {
         </Button>
       </div>
 
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <div className="mb-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--brand-catalog)]">
-            <span
-              className="grid h-[18px] w-[18px] place-items-center rounded-[4px] font-serif text-[10px] font-semibold text-white"
-              style={{ background: "var(--brand-catalog)" }}
+      <PageHead
+        subColor="var(--brand-catalog)"
+        mark={<Shirt size={11} strokeWidth={2.2} />}
+        eyebrow={t("page.eyebrow")}
+        title={product.name}
+        sub={t(`productTypes.${product.product_type}`)}
+        actions={
+          canWrite ? (
+            <Button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              data-testid="product-detail-edit"
+              className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-catalog)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
+              style={{
+                borderColor: "color-mix(in oklab, var(--brand-catalog) 70%, black)",
+              }}
             >
-              <Shirt size={11} strokeWidth={2.2} />
-            </span>
-            {t("page.eyebrow")}
-          </div>
-          <h1 className="font-serif text-[30px] font-normal leading-[1.05] tracking-[-0.025em] text-[color:var(--orion-ink)]">
-            {product.name}
-          </h1>
-          <div className="mt-1 text-[12px] text-[color:var(--orion-ink-3)]">
-            {t(`productTypes.${product.product_type}`)}
-          </div>
-        </div>
-        {canWrite ? (
-          <Button
-            type="button"
-            onClick={() => setEditOpen(true)}
-            data-testid="product-detail-edit"
-            className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-catalog)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
-            style={{
-              borderColor: "color-mix(in oklab, var(--brand-catalog) 70%, black)",
-            }}
-          >
-            <Pencil className="size-3.5" />
-            {t("actions.edit")}
-          </Button>
-        ) : null}
-      </header>
+              <Pencil className="size-3.5" />
+              {t("actions.edit")}
+            </Button>
+          ) : null
+        }
+      />
 
       <section className="mb-6 grid grid-cols-1 gap-[1px] overflow-hidden rounded-[10px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-line-soft)] sm:grid-cols-3">
         <DetailCell

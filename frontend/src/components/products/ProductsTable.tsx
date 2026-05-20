@@ -36,7 +36,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useDeleteProduct } from "@/hooks/use-products";
 import { useCanAccess } from "@/hooks/use-permissions";
-import type { Product, ProductType } from "@/lib/schemas/product";
+import type { Product, ProductType, Size } from "@/lib/schemas/product";
 
 export type ProductsTableProps = {
   rows: Product[];
@@ -54,12 +54,59 @@ const PRODUCT_TYPE_GLYPH: Record<ProductType, React.ReactNode> = {
 };
 
 /**
- * Products list table — mirrors the `.tbl` rules from `/docs/design/source/styles.css`.
- *
- * Columns: small glyph cell (28×28 rounded-6 tinted from --accent) + name + spec
- * code (mono) + print code (mono) + variation count + actions.
+ * Maps the three-letter design source color codes to their swatch hex.
+ * Anything unknown falls back to a neutral stone — never a brand color.
  */
-export function ProductsTable({ rows, specCodeById, printCodeById, printImageById, onEdit }: ProductsTableProps) {
+const COLOR_HEX_BY_CODE: Record<string, string> = {
+  PRT: "#1f1f1f",
+  OFF: "#f4f1ea",
+  MAR: "#7a4b2a",
+  ARE: "#c9b9a3",
+  BEG: "#cfb98e",
+  MUS: "#7a8a76",
+  VRD: "#3a4a3d",
+  CAR: "#6b4a2e",
+  VRM: "#b03a2e",
+  AZM: "#2a3b5a",
+};
+
+const SIZE_ORDER: Size[] = ["p", "m", "g", "gg"];
+
+function uniqueColorCodes(p: Product): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of p.variations) {
+    if (seen.has(v.color_code)) continue;
+    seen.add(v.color_code);
+    out.push(v.color_code);
+  }
+  return out;
+}
+
+function uniqueSizes(p: Product): Size[] {
+  const seen = new Set<Size>();
+  for (const v of p.variations) seen.add(v.size);
+  return SIZE_ORDER.filter((s) => seen.has(s));
+}
+
+/**
+ * Products list table — direct port of `Products` from
+ * `/docs/design/source/pages/catalog.jsx`. Column order:
+ *   glyph + spec code (mono) + product name + spec icon + print icon +
+ *   colors swatches + sizes pills + chevron.
+ *
+ * The design source has a `code` column derived from the product itself.
+ * Our backend doesn't carry a product-level code, so we surface the spec
+ * code in that slot — the spec is the recipe identity and the design
+ * source displays e.g. "CRP-OVS" right next to the spec column anyway.
+ */
+export function ProductsTable({
+  rows,
+  specCodeById,
+  printCodeById,
+  printImageById,
+  onEdit,
+}: ProductsTableProps) {
   const t = useTranslations("products");
   const canWrite = useCanAccess("products.write");
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -109,16 +156,6 @@ export function ProductsTable({ rows, specCodeById, printCodeById, printImageByI
         ),
       },
       {
-        id: "product_type",
-        accessorKey: "product_type",
-        header: () => t("table.columns.type"),
-        cell: ({ row }) => (
-          <span className="text-[color:var(--orion-ink-2)]">
-            {t(`productTypes.${row.original.product_type}`)}
-          </span>
-        ),
-      },
-      {
         id: "spec",
         header: () => t("table.columns.spec"),
         cell: ({ row }) => {
@@ -149,13 +186,59 @@ export function ProductsTable({ rows, specCodeById, printCodeById, printImageByI
         },
       },
       {
+        id: "colors",
+        header: () => t("table.columns.colors"),
+        enableSorting: false,
+        cell: ({ row }) => {
+          const codes = uniqueColorCodes(row.original);
+          if (codes.length === 0) {
+            return <span className="text-[color:var(--orion-ink-3)]">—</span>;
+          }
+          return (
+            <span className="inline-flex items-center gap-[3px]">
+              {codes.slice(0, 4).map((c) => (
+                <span
+                  key={c}
+                  aria-label={c}
+                  className="inline-block size-[14px] rounded-full border-[1.5px] border-[color:var(--orion-surface)] shadow-[0_0_0_1px_var(--orion-line)]"
+                  style={{ background: COLOR_HEX_BY_CODE[c] ?? "var(--orion-surface-2)" }}
+                />
+              ))}
+              {codes.length > 4 ? (
+                <span className="ml-1 text-[11px] text-[color:var(--orion-ink-3)] tabular-nums">
+                  +{codes.length - 4}
+                </span>
+              ) : null}
+            </span>
+          );
+        },
+      },
+      {
+        id: "sizes",
+        header: () => t("table.columns.sizes"),
+        enableSorting: false,
+        cell: ({ row }) => {
+          const sizes = uniqueSizes(row.original);
+          if (sizes.length === 0) {
+            return <span className="text-[color:var(--orion-ink-3)]">—</span>;
+          }
+          return (
+            <span className="text-[11.5px] text-[color:var(--orion-ink-3)] tabular-nums">
+              {sizes.map((s) => t(`variations.sizes.${s}`)).join(" · ")}
+            </span>
+          );
+        },
+      },
+      {
         id: "variations",
+        accessorFn: (row) => row.variations.length,
         header: () => t("table.columns.variations"),
         cell: ({ row }) => (
           <span className="text-[11.5px] text-[color:var(--orion-ink-3)] tabular-nums">
             {row.original.variations.length}
           </span>
         ),
+        meta: { align: "right" },
       },
     ];
 
@@ -163,6 +246,7 @@ export function ProductsTable({ rows, specCodeById, printCodeById, printImageByI
       id: "actions",
       header: () => <span className="sr-only">{t("table.columns.actions")}</span>,
       enableSorting: false,
+      size: 100,
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1">
           {canWrite ? (
@@ -172,8 +256,11 @@ export function ProductsTable({ rows, specCodeById, printCodeById, printImageByI
                 variant="ghost"
                 size="icon-sm"
                 aria-label={t("actions.edit")}
-                onClick={(e) => { e.stopPropagation(); onEdit(row.original); }}
-                className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(row.original);
+                }}
+                className="h-7 w-7 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
               >
                 <Pencil className="size-3.5" />
               </Button>
@@ -182,23 +269,20 @@ export function ProductsTable({ rows, specCodeById, printCodeById, printImageByI
                 variant="ghost"
                 size="icon-sm"
                 aria-label={t("actions.delete")}
-                onClick={(e) => { e.stopPropagation(); setPendingDelete(row.original); }}
-                className="h-8 w-8 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPendingDelete(row.original);
+                }}
+                className="h-7 w-7 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
               >
                 <Trash2 className="size-3.5" />
               </Button>
             </>
           ) : null}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t("actions.view")}
-            onClick={(e) => { e.stopPropagation(); onEdit(row.original); }}
-            className="h-7 w-7 rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)]"
-          >
-            <ChevronRight className="size-3.5" />
-          </Button>
+          <ChevronRight
+            aria-hidden
+            className="size-3.5 text-[color:var(--orion-ink-3)]"
+          />
         </div>
       ),
     });
@@ -239,15 +323,23 @@ export function ProductsTable({ rows, specCodeById, printCodeById, printImageByI
               {hg.headers.map((header) => {
                 const sortable = header.column.getCanSort();
                 const dir = header.column.getIsSorted();
+                const align = (header.column.columnDef.meta as { align?: string } | undefined)
+                  ?.align;
+                const isActionsCol = header.column.id === "actions";
                 return (
                   <th
                     key={header.id}
                     onClick={sortable ? header.column.getToggleSortingHandler() : undefined}
-                    className={`border-b border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-[14px] py-[10px] text-left text-[10.5px] font-semibold tracking-[0.08em] uppercase text-[color:var(--orion-ink-3)] ${
+                    className={`border-b border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-[14px] py-[10px] text-[10.5px] font-semibold tracking-[0.08em] uppercase text-[color:var(--orion-ink-3)] ${
                       sortable ? "cursor-pointer select-none" : ""
-                    } ${header.column.id === "actions" || header.column.id === "variations" ? "text-right" : ""}`}
+                    } ${align === "right" || isActionsCol ? "text-right" : "text-left"}`}
+                    style={{ width: header.column.columnDef.size }}
                   >
-                    <span className="inline-flex items-center gap-1">
+                    <span
+                      className={`inline-flex items-center gap-1 w-full ${
+                        align === "right" || isActionsCol ? "justify-end" : "justify-start"
+                      }`}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(header.column.columnDef.header, header.getContext())}
@@ -274,18 +366,23 @@ export function ProductsTable({ rows, specCodeById, printCodeById, printImageByI
               className="group/tbl-row cursor-pointer hover:[&_td]:bg-[color:var(--orion-bg)]"
               onClick={() => onEdit(row.original)}
             >
-              {row.getVisibleCells().map((cell) => (
-                <td
-                  key={cell.id}
-                  className={`px-[14px] py-[12px] align-middle text-[color:var(--orion-ink-2)] ${
-                    idx < arr.length - 1
-                      ? "border-b border-[color:var(--orion-line-soft)]"
-                      : ""
-                  } ${cell.column.id === "actions" || cell.column.id === "variations" ? "text-right" : ""}`}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
+              {row.getVisibleCells().map((cell) => {
+                const align = (cell.column.columnDef.meta as { align?: string } | undefined)
+                  ?.align;
+                const isActionsCol = cell.column.id === "actions";
+                return (
+                  <td
+                    key={cell.id}
+                    className={`px-[14px] py-[12px] align-middle text-[color:var(--orion-ink-2)] ${
+                      idx < arr.length - 1
+                        ? "border-b border-[color:var(--orion-line-soft)]"
+                        : ""
+                    } ${align === "right" || isActionsCol ? "text-right" : "text-left"}`}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

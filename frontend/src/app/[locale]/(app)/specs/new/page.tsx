@@ -1,11 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, FileText } from "lucide-react";
 import { Link, useRouter } from "@/i18n/routing";
 import { useCreateSpec } from "@/hooks/use-specs";
 import { SpecForm, type SpecFormSubmit } from "@/components/specs/SpecForm";
-import { SpecDetailHeader } from "@/components/specs/SpecDetailHeader";
+import { PageHead } from "@/components/page/PageHead";
 import { Button } from "@/components/ui/button";
 
 export default function NewSpecPage() {
@@ -20,7 +20,9 @@ export default function NewSpecPage() {
 
   return (
     <div data-testid="specs-new-page">
-      <SpecDetailHeader
+      <PageHead
+        subColor="var(--brand-catalog)"
+        mark={<FileText size={11} strokeWidth={2.2} />}
         eyebrow={t("specs.page.eyebrow")}
         title={t("specs.form.title.new")}
         sub={t("specs.list.sub")}
@@ -32,7 +34,7 @@ export default function NewSpecPage() {
           </Button>
         }
       />
-      <div className="rounded-xl border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-6 py-6">
+      <div className="rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-6 py-6">
         <SpecForm
           initial={null}
           submitting={create.isPending}

@@ -1,7 +1,15 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ArrowDownCircle, ArrowUpCircle, Check, Search } from "lucide-react";
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Boxes,
+  Check,
+  Minus,
+  Plus,
+  Search,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -23,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { ApiError } from "@/lib/api-client";
 import { useCreateStockEntry, useCreateStockExit, useStockLevels } from "@/hooks/use-stock";
+import { StockStatusPill } from "@/components/stock/StockStatusPill";
 import {
   STOCK_EXIT_REASONS,
   STOCK_SOURCES,
@@ -245,17 +254,70 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
               void handleSubmit();
             }}
           >
+            {/* Hero — direct port of inventory.jsx AdjustStockBody hero
+                (lines 442-464). 56×56 surface tile + product name (Fraunces
+                17px) + chip row (color swatch, size pill, SKU mono). On the
+                right: large status-colored count + status pill. */}
             <div
-              className="flex items-center justify-between gap-3 rounded-[10px] bg-[color:var(--orion-surface-2)] px-3 py-2 text-[12.5px]"
+              className="flex items-center gap-3 rounded-[12px] bg-[color:var(--orion-surface-2)] p-[18px]"
               data-testid="stock-adjust-current"
             >
-              <span className="text-[color:var(--orion-ink-3)]">
-                {t("labels.variation")}:{" "}
-                <span className="font-mono">{activeVariation.sku}</span>
+              <span
+                aria-hidden
+                className="grid size-14 flex-shrink-0 place-items-center rounded-[12px] bg-[color:var(--orion-surface)] text-[color:var(--orion-ink-2)]"
+              >
+                <Boxes size={26} strokeWidth={1.5} />
               </span>
-              <span className="font-medium text-[color:var(--orion-ink)]">
-                {activeVariation.on_hand}
-              </span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-serif text-[17px] text-[color:var(--orion-ink)]">
+                  {activeVariation.product.name}
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2.5 text-[12px] text-[color:var(--orion-ink-2)]">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span
+                      aria-hidden
+                      className="size-3.5 rounded-full"
+                      style={{
+                        background: "var(--orion-surface)",
+                        boxShadow:
+                          "0 0 0 1px var(--orion-line), inset 0 0 0 1px rgba(255,255,255,.15)",
+                      }}
+                    />
+                    {activeVariation.color}
+                  </span>
+                  <span
+                    className="inline-flex items-center justify-center rounded-full border bg-[color:var(--orion-surface)] px-2 py-[2px] text-[11px] font-semibold tracking-[0.04em] text-[color:var(--orion-ink-2)]"
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      minWidth: 28,
+                      borderColor: "var(--orion-line-soft)",
+                    }}
+                  >
+                    {activeVariation.size.toUpperCase()}
+                  </span>
+                  <span className="font-mono text-[11px] text-[color:var(--orion-ink-3)]">
+                    {activeVariation.sku}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <div
+                  className="font-serif text-[28px] leading-none"
+                  style={{
+                    color:
+                      activeVariation.on_hand <= 0
+                        ? "var(--status-err)"
+                        : activeVariation.on_hand < 10
+                          ? "var(--status-warn)"
+                          : "var(--status-ok)",
+                  }}
+                >
+                  {activeVariation.on_hand}
+                </div>
+                <div className="mt-1">
+                  <StockStatusPill onHand={activeVariation.on_hand} threshold={5} />
+                </div>
+              </div>
             </div>
 
             {/* Direction toggle — +/- buttons. */}
@@ -299,23 +361,60 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
               </div>
             </div>
 
-            {/* Quantity */}
+            {/* Quantity — stepper with -/+ buttons (matches design's AdjustStockBody).
+                Display-font 22px center-aligned numeric input. Min clamped to 1. */}
             <div className="flex flex-col gap-1.5">
               <label htmlFor={`${formId}-qty`} className={FIELD_LABEL_CLASS}>
                 {t("labels.quantity")}
               </label>
-              <Input
-                id={`${formId}-qty`}
-                data-testid="stock-adjust-quantity"
-                inputMode="numeric"
-                value={quantity}
-                onChange={(e) => {
-                  setQuantity(e.target.value.replace(/\D/g, ""));
-                  setQuantityError(null);
-                }}
-                className={FIELD_INPUT_CLASS}
-                aria-invalid={!!quantityError}
-              />
+              <div className="flex max-w-[240px] items-center gap-2">
+                <button
+                  type="button"
+                  data-testid="stock-adjust-qty-decrement"
+                  aria-label="decrement"
+                  onClick={() => {
+                    const next = Math.max(1, (parsedQty || 1) - 1);
+                    setQuantity(String(next));
+                    setQuantityError(null);
+                  }}
+                  className="grid size-[38px] cursor-pointer place-items-center rounded-[6px] border bg-[color:var(--orion-surface)] text-[color:var(--orion-ink-2)] transition-colors hover:bg-[color:var(--orion-surface-2)]"
+                  style={{ borderColor: "var(--orion-line)" }}
+                >
+                  <Minus size={14} strokeWidth={2} />
+                </button>
+                <input
+                  id={`${formId}-qty`}
+                  data-testid="stock-adjust-quantity"
+                  type="text"
+                  inputMode="numeric"
+                  value={quantity}
+                  onChange={(e) => {
+                    setQuantity(e.target.value.replace(/\D/g, ""));
+                    setQuantityError(null);
+                  }}
+                  aria-invalid={!!quantityError}
+                  className="flex-1 rounded-[8px] border bg-[color:var(--orion-surface)] py-[8px] text-center font-serif text-[22px] text-[color:var(--orion-ink)] outline-none tabular-nums"
+                  style={{
+                    borderColor: quantityError
+                      ? "var(--status-err)"
+                      : "var(--orion-line)",
+                  }}
+                />
+                <button
+                  type="button"
+                  data-testid="stock-adjust-qty-increment"
+                  aria-label="increment"
+                  onClick={() => {
+                    const next = (parsedQty || 0) + 1;
+                    setQuantity(String(next));
+                    setQuantityError(null);
+                  }}
+                  className="grid size-[38px] cursor-pointer place-items-center rounded-[6px] border bg-[color:var(--orion-surface)] text-[color:var(--orion-ink-2)] transition-colors hover:bg-[color:var(--orion-surface-2)]"
+                  style={{ borderColor: "var(--orion-line)" }}
+                >
+                  <Plus size={14} strokeWidth={2} />
+                </button>
+              </div>
               {quantityError ? (
                 <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
                   {quantityError}
@@ -371,50 +470,79 @@ export function StockAdjustDialog({ open, onOpenChange, variation, defaultDirect
               />
             </div>
 
-            {/* Projected on-hand preview */}
-            <div
-              className="grid grid-cols-3 items-center gap-2 rounded-[10px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface-2)] px-3 py-3"
-              data-testid="stock-adjust-projected"
-            >
-              <div className="text-center">
-                <div className="text-[10.5px] uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
-                  {t("labels.variation")}
+            {/* Projected on-hand preview — direct port of "Pré-visualização" from
+                inventory.jsx. 5-col grid: Atual / sign / Entrada(or Saída) / = / Final,
+                32px display numerals. Color cues turn the Final red below zero,
+                amber when the resulting on-hand is critical. */}
+            <div className="flex flex-col gap-1.5">
+              <span className={FIELD_LABEL_CLASS}>
+                {t("labels.preview")}
+              </span>
+              <div
+                className="grid items-center gap-2 rounded-[12px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface-2)] px-3 py-3"
+                style={{ gridTemplateColumns: "1fr auto 1fr auto 1fr" }}
+                data-testid="stock-adjust-projected"
+              >
+                <div className="text-center">
+                  <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                    {t("preview.current")}
+                  </div>
+                  <div className="font-serif text-[32px] leading-[1.1] text-[color:var(--orion-ink)]">
+                    {activeVariation.on_hand}
+                  </div>
                 </div>
-                <div className="font-serif text-[24px] leading-none text-[color:var(--orion-ink)]">
-                  {activeVariation.on_hand}
+                <span className="font-serif text-[24px] text-[color:var(--orion-ink-3)]">
+                  {direction === "entry" ? "+" : "−"}
+                </span>
+                <div className="text-center">
+                  <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                    {direction === "entry"
+                      ? t("preview.entry")
+                      : t("preview.exit")}
+                  </div>
+                  <div
+                    className="font-serif text-[32px] leading-[1.1]"
+                    style={{
+                      color:
+                        direction === "entry"
+                          ? "var(--status-ok)"
+                          : "var(--status-err)",
+                    }}
+                  >
+                    {qtyIsValid ? parsedQty : 0}
+                  </div>
                 </div>
-              </div>
-              <div className="text-center">
-                <div className="text-[10.5px] uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
-                  {direction === "entry" ? "+" : "-"}
-                </div>
-                <div
-                  className="font-serif text-[24px] leading-none"
-                  style={{
-                    color: direction === "entry" ? "var(--status-ok)" : "var(--status-err)",
-                  }}
-                >
-                  {qtyIsValid ? parsedQty : 0}
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-[10.5px] uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                <span className="font-serif text-[24px] text-[color:var(--orion-ink-3)]">
                   =
-                </div>
-                <div
-                  className="font-serif text-[24px] leading-none"
-                  style={{
-                    color:
-                      projected < 0
-                        ? "var(--status-err)"
-                        : projected <= 5
-                          ? "var(--status-warn)"
-                          : "var(--orion-ink)",
-                  }}
-                >
-                  {projected}
+                </span>
+                <div className="text-center">
+                  <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                    {t("preview.final")}
+                  </div>
+                  <div
+                    className="font-serif text-[32px] leading-[1.1]"
+                    style={{
+                      color:
+                        projected < 0
+                          ? "var(--status-err)"
+                          : projected < 10
+                            ? "var(--status-warn)"
+                            : "var(--orion-ink)",
+                    }}
+                  >
+                    {projected}
+                  </div>
                 </div>
               </div>
+              {projected < 0 ? (
+                <p className="text-[11.5px] text-[color:var(--status-err)]">
+                  {t("preview.negativeWarning")}
+                </p>
+              ) : projected >= 0 && projected < 10 ? (
+                <p className="text-[11.5px] text-[color:var(--status-warn)]">
+                  {t("preview.lowWarning")}
+                </p>
+              ) : null}
             </div>
 
             {serverError ? (

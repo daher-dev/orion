@@ -1206,12 +1206,12 @@
       "columns": {
         "supplier": "Supplier",
         "kind": "Kind",
-        "fabricType": "Fabric",
+        "fabricType": "Type",
         "color": "Color",
         "receivedAt": "Received",
         "initialWeight": "Initial",
-        "currentWeight": "Current",
-        "usage": "Usage",
+        "currentWeight": "Remaining",
+        "usage": "Balance",
         "pricePerKg": "Price/kg",
         "actions": "Actions"
       }
@@ -1359,7 +1359,16 @@
         "quantity": "Quantity",
         "reason": "Reason",
         "source": "Source",
-        "notes": "Notes"
+        "notes": "Notes",
+        "preview": "Preview"
+      },
+      "preview": {
+        "current": "Current",
+        "entry": "Entry",
+        "exit": "Exit",
+        "final": "Final",
+        "negativeWarning": "Stock would go negative.",
+        "lowWarning": "After this exit the SKU will be in shortage."
       },
       "placeholders": {
         "notes": "Optional notes…",

@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import { useTranslations } from "next-intl";
+import { Check } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -45,6 +46,7 @@ function toDefaults(roll?: FabricRoll): Partial<FabricRollFormValues> | undefine
 
 export function FabricRollFormSheet({ open, onOpenChange, initial }: FabricRollFormSheetProps) {
   const t = useTranslations("fabric.form");
+  const tTypes = useTranslations("fabric.fabricTypes");
   const formId = useId();
   const isEdit = !!initial;
   const createRoll = useCreateFabricRoll();
@@ -75,11 +77,22 @@ export function FabricRollFormSheet({ open, onOpenChange, initial }: FabricRollF
       >
         <SheetHeader className="gap-1 border-b border-[color:var(--orion-line-soft)] px-[22px] py-[18px]">
           <SheetTitle className="font-serif text-[18px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
-            {isEdit ? t("title.edit") : t("title.new")}
+            {isEdit && initial ? tTypes(initial.fabric_type) : t("title.new")}
           </SheetTitle>
-          <SheetDescription className="sr-only">
-            {isEdit ? t("title.edit") : t("title.new")}
-          </SheetDescription>
+          {/* Sub-line per design — short mono ID + supplier/color summary.
+              For new-fabric we keep the sub-description hidden for sr only. */}
+          {isEdit && initial ? (
+            <SheetDescription
+              className="font-mono text-[12px] text-[color:var(--orion-ink-3)]"
+              data-testid="fabric-sheet-id"
+            >
+              {initial.id}
+            </SheetDescription>
+          ) : (
+            <SheetDescription className="sr-only">
+              {t("title.new")}
+            </SheetDescription>
+          )}
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-[22px] py-[18px]">
@@ -109,7 +122,8 @@ export function FabricRollFormSheet({ open, onOpenChange, initial }: FabricRollF
               borderColor: "color-mix(in oklab, var(--brand-inv) 70%, black)",
             }}
           >
-            {t("save")}
+            <Check size={13} strokeWidth={2.2} />
+            {isEdit ? t("save") : t("submitNew")}
           </Button>
         </SheetFooter>
       </SheetContent>

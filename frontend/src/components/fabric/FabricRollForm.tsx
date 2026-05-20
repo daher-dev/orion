@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import { useTranslations } from "next-intl";
-import { Layers, Rows3 } from "lucide-react";
+import { Rows3, Shirt } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -19,6 +19,24 @@ import {
   type FabricRollFormPayload,
   type FabricRollFormValues,
 } from "@/lib/schemas/fabric";
+
+/**
+ * Preset color palette — direct port of `COLOR_NAMES_INV` from
+ * /docs/design/source/pages/inventory.jsx. Clicking a swatch fills the
+ * free-text color input; users can still type any custom color name.
+ */
+const COLOR_PRESETS: ReadonlyArray<{ name: string; hex: string }> = [
+  { name: "Preto", hex: "#1f1f1f" },
+  { name: "Marrom", hex: "#7a4b2a" },
+  { name: "Areia", hex: "#c9b9a3" },
+  { name: "Off-white", hex: "#efe6d3" },
+  { name: "Bege", hex: "#cfb98e" },
+  { name: "Verde-musgo", hex: "#7a8a76" },
+  { name: "Verde", hex: "#3a4a3d" },
+  { name: "Caramelo", hex: "#6b4a2e" },
+  { name: "Branco", hex: "#f4f1ea" },
+  { name: "Vermelho", hex: "#b03a2e" },
+];
 
 type Props = {
   formId: string;
@@ -106,7 +124,7 @@ export function FabricRollForm({ formId, defaultValues, serverError, onSubmit }:
               {k === "rib" ? (
                 <Rows3 size={14} strokeWidth={1.6} />
               ) : (
-                <Layers size={14} strokeWidth={1.6} />
+                <Shirt size={14} strokeWidth={1.6} />
               )}
               {tKinds(k)}
             </button>
@@ -173,6 +191,53 @@ export function FabricRollForm({ formId, defaultValues, serverError, onSubmit }:
             className={FIELD_INPUT_CLASS}
             aria-invalid={!!errors.color}
             {...form.register("color")}
+          />
+          {/* Preset color swatches — clicking fills the input. Matches the
+              pill-style color chooser from inventory.jsx NewFabricSheet. */}
+          <Controller
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {COLOR_PRESETS.map((c) => {
+                  const active =
+                    field.value?.trim().toLowerCase() === c.name.toLowerCase();
+                  return (
+                    <button
+                      key={c.name}
+                      type="button"
+                      data-testid={`fabric-color-preset-${c.name}`}
+                      onClick={() =>
+                        field.onChange(active ? "" : c.name)
+                      }
+                      className="inline-flex cursor-pointer items-center gap-1.5 rounded-full font-[inherit]"
+                      style={{
+                        padding: "5px 10px 5px 6px",
+                        border: active
+                          ? "1.5px solid var(--brand-inv)"
+                          : "1px solid var(--orion-line)",
+                        background: active
+                          ? "color-mix(in oklab, var(--brand-inv) 10%, var(--orion-surface))"
+                          : "var(--orion-surface)",
+                        fontSize: 12,
+                        color: "var(--orion-ink-2)",
+                      }}
+                    >
+                      <span
+                        aria-hidden
+                        className="size-3.5 flex-shrink-0 rounded-full"
+                        style={{
+                          background: c.hex,
+                          boxShadow:
+                            "0 0 0 1px var(--orion-line), inset 0 0 0 1px rgba(255,255,255,.15)",
+                        }}
+                      />
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           />
           {errors.color?.message ? (
             <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">

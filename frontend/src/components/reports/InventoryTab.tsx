@@ -11,12 +11,20 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/reports/ChartCard";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useInventoryReport } from "@/hooks/use-reports";
 import type { ReportDateRange } from "@/lib/schemas/reports";
 
 type Props = { range: ReportDateRange };
 
+/**
+ * Inventory tab — adapted from the `InventoryReport` component in
+ * `/docs/design/source/pages/reports-settings.jsx`.
+ *
+ *  - "Current stock levels" card — horizontal bar chart using the amber
+ *    `--brand-inv` accent, matching the Estoque sub-product brand.
+ *  - "Slow movers" — table (`.tbl` parity) inside a `.card` with no body
+ *    padding so the table header rule lines up with the card edges.
+ */
 export function InventoryTab({ range }: Props) {
   const t = useTranslations("reports.inventory");
   const tCharts = useTranslations("reports.charts");
@@ -24,7 +32,7 @@ export function InventoryTab({ range }: Props) {
 
   if (isError) {
     return (
-      <div className="rounded-[12px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-6 text-[13px] text-[color:var(--orion-ink-3)]">
+      <div className="rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-6 text-[13px] text-[color:var(--orion-ink-3)]">
         {tCharts("loadError")}
       </div>
     );
@@ -35,7 +43,7 @@ export function InventoryTab({ range }: Props) {
   const slowMovers = (data?.slow_movers ?? []).slice(0, 20);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-[18px]">
       <ChartCard
         title={t("currentLevels")}
         loading={isPending}
@@ -74,7 +82,7 @@ export function InventoryTab({ range }: Props) {
                   fontSize: 12,
                 }}
               />
-              <Bar dataKey="on_hand" fill="var(--brand-inv)" radius={[0, 6, 6, 0]} />
+              <Bar dataKey="on_hand" fill="var(--brand-inv)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -88,26 +96,49 @@ export function InventoryTab({ range }: Props) {
         pad={false}
         skeletonHeight={220}
       >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="px-[18px]">{t("sku")}</TableHead>
-              <TableHead className="text-right">{t("daysIdle")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {slowMovers.map((row) => (
-              <TableRow key={row.variation_id}>
-                <TableCell className="px-[18px] font-mono text-[12.5px] text-[color:var(--orion-ink)]">
+        {/* .tbl — direct port of the design table: 10.5px / 0.08em uppercase
+            ink-3 headers, 13px ink-2 body, line-soft row borders, hover bg. */}
+        <table className="w-full border-separate border-spacing-0 text-[13px]">
+          <thead>
+            <tr>
+              <th className="border-b border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-[18px] py-[10px] text-left text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                {t("sku")}
+              </th>
+              <th className="border-b border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-[18px] py-[10px] text-right text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                {t("daysIdle")}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {slowMovers.map((row, idx) => (
+              <tr
+                key={row.variation_id}
+                className="hover:bg-[color:var(--orion-bg)]"
+              >
+                <td
+                  className={[
+                    "px-[18px] py-[12px] font-mono text-[12px] text-[color:var(--orion-ink)]",
+                    idx === slowMovers.length - 1
+                      ? ""
+                      : "border-b border-[color:var(--orion-line-soft)]",
+                  ].join(" ")}
+                >
                   {row.sku}
-                </TableCell>
-                <TableCell className="text-right font-mono text-[12.5px] tabular-nums text-[color:var(--orion-ink)]">
+                </td>
+                <td
+                  className={[
+                    "px-[18px] py-[12px] text-right font-mono text-[12px] tabular-nums text-[color:var(--orion-ink)]",
+                    idx === slowMovers.length - 1
+                      ? ""
+                      : "border-b border-[color:var(--orion-line-soft)]",
+                  ].join(" ")}
+                >
                   {row.days_no_movement}
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ))}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </ChartCard>
     </div>
   );

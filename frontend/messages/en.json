@@ -1420,18 +1420,22 @@
   },
   "reports": {
     "page": {
-      "eyebrow": "REPORTS"
+      "eyebrow": "Reports"
     },
     "list": {
       "title": "Reports",
-      "titleEm": "last 90 days",
-      "sub": "Track sales, production, inventory and costs."
+      "titleEm": "& analytics",
+      "sub": "Cross-reference sales, production, inventory and cost data."
     },
     "tabs": {
       "sales": "Sales",
       "production": "Production",
       "inventory": "Inventory",
       "costs": "Costs"
+    },
+    "actions": {
+      "exportCsv": "Export CSV",
+      "exportComingSoon": "CSV export coming soon."
     },
     "dateRange": {
       "last7d": "Last 7 days",
@@ -1443,18 +1447,19 @@
     },
     "charts": {
       "empty": "No data for this period.",
-      "loadError": "Could not load chart data."
+      "loadError": "Could not load the report."
     },
     "sales": {
-      "totalRevenue": "TOTAL REVENUE",
-      "totalOrders": "TOTAL ORDERS",
-      "byChannel": "By channel",
-      "byStatus": "By status",
-      "byDay": "By day"
+      "totalRevenue": "Total revenue",
+      "totalOrders": "Total orders",
+      "avgTicket": "Average ticket",
+      "byChannel": "Orders by channel",
+      "byStatus": "Orders by status",
+      "byDay": "Revenue by day"
     },
     "production": {
-      "scrapPct": "SCRAP %",
-      "piecesPerDay": "PIECES PER DAY",
+      "scrapPct": "Scrap rate",
+      "piecesPerDay": "Pieces per day",
       "cuttingThroughput": "Cutting throughput",
       "sewingThroughput": "Sewing throughput"
     },
@@ -1466,10 +1471,10 @@
     },
     "costs": {
       "specCosts": "Spec costs",
-      "specCode": "SPEC",
-      "laborCost": "LABOR COST",
-      "trimCost": "TRIM COST",
-      "total": "TOTAL",
+      "specCode": "Spec",
+      "laborCost": "Labor cost",
+      "trimCost": "Trim cost",
+      "total": "Total",
       "fabricCost": "Average fabric cost per kg"
     }
   },

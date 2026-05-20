@@ -105,15 +105,18 @@ export function DateRangePicker({ value, onChange }: Props) {
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button
+        {/*
+         * Date chip — `.btn` from /docs/design/source/styles.css:
+         * inline-flex, 7px gap, 7/13 padding, 6px radius, 1px line border,
+         * surface bg, ink color, 13px / 500.
+         */}
+        <button
           type="button"
-          variant="outline"
-          size="sm"
-          className="h-9 gap-2 rounded-[8px] border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] text-[13px] font-medium text-[color:var(--orion-ink)]"
+          className="inline-flex h-auto items-center gap-[7px] whitespace-nowrap rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] hover:bg-[color:var(--orion-surface-2)]"
         >
-          <CalendarIcon className="size-3.5 text-[color:var(--orion-ink-3)]" />
+          <CalendarIcon size={14} strokeWidth={2.2} className="text-[color:var(--orion-ink-3)]" />
           {label}
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent
         align="end"

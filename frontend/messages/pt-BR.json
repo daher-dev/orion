@@ -1420,18 +1420,22 @@
   },
   "reports": {
     "page": {
-      "eyebrow": "RELATÓRIOS"
+      "eyebrow": "Relatórios"
     },
     "list": {
       "title": "Relatórios",
-      "titleEm": "nos últimos 90 dias",
-      "sub": "Acompanhe vendas, produção, estoque e custos."
+      "titleEm": "& análises",
+      "sub": "Cruze dados de vendas, produção, estoque e custos."
     },
     "tabs": {
       "sales": "Vendas",
       "production": "Produção",
       "inventory": "Estoque",
       "costs": "Custos"
+    },
+    "actions": {
+      "exportCsv": "Exportar CSV",
+      "exportComingSoon": "Exportar CSV em breve."
     },
     "dateRange": {
       "last7d": "Últimos 7 dias",
@@ -1443,18 +1447,19 @@
     },
     "charts": {
       "empty": "Nenhum dado para este período.",
-      "loadError": "Não foi possível carregar os dados."
+      "loadError": "Não foi possível carregar o relatório."
     },
     "sales": {
-      "totalRevenue": "RECEITA TOTAL",
-      "totalOrders": "TOTAL DE PEDIDOS",
-      "byChannel": "Por canal",
-      "byStatus": "Por status",
-      "byDay": "Por dia"
+      "totalRevenue": "Receita total",
+      "totalOrders": "Total de pedidos",
+      "avgTicket": "Ticket médio",
+      "byChannel": "Pedidos por canal",
+      "byStatus": "Pedidos por status",
+      "byDay": "Receita por dia"
     },
     "production": {
-      "scrapPct": "% DESCARTE",
-      "piecesPerDay": "PEÇAS POR DIA",
+      "scrapPct": "Taxa de descarte",
+      "piecesPerDay": "Peças por dia",
       "cuttingThroughput": "Throughput de corte",
       "sewingThroughput": "Throughput de costura"
     },
@@ -1466,10 +1471,10 @@
     },
     "costs": {
       "specCosts": "Custos por ficha",
-      "specCode": "FICHA",
-      "laborCost": "CUSTO MO",
-      "trimCost": "CUSTO AVIAMENTOS",
-      "total": "TOTAL",
+      "specCode": "Ficha",
+      "laborCost": "Custo MO",
+      "trimCost": "Aviamentos",
+      "total": "Total",
       "fabricCost": "Custo médio de tecido por kg"
     }
   },

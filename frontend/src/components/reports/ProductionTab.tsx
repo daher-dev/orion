@@ -2,9 +2,9 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -16,6 +16,16 @@ import type { ReportDateRange } from "@/lib/schemas/reports";
 
 type Props = { range: ReportDateRange };
 
+/**
+ * Production tab — direct port of the `ProductionReport` component in
+ * `/docs/design/source/pages/reports-settings.jsx`.
+ *
+ *  - KPI strip: Scrap rate + Pieces per day.
+ *  - 2-column body: Cutting throughput + Sewing throughput.
+ *  - Bars use the `--brand-prod` (teal) accent — keeps the page consistent
+ *    with the Production section's brand color even though we're on the
+ *    Reports page (whose brand is `--brand-reports`).
+ */
 export function ProductionTab({ range }: Props) {
   const t = useTranslations("reports.production");
   const tCharts = useTranslations("reports.charts");
@@ -24,7 +34,7 @@ export function ProductionTab({ range }: Props) {
 
   if (isError) {
     return (
-      <div className="rounded-[12px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-6 text-[13px] text-[color:var(--orion-ink-3)]">
+      <div className="rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-6 text-[13px] text-[color:var(--orion-ink-3)]">
         {tCharts("loadError")}
       </div>
     );
@@ -48,9 +58,9 @@ export function ProductionTab({ range }: Props) {
     : `${scrapPct.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <KpiTile label={t("scrapPct")} value={scrapLabel} accent="var(--brand-prod)" />
+    <div className="flex flex-col gap-[18px]">
+      <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
+        <KpiTile label={t("scrapPct")} value={scrapLabel} />
         <KpiTile
           label={t("piecesPerDay")}
           value={
@@ -58,11 +68,10 @@ export function ProductionTab({ range }: Props) {
               ? "—"
               : (cutting.reduce((acc, r) => acc + r.pieces, 0) || 0).toLocaleString(locale)
           }
-          accent="var(--brand-prod)"
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-[18px] lg:grid-cols-2">
         <ChartCard
           title={t("cuttingThroughput")}
           loading={isPending}
@@ -70,7 +79,7 @@ export function ProductionTab({ range }: Props) {
           emptyMessage={tCharts("empty")}
           skeletonHeight={260}
         >
-          <ThroughputChart data={cutting} stroke="var(--brand-prod)" />
+          <ThroughputChart data={cutting} fill="var(--brand-prod)" />
         </ChartCard>
 
         <ChartCard
@@ -80,7 +89,7 @@ export function ProductionTab({ range }: Props) {
           emptyMessage={tCharts("empty")}
           skeletonHeight={260}
         >
-          <ThroughputChart data={sewing} stroke="var(--brand-reports)" />
+          <ThroughputChart data={sewing} fill="var(--brand-reports)" />
         </ChartCard>
       </div>
     </div>
@@ -89,15 +98,15 @@ export function ProductionTab({ range }: Props) {
 
 function ThroughputChart({
   data,
-  stroke,
+  fill,
 }: {
   data: { label: string; pieces: number }[];
-  stroke: string;
+  fill: string;
 }) {
   return (
     <div className="h-[260px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+        <BarChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--orion-line-soft)" />
           <XAxis
             dataKey="label"
@@ -119,31 +128,25 @@ function ThroughputChart({
               fontSize: 12,
             }}
           />
-          <Line type="monotone" dataKey="pieces" stroke={stroke} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-        </LineChart>
+          <Bar dataKey="pieces" fill={fill} radius={[4, 4, 0, 0]} />
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
 }
 
-function KpiTile({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent: string;
-}) {
+/**
+ * KPI tile — direct port of `.kpi` from /docs/design/source/styles.css.
+ * Same shape as `SalesTab.KpiTile`; kept colocated to avoid premature
+ * cross-tab coupling.
+ */
+function KpiTile({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className="flex flex-col gap-2 rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[18px] py-[16px]"
-      style={{ borderLeft: `3px solid ${accent}` }}
-    >
-      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+    <div className="flex flex-col gap-2 overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[18px] py-[16px]">
+      <span className="text-[11px] font-semibold uppercase leading-none tracking-[0.1em] text-[color:var(--orion-ink-3)]">
         {label}
       </span>
-      <span className="font-serif text-[28px] font-normal leading-none tracking-[-0.02em] text-[color:var(--orion-ink)]">
+      <span className="font-serif text-[30px] font-normal leading-none tracking-[-0.02em] text-[color:var(--orion-ink)]">
         {value}
       </span>
     </div>

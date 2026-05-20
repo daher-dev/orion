@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Download } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { PageHead } from "@/components/page/PageHead";
 import { ReportTabs } from "@/components/reports/ReportTabs";
 import { DateRangePicker } from "@/components/reports/DateRangePicker";
@@ -22,21 +23,52 @@ function defaultRange(): ReportDateRange {
   return { date_from: toIso(from), date_to: toIso(to) };
 }
 
+/**
+ * Reports page — direct port of the `Reports` page in
+ * `/docs/design/source/pages/reports-settings.jsx`.
+ *
+ * Layout:
+ *  - PageHead with the `--brand-reports` eyebrow, "Relatórios & análises" title,
+ *    and a right-side action row (calendar + Export CSV) matching the design.
+ *  - `Seg` segmented control (Vendas / Produção / Estoque / Custos) below.
+ *  - The active tab body renders below the segmented control.
+ */
 export default function ReportsPage() {
   const t = useTranslations("reports");
   const [tab, setTab] = useState<string>("sales");
   const [range, setRange] = useState<ReportDateRange>(defaultRange);
 
+  // Export CSV button is wired as a "coming soon" stub — the backend
+  // endpoints do not yet expose a CSV export, but the design includes
+  // the action so we keep it visible and surface a clear toast instead.
+  const handleExport = () => {
+    toast.message(t("actions.exportComingSoon"));
+  };
+
   return (
-    <div className="flex flex-col gap-4">
+    <div>
       <PageHead
-        mark={<BarChart3 className="size-3" strokeWidth={2.2} />}
+        mark={<BarChart3 size={11} strokeWidth={2.2} />}
         eyebrow={t("page.eyebrow")}
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
         subColor="var(--brand-reports)"
-        actions={<DateRangePicker value={range} onChange={setRange} />}
+        actions={
+          <>
+            <DateRangePicker value={range} onChange={setRange} />
+            {/* .btn — matches the secondary button used in the design's
+                action row next to the date chip. */}
+            <button
+              type="button"
+              onClick={handleExport}
+              className="inline-flex h-auto items-center gap-[7px] whitespace-nowrap rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] hover:bg-[color:var(--orion-surface-2)]"
+            >
+              <Download size={14} strokeWidth={2.2} />
+              {t("actions.exportCsv")}
+            </button>
+          </>
+        }
       />
       <ReportTabs value={tab} onValueChange={setTab} range={range} />
     </div>

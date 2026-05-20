@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Scissors } from "lucide-react";
+import { Check, Layers, Rows3, Scissors } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -22,7 +22,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUpdateCuttingOrder } from "@/hooks/use-cutting";
-import { CUTTING_STATUSES, type CuttingOrder, type CuttingStatus } from "@/lib/schemas/cutting";
+import {
+  CUTTING_STATUSES,
+  sumOutputs,
+  type CuttingOrder,
+  type CuttingStatus,
+} from "@/lib/schemas/cutting";
 import { SIZES } from "@/lib/schemas/product";
 import { ApiError } from "@/lib/api-client";
 import { CuttingStatusPill } from "./CuttingStatusPill";
@@ -38,6 +43,9 @@ const FIELD_INPUT_CLASS =
 
 const SECTION_CLASS =
   "mb-[10px] mt-[18px] border-b border-[color:var(--orion-line-soft)] pb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]";
+
+const SHEET_CLASS =
+  "flex h-full w-[480px] max-w-full flex-col gap-0 border-l border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-0 shadow-[-8px_0_32px_-8px_rgba(31,27,21,0.18)] sm:max-w-none";
 
 export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
   const t = useTranslations("cutting");
@@ -81,24 +89,19 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
     (order?.planned_outputs ?? []).map((o) => [o.size, o.quantity]),
   );
 
+  const totalPlanned = sumOutputs(order?.planned_outputs);
+  const totalActual = SIZES.reduce((acc, s) => acc + (actualMap[s] ?? 0), 0);
+  const progressPct =
+    totalPlanned > 0 ? Math.min(100, Math.round((totalActual / totalPlanned) * 100)) : 0;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="flex h-full w-[480px] max-w-full flex-col gap-0 border-l border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-0 shadow-[-8px_0_32px_-8px_rgba(31,27,21,0.18)] sm:max-w-none"
-      >
+      <SheetContent side="right" className={SHEET_CLASS}>
         <SheetHeader
           className="flex-row items-center gap-3 border-b border-[color:var(--orion-line-soft)] p-0"
           style={{ padding: "18px 22px" }}
         >
-          <span
-            className="grid size-9 place-items-center rounded-[8px] text-[color:var(--orion-ink-2)]"
-            style={{ background: "color-mix(in oklab, var(--brand-prod) 14%, var(--orion-surface))" }}
-            aria-hidden
-          >
-            <Scissors size={16} strokeWidth={1.6} />
-          </span>
-          <div className="flex flex-col gap-0.5 min-w-0">
+          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
             <SheetTitle className="font-serif text-[18px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
               {t("detail.title")}
             </SheetTitle>
@@ -106,54 +109,127 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
               {order ? order.id.replace(/-/g, "").slice(0, 8).toUpperCase() : "—"}
             </SheetDescription>
           </div>
-          <div className="ml-auto">
-            <CuttingStatusPill status={order?.status ?? "pending"} />
-          </div>
+          {order ? <CuttingStatusPill status={order.status} /> : null}
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto" style={{ padding: "18px 22px" }}>
           {order ? (
             <>
-              {/* Product + rolls hero */}
-              <div className="mb-4 rounded-[12px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] p-4">
-                <div className="mb-3">
-                  <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
-                    {t("detail.product")}
-                  </div>
-                  <div className="mt-0.5 font-serif text-[15px] text-[color:var(--orion-ink)]">
+              {/* Product hero — direct port of the design's product header
+                  block (scissors mark, name, roll line). */}
+              <div
+                className="mb-[18px] flex items-center gap-3.5 rounded-[12px]"
+                style={{ background: "var(--orion-surface-2)", padding: 18 }}
+              >
+                <span
+                  aria-hidden
+                  className="grid place-items-center"
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    background:
+                      "color-mix(in oklab, var(--brand-prod) 14%, var(--orion-surface))",
+                    color: "var(--brand-prod)",
+                  }}
+                >
+                  <Scissors size={22} strokeWidth={1.6} />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="truncate font-serif text-[17px] text-[color:var(--orion-ink)]">
                     {order.product.name}
                   </div>
-                  {order.product.code ? (
-                    <div className="font-mono text-[11px] text-[color:var(--orion-ink-3)]">
-                      {order.product.code}
-                    </div>
-                  ) : null}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
-                      {t("detail.bodyRoll")}
-                    </div>
-                    <div className="mt-0.5 font-mono text-[12px] text-[color:var(--orion-ink-2)]">
-                      {order.body_roll.code}
-                    </div>
+                  <div
+                    className="text-[color:var(--orion-ink-3)]"
+                    style={{ fontSize: 12, marginTop: 4 }}
+                  >
+                    {t("detail.bodyRollLabel")}{" "}
+                    <span className="font-mono">{order.body_roll.code}</span>
+                    {totalPlanned > 0
+                      ? ` · ${totalPlanned} ${t("kanban.pieces")}`
+                      : ""}
                   </div>
-                  {order.rib_roll ? (
-                    <div>
-                      <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
-                        {t("detail.ribRoll")}
-                      </div>
-                      <div className="mt-0.5 font-mono text-[12px] text-[color:var(--orion-ink-2)]">
-                        {order.rib_roll.code}
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
               </div>
 
+              {/* Progress block — direct port of design's `Progresso`. */}
+              <div className="mb-[6px] text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                {t("detail.progress")}
+              </div>
+              <div
+                className="mb-[18px] rounded-[10px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface)]"
+                style={{ padding: 14 }}
+              >
+                <div className="flex items-baseline justify-between" style={{ marginBottom: 8 }}>
+                  <span
+                    className="font-serif text-[color:var(--orion-ink)]"
+                    style={{ fontSize: 24, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}
+                  >
+                    {totalActual}
+                    <span className="text-[color:var(--orion-ink-3)]" style={{ fontSize: 16 }}>
+                      {" / "}
+                      {totalPlanned}
+                    </span>
+                  </span>
+                  <span
+                    className="text-[color:var(--orion-ink-3)]"
+                    style={{ fontSize: 12, fontVariantNumeric: "tabular-nums" }}
+                  >
+                    {progressPct}% {t("detail.complete")}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    height: 6,
+                    background: "var(--orion-line-soft)",
+                    borderRadius: 999,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${progressPct}%`,
+                      background: "var(--brand-prod)",
+                      borderRadius: 999,
+                      transition: "width .25s ease",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Rolls section — mono labels under brand-tinted chips */}
+              <div className={SECTION_CLASS} style={{ marginTop: 0 }}>
+                {t("form.sections.rolls")}
+              </div>
+              <div className="mb-[18px] grid grid-cols-2 gap-3">
+                <div className="rounded-[8px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-3 py-2.5">
+                  <div className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                    <Layers size={11} strokeWidth={1.6} />
+                    {t("detail.bodyRoll")}
+                  </div>
+                  <div className="mt-1 font-mono text-[12.5px] text-[color:var(--orion-ink)]">
+                    {order.body_roll.code}
+                  </div>
+                </div>
+                {order.rib_roll ? (
+                  <div className="rounded-[8px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-bg)] px-3 py-2.5">
+                    <div className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                      <Rows3 size={11} strokeWidth={1.6} />
+                      {t("detail.ribRoll")}
+                    </div>
+                    <div className="mt-1 font-mono text-[12.5px] text-[color:var(--orion-ink)]">
+                      {order.rib_roll.code}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
               {/* Status selector */}
-              <div className="mb-4">
-                <div className={SECTION_CLASS}>{t("detail.status")}</div>
+              <div className={SECTION_CLASS} style={{ marginTop: 0 }}>
+                {t("detail.status")}
+              </div>
+              <div className="mb-[6px]">
                 <Select value={status} onValueChange={(v) => setStatus(v as CuttingStatus)}>
                   <SelectTrigger className={FIELD_INPUT_CLASS}>
                     <SelectValue />
@@ -168,7 +244,7 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
                 </Select>
               </div>
 
-              {/* Planned vs. actual per size */}
+              {/* Planned read-only grid */}
               <div className={SECTION_CLASS}>{t("detail.plannedOutputs")}</div>
               <div className="mb-4 overflow-hidden rounded-[10px] border border-[color:var(--orion-line-soft)]">
                 <div className="grid grid-cols-4 gap-px bg-[color:var(--orion-line-soft)]">
@@ -191,32 +267,62 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
                 </div>
               </div>
 
+              {/* Actual editable grid with per-size mini progress */}
               <div className={SECTION_CLASS}>{t("detail.actualOutputs")}</div>
               <div className="overflow-hidden rounded-[10px] border border-[color:var(--orion-line-soft)]">
                 <div className="grid grid-cols-4 gap-px bg-[color:var(--orion-line-soft)]">
-                  {SIZES.map((s) => (
-                    <div
-                      key={s}
-                      className="flex flex-col items-center gap-1.5 bg-[color:var(--orion-surface)] px-2 py-3"
-                    >
-                      <span className="font-mono text-[13px] font-medium text-[color:var(--orion-ink)]">
-                        {s.toUpperCase()}
-                      </span>
-                      <Input
-                        type="number"
-                        min={0}
-                        inputMode="numeric"
-                        value={actualMap[s] ?? 0}
-                        onChange={(e) =>
-                          setActualMap((prev) => ({
-                            ...prev,
-                            [s]: Math.max(0, Number(e.target.value) || 0),
-                          }))
-                        }
-                        className={`${FIELD_INPUT_CLASS} h-auto w-full max-w-[68px] text-center`}
-                      />
-                    </div>
-                  ))}
+                  {SIZES.map((s) => {
+                    const planned = plannedMap[s] ?? 0;
+                    const actual = actualMap[s] ?? 0;
+                    const pct = planned > 0 ? Math.min(100, (actual / planned) * 100) : 0;
+                    const reached = planned > 0 && actual === planned;
+                    return (
+                      <div
+                        key={s}
+                        className="flex flex-col items-center gap-1.5 bg-[color:var(--orion-surface)] px-2 py-3"
+                      >
+                        <span className="font-mono text-[13px] font-medium text-[color:var(--orion-ink)]">
+                          {s.toUpperCase()}
+                        </span>
+                        <Input
+                          type="number"
+                          min={0}
+                          inputMode="numeric"
+                          value={actual}
+                          aria-label={`${s.toUpperCase()} ${t("detail.actualOutputs")}`}
+                          onChange={(e) =>
+                            setActualMap((prev) => ({
+                              ...prev,
+                              [s]: Math.max(0, Number(e.target.value) || 0),
+                            }))
+                          }
+                          className={`${FIELD_INPUT_CLASS} h-auto w-full max-w-[68px] text-center`}
+                        />
+                        {/* Mini per-size progress bar mirrors the design row's
+                            inline progress. */}
+                        <div
+                          aria-hidden
+                          style={{
+                            width: "100%",
+                            maxWidth: 70,
+                            height: 3,
+                            background: "var(--orion-line-soft)",
+                            borderRadius: 999,
+                            overflow: "hidden",
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: "100%",
+                              width: `${pct}%`,
+                              background: reached ? "var(--status-ok)" : "var(--brand-prod)",
+                              transition: "width .25s ease",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </>

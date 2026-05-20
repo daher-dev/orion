@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { useReceiveShipment } from "@/hooks/use-sewing";
 import { ApiError } from "@/lib/api-client";
 import {
@@ -166,13 +167,25 @@ export function ShipmentReceiveDialog({ open, shipment, onOpenChange }: Props) {
                       <span className="text-[10px] text-[color:var(--orion-ink-3)]">
                         / {requestedBySize[size]}
                       </span>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={requestedBySize[size]}
-                        inputMode="numeric"
-                        className={cn(FIELD_INPUT_CLASS, "h-auto w-full max-w-[68px] text-center")}
-                        {...form.register(`sizes.${size}` as const, { valueAsNumber: true })}
+                      <Controller
+                        control={form.control}
+                        name={`sizes.${size}` as const}
+                        render={({ field }) => (
+                          <NumberInput
+                            tone="prod"
+                            step={1}
+                            min={0}
+                            max={requestedBySize[size]}
+                            decimals={0}
+                            align="center"
+                            aria-label={size.toUpperCase()}
+                            value={field.value}
+                            onChange={(next) =>
+                              field.onChange(next === "" ? 0 : Number(next))
+                            }
+                            onBlur={field.onBlur}
+                          />
+                        )}
                       />
                     </div>
                   ))}

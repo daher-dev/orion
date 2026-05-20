@@ -20,9 +20,16 @@ describe("SpecForm", () => {
 
     fireEvent.change(screen.getByTestId("spec-form-code"), { target: { value: "FT-X1" } });
     fireEvent.change(screen.getByTestId("spec-form-name"), { target: { value: "Cropped" } });
-    fireEvent.change(screen.getByTestId("spec-form-gsm"), { target: { value: "180" } });
-    fireEvent.change(screen.getByTestId("spec-form-weight"), { target: { value: "250" } });
-    fireEvent.change(screen.getByTestId("spec-form-labor"), { target: { value: "15.00" } });
+    // NumberInput commits on blur — focus/change/blur to flush each draft.
+    const editNumber = (testId: string, value: string) => {
+      const el = screen.getByTestId(testId);
+      fireEvent.focus(el);
+      fireEvent.change(el, { target: { value } });
+      fireEvent.blur(el);
+    };
+    editNumber("spec-form-gsm", "180");
+    editNumber("spec-form-weight", "250");
+    editNumber("spec-form-labor", "15");
 
     fireEvent.click(screen.getByTestId("spec-form-submit"));
 
@@ -32,7 +39,7 @@ describe("SpecForm", () => {
         code: "FT-X1",
         name: "Cropped",
         fabric_grammage_gsm: 180,
-        labor_cost: "15.00",
+        labor_cost: "15",
         has_ribana: false,
         ribana_weight_pct: null,
         trims: [],

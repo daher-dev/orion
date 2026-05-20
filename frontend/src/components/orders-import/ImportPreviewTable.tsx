@@ -4,6 +4,7 @@ import { useCallback, type ChangeEvent } from "react";
 import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
 import type {
   EditableField,
@@ -106,24 +107,30 @@ export function ImportPreviewTable({
                   />
                 </Td>
                 <Td align="right">
-                  <CellInput
-                    type="number"
-                    inputMode="numeric"
+                  <NumberInput
+                    tone="sales"
+                    step={1}
                     min={1}
+                    decimals={0}
+                    align="right"
+                    className="!border-transparent !bg-transparent hover:!border-[color:var(--orion-line-soft)]"
                     value={row.quantity != null ? String(row.quantity) : ""}
-                    onChange={handleChange(row.row_index, "quantity")}
-                    className="text-right"
+                    onChange={(next) => onUpdate(row.row_index, "quantity", next)}
+                    aria-label={t("columns.quantity")}
                   />
                 </Td>
                 <Td align="right">
-                  <CellInput
-                    type="number"
-                    inputMode="decimal"
-                    step="0.01"
+                  <NumberInput
+                    tone="sales"
+                    prefix="R$"
+                    step={0.01}
                     min={0}
+                    decimals={2}
+                    align="right"
+                    className="!border-transparent !bg-transparent hover:!border-[color:var(--orion-line-soft)]"
                     value={row.sale_price ?? ""}
-                    onChange={handleChange(row.row_index, "sale_price")}
-                    className="text-right"
+                    onChange={(next) => onUpdate(row.row_index, "sale_price", next)}
+                    aria-label={t("columns.salePrice")}
                   />
                 </Td>
                 <Td>

@@ -13,6 +13,7 @@ import {
 } from "@/lib/schemas/spec";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -236,27 +237,31 @@ export function SpecForm({
         <div className="grid grid-cols-2 gap-3">
           <FormField>
             <Label htmlFor="spec-gsm">{t("specs.form.labels.gsm")}</Label>
-            <Input
+            <NumberInput
               id="spec-gsm"
-              type="number"
-              min={0}
+              tone="catalog"
+              suffix="g/m²"
               step={5}
+              min={0}
+              decimals={0}
+              align="right"
               value={state.fabric_grammage_gsm}
-              onChange={(e) => setField("fabric_grammage_gsm", e.target.value)}
-              required
+              onChange={(next) => setField("fabric_grammage_gsm", next)}
               data-testid="spec-form-gsm"
             />
           </FormField>
           <FormField>
             <Label htmlFor="spec-weight">{t("specs.form.labels.weightPerPiece")}</Label>
-            <Input
+            <NumberInput
               id="spec-weight"
-              type="number"
-              min={0}
+              tone="catalog"
+              suffix="g"
               step={0.01}
+              min={0}
+              decimals={2}
+              align="right"
               value={state.fabric_weight_per_piece_g}
-              onChange={(e) => setField("fabric_weight_per_piece_g", e.target.value)}
-              required
+              onChange={(next) => setField("fabric_weight_per_piece_g", next)}
               data-testid="spec-form-weight"
             />
           </FormField>
@@ -341,26 +346,31 @@ export function SpecForm({
         <div className="grid grid-cols-2 gap-3">
           <FormField>
             <Label htmlFor="spec-labor">{t("specs.form.labels.laborCost")}</Label>
-            <Input
+            <NumberInput
               id="spec-labor"
-              type="number"
-              min={0}
+              tone="catalog"
+              prefix="R$"
               step={0.5}
+              min={0}
+              decimals={2}
+              align="right"
               value={state.labor_cost}
-              onChange={(e) => setField("labor_cost", e.target.value)}
-              required
+              onChange={(next) => setField("labor_cost", next)}
               data-testid="spec-form-labor"
             />
           </FormField>
           <FormField>
             <Label htmlFor="spec-sale">{t("specs.form.labels.salePrice")}</Label>
-            <Input
+            <NumberInput
               id="spec-sale"
-              type="number"
-              min={0}
+              tone="catalog"
+              prefix="R$"
               step={1}
+              min={0}
+              decimals={2}
+              align="right"
               value={state.sale_price}
-              onChange={(e) => setField("sale_price", e.target.value)}
+              onChange={(next) => setField("sale_price", next)}
               data-testid="spec-form-sale"
             />
           </FormField>

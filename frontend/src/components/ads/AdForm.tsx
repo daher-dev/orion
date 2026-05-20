@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { GarmentGlyph } from "@/components/ui/garment-glyph";
 import { useProducts } from "@/hooks/use-products";
 import {
   ECOMMERCE_CHANNELS,
@@ -25,8 +26,64 @@ import {
   type AdFormValues,
   type Ecommerce,
 } from "@/lib/schemas/ad";
+import { SIZES, type Product, type Size } from "@/lib/schemas/product";
 import { CHANNEL_THEME } from "./AdsGrid";
 import { cn } from "@/lib/utils";
+
+/**
+ * Derive a short "code" for a product from its first variation's SKU.
+ * SKUs in Orion follow `{productCode}-{size}-{colorCode}` (e.g.
+ * `CAM01-M-BLK`), so we take the leading segment. Falls back to the
+ * product type label when no variation is present.
+ */
+function productCode(product: Product): string {
+  const first = product.variations[0];
+  if (first?.sku) return first.sku.split("-")[0];
+  return product.product_type.toUpperCase();
+}
+
+/**
+ * Deduplicate variation colors, preserving insertion order. Used for the
+ * little color-dot row in the rich product option.
+ */
+function distinctColors(product: Product): { color: string; hex: string }[] {
+  const seen = new Set<string>();
+  const out: { color: string; hex: string }[] = [];
+  for (const v of product.variations) {
+    if (seen.has(v.color_code)) continue;
+    seen.add(v.color_code);
+    out.push({ color: v.color, hex: colorHex(v.color_code) });
+  }
+  return out;
+}
+
+/**
+ * Map a 3-letter color code to a CSS hex. The set is intentionally
+ * narrow — codes outside it fall back to a warm neutral.
+ */
+function colorHex(code: string): string {
+  const map: Record<string, string> = {
+    BLK: "#1f1b15",
+    WHT: "#f5f0e8",
+    GRY: "#7a7160",
+    NVY: "#1e293b",
+    RED: "#b91c1c",
+    GRN: "#15803d",
+    BLU: "#1e40af",
+    YEL: "#eab308",
+    PNK: "#ec4899",
+    BRW: "#7c4a1e",
+    BEG: "#d4b896",
+    MNT: "#a7d3c2",
+  };
+  return map[code] ?? "#a8a098";
+}
+
+function distinctSizes(product: Product): Size[] {
+  const seen = new Set<Size>();
+  for (const v of product.variations) seen.add(v.size);
+  return SIZES.filter((s) => seen.has(s));
+}
 
 type Props = {
   formId: string;
@@ -66,8 +123,14 @@ export function AdForm({ formId, initial, onSubmit }: Props) {
     return t(key as never);
   }
 
-  const productOptions = products.data?.items ?? [];
-  const selectedProduct = productOptions.find((p) => p.id === productId);
+  const productOptions = useMemo(
+    () => products.data?.items ?? [],
+    [products.data?.items],
+  );
+  const selectedProduct = useMemo(
+    () => productOptions.find((p) => p.id === productId),
+    [productOptions, productId],
+  );
 
   return (
     <form
@@ -175,11 +238,20 @@ export function AdForm({ formId, initial, onSubmit }: Props) {
                 >
                   {selectedProduct ? (
                     <span className="flex min-w-0 items-center gap-2">
+                      <span
+                        className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface-2)] text-[color:var(--orion-ink-2)]"
+                        aria-hidden="true"
+                      >
+                        <GarmentGlyph
+                          productType={selectedProduct.product_type}
+                          size={14}
+                        />
+                      </span>
                       <span className="truncate text-[13px] text-[color:var(--orion-ink)]">
                         {selectedProduct.name}
                       </span>
-                      <span className="text-[11px] text-[color:var(--orion-ink-3)]">
-                        {selectedProduct.product_type}
+                      <span className="font-mono text-[10.5px] text-[color:var(--orion-ink-3)]">
+                        {productCode(selectedProduct)}
                       </span>
                     </span>
                   ) : (
@@ -187,10 +259,13 @@ export function AdForm({ formId, initial, onSubmit }: Props) {
                       {t("placeholders.product")}
                     </span>
                   )}
-                  <ChevronsUpDown
+                  <ChevronDown
                     size={14}
                     strokeWidth={1.6}
-                    className="text-[color:var(--orion-ink-3)]"
+                    className={cn(
+                      "shrink-0 text-[color:var(--orion-ink-3)] transition-transform duration-150",
+                      productOpen && "rotate-180",
+                    )}
                   />
                 </Button>
               </PopoverTrigger>
@@ -203,32 +278,78 @@ export function AdForm({ formId, initial, onSubmit }: Props) {
                   <CommandList>
                     <CommandEmpty>{t("noProducts")}</CommandEmpty>
                     <CommandGroup>
-                      {productOptions.map((p) => (
-                        <CommandItem
-                          key={p.id}
-                          value={`${p.name} ${p.product_type}`}
-                          onSelect={() => {
-                            field.onChange(p.id);
-                            setProductOpen(false);
-                          }}
-                        >
-                          <Check
-                            size={13}
-                            className={cn(
-                              "mr-2",
-                              field.value === p.id ? "opacity-100" : "opacity-0",
-                            )}
-                          />
-                          <span className="flex flex-1 flex-col gap-0.5">
-                            <span className="text-[13px] text-[color:var(--orion-ink)]">
-                              {p.name}
+                      {productOptions.map((p) => {
+                        const colors = distinctColors(p);
+                        const sizes = distinctSizes(p);
+                        const selected = field.value === p.id;
+                        return (
+                          <CommandItem
+                            key={p.id}
+                            value={`${p.name} ${productCode(p)} ${p.product_type}`}
+                            onSelect={() => {
+                              field.onChange(p.id);
+                              setProductOpen(false);
+                            }}
+                            className="gap-2.5"
+                          >
+                            <span
+                              className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface-2)] text-[color:var(--orion-ink-2)]"
+                              aria-hidden="true"
+                            >
+                              <GarmentGlyph productType={p.product_type} size={14} />
                             </span>
-                            <span className="text-[11px] text-[color:var(--orion-ink-3)]">
-                              {p.product_type}
+                            <span className="flex min-w-0 flex-1 flex-col gap-1">
+                              <span className="flex min-w-0 items-center gap-2">
+                                <span className="truncate text-[13px] text-[color:var(--orion-ink)]">
+                                  {p.name}
+                                </span>
+                                <span className="font-mono text-[10.5px] text-[color:var(--orion-ink-3)]">
+                                  {productCode(p)}
+                                </span>
+                              </span>
+                              <span className="flex items-center gap-2">
+                                {colors.length > 0 ? (
+                                  <span className="flex gap-[3px]">
+                                    {colors.slice(0, 6).map((c) => (
+                                      <span
+                                        key={c.color}
+                                        className="inline-block h-2.5 w-2.5 rounded-full border border-[color:var(--orion-line-soft)]"
+                                        style={{
+                                          background: c.hex,
+                                          boxShadow:
+                                            "inset 0 0 0 1px rgba(0,0,0,.04)",
+                                        }}
+                                        title={c.color}
+                                      />
+                                    ))}
+                                  </span>
+                                ) : null}
+                                {colors.length > 0 && sizes.length > 0 ? (
+                                  <span className="h-2.5 w-px bg-[color:var(--orion-line-soft)]" />
+                                ) : null}
+                                {sizes.length > 0 ? (
+                                  <span className="flex gap-[3px]">
+                                    {sizes.map((s) => (
+                                      <span
+                                        key={s}
+                                        className="rounded-[3px] border border-[color:var(--orion-line-soft)] px-[5px] py-px font-mono text-[10px] leading-[1.2] text-[color:var(--orion-ink-3)]"
+                                      >
+                                        {s.toUpperCase()}
+                                      </span>
+                                    ))}
+                                  </span>
+                                ) : null}
+                              </span>
                             </span>
-                          </span>
-                        </CommandItem>
-                      ))}
+                            {selected ? (
+                              <Check
+                                size={13}
+                                className="shrink-0 text-[color:var(--brand-sales)]"
+                              />
+                            ) : null}
+                          </CommandItem>
+                        );
+                      })}
                     </CommandGroup>
                   </CommandList>
                 </Command>

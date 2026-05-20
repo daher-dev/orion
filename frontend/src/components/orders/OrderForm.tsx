@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
   SelectContent,
@@ -154,7 +155,14 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
                       {t("placeholders.client")}
                     </span>
                   )}
-                  <ChevronsUpDown size={14} strokeWidth={1.6} className="text-[color:var(--orion-ink-3)]" />
+                  <ChevronDown
+                    size={14}
+                    strokeWidth={1.6}
+                    className={cn(
+                      "shrink-0 text-[color:var(--orion-ink-3)] transition-transform duration-150",
+                      clientOpen && "rotate-180",
+                    )}
+                  />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
@@ -288,7 +296,14 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
                       {t("placeholders.ad")}
                     </span>
                   )}
-                  <ChevronsUpDown size={14} strokeWidth={1.6} className="text-[color:var(--orion-ink-3)]" />
+                  <ChevronDown
+                    size={14}
+                    strokeWidth={1.6}
+                    className={cn(
+                      "shrink-0 text-[color:var(--orion-ink-3)] transition-transform duration-150",
+                      adOpen && "rotate-180",
+                    )}
+                  />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
@@ -359,25 +374,42 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
           control={form.control}
           name="variation_id"
           render={({ field }) => (
-            <select
-              id={`${formId}-variation_id`}
-              value={field.value}
-              onChange={(e) => field.onChange(e.target.value)}
+            <Select
+              value={field.value || undefined}
+              onValueChange={(v) => field.onChange(v)}
               disabled={!selectedAd}
-              className={FIELD_INPUT_CLASS}
-              aria-invalid={!!errors.variation_id}
             >
-              <option value="">
-                {variations.length === 0
-                  ? t("noVariations")
-                  : t("placeholders.variation")}
-              </option>
-              {variations.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {`${v.color} · ${v.size.toUpperCase()} · ${v.sku}`}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                id={`${formId}-variation_id`}
+                className={FIELD_INPUT_CLASS}
+                aria-invalid={!!errors.variation_id}
+              >
+                <SelectValue
+                  placeholder={
+                    variations.length === 0
+                      ? t("noVariations")
+                      : t("placeholders.variation")
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {variations.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    <span className="flex items-center gap-2">
+                      <span className="text-[13px] text-[color:var(--orion-ink)]">
+                        {v.color}
+                      </span>
+                      <span className="rounded-[3px] border border-[color:var(--orion-line-soft)] px-[5px] py-px font-mono text-[10px] leading-[1.2] text-[color:var(--orion-ink-3)]">
+                        {v.size.toUpperCase()}
+                      </span>
+                      <span className="font-mono text-[11px] text-[color:var(--orion-ink-3)]">
+                        {v.sku}
+                      </span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         />
         {errors.variation_id?.message ? (
@@ -392,14 +424,23 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
           <label htmlFor={`${formId}-quantity`} className={FIELD_LABEL_CLASS}>
             {t("labels.quantity")}
           </label>
-          <Input
-            id={`${formId}-quantity`}
-            type="number"
-            min={1}
-            step={1}
-            className={FIELD_INPUT_CLASS}
-            aria-invalid={!!errors.quantity}
-            {...form.register("quantity")}
+          <Controller
+            control={form.control}
+            name="quantity"
+            render={({ field }) => (
+              <NumberInput
+                id={`${formId}-quantity`}
+                tone="sales"
+                step={1}
+                min={1}
+                decimals={0}
+                align="right"
+                aria-invalid={!!errors.quantity}
+                value={field.value}
+                onChange={(next) => field.onChange(next === "" ? 1 : Number(next))}
+                onBlur={field.onBlur}
+              />
+            )}
           />
           {errors.quantity?.message ? (
             <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
@@ -411,14 +452,24 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
           <label htmlFor={`${formId}-sale_price`} className={FIELD_LABEL_CLASS}>
             {t("labels.salePrice")}
           </label>
-          <Input
-            id={`${formId}-sale_price`}
-            type="number"
-            min={0}
-            step="0.01"
-            className={FIELD_INPUT_CLASS}
-            aria-invalid={!!errors.sale_price}
-            {...form.register("sale_price")}
+          <Controller
+            control={form.control}
+            name="sale_price"
+            render={({ field }) => (
+              <NumberInput
+                id={`${formId}-sale_price`}
+                tone="sales"
+                prefix="R$"
+                step={0.01}
+                min={0}
+                decimals={2}
+                align="right"
+                aria-invalid={!!errors.sale_price}
+                value={field.value}
+                onChange={(next) => field.onChange(next === "" ? 0 : Number(next))}
+                onBlur={field.onBlur}
+              />
+            )}
           />
           {errors.sale_price?.message ? (
             <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">

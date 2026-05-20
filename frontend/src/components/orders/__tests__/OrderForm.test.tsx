@@ -136,7 +136,8 @@ describe("OrderForm", () => {
       </TestProviders>,
     );
     expect(screen.getByDisplayValue("3")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("149")).toBeInTheDocument();
+    // sale_price renders through NumberInput with decimals=2 → pt-BR "149,00".
+    expect(screen.getByDisplayValue("149,00")).toBeInTheDocument();
     expect(screen.getByDisplayValue("EXT-1")).toBeInTheDocument();
   });
 });

@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, ChevronsUpDown, Factory, Scissors } from "lucide-react";
+import { Check, ChevronDown, Factory, Scissors } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -144,10 +145,13 @@ export function ShipmentForm({ formId, onSubmit }: Props) {
                       {t("placeholders.cuttingOrder")}
                     </span>
                   )}
-                  <ChevronsUpDown
+                  <ChevronDown
                     size={14}
                     strokeWidth={1.6}
-                    className="text-[color:var(--orion-ink-3)]"
+                    className={cn(
+                      "shrink-0 text-[color:var(--orion-ink-3)] transition-transform duration-150",
+                      cuttingOpen && "rotate-180",
+                    )}
                   />
                 </Button>
               </PopoverTrigger>
@@ -239,10 +243,13 @@ export function ShipmentForm({ formId, onSubmit }: Props) {
                       {t("placeholders.contractor")}
                     </span>
                   )}
-                  <ChevronsUpDown
+                  <ChevronDown
                     size={14}
                     strokeWidth={1.6}
-                    className="text-[color:var(--orion-ink-3)]"
+                    className={cn(
+                      "shrink-0 text-[color:var(--orion-ink-3)] transition-transform duration-150",
+                      contractorOpen && "rotate-180",
+                    )}
                   />
                 </Button>
               </PopoverTrigger>
@@ -327,12 +334,22 @@ export function ShipmentForm({ formId, onSubmit }: Props) {
               <span className="font-mono text-[13px] font-medium text-[color:var(--orion-ink)]">
                 {size.toUpperCase()}
               </span>
-              <Input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                className={cn(FIELD_INPUT_CLASS, "h-auto w-full max-w-[68px] text-center")}
-                {...form.register(`sizes.${size}` as const, { valueAsNumber: true })}
+              <Controller
+                control={form.control}
+                name={`sizes.${size}` as const}
+                render={({ field }) => (
+                  <NumberInput
+                    tone="prod"
+                    step={1}
+                    min={0}
+                    decimals={0}
+                    align="center"
+                    aria-label={size.toUpperCase()}
+                    value={field.value}
+                    onChange={(next) => field.onChange(next === "" ? 0 : Number(next))}
+                    onBlur={field.onBlur}
+                  />
+                )}
               />
             </div>
           ))}

@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, ChevronsUpDown, Layers, Rows3 } from "lucide-react";
+import { Check, ChevronDown, Layers, Rows3 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -134,10 +135,13 @@ export function CuttingForm({ formId, onSubmit }: Props) {
                       {t("placeholders.product")}
                     </span>
                   )}
-                  <ChevronsUpDown
+                  <ChevronDown
                     size={14}
                     strokeWidth={1.6}
-                    className="text-[color:var(--orion-ink-3)]"
+                    className={cn(
+                      "shrink-0 text-[color:var(--orion-ink-3)] transition-transform duration-150",
+                      productOpen && "rotate-180",
+                    )}
                   />
                 </Button>
               </PopoverTrigger>
@@ -229,10 +233,13 @@ export function CuttingForm({ formId, onSubmit }: Props) {
                       {t("placeholders.bodyRoll")}
                     </span>
                   )}
-                  <ChevronsUpDown
+                  <ChevronDown
                     size={14}
                     strokeWidth={1.6}
-                    className="text-[color:var(--orion-ink-3)]"
+                    className={cn(
+                      "shrink-0 text-[color:var(--orion-ink-3)] transition-transform duration-150",
+                      bodyOpen && "rotate-180",
+                    )}
                   />
                 </Button>
               </PopoverTrigger>
@@ -326,10 +333,13 @@ export function CuttingForm({ formId, onSubmit }: Props) {
                       {t("placeholders.ribRoll")}
                     </span>
                   )}
-                  <ChevronsUpDown
+                  <ChevronDown
                     size={14}
                     strokeWidth={1.6}
-                    className="text-[color:var(--orion-ink-3)]"
+                    className={cn(
+                      "shrink-0 text-[color:var(--orion-ink-3)] transition-transform duration-150",
+                      ribOpen && "rotate-180",
+                    )}
                   />
                 </Button>
               </PopoverTrigger>
@@ -420,15 +430,22 @@ export function CuttingForm({ formId, onSubmit }: Props) {
               >
                 {size.toUpperCase()}
               </span>
-              <Input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                className={cn(
-                  FIELD_INPUT_CLASS,
-                  "h-auto w-full max-w-[68px] text-center",
+              <Controller
+                control={form.control}
+                name={`sizes.${size}` as const}
+                render={({ field }) => (
+                  <NumberInput
+                    tone="prod"
+                    step={1}
+                    min={0}
+                    decimals={0}
+                    align="center"
+                    aria-label={size.toUpperCase()}
+                    value={field.value}
+                    onChange={(next) => field.onChange(next === "" ? 0 : Number(next))}
+                    onBlur={field.onBlur}
+                  />
                 )}
-                {...form.register(`sizes.${size}` as const, { valueAsNumber: true })}
               />
             </div>
           ))}

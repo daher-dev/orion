@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { TRIM_TYPES, type TrimType } from "@/lib/schemas/spec";
 
 export type TrimRowValue = {
@@ -42,7 +42,7 @@ export function TrimRow({
     <div
       data-testid="trim-row"
       className="grid items-center gap-2"
-      style={{ gridTemplateColumns: "1fr 80px 110px 28px" }}
+      style={{ gridTemplateColumns: "1fr 96px 136px 28px" }}
     >
       <Select
         value={value.trim_type}
@@ -63,23 +63,27 @@ export function TrimRow({
           ))}
         </SelectContent>
       </Select>
-      <Input
-        type="number"
+      <NumberInput
+        tone="catalog"
+        step={1}
         min={1}
+        decimals={0}
+        align="right"
         aria-label={t("specs.form.labels.trimQty")}
         value={value.quantity}
-        onChange={(e) => onChange({ ...value, quantity: Number(e.target.value) || 1 })}
-        className="text-right tabular-nums"
+        onChange={(next) => onChange({ ...value, quantity: Number(next) || 1 })}
         data-testid={`trim-row-${index}-qty`}
       />
-      <Input
-        type="number"
-        min={0}
+      <NumberInput
+        tone="catalog"
+        prefix="R$"
         step={0.01}
+        min={0}
+        decimals={2}
+        align="right"
         aria-label={t("specs.form.labels.trimUnitPrice")}
         value={value.unit_price}
-        onChange={(e) => onChange({ ...value, unit_price: e.target.value })}
-        className="text-right tabular-nums"
+        onChange={(next) => onChange({ ...value, unit_price: next })}
         data-testid={`trim-row-${index}-price`}
       />
       <button

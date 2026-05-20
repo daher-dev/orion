@@ -1,9 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   printFormSchema,
   type Print,
@@ -109,14 +110,25 @@ export function PrintForm({ formId, initial, onSubmit }: Props) {
         <label htmlFor="print-cost" className={FIELD_LABEL_CLASS}>
           {t("labels.costPerUnit")}
         </label>
-        <Input
-          id="print-cost"
-          inputMode="decimal"
-          autoComplete="off"
-          aria-invalid={!!form.formState.errors.cost_per_unit}
-          className={FIELD_INPUT_CLASS}
-          placeholder={t("placeholders.costPerUnit")}
-          {...form.register("cost_per_unit")}
+        <Controller
+          control={form.control}
+          name="cost_per_unit"
+          render={({ field }) => (
+            <NumberInput
+              id="print-cost"
+              tone="catalog"
+              prefix="R$"
+              step={0.1}
+              decimals={2}
+              min={0}
+              align="right"
+              placeholder={t("placeholders.costPerUnit")}
+              aria-invalid={!!form.formState.errors.cost_per_unit}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
         />
         {fieldError("cost_per_unit") ? (
           <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">

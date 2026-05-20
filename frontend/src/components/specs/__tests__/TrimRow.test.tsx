@@ -19,8 +19,9 @@ describe("TrimRow", () => {
     );
     const qty = screen.getByTestId("trim-row-0-qty") as HTMLInputElement;
     const price = screen.getByTestId("trim-row-0-price") as HTMLInputElement;
+    // NumberInput displays in pt-BR: integer qty shows as "1", decimal price as "0,50".
     expect(qty.value).toBe("1");
-    expect(price.value).toBe("0.50");
+    expect(price.value).toBe("0,50");
   });
 
   it("calls onChange when the quantity is edited", () => {
@@ -28,7 +29,11 @@ describe("TrimRow", () => {
     renderWithProviders(
       <TrimRow index={0} value={makeValue()} onChange={onChange} onRemove={() => {}} />,
     );
-    fireEvent.change(screen.getByTestId("trim-row-0-qty"), { target: { value: "3" } });
+    const qty = screen.getByTestId("trim-row-0-qty");
+    // NumberInput commits on blur — fire change then blur to flush the draft.
+    fireEvent.focus(qty);
+    fireEvent.change(qty, { target: { value: "3" } });
+    fireEvent.blur(qty);
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ quantity: 3 }));
   });
 
@@ -37,7 +42,10 @@ describe("TrimRow", () => {
     renderWithProviders(
       <TrimRow index={1} value={makeValue()} onChange={onChange} onRemove={() => {}} />,
     );
-    fireEvent.change(screen.getByTestId("trim-row-1-price"), { target: { value: "1.25" } });
+    const price = screen.getByTestId("trim-row-1-price");
+    fireEvent.focus(price);
+    fireEvent.change(price, { target: { value: "1,25" } });
+    fireEvent.blur(price);
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ unit_price: "1.25" }));
   });
 

@@ -46,18 +46,37 @@ export function Sidebar() {
           style={style}
           className={
             // .sb-item — design-exact: gap 10px, padding 8px 10px, margin 1px 0,
-            // radius 6px, font-size 13.5px, color rgba(217,210,194,.85),
-            // border 1px solid transparent. Active adds white/6 bg, brighter
-            // cream text, and the 3px sub-color left bar via ::before.
-            "group/sb-item relative my-px flex items-center gap-2.5 rounded-md border border-transparent px-2.5 py-2 text-[13.5px] leading-none text-[rgb(217_210_194_/_0.85)] transition-colors " +
+            // radius var(--radius-sm) [6px], font-size 13.5px, color
+            // rgba(217,210,194,.85), border 1px solid transparent. Active adds
+            // white/6 bg, brighter cream text, and the 3px sub-color left bar
+            // via ::before. Collapsed state hides the bar and centres the icon.
+            "group/sb-item relative my-px flex items-center gap-2.5 rounded-sm border border-transparent px-2.5 py-2 text-[13.5px] leading-none text-[rgb(217_210_194_/_0.85)] transition-colors " +
             "hover:bg-white/[0.04] hover:text-[#f5efe0] " +
             "data-[active]:bg-white/[0.06] data-[active]:border-white/[0.06] data-[active]:text-[#f5efe0] " +
             "data-[active]:before:absolute data-[active]:before:left-[-10px] data-[active]:before:top-1.5 data-[active]:before:bottom-1.5 data-[active]:before:w-[3px] data-[active]:before:rounded-r-[3px] data-[active]:before:bg-[var(--sub-color)] data-[active]:before:content-[''] " +
             "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:before:hidden"
           }
         >
-          <Icon className="size-[15px] shrink-0" strokeWidth={1.75} />
+          {/*
+           * Icon strokeWidth=2 matches lucide's default in the design source
+           * (icons.jsx passes `strokeWidth` through unchanged, and SUBS items
+           * never override it). 1.75 read too thin against the dark sidebar.
+           */}
+          <Icon className="size-[15px] shrink-0" strokeWidth={2} />
           <span className="group-data-[collapsible=icon]:hidden">{t(item.labelKey)}</span>
+          {/*
+           * .sb-count — 11px tabular-nums chip, margin-left auto, bg white/6,
+           * cream/.7. Only rendered when the NavItem carries a numeric count.
+           * Hidden in collapsed (icon-only) mode to match design.
+           */}
+          {item.count != null ? (
+            <span
+              className="ml-auto rounded-full bg-white/[0.06] px-1.5 py-px text-[11px] tabular-nums leading-none text-[rgb(245_239_224_/_0.7)] group-data-[collapsible=icon]:hidden"
+              aria-hidden
+            >
+              {item.count}
+            </span>
+          ) : null}
         </Link>
       </li>
     );
@@ -114,9 +133,15 @@ export function Sidebar() {
           );
         })}
 
-        <div className="mt-auto pt-3">
-          <ul className="m-0 list-none p-0">{bottomItems.filter(hasPermission).map(renderItem)}</ul>
-        </div>
+        {/*
+         * Reports + Ajustes — design source renders them inline after the
+         * sections (not pinned to bottom). The `sep: true` on Reports adds a
+         * 12px gap above the row, matching the `<div style={{ height: 12 }}/>`
+         * spacer in shell.jsx.
+         */}
+        <ul className="m-0 list-none p-0 pt-3">
+          {bottomItems.filter(hasPermission).map(renderItem)}
+        </ul>
       </SidebarContent>
 
       <ShadSidebarFooter className="border-t border-white/5 p-0">

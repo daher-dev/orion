@@ -26,11 +26,16 @@
     "profile": "Profile",
     "settings": "Settings",
     "signOut": "Sign out",
-    "noName": "Unnamed user"
+    "noName": "Unnamed user",
+    "commandSections": {
+      "main": "Main",
+      "workspace": "Workspace"
+    }
   },
   "topbar": {
     "search": "Search",
-    "searchPlaceholder": "What are we doing now?"
+    "searchPlaceholder": "What are we doing now?",
+    "toggleSidebar": "Toggle sidebar"
   },
   "nav": {
     "sections": {

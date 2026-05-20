@@ -26,11 +26,16 @@
     "profile": "Perfil",
     "settings": "Ajustes",
     "signOut": "Sair",
-    "noName": "Usuário sem nome"
+    "noName": "Usuário sem nome",
+    "commandSections": {
+      "main": "Principal",
+      "workspace": "Área de trabalho"
+    }
   },
   "topbar": {
     "search": "Buscar",
-    "searchPlaceholder": "O que vamos fazer agora?"
+    "searchPlaceholder": "O que vamos fazer agora?",
+    "toggleSidebar": "Alternar barra lateral"
   },
   "nav": {
     "sections": {

@@ -165,16 +165,32 @@
         "inStock": "Estoque",
         "shipped30d": "Enviadas"
       },
+      "stageSubs": {
+        "pendingOrders": "Aguardando produção",
+        "inCutting": "Em corte ou aguardando",
+        "inSewing": "Em bancas",
+        "inStock": "Prontas p/ envio",
+        "shipped30d": "Últimos 7 dias"
+      },
       "sub": "Onde estão suas peças neste momento",
-      "footer": "Em média uma peça leva 7.2 dias para sair como pedido entregue."
+      "footer": "Em média uma peça leva <b>7,2 dias</b> para sair como pedido entregue.",
+      "updated": "Atualizado há {minutes} min",
+      "viewDetails": "Ver detalhes"
     },
     "needsAction": {
       "title": "Precisa da sua atenção",
+      "sub": "{count, plural, =0 {Nenhuma pendência} one {# pendência} other {# pendências}}",
       "empty": "Tudo em dia.",
-      "viewAll": "Ver todas"
+      "viewAll": "Ver todas",
+      "since": {
+        "minutes": "há {count} min",
+        "hours": "{count, plural, one {há # hora} other {há # horas}}",
+        "days": "{count, plural, one {há # dia} other {há # dias}}"
+      }
     },
     "activity": {
       "title": "Atividade recente",
+      "sub": "{count, plural, =0 {Nenhuma ação ainda} one {Última ação} other {Últimas # ações}}",
       "empty": "Nenhuma atividade ainda.",
       "system": "Sistema",
       "auditLink": "Auditoria"
@@ -185,10 +201,12 @@
       "last90d": "Últimos 90 dias"
     },
     "actions": {
-      "newOrder": "Novo pedido"
+      "newOrder": "Novo pedido",
+      "period": "Período"
     },
     "revenueByChannel": {
-      "title": "Receita por canal (30d)",
+      "title": "Receita por canal",
+      "sub": "Últimos 30 dias",
       "empty": "Nenhum dado de receita ainda."
     }
   },

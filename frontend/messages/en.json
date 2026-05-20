@@ -1644,10 +1644,6 @@
         "title": "Coming soon",
         "body": "This section will launch in a future release."
       },
-      "billing": {
-        "title": "Subscription — coming soon",
-        "body": "Plans, invoices, and payment methods will live here."
-      },
       "integrations": {
         "title": "Integrations — coming soon",
         "body": "Connect Orion to your shop, marketplace, and accounting tools."
@@ -1655,6 +1651,32 @@
       "notifications": {
         "title": "Notifications — coming soon",
         "body": "Configure how you and your team get alerts from Orion."
+      }
+    },
+    "billing": {
+      "title": "Subscription",
+      "hero": {
+        "eyebrow": "Current plan",
+        "betaPill": "Private beta",
+        "body": "You're part of the early group — billing isn't enabled yet. When it is, we'll let you know well in advance."
+      },
+      "usage": {
+        "title": "Team usage",
+        "sub": "Members with access to your account",
+        "of": "of {max} people",
+        "remaining": "{count, plural, one {<b>#</b> seat left} other {<b>#</b> seats left}} on this account.",
+        "limitReached": "Limit reached — get in touch to unlock more seats."
+      },
+      "features": {
+        "title": "What's included",
+        "sub": "Features available on the {plan} plan",
+        "items": [
+          "Unlimited members",
+          "Marketplace integrations",
+          "NFe and tax invoicing",
+          "WhatsApp support",
+          "Advanced reports and export"
+        ]
       }
     },
     "forbidden": {

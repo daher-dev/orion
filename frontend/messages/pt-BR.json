@@ -1644,10 +1644,6 @@
         "title": "Em breve",
         "body": "Esta seção será lançada em uma versão futura."
       },
-      "billing": {
-        "title": "Assinatura — em breve",
-        "body": "Planos, faturas e métodos de pagamento ficarão aqui."
-      },
       "integrations": {
         "title": "Integrações — em breve",
         "body": "Conecte o Orion à sua loja, marketplace e ferramentas contábeis."
@@ -1655,6 +1651,32 @@
       "notifications": {
         "title": "Notificações — em breve",
         "body": "Configure como você e seu time recebem alertas do Orion."
+      }
+    },
+    "billing": {
+      "title": "Assinatura",
+      "hero": {
+        "eyebrow": "Plano atual",
+        "betaPill": "Beta privada",
+        "body": "Você faz parte do grupo inicial — cobrança ainda não está habilitada. Quando habilitarmos, avisaremos com bastante antecedência."
+      },
+      "usage": {
+        "title": "Uso da equipe",
+        "sub": "Membros com acesso à sua conta",
+        "of": "de {max} pessoas",
+        "remaining": "{count, plural, one {Resta <b>#</b> assento disponível} other {Restam <b>#</b> assentos disponíveis}} nesta conta.",
+        "limitReached": "Limite atingido — fale com a gente para liberar mais assentos."
+      },
+      "features": {
+        "title": "O que está incluído",
+        "sub": "Recursos disponíveis no plano {plan}",
+        "items": [
+          "Membros ilimitados",
+          "Integrações com marketplaces",
+          "NFe e emissão fiscal",
+          "Suporte por WhatsApp",
+          "Relatórios avançados e exportação"
+        ]
       }
     },
     "forbidden": {

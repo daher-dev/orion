@@ -48,8 +48,10 @@ async def establish_session(db: AsyncSession, *, claims: dict) -> list[tuple[Use
 
     email = (claims.get("email") or "").strip().lower()
     email_verified = bool(claims.get("email_verified"))
-    if email and email_verified and await _accept_pending_invites_for_email(
-        db, firebase_uid=firebase_uid, claims=claims, email=email
+    if (
+        email
+        and email_verified
+        and await _accept_pending_invites_for_email(db, firebase_uid=firebase_uid, claims=claims, email=email)
     ):
         return await get_user_companies(db, firebase_uid)
 

@@ -53,8 +53,7 @@ def _build_me_response(
         active = memberships[0]
 
     companies = [
-        CompanyMembership(id=company.id, name=company.name, role_code=role.code)
-        for _, company, role in memberships
+        CompanyMembership(id=company.id, name=company.name, role_code=role.code) for _, company, role in memberships
     ]
 
     if active is None:

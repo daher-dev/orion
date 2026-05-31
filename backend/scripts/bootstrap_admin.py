@@ -64,9 +64,7 @@ async def bootstrap() -> uuid.UUID:
         if admin_role is None:
             raise RuntimeError("Admin role not seeded — run migrations first (alembic upgrade head).")
 
-        company = await _get_or_create_company(
-            db, name=company_name, subdomain=subdomain, main_color=main_color
-        )
+        company = await _get_or_create_company(db, name=company_name, subdomain=subdomain, main_color=main_color)
 
         existing_user = (
             await db.exec(

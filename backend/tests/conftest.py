@@ -76,9 +76,7 @@ async def _truncate_all(session: AsyncSession) -> None:
         await conn.execute(text(f"TRUNCATE {quoted} RESTART IDENTITY CASCADE"))
     # Sweep test-added Roles (any code outside the seeded triple). Cascades
     # through role_permissions via the FK ondelete=CASCADE on RolePermission.
-    await conn.execute(
-        text("DELETE FROM roles WHERE code NOT IN ('admin', 'manager', 'operator')")
-    )
+    await conn.execute(text("DELETE FROM roles WHERE code NOT IN ('admin', 'manager', 'operator')"))
     await session.commit()
 
 

@@ -51,9 +51,7 @@ async def _make_variation(db_session, *, company_id: uuid.UUID, **overrides):
     # Each call uses a unique spec code so the (company_id, spec_id, print_id)
     # unique constraint on `products` doesn't collide when a test creates
     # multiple variations in the same tenant.
-    spec = await create_product_spec(
-        db_session, company_id=company_id, code=f"FT{uuid.uuid4().hex[:6].upper()}"
-    )
+    spec = await create_product_spec(db_session, company_id=company_id, code=f"FT{uuid.uuid4().hex[:6].upper()}")
     product = await create_product(db_session, company_id=company_id, spec_id=spec.id)
     variation = await create_product_variation(
         db_session,
@@ -107,15 +105,9 @@ async def test_levels_empty(authed_client: AsyncClient, db_session):
 
 async def test_levels_returns_on_hand_aggregate(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
-    _, variation = await _make_variation(
-        db_session, company_id=company.id, sku="CAM01-M-BLK"
-    )
-    await create_stock_entry(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=15
-    )
-    await create_stock_exit(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=4
-    )
+    _, variation = await _make_variation(db_session, company_id=company.id, sku="CAM01-M-BLK")
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=15)
+    await create_stock_exit(db_session, company_id=company.id, variation_id=variation.id, quantity=4)
     response = await authed_client.get("/v1/stock/levels")
     body = response.json()
     assert body["total"] == 1
@@ -174,9 +166,7 @@ async def test_levels_filters_by_product_id(authed_client: AsyncClient, db_sessi
     )
     await create_stock_entry(db_session, company_id=company.id, variation_id=va.id, quantity=1)
     await create_stock_entry(db_session, company_id=company.id, variation_id=vb.id, quantity=1)
-    response = await authed_client.get(
-        "/v1/stock/levels", params={"product_id": str(product_a.id)}
-    )
+    response = await authed_client.get("/v1/stock/levels", params={"product_id": str(product_a.id)})
     body = response.json()
     assert body["total"] == 1
     assert body["items"][0]["sku"] == "A-M-BLK"
@@ -199,12 +189,8 @@ async def test_levels_tenant_isolation(authed_client: AsyncClient, db_session):
 async def test_levels_pagination(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     for i in range(3):
-        _, v = await _make_variation(
-            db_session, company_id=company.id, sku=f"S{i}-M-BLK"
-        )
-        await create_stock_entry(
-            db_session, company_id=company.id, variation_id=v.id, quantity=1
-        )
+        _, v = await _make_variation(db_session, company_id=company.id, sku=f"S{i}-M-BLK")
+        await create_stock_entry(db_session, company_id=company.id, variation_id=v.id, quantity=1)
     response = await authed_client.get("/v1/stock/levels", params={"page_size": 2})
     body = response.json()
     assert body["total"] == 3
@@ -243,12 +229,8 @@ async def test_movements_empty(authed_client: AsyncClient, db_session):
 async def test_movements_returns_entries_and_exits(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     _, variation = await _make_variation(db_session, company_id=company.id)
-    await create_stock_entry(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=10
-    )
-    await create_stock_exit(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=2
-    )
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=10)
+    await create_stock_exit(db_session, company_id=company.id, variation_id=variation.id, quantity=2)
     response = await authed_client.get("/v1/stock/movements")
     body = response.json()
     assert body["total"] == 2
@@ -262,9 +244,7 @@ async def test_movements_filters_by_variation(authed_client: AsyncClient, db_ses
     _, v2 = await _make_variation(db_session, company_id=company.id, sku="V2-M-BLK")
     await create_stock_entry(db_session, company_id=company.id, variation_id=v1.id, quantity=1)
     await create_stock_entry(db_session, company_id=company.id, variation_id=v2.id, quantity=1)
-    response = await authed_client.get(
-        "/v1/stock/movements", params={"variation_id": str(v1.id)}
-    )
+    response = await authed_client.get("/v1/stock/movements", params={"variation_id": str(v1.id)})
     body = response.json()
     assert body["total"] == 1
     assert body["items"][0]["variation_id"] == str(v1.id)
@@ -298,9 +278,7 @@ async def test_movements_filters_by_reason_or_source(authed_client: AsyncClient,
         quantity=4,
         source=StockSource.ADJUSTMENT,
     )
-    response = await authed_client.get(
-        "/v1/stock/movements", params={"reason_or_source": "adjustment"}
-    )
+    response = await authed_client.get("/v1/stock/movements", params={"reason_or_source": "adjustment"})
     body = response.json()
     # Both the entry-adjustment AND any exit-adjustment match — but no exits exist here.
     assert body["total"] == 1
@@ -312,9 +290,7 @@ async def test_movements_filters_by_reason_or_source(authed_client: AsyncClient,
 
 async def test_create_entry_success(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
-    _, variation = await _make_variation(
-        db_session, company_id=company.id, sku="CAM01-M-BLK"
-    )
+    _, variation = await _make_variation(db_session, company_id=company.id, sku="CAM01-M-BLK")
     response = await authed_client.post(
         "/v1/stock/entries",
         json={"variation_id": str(variation.id), "quantity": 12, "notes": "Found"},
@@ -327,17 +303,11 @@ async def test_create_entry_success(authed_client: AsyncClient, db_session):
     assert body["notes"] == "Found"
     assert body["shipment"] is None
 
-    rows = (
-        await db_session.exec(
-            select(StockEntry).where(StockEntry.variation_id == variation.id)
-        )
-    ).all()
+    rows = (await db_session.exec(select(StockEntry).where(StockEntry.variation_id == variation.id))).all()
     assert len(list(rows)) == 1
 
 
-async def test_create_entry_invalid_quantity_returns_422(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_entry_invalid_quantity_returns_422(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     _, variation = await _make_variation(db_session, company_id=company.id)
     response = await authed_client.post(
@@ -347,9 +317,7 @@ async def test_create_entry_invalid_quantity_returns_422(
     assert response.status_code == 422
 
 
-async def test_create_entry_unknown_variation_returns_404(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_entry_unknown_variation_returns_404(authed_client: AsyncClient, db_session):
     await _seed_admin(db_session)
     response = await authed_client.post(
         "/v1/stock/entries",
@@ -358,9 +326,7 @@ async def test_create_entry_unknown_variation_returns_404(
     assert response.status_code == 404
 
 
-async def test_create_entry_other_tenant_variation_returns_404(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_entry_other_tenant_variation_returns_404(authed_client: AsyncClient, db_session):
     await _seed_admin(db_session)
     other = await create_company(db_session)
     _, foreign = await _make_variation(db_session, company_id=other.id)
@@ -372,9 +338,7 @@ async def test_create_entry_other_tenant_variation_returns_404(
     assert response.status_code == 404
 
 
-async def test_create_entry_with_explicit_source(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_entry_with_explicit_source(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     _, variation = await _make_variation(db_session, company_id=company.id)
     response = await authed_client.post(
@@ -396,9 +360,7 @@ async def test_operator_can_create_entry(authed_client: AsyncClient, db_session)
     assert response.status_code == 201
 
 
-async def test_create_entry_forbidden_when_no_permission(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_entry_forbidden_when_no_permission(authed_client: AsyncClient, db_session):
     company = await create_company(db_session)
     role = Role(code=f"custom-no-stock-{uuid.uuid4().hex[:8]}", name="Custom")
     db_session.add(role)
@@ -422,12 +384,8 @@ async def test_create_entry_forbidden_when_no_permission(
 
 async def test_create_exit_success(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
-    _, variation = await _make_variation(
-        db_session, company_id=company.id, sku="CAM01-M-BLK"
-    )
-    await create_stock_entry(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=10
-    )
+    _, variation = await _make_variation(db_session, company_id=company.id, sku="CAM01-M-BLK")
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=10)
     response = await authed_client.post(
         "/v1/stock/exits",
         json={
@@ -443,22 +401,14 @@ async def test_create_exit_success(authed_client: AsyncClient, db_session):
     assert body["reason"] == "loss"
     assert body["order"] is None
 
-    rows = (
-        await db_session.exec(
-            select(StockExit).where(StockExit.variation_id == variation.id)
-        )
-    ).all()
+    rows = (await db_session.exec(select(StockExit).where(StockExit.variation_id == variation.id))).all()
     assert len(list(rows)) == 1
 
 
-async def test_create_exit_returns_409_on_insufficient_stock(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_exit_returns_409_on_insufficient_stock(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     _, variation = await _make_variation(db_session, company_id=company.id)
-    await create_stock_entry(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=3
-    )
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=3)
     response = await authed_client.post(
         "/v1/stock/exits",
         json={"variation_id": str(variation.id), "quantity": 10},
@@ -469,9 +419,7 @@ async def test_create_exit_returns_409_on_insufficient_stock(
     assert "3" in detail
 
 
-async def test_create_exit_returns_404_when_unknown_variation(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_exit_returns_404_when_unknown_variation(authed_client: AsyncClient, db_session):
     await _seed_admin(db_session)
     response = await authed_client.post(
         "/v1/stock/exits",
@@ -480,9 +428,7 @@ async def test_create_exit_returns_404_when_unknown_variation(
     assert response.status_code == 404
 
 
-async def test_create_exit_invalid_quantity_returns_422(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_exit_invalid_quantity_returns_422(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     _, variation = await _make_variation(db_session, company_id=company.id)
     response = await authed_client.post(
@@ -495,9 +441,7 @@ async def test_create_exit_invalid_quantity_returns_422(
 async def test_operator_can_create_exit(authed_client: AsyncClient, db_session):
     company, _ = await _seed_operator(db_session)
     _, variation = await _make_variation(db_session, company_id=company.id)
-    await create_stock_entry(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=5
-    )
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=5)
     response = await authed_client.post(
         "/v1/stock/exits",
         json={"variation_id": str(variation.id), "quantity": 2},

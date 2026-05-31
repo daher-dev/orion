@@ -142,8 +142,7 @@ async def sales_report(
         .order_by(Order.status)
     )
     by_status = [
-        SalesByStatus(status=status, count=int(count or 0))
-        for status, count in (await db.exec(by_status_stmt)).all()
+        SalesByStatus(status=status, count=int(count or 0)) for status, count in (await db.exec(by_status_stmt)).all()
     ]
 
     # by day — bind the date_trunc expression once so GROUP BY / ORDER BY
@@ -222,8 +221,8 @@ async def production_report(
         .join(CuttingOrderOutput, CuttingOrderOutput.cutting_order_id == CuttingOrder.id)
         .where(
             CuttingOrder.cut_at.is_not(None),  # type: ignore[attr-defined]
-            CuttingOrder.cut_at >= lower,
-            CuttingOrder.cut_at <= upper,
+            CuttingOrder.cut_at >= lower,  # ty: ignore[unsupported-operator]
+            CuttingOrder.cut_at <= upper,  # ty: ignore[unsupported-operator]
         )
         .group_by(cut_day_expr)
         .order_by(cut_day_expr)
@@ -248,8 +247,8 @@ async def production_report(
         .join(SewingShipmentItem, SewingShipmentItem.shipment_id == SewingShipment.id)
         .where(
             SewingShipment.received_at.is_not(None),  # type: ignore[attr-defined]
-            SewingShipment.received_at >= lower.date(),
-            SewingShipment.received_at <= upper.date(),
+            SewingShipment.received_at >= lower.date(),  # ty: ignore[unsupported-operator]
+            SewingShipment.received_at <= upper.date(),  # ty: ignore[unsupported-operator]
         )
         .group_by(SewingShipment.received_at)
         .order_by(SewingShipment.received_at)
@@ -279,11 +278,7 @@ async def production_report(
     requested_total, received_total = (await db.exec(scrap_stmt)).first() or (0, 0)
     requested_total = int(requested_total or 0)
     received_total = int(received_total or 0)
-    scrap_pct = (
-        round(100.0 * (1.0 - received_total / requested_total), 2)
-        if requested_total > 0
-        else 0.0
-    )
+    scrap_pct = round(100.0 * (1.0 - received_total / requested_total), 2) if requested_total > 0 else 0.0
 
     return ProductionReport(
         cutting_throughput=cutting_throughput,
@@ -336,9 +331,7 @@ async def inventory_report(
         .group_by(StockExit.variation_id)
         .subquery()
     )
-    on_hand_expr = (
-        func.coalesce(entries_agg.c.total, 0) - func.coalesce(exits_agg.c.total, 0)
-    )
+    on_hand_expr = func.coalesce(entries_agg.c.total, 0) - func.coalesce(exits_agg.c.total, 0)
     last_move_expr = func.greatest(
         func.coalesce(entries_agg.c.last_at, exits_agg.c.last_at),
         func.coalesce(exits_agg.c.last_at, entries_agg.c.last_at),
@@ -426,9 +419,7 @@ async def costs_report(
         scoped(
             select(
                 SpecTrim.spec_id.label("spec_id"),
-                func.coalesce(
-                    func.sum(SpecTrim.unit_price * SpecTrim.quantity), 0
-                ).label("trim_total"),
+                func.coalesce(func.sum(SpecTrim.unit_price * SpecTrim.quantity), 0).label("trim_total"),
             ),
             ProductSpec,
             company_id,

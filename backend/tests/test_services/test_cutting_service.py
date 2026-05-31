@@ -33,7 +33,6 @@ from tests.factories import (
     create_user,
 )
 
-
 # ---------------------------------------------------------------- helpers
 
 
@@ -119,9 +118,7 @@ async def test_create_rejects_body_equal_to_rib(db_session):
             planned_outputs=[],
         )
     # No row was inserted.
-    rows = (
-        await db_session.exec(select(CuttingOrder).where(CuttingOrder.company_id == company.id))
-    ).all()
+    rows = (await db_session.exec(select(CuttingOrder).where(CuttingOrder.company_id == company.id))).all()
     assert list(rows) == []
 
 
@@ -221,9 +218,7 @@ async def test_get_cutting_order_returns_match(db_session):
         product_id=product.id,
         body_roll_id=body.id,
     )
-    read = await cutting_service.get_cutting_order(
-        db_session, company_id=company.id, order_id=order.id
-    )
+    read = await cutting_service.get_cutting_order(db_session, company_id=company.id, order_id=order.id)
     assert read.id == order.id
     assert read.product.name == "Cropped Oversized"
 
@@ -231,9 +226,7 @@ async def test_get_cutting_order_returns_match(db_session):
 async def test_get_cutting_order_not_found(db_session):
     company, _user, _spec, _product, _body, _rib = await _setup_world(db_session)
     with pytest.raises(NotFoundError):
-        await cutting_service.get_cutting_order(
-            db_session, company_id=company.id, order_id=uuid.uuid4()
-        )
+        await cutting_service.get_cutting_order(db_session, company_id=company.id, order_id=uuid.uuid4())
 
 
 async def test_get_isolated_by_tenant(db_session):
@@ -246,9 +239,7 @@ async def test_get_isolated_by_tenant(db_session):
         body_roll_id=body.id,
     )
     with pytest.raises(NotFoundError):
-        await cutting_service.get_cutting_order(
-            db_session, company_id=company_b.id, order_id=order.id
-        )
+        await cutting_service.get_cutting_order(db_session, company_id=company_b.id, order_id=order.id)
 
 
 # ----------------------------------------------------------------- list
@@ -306,12 +297,8 @@ async def test_list_filter_by_product_id(db_session):
     company, _user, _spec, product, body, _rib = await _setup_world(db_session)
     spec2 = await create_product_spec(db_session, company_id=company.id, code="OTH02")
     product2 = await create_product(db_session, company_id=company.id, spec_id=spec2.id, name="Other")
-    await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
-    await create_cutting_order(
-        db_session, company_id=company.id, product_id=product2.id, body_roll_id=body.id
-    )
+    await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
+    await create_cutting_order(db_session, company_id=company.id, product_id=product2.id, body_roll_id=body.id)
 
     items, total = await cutting_service.list_cutting_orders(
         db_session,
@@ -326,15 +313,9 @@ async def test_list_filter_by_product_id(db_session):
 async def test_list_search_by_product_name(db_session):
     company, _user, _spec, product, body, _rib = await _setup_world(db_session)
     spec2 = await create_product_spec(db_session, company_id=company.id, code="MOL01")
-    product2 = await create_product(
-        db_session, company_id=company.id, spec_id=spec2.id, name="Moletom Vintage"
-    )
-    await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
-    await create_cutting_order(
-        db_session, company_id=company.id, product_id=product2.id, body_roll_id=body.id
-    )
+    product2 = await create_product(db_session, company_id=company.id, spec_id=spec2.id, name="Moletom Vintage")
+    await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
+    await create_cutting_order(db_session, company_id=company.id, product_id=product2.id, body_roll_id=body.id)
 
     items, total = await cutting_service.list_cutting_orders(
         db_session,
@@ -348,16 +329,10 @@ async def test_list_search_by_product_name(db_session):
 
 async def test_list_search_by_supplier_name(db_session):
     company, _user, _spec, product, _body, _rib = await _setup_world(db_session)
-    weird_supplier = await create_fabric_roll(
-        db_session, company_id=company.id, supplier_name="Têxtil Unique XYZ"
-    )
+    weird_supplier = await create_fabric_roll(db_session, company_id=company.id, supplier_name="Têxtil Unique XYZ")
     other = await create_fabric_roll(db_session, company_id=company.id)
-    await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=weird_supplier.id
-    )
-    await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=other.id
-    )
+    await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=weird_supplier.id)
+    await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=other.id)
 
     items, total = await cutting_service.list_cutting_orders(
         db_session,
@@ -375,12 +350,8 @@ async def test_list_isolated_by_tenant(db_session):
     spec_b = await create_product_spec(db_session, company_id=company_b.id, code="OTH03")
     product_b = await create_product(db_session, company_id=company_b.id, spec_id=spec_b.id)
     body_b = await create_fabric_roll(db_session, company_id=company_b.id)
-    await create_cutting_order(
-        db_session, company_id=company_a.id, product_id=product.id, body_roll_id=body.id
-    )
-    await create_cutting_order(
-        db_session, company_id=company_b.id, product_id=product_b.id, body_roll_id=body_b.id
-    )
+    await create_cutting_order(db_session, company_id=company_a.id, product_id=product.id, body_roll_id=body.id)
+    await create_cutting_order(db_session, company_id=company_b.id, product_id=product_b.id, body_roll_id=body_b.id)
 
     items, total = await cutting_service.list_cutting_orders(
         db_session,
@@ -406,15 +377,9 @@ async def test_list_returns_empty_for_new_tenant(db_session):
 
 async def test_list_outputs_are_eager_loaded(db_session):
     company, _user, _spec, product, body, _rib = await _setup_world(db_session)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
-    await create_cutting_order_output(
-        db_session, cutting_order_id=order.id, size=Size.P, quantity=5
-    )
-    await create_cutting_order_output(
-        db_session, cutting_order_id=order.id, size=Size.M, quantity=8
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
+    await create_cutting_order_output(db_session, cutting_order_id=order.id, size=Size.P, quantity=5)
+    await create_cutting_order_output(db_session, cutting_order_id=order.id, size=Size.M, quantity=8)
 
     items, _total = await cutting_service.list_cutting_orders(
         db_session,
@@ -518,9 +483,7 @@ async def test_update_replaces_actual_outputs(db_session):
         product_id=product.id,
         body_roll_id=body.id,
     )
-    await create_cutting_order_output(
-        db_session, cutting_order_id=order.id, size=Size.M, quantity=12
-    )
+    await create_cutting_order_output(db_session, cutting_order_id=order.id, size=Size.M, quantity=12)
 
     read = await cutting_service.update_cutting_order(
         db_session,
@@ -536,18 +499,14 @@ async def test_update_replaces_actual_outputs(db_session):
     assert sum(o.quantity for o in read.actual_outputs) == 8
 
     rows = (
-        await db_session.exec(
-            select(CuttingOrderOutput).where(CuttingOrderOutput.cutting_order_id == order.id)
-        )
+        await db_session.exec(select(CuttingOrderOutput).where(CuttingOrderOutput.cutting_order_id == order.id))
     ).all()
     assert {r.size for r in rows} == {Size.M, Size.G}
 
 
 async def test_update_actuals_audit_message(db_session):
     company, user, _spec, product, body, _rib = await _setup_world(db_session)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     await cutting_service.update_cutting_order(
         db_session,
         company_id=company.id,
@@ -561,9 +520,7 @@ async def test_update_actuals_audit_message(db_session):
 
 async def test_update_cut_at(db_session):
     company, user, _spec, product, body, _rib = await _setup_world(db_session)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     when = datetime.now(UTC)
     read = await cutting_service.update_cutting_order(
         db_session,
@@ -591,9 +548,7 @@ async def test_update_isolated_by_tenant(db_session):
     company_a, _user, _spec, product, body, _rib = await _setup_world(db_session)
     company_b = await create_company(db_session)
     user_b = await create_user(db_session, company_id=company_b.id)
-    order = await create_cutting_order(
-        db_session, company_id=company_a.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company_a.id, product_id=product.id, body_roll_id=body.id)
     with pytest.raises(NotFoundError):
         await cutting_service.update_cutting_order(
             db_session,
@@ -609,9 +564,7 @@ async def test_update_isolated_by_tenant(db_session):
 
 async def test_delete_cutting_order_removes_row(db_session):
     company, user, _spec, product, body, _rib = await _setup_world(db_session)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     await cutting_service.delete_cutting_order(
         db_session,
         company_id=company.id,
@@ -628,9 +581,7 @@ async def test_delete_cutting_order_removes_row(db_session):
 async def test_delete_blocked_when_shipment_exists(db_session):
     company, user, _spec, product, body, _rib = await _setup_world(db_session)
     contractor = await create_sewing_contractor(db_session, company_id=company.id)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     await create_sewing_shipment(
         db_session,
         company_id=company.id,
@@ -663,9 +614,7 @@ async def test_delete_isolated_by_tenant(db_session):
     company_a, _user, _spec, product, body, _rib = await _setup_world(db_session)
     company_b = await create_company(db_session)
     user_b = await create_user(db_session, company_id=company_b.id)
-    order = await create_cutting_order(
-        db_session, company_id=company_a.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company_a.id, product_id=product.id, body_roll_id=body.id)
     with pytest.raises(NotFoundError):
         await cutting_service.delete_cutting_order(
             db_session,

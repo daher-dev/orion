@@ -24,8 +24,8 @@ describe("AuthCard", () => {
       </TestProviders>,
     );
     expect(screen.getByText("U")).toBeInTheDocument();
-    expect(screen.getByText("Orion")).toBeInTheDocument();
-    expect(screen.getByText("by Underground")).toBeInTheDocument();
+    expect(screen.getByText("Underground")).toBeInTheDocument();
+    expect(screen.getByText("by Orion")).toBeInTheDocument();
   });
 
   it("renders a banner when provided", () => {

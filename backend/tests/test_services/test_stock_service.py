@@ -51,9 +51,7 @@ async def _make_variation(db_session, *, company_id: uuid.UUID, **overrides):
     # Use a unique spec code so the (company_id, spec_id, print_id) unique
     # constraint on `products` doesn't collide when callers create multiple
     # variations in the same test.
-    spec = await create_product_spec(
-        db_session, company_id=company_id, code=f"FT{uuid.uuid4().hex[:6].upper()}"
-    )
+    spec = await create_product_spec(db_session, company_id=company_id, code=f"FT{uuid.uuid4().hex[:6].upper()}")
     product = await create_product(db_session, company_id=company_id, spec_id=spec.id)
     variation = await create_product_variation(
         db_session,
@@ -237,9 +235,7 @@ async def test_create_exit_allows_taking_exactly_what_is_available(db_session):
     )
     assert exit_row.quantity == 4
 
-    on_hand = await stock_service._compute_on_hand(
-        db_session, company_id=company.id, variation_id=variation.id
-    )
+    on_hand = await stock_service._compute_on_hand(db_session, company_id=company.id, variation_id=variation.id)
     assert on_hand == 0
 
 
@@ -258,9 +254,7 @@ async def test_create_exit_isolated_by_tenant(db_session):
     company_a, user_a = await _setup(db_session)
     company_b = await create_company(db_session)
     _, foreign = await _make_variation(db_session, company_id=company_b.id)
-    await create_stock_entry(
-        db_session, company_id=company_b.id, variation_id=foreign.id, quantity=10
-    )
+    await create_stock_entry(db_session, company_id=company_b.id, variation_id=foreign.id, quantity=10)
 
     # Company A cannot exit from company B's variation.
     with pytest.raises(NotFoundError):
@@ -277,18 +271,10 @@ async def test_create_exit_isolated_by_tenant(db_session):
 
 async def test_list_stock_levels_aggregates_entries_minus_exits(db_session):
     company, _ = await _setup(db_session)
-    _, variation = await _make_variation(
-        db_session, company_id=company.id, sku="CAM01-M-BLK"
-    )
-    await create_stock_entry(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=10
-    )
-    await create_stock_entry(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=5
-    )
-    await create_stock_exit(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=3
-    )
+    _, variation = await _make_variation(db_session, company_id=company.id, sku="CAM01-M-BLK")
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=10)
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=5)
+    await create_stock_exit(db_session, company_id=company.id, variation_id=variation.id, quantity=3)
 
     rows, total = await stock_service.list_stock_levels(
         db_session,
@@ -325,9 +311,7 @@ async def test_list_stock_levels_includes_variation_with_only_exits(db_session):
     company, _ = await _setup(db_session)
     _, variation = await _make_variation(db_session, company_id=company.id, sku="EXIT-ONLY")
     # Direct insert bypassing the service so we don't trip the negative-stock guard.
-    await create_stock_exit(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=4
-    )
+    await create_stock_exit(db_session, company_id=company.id, variation_id=variation.id, quantity=4)
 
     rows, total = await stock_service.list_stock_levels(
         db_session,
@@ -346,12 +330,8 @@ async def test_list_stock_levels_filters_by_low_stock_only(db_session):
     _, low = await _make_variation(db_session, company_id=company.id, sku="LOW-M-BLK")
     _, high = await _make_variation(db_session, company_id=company.id, sku="HIGH-M-BLK")
 
-    await create_stock_entry(
-        db_session, company_id=company.id, variation_id=low.id, quantity=3
-    )
-    await create_stock_entry(
-        db_session, company_id=company.id, variation_id=high.id, quantity=50
-    )
+    await create_stock_entry(db_session, company_id=company.id, variation_id=low.id, quantity=3)
+    await create_stock_entry(db_session, company_id=company.id, variation_id=high.id, quantity=50)
 
     rows, total = await stock_service.list_stock_levels(
         db_session,
@@ -398,12 +378,8 @@ async def test_list_stock_levels_filters_by_product_id(db_session):
 
 async def test_list_stock_levels_search_matches_sku(db_session):
     company, _ = await _setup(db_session)
-    _, v1 = await _make_variation(
-        db_session, company_id=company.id, sku="MUG-001-M-BLK"
-    )
-    _, v2 = await _make_variation(
-        db_session, company_id=company.id, sku="OTHER-M-BLK"
-    )
+    _, v1 = await _make_variation(db_session, company_id=company.id, sku="MUG-001-M-BLK")
+    _, v2 = await _make_variation(db_session, company_id=company.id, sku="OTHER-M-BLK")
     await create_stock_entry(db_session, company_id=company.id, variation_id=v1.id, quantity=1)
     await create_stock_entry(db_session, company_id=company.id, variation_id=v2.id, quantity=1)
 
@@ -419,12 +395,8 @@ async def test_list_stock_levels_search_matches_sku(db_session):
 
 async def test_list_stock_levels_search_matches_color(db_session):
     company, _ = await _setup(db_session)
-    _, v1 = await _make_variation(
-        db_session, company_id=company.id, color="Preto", color_code="BLK"
-    )
-    _, v2 = await _make_variation(
-        db_session, company_id=company.id, color="Off-white", color_code="OFW"
-    )
+    _, v1 = await _make_variation(db_session, company_id=company.id, color="Preto", color_code="BLK")
+    _, v2 = await _make_variation(db_session, company_id=company.id, color="Off-white", color_code="OFW")
     await create_stock_entry(db_session, company_id=company.id, variation_id=v1.id, quantity=1)
     await create_stock_entry(db_session, company_id=company.id, variation_id=v2.id, quantity=1)
 
@@ -441,15 +413,9 @@ async def test_list_stock_levels_search_matches_color(db_session):
 async def test_list_stock_levels_search_matches_product_name(db_session):
     company, _ = await _setup(db_session)
     spec = await create_product_spec(db_session, company_id=company.id)
-    product = await create_product(
-        db_session, company_id=company.id, spec_id=spec.id, name="Camisa Bordada"
-    )
-    variation = await create_product_variation(
-        db_session, company_id=company.id, product_id=product.id
-    )
-    await create_stock_entry(
-        db_session, company_id=company.id, variation_id=variation.id, quantity=2
-    )
+    product = await create_product(db_session, company_id=company.id, spec_id=spec.id, name="Camisa Bordada")
+    variation = await create_product_variation(db_session, company_id=company.id, product_id=product.id)
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=2)
 
     _rows, total = await stock_service.list_stock_levels(
         db_session,

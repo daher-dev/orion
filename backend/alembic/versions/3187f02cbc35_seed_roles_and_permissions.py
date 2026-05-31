@@ -10,6 +10,7 @@ import uuid
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -49,17 +50,28 @@ ROLES: tuple[tuple[str, str, str, list[str]], ...] = (
         "Manager",
         "Read/write on operations; read-only on roles/users.",
         [
-            "clients.read", "clients.write",
-            "contractors.read", "contractors.write",
-            "prints.read", "prints.write",
-            "specs.read", "specs.write",
-            "products.read", "products.write",
-            "ads.read", "ads.write",
-            "fabric.read", "fabric.write",
-            "cutting.read", "cutting.write",
-            "sewing.read", "sewing.write",
-            "stock.read", "stock.write",
-            "orders.read", "orders.write",
+            "clients.read",
+            "clients.write",
+            "contractors.read",
+            "contractors.write",
+            "prints.read",
+            "prints.write",
+            "specs.read",
+            "specs.write",
+            "products.read",
+            "products.write",
+            "ads.read",
+            "ads.write",
+            "fabric.read",
+            "fabric.write",
+            "cutting.read",
+            "cutting.write",
+            "sewing.read",
+            "sewing.write",
+            "stock.read",
+            "stock.write",
+            "orders.read",
+            "orders.write",
             "companies.read",
             "users.read",
             "roles.read",
@@ -71,9 +83,12 @@ ROLES: tuple[tuple[str, str, str, list[str]], ...] = (
         "Production-floor user: read/write on cutting, sewing, stock; read-only elsewhere.",
         [
             "fabric.read",
-            "cutting.read", "cutting.write",
-            "sewing.read", "sewing.write",
-            "stock.read", "stock.write",
+            "cutting.read",
+            "cutting.write",
+            "sewing.read",
+            "sewing.write",
+            "stock.read",
+            "stock.write",
             "products.read",
             "specs.read",
             "prints.read",
@@ -136,9 +151,7 @@ def upgrade() -> None:
         rid = uuid.uuid4()
         role_rows.append({"id": rid, "code": code, "name": name, "description": description})
         for perm_code in _expand(perm_codes):
-            role_permission_rows.append(
-                {"role_id": rid, "permission_id": permission_ids[perm_code]}
-            )
+            role_permission_rows.append({"role_id": rid, "permission_id": permission_ids[perm_code]})
     op.bulk_insert(roles_table, role_rows)
     op.bulk_insert(role_permissions_table, role_permission_rows)
 

@@ -50,9 +50,7 @@ async def _scaffold(db_session):
     user = await create_user(db_session, company_id=company.id)
     spec = await create_product_spec(db_session, company_id=company.id)
     product = await create_product(db_session, company_id=company.id, spec_id=spec.id)
-    variation = await create_product_variation(
-        db_session, company_id=company.id, product_id=product.id
-    )
+    variation = await create_product_variation(db_session, company_id=company.id, product_id=product.id)
     client = await create_client(db_session, company_id=company.id)
     ad = await create_ad(db_session, company_id=company.id, product_id=product.id)
     return company, user, product, variation, client, ad
@@ -82,21 +80,15 @@ async def test_create_order_persists_and_audits(db_session):
     assert order.status == OrderStatus.PENDING
     assert order.company_id == company.id
 
-    audits = (
-        await db_session.exec(select(AuditLog).where(AuditLog.resource_id == order.id))
-    ).all()
+    audits = (await db_session.exec(select(AuditLog).where(AuditLog.resource_id == order.id))).all()
     assert any("Created order ORD-" in a.message for a in audits)
 
 
 async def test_create_order_rejects_variation_from_other_product(db_session):
     company, user, _, _, client, ad = await _scaffold(db_session)
     spec2 = await create_product_spec(db_session, company_id=company.id)
-    other_product = await create_product(
-        db_session, company_id=company.id, spec_id=spec2.id
-    )
-    other_variation = await create_product_variation(
-        db_session, company_id=company.id, product_id=other_product.id
-    )
+    other_product = await create_product(db_session, company_id=company.id, spec_id=spec2.id)
+    other_variation = await create_product_variation(db_session, company_id=company.id, product_id=other_product.id)
 
     with pytest.raises(ValidationError):
         await create_order(
@@ -280,9 +272,7 @@ async def test_list_orders_returns_only_tenant_rows(db_session):
         client_id=client_b.id,
     )
 
-    rows, total = await list_orders(
-        db_session, company_id=company_a.id, filters=OrderFilters(), page=PageParams()
-    )
+    rows, total = await list_orders(db_session, company_id=company_a.id, filters=OrderFilters(), page=PageParams())
     assert total == 1
     assert rows[0][0].company_id == company_a.id
 
@@ -531,9 +521,7 @@ async def test_update_order_changes_fields_and_audits(db_session):
     assert updated.sale_price == Decimal("250.00")
     assert updated.quantity == 3
 
-    audits = (
-        await db_session.exec(select(AuditLog).where(AuditLog.resource_id == order.id))
-    ).all()
+    audits = (await db_session.exec(select(AuditLog).where(AuditLog.resource_id == order.id))).all()
     assert any("sale_price" in a.message or "Edited order" in a.message for a in audits)
 
 
@@ -661,9 +649,7 @@ async def test_transition_to_paid_audits(db_session):
     )
     assert row[0].status == OrderStatus.PAID
 
-    audits = (
-        await db_session.exec(select(AuditLog).where(AuditLog.resource_id == order.id))
-    ).all()
+    audits = (await db_session.exec(select(AuditLog).where(AuditLog.resource_id == order.id))).all()
     assert any("PAID" in a.message for a in audits)
 
 
@@ -688,9 +674,7 @@ async def test_transition_to_shipped_creates_stock_exit(db_session):
     )
     assert row[0].status == OrderStatus.SHIPPED
 
-    exits = (
-        await db_session.exec(select(StockExit).where(StockExit.order_id == order.id))
-    ).all()
+    exits = (await db_session.exec(select(StockExit).where(StockExit.order_id == order.id))).all()
     assert len(exits) == 1
     assert exits[0].quantity == 3
     assert exits[0].reason == StockExitReason.SALE
@@ -722,9 +706,7 @@ async def test_transition_to_shipped_idempotent_on_retry(db_session):
         order_id=order.id,
         target=OrderStatus.SHIPPED,
     )
-    exits = (
-        await db_session.exec(select(StockExit).where(StockExit.order_id == order.id))
-    ).all()
+    exits = (await db_session.exec(select(StockExit).where(StockExit.order_id == order.id))).all()
     assert len(exits) == 1
 
 
@@ -755,9 +737,7 @@ async def test_transition_to_shipped_skips_when_exit_already_present(db_session)
         order_id=order.id,
         target=OrderStatus.SHIPPED,
     )
-    exits = (
-        await db_session.exec(select(StockExit).where(StockExit.order_id == order.id))
-    ).all()
+    exits = (await db_session.exec(select(StockExit).where(StockExit.order_id == order.id))).all()
     # Still exactly one exit (the manually-injected one); none was added.
     assert len(exits) == 1
 
@@ -796,11 +776,7 @@ async def test_transition_to_delivered_then_returned_writes_entry(db_session):
     )
     assert row[0].status == OrderStatus.RETURNED
 
-    entries = (
-        await db_session.exec(
-            select(StockEntry).where(StockEntry.variation_id == variation.id)
-        )
-    ).all()
+    entries = (await db_session.exec(select(StockEntry).where(StockEntry.variation_id == variation.id))).all()
     return_entries = [e for e in entries if e.source == StockSource.RETURN]
     assert len(return_entries) == 1
     assert return_entries[0].quantity == 2
@@ -827,11 +803,7 @@ async def test_return_without_prior_exit_does_not_create_entry(db_session):
         order_id=order.id,
         target=OrderStatus.RETURNED,
     )
-    return_entries = (
-        await db_session.exec(
-            select(StockEntry).where(StockEntry.variation_id == variation.id)
-        )
-    ).all()
+    return_entries = (await db_session.exec(select(StockEntry).where(StockEntry.variation_id == variation.id))).all()
     assert all(e.source != StockSource.RETURN for e in return_entries)
 
 
@@ -946,14 +918,10 @@ async def test_delete_order_removes_row_and_audits(db_session):
         user_id=user.id,
         order_id=order.id,
     )
-    remaining = (
-        await db_session.exec(select(Order).where(Order.id == order.id))
-    ).first()
+    remaining = (await db_session.exec(select(Order).where(Order.id == order.id))).first()
     assert remaining is None
 
-    audits = (
-        await db_session.exec(select(AuditLog).where(AuditLog.resource_id == order.id))
-    ).all()
+    audits = (await db_session.exec(select(AuditLog).where(AuditLog.resource_id == order.id))).all()
     assert any("Deleted order" in a.message for a in audits)
 
 
@@ -980,9 +948,7 @@ async def test_delete_order_blocked_when_stock_exit_exists(db_session):
             user_id=user.id,
             order_id=order.id,
         )
-    still_there = (
-        await db_session.exec(select(Order).where(Order.id == order.id))
-    ).first()
+    still_there = (await db_session.exec(select(Order).where(Order.id == order.id))).first()
     assert still_there is not None
 
 

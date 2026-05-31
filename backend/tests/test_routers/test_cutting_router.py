@@ -18,7 +18,6 @@ from tests.factories import (
     get_role_by_code,
 )
 
-
 # ----------------------------------------------------------------- helpers
 
 
@@ -88,9 +87,7 @@ async def test_list_returns_empty_page_for_new_tenant(authed_client: AsyncClient
 async def test_list_returns_tenant_rows(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     product, body = await _seed_world(db_session, company.id)
-    await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     response = await authed_client.get("/v1/cutting")
     assert response.status_code == 200
     body_json = response.json()
@@ -131,9 +128,7 @@ async def test_list_supports_product_filter(authed_client: AsyncClient, db_sessi
     spec2 = await create_product_spec(db_session, company_id=company.id, code="OTH01")
     product2 = await create_product(db_session, company_id=company.id, spec_id=spec2.id, name="Other")
     await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
-    await create_cutting_order(
-        db_session, company_id=company.id, product_id=product2.id, body_roll_id=body.id
-    )
+    await create_cutting_order(db_session, company_id=company.id, product_id=product2.id, body_roll_id=body.id)
 
     response = await authed_client.get("/v1/cutting", params={"product_id": str(product2.id)})
     body_json = response.json()
@@ -145,9 +140,7 @@ async def test_list_pagination(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     product, body = await _seed_world(db_session, company.id)
     for _ in range(3):
-        await create_cutting_order(
-            db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-        )
+        await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     response = await authed_client.get("/v1/cutting", params={"page_size": 2})
     body_json = response.json()
     assert body_json["total"] == 3
@@ -158,17 +151,13 @@ async def test_list_pagination(authed_client: AsyncClient, db_session):
 async def test_list_does_not_leak_other_tenants(authed_client: AsyncClient, db_session):
     company_a, _ = await _seed_admin(db_session)
     product_a, body_a = await _seed_world(db_session, company_a.id)
-    await create_cutting_order(
-        db_session, company_id=company_a.id, product_id=product_a.id, body_roll_id=body_a.id
-    )
+    await create_cutting_order(db_session, company_id=company_a.id, product_id=product_a.id, body_roll_id=body_a.id)
 
     company_b = await create_company(db_session)
     spec_b = await create_product_spec(db_session, company_id=company_b.id, code="OTH02")
     product_b = await create_product(db_session, company_id=company_b.id, spec_id=spec_b.id)
     body_b = await create_fabric_roll(db_session, company_id=company_b.id)
-    await create_cutting_order(
-        db_session, company_id=company_b.id, product_id=product_b.id, body_roll_id=body_b.id
-    )
+    await create_cutting_order(db_session, company_id=company_b.id, product_id=product_b.id, body_roll_id=body_b.id)
 
     response = await authed_client.get("/v1/cutting")
     body_json = response.json()
@@ -203,12 +192,8 @@ async def test_list_forbidden_when_no_permission(authed_client: AsyncClient, db_
 async def test_get_returns_row(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     product, body = await _seed_world(db_session, company.id)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
-    await create_cutting_order_output(
-        db_session, cutting_order_id=order.id, size=Size.M, quantity=10
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
+    await create_cutting_order_output(db_session, cutting_order_id=order.id, size=Size.M, quantity=10)
 
     response = await authed_client.get(f"/v1/cutting/{order.id}")
     assert response.status_code == 200
@@ -230,9 +215,7 @@ async def test_get_404_for_other_tenant_row(authed_client: AsyncClient, db_sessi
     spec_o = await create_product_spec(db_session, company_id=other.id, code="OTH03")
     product_o = await create_product(db_session, company_id=other.id, spec_id=spec_o.id)
     body_o = await create_fabric_roll(db_session, company_id=other.id)
-    order = await create_cutting_order(
-        db_session, company_id=other.id, product_id=product_o.id, body_roll_id=body_o.id
-    )
+    order = await create_cutting_order(db_session, company_id=other.id, product_id=product_o.id, body_roll_id=body_o.id)
     response = await authed_client.get(f"/v1/cutting/{order.id}")
     assert response.status_code == 404
 
@@ -253,9 +236,7 @@ async def test_create_success(authed_client: AsyncClient, db_session):
     assert body_json["body_roll"]["id"] == str(body.id)
     assert body_json["product"]["id"] == str(product.id)
 
-    rows = (
-        await db_session.exec(select(CuttingOrder).where(CuttingOrder.company_id == company.id))
-    ).all()
+    rows = (await db_session.exec(select(CuttingOrder).where(CuttingOrder.company_id == company.id))).all()
     assert len(list(rows)) == 1
 
 
@@ -347,9 +328,7 @@ async def test_create_forbidden_for_no_permission(authed_client: AsyncClient, db
 async def test_patch_updates_status(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     product, body = await _seed_world(db_session, company.id)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     response = await authed_client.patch(
         f"/v1/cutting/{order.id}",
         json={"status": "cutting"},
@@ -361,9 +340,7 @@ async def test_patch_updates_status(authed_client: AsyncClient, db_session):
 async def test_patch_replaces_actuals(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     product, body = await _seed_world(db_session, company.id)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     response = await authed_client.patch(
         f"/v1/cutting/{order.id}",
         json={
@@ -421,9 +398,7 @@ async def test_patch_forbidden_for_no_permission(authed_client: AsyncClient, db_
         firebase_uid="qa-dev-user",
     )
     product, body = await _seed_world(db_session, company.id)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     response = await authed_client.patch(
         f"/v1/cutting/{order.id}",
         json={"status": "cutting"},
@@ -437,9 +412,7 @@ async def test_patch_forbidden_for_no_permission(authed_client: AsyncClient, db_
 async def test_delete_returns_204(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     product, body = await _seed_world(db_session, company.id)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     response = await authed_client.delete(f"/v1/cutting/{order.id}")
     assert response.status_code == 204
 
@@ -456,9 +429,7 @@ async def test_delete_returns_404_when_unknown(authed_client: AsyncClient, db_se
 async def test_delete_returns_409_when_shipment_exists(authed_client: AsyncClient, db_session):
     company, _ = await _seed_admin(db_session)
     product, body = await _seed_world(db_session, company.id)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     contractor = await create_sewing_contractor(db_session, company_id=company.id)
     await create_sewing_shipment(
         db_session,
@@ -486,9 +457,7 @@ async def test_delete_forbidden_for_no_permission(authed_client: AsyncClient, db
         firebase_uid="qa-dev-user",
     )
     product, body = await _seed_world(db_session, company.id)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     response = await authed_client.delete(f"/v1/cutting/{order.id}")
     assert response.status_code == 403
 
@@ -499,9 +468,7 @@ async def test_delete_forbidden_for_no_permission(authed_client: AsyncClient, db
 async def test_operator_can_list(authed_client: AsyncClient, db_session):
     company, _ = await _seed_operator(db_session)
     product, body = await _seed_world(db_session, company.id)
-    await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     response = await authed_client.get("/v1/cutting")
     assert response.status_code == 200
     assert response.json()["total"] == 1
@@ -510,8 +477,6 @@ async def test_operator_can_list(authed_client: AsyncClient, db_session):
 async def test_operator_can_get_detail(authed_client: AsyncClient, db_session):
     company, _ = await _seed_operator(db_session)
     product, body = await _seed_world(db_session, company.id)
-    order = await create_cutting_order(
-        db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id
-    )
+    order = await create_cutting_order(db_session, company_id=company.id, product_id=product.id, body_roll_id=body.id)
     response = await authed_client.get(f"/v1/cutting/{order.id}")
     assert response.status_code == 200

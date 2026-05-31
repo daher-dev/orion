@@ -41,9 +41,7 @@ async def _provision_operator(db_session, firebase_uid: str = "qa-dev-user"):
 async def _seed_full_chain(db_session, *, company_id: uuid.UUID):
     spec = await create_product_spec(db_session, company_id=company_id)
     product = await create_product(db_session, company_id=company_id, spec_id=spec.id)
-    variation = await create_product_variation(
-        db_session, company_id=company_id, product_id=product.id
-    )
+    variation = await create_product_variation(db_session, company_id=company_id, product_id=product.id)
     ad = await create_ad(db_session, company_id=company_id, product_id=product.id)
     client = await create_client(db_session, company_id=company_id)
     return product, variation, ad, client, spec
@@ -61,15 +59,11 @@ async def test_list_orders_requires_auth(async_client: AsyncClient):
     assert response.status_code == 401
 
 
-async def test_list_orders_returns_only_tenant_rows(
-    authed_client: AsyncClient, db_session
-):
+async def test_list_orders_returns_only_tenant_rows(authed_client: AsyncClient, db_session):
     company, _ = await _provision_manager(db_session)
     other = await create_company(db_session)
     _, variation, ad, client, _ = await _seed_full_chain(db_session, company_id=company.id)
-    _, other_variation, other_ad, other_client, _ = await _seed_full_chain(
-        db_session, company_id=other.id
-    )
+    _, other_variation, other_ad, other_client, _ = await _seed_full_chain(db_session, company_id=other.id)
     await factory_create_order(
         db_session,
         company_id=company.id,
@@ -124,9 +118,7 @@ async def test_list_orders_filters_by_channel(authed_client: AsyncClient, db_ses
     company, _ = await _provision_manager(db_session)
     spec = await create_product_spec(db_session, company_id=company.id)
     product = await create_product(db_session, company_id=company.id, spec_id=spec.id)
-    variation = await create_product_variation(
-        db_session, company_id=company.id, product_id=product.id
-    )
+    variation = await create_product_variation(db_session, company_id=company.id, product_id=product.id)
     ad_shopee = await create_ad(
         db_session,
         company_id=company.id,
@@ -183,9 +175,7 @@ async def test_list_orders_filters_by_client(authed_client: AsyncClient, db_sess
         external_order_id="O2",
     )
 
-    response = await authed_client.get(
-        "/v1/orders", params={"client_id": str(other_client.id)}
-    )
+    response = await authed_client.get("/v1/orders", params={"client_id": str(other_client.id)})
     body = response.json()
     assert body["total"] == 1
     assert body["items"][0]["client"]["id"] == str(other_client.id)
@@ -204,9 +194,7 @@ async def test_list_orders_paginates(authed_client: AsyncClient, db_session):
             external_order_id=f"E{i}",
         )
 
-    response = await authed_client.get(
-        "/v1/orders", params={"page": 1, "page_size": 2}
-    )
+    response = await authed_client.get("/v1/orders", params={"page": 1, "page_size": 2})
     body = response.json()
     assert body["total"] == 3
     assert len(body["items"]) == 2
@@ -218,9 +206,7 @@ async def test_list_orders_paginates(authed_client: AsyncClient, db_session):
 
 async def test_get_order_detail(authed_client: AsyncClient, db_session):
     company, _ = await _provision_manager(db_session)
-    _, variation, ad, client, spec = await _seed_full_chain(
-        db_session, company_id=company.id
-    )
+    _, variation, ad, client, spec = await _seed_full_chain(db_session, company_id=company.id)
     order = await factory_create_order(
         db_session,
         company_id=company.id,
@@ -270,18 +256,12 @@ async def test_create_order_201(authed_client: AsyncClient, db_session):
     assert body["status"] == "pending"
 
 
-async def test_create_order_422_when_variation_wrong_product(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_order_422_when_variation_wrong_product(authed_client: AsyncClient, db_session):
     company, _ = await _provision_manager(db_session)
     _, _, ad, client, _ = await _seed_full_chain(db_session, company_id=company.id)
     spec2 = await create_product_spec(db_session, company_id=company.id)
-    other_product = await create_product(
-        db_session, company_id=company.id, spec_id=spec2.id
-    )
-    other_variation = await create_product_variation(
-        db_session, company_id=company.id, product_id=other_product.id
-    )
+    other_product = await create_product(db_session, company_id=company.id, spec_id=spec2.id)
+    other_variation = await create_product_variation(db_session, company_id=company.id, product_id=other_product.id)
 
     response = await authed_client.post(
         "/v1/orders",
@@ -297,9 +277,7 @@ async def test_create_order_422_when_variation_wrong_product(
     assert response.status_code == 422
 
 
-async def test_create_order_409_when_duplicate_external_id(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_order_409_when_duplicate_external_id(authed_client: AsyncClient, db_session):
     company, _ = await _provision_manager(db_session)
     _, variation, ad, client, _ = await _seed_full_chain(db_session, company_id=company.id)
     await factory_create_order(
@@ -419,9 +397,7 @@ async def test_transition_to_paid_200(authed_client: AsyncClient, db_session):
     assert response.json()["status"] == "paid"
 
 
-async def test_transition_to_shipped_writes_stock_exit(
-    authed_client: AsyncClient, db_session
-):
+async def test_transition_to_shipped_writes_stock_exit(authed_client: AsyncClient, db_session):
     company, _ = await _provision_manager(db_session)
     _, variation, ad, client, _ = await _seed_full_chain(db_session, company_id=company.id)
     order = await factory_create_order(

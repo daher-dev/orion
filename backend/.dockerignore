@@ -1,0 +1,22 @@
+# Python caches & virtualenv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Tests & docs are not needed in the runtime image
+tests/
+*.md
+
+# Secrets / local env
+.env
+.env.*
+
+# VCS & OS noise
+.git/
+.gitignore
+.DS_Store

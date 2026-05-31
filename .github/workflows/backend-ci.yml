@@ -111,3 +111,61 @@ jobs:
 
       - name: Run pytest
         run: uv run pytest
+
+  deploy:
+    name: Deploy to Cloud Run
+    needs: [lint, typecheck, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.AR_REPO }}/backend:${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build & push image
+        run: |
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Set up Python
+        run: uv python install 3.14
+
+      - name: Install dependencies (for Alembic)
+        run: uv sync
+
+      - name: Run database migrations (Neon)
+        run: |
+          DATABASE_URL="$(gcloud secrets versions access latest --secret=orion-database-url)" \
+            uv run alembic upgrade head
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy orion-backend \
+            --image "$IMAGE" \
+            --region "${{ vars.GCP_REGION }}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --service-account "orion-runtime@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com" \
+            --set-env-vars "^##^ENV=prd##LOG_LEVEL=INFO##FIREBASE_PROJECT_ID=${{ vars.GCP_PROJECT_ID }}##ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }}" \
+            --set-secrets "DATABASE_URL=orion-database-url:latest,ANTHROPIC_API_KEY=orion-anthropic-key:latest"

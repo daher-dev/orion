@@ -18,6 +18,10 @@ class Settings(BaseSettings):
 
     K_SERVICE: str = Field(default="", description="Cloud Run service name")
 
+    ALLOWED_ORIGINS: str = Field(
+        default="", description="Comma-separated list of allowed CORS origins"
+    )
+
     # FEATURE-014 — Anthropic Claude API used by the LLM-powered orders
     # import. Tests never call the real API (mocked via respx). In dev,
     # leave ANTHROPIC_API_KEY blank and the import service surfaces a
@@ -34,10 +38,10 @@ class Settings(BaseSettings):
 
     @property
     def allowed_origins(self) -> list[str]:
+        configured = [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
         if self.ENV == "prd":
-            # Fill in the production origins for the project.
-            return []
-        return [
+            return configured
+        return configured + [
             "http://localhost:3000",
             "http://localhost:8000",
             "http://127.0.0.1:3000",

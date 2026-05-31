@@ -441,7 +441,7 @@ export function CuttingForm({ formId, onSubmit }: Props) {
                     decimals={0}
                     align="center"
                     aria-label={size.toUpperCase()}
-                    value={field.value}
+                    value={field.value as number | string | null | undefined}
                     onChange={(next) => field.onChange(next === "" ? 0 : Number(next))}
                     onBlur={field.onBlur}
                   />

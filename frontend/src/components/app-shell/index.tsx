@@ -2,12 +2,16 @@
 
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/providers/auth-provider";
 import { useMe } from "@/hooks/use-me";
-import { useRouter, usePathname } from "@/i18n/routing";
+import { useEstablishSession } from "@/hooks/use-session";
+import { qk } from "@/lib/query-keys";
+import { ApiError } from "@/lib/api-client";
+import { useRouter } from "@/i18n/routing";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
@@ -16,8 +20,9 @@ import { Topbar } from "./Topbar";
  *
  * Responsibilities
  * - Auth guard: if no Firebase user, redirect to /login.
- * - Onboarding guard: if signed-in but no User row in any company yet,
- *   redirect to /onboarding.
+ * - Access gate: if signed-in but with no membership, establish the backend
+ *   session (POST /v1/auth/session). It provisions the user from a matching
+ *   pending invite, or rejects with 403 → redirect to /access-denied.
  * - Render the chrome: SidebarProvider > Sidebar + (Topbar + main).
  *
  * Loading state: render a centered skeleton until auth + /v1/auth/me settle.
@@ -27,9 +32,10 @@ import { Topbar } from "./Topbar";
 export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslations("appShell");
   const router = useRouter();
-  const pathname = usePathname();
   const { user, loading: authLoading } = useAuth();
   const { data, isPending: meLoading, isError } = useMe();
+  const establishSession = useEstablishSession();
+  const qc = useQueryClient();
 
   useEffect(() => {
     if (authLoading) return;
@@ -39,20 +45,34 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
     // /v1/auth/me hasn't resolved yet — wait. (Errors fall through and let
     // the user see the empty state; the API client will surface them.)
-    if (meLoading) return;
-    if (isError) return;
-    // Only redirect when data has settled and explicitly has no user row.
+    if (meLoading || isError) return;
     // When data is undefined the query is still loading or was just cleared
-    // (e.g. after a cache invalidation) — never redirect in that transient state.
-    if (data !== undefined && !data.user) {
-      // Signed in to Firebase but no User row anywhere → onboarding.
-      if (!pathname.startsWith("/onboarding")) {
-        router.replace("/onboarding");
-      }
-    }
-  }, [authLoading, user, meLoading, isError, data, router, pathname]);
+    // (e.g. after a cache invalidation) — never act in that transient state.
+    if (data === undefined) return;
+    if (data.user) return; // Provisioned member → render the app.
 
-  if (authLoading || (user && (meLoading || data === undefined))) {
+    // Signed into Firebase but no membership resolved yet. Establish the
+    // session: the backend provisions the user from a matching pending invite,
+    // or rejects with 403 `not_invited`. Guard on isIdle so this fires once.
+    if (establishSession.isIdle) {
+      establishSession.mutate(undefined, {
+        onSuccess: () => {
+          void qc.invalidateQueries({ queryKey: qk.auth.me() });
+        },
+        onError: (err) => {
+          if (err instanceof ApiError && err.status === 403) {
+            router.replace("/access-denied");
+          }
+        },
+      });
+    }
+  }, [authLoading, user, meLoading, isError, data, establishSession, qc, router]);
+
+  if (
+    authLoading ||
+    (user && (meLoading || data === undefined)) ||
+    establishSession.isPending
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center p-8">
         <div className="w-full max-w-md space-y-3" aria-label={t("loading")}>

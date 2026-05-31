@@ -9,7 +9,7 @@ import { routing } from "@/i18n/routing";
  * mounts <AppShell>, which is a client component that:
  *   - reads the Firebase auth state
  *   - hits /v1/auth/me to load the User row + permissions
- *   - redirects to /login or /onboarding as appropriate
+ *   - redirects to /login or /access-denied as appropriate
  *
  * Doing the redirect on the client lets us share dev-bypass behavior with
  * the rest of the app (Firebase is never even initialized when

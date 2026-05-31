@@ -17,15 +17,16 @@ describe("AuthCard", () => {
     expect(screen.getByRole("button", { name: "child" })).toBeInTheDocument();
   });
 
-  it("renders the Underground brand mark + wordmark + sub", () => {
+  it("renders the Orion brand mark + wordmark (no tenant name)", () => {
     render(
       <TestProviders>
         <AuthCard title="t">x</AuthCard>
       </TestProviders>,
     );
-    expect(screen.getByText("U")).toBeInTheDocument();
-    expect(screen.getByText("Underground")).toBeInTheDocument();
-    expect(screen.getByText("by Orion")).toBeInTheDocument();
+    expect(screen.getByText("O")).toBeInTheDocument();
+    expect(screen.getByText("Orion")).toBeInTheDocument();
+    expect(screen.queryByText("Underground")).not.toBeInTheDocument();
+    expect(screen.queryByText("by Orion")).not.toBeInTheDocument();
   });
 
   it("renders a banner when provided", () => {

@@ -15,16 +15,14 @@ from schemas.auth import (
     InvitePublicResponse,
     InviteResponse,
     MeResponse,
-    OnboardingRequest,
-    OnboardingResponse,
     RoleSummary,
     UserSummary,
 )
 from services._audit import write_audit
 from services.auth import (
     accept_invite,
-    create_company_and_admin,
     create_invite,
+    establish_session,
     get_invite_by_token,
     get_user_companies,
     get_user_in_company,
@@ -42,34 +40,25 @@ def _build_summaries(user: User, company: Company, role: Role) -> tuple[UserSumm
     )
 
 
-@router.get("/me", response_model=MeResponse)
-async def get_me(
-    claims: CurrentClaims,
-    db: DbSession,
-    x_orion_company_id: Annotated[
-        uuid.UUID | None,
-        Header(alias="X-Orion-Company-Id", convert_underscores=False),
-    ] = None,
+def _build_me_response(
+    memberships: list[tuple[User, Company, Role]],
+    x_orion_company_id: uuid.UUID | None,
 ) -> MeResponse:
-    memberships = await get_user_companies(db, claims["uid"])
     if not memberships:
         return MeResponse()
 
     if x_orion_company_id is not None:
-        active = next(
-            (m for m in memberships if m[1].id == x_orion_company_id),
-            None,
-        )
+        active = next((m for m in memberships if m[1].id == x_orion_company_id), None)
     else:
         active = memberships[0]
 
+    companies = [
+        CompanyMembership(id=company.id, name=company.name, role_code=role.code)
+        for _, company, role in memberships
+    ]
+
     if active is None:
-        return MeResponse(
-            companies=[
-                CompanyMembership(id=company.id, name=company.name, role_code=role.code)
-                for _, company, role in memberships
-            ],
-        )
+        return MeResponse(companies=companies)
 
     user, company, role = active
     user_summary, company_summary, role_summary = _build_summaries(user, company, role)
@@ -80,26 +69,39 @@ async def get_me(
         company=company_summary,
         role=role_summary,
         permissions=permissions,
-        companies=[
-            CompanyMembership(id=company_.id, name=company_.name, role_code=role_.code)
-            for _, company_, role_ in memberships
-        ],
+        companies=companies,
     )
 
 
-@router.post(
-    "/onboarding/companies",
-    response_model=OnboardingResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_onboarding_company(
-    payload: OnboardingRequest,
+@router.get("/me", response_model=MeResponse)
+async def get_me(
     claims: CurrentClaims,
     db: DbSession,
-) -> OnboardingResponse:
-    company, user, role = await create_company_and_admin(db, claims=claims, payload=payload)
-    user_summary, company_summary, role_summary = _build_summaries(user, company, role)
-    return OnboardingResponse(company=company_summary, user=user_summary, role=role_summary)
+    x_orion_company_id: Annotated[
+        uuid.UUID | None,
+        Header(alias="X-Orion-Company-Id", convert_underscores=False),
+    ] = None,
+) -> MeResponse:
+    memberships = await get_user_companies(db, claims["uid"])
+    return _build_me_response(memberships, x_orion_company_id)
+
+
+@router.post("/session", response_model=MeResponse)
+async def establish_session_endpoint(
+    claims: CurrentClaims,
+    db: DbSession,
+    x_orion_company_id: Annotated[
+        uuid.UUID | None,
+        Header(alias="X-Orion-Company-Id", convert_underscores=False),
+    ] = None,
+) -> MeResponse:
+    """Login gate: resolve or provision the caller's memberships.
+
+    Returns the membership envelope when the identity is already a member or has a
+    matching pending invite (auto-accepted here); raises 403 `not_invited` otherwise.
+    """
+    memberships = await establish_session(db, claims=claims)
+    return _build_me_response(memberships, x_orion_company_id)
 
 
 @router.post(

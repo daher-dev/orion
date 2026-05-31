@@ -87,17 +87,18 @@ jobs:
           cat backend.log
           exit 1
 
-      # The e2e specs assume `qa-dev-user` is an onboarded admin (they create
-      # their own per-test data via the API). On a fresh CI DB nothing seeds it,
-      # so onboard it here via the real onboarding endpoint.
-      - name: Onboard dev-bypass user (qa-dev-user)
-        run: |
-          curl -fsS -X POST http://localhost:8000/v1/auth/onboarding/companies \
-            -H "Content-Type: application/json" \
-            -H "X-Dev-Bypass-Uid: qa-dev-user" \
-            -H "X-Dev-Bypass-Name: QA Dev User" \
-            -H "X-Dev-Bypass-Email: qa-dev@orion.local" \
-            -d '{"company_name":"QA E2E","subdomain":"qae2e","main_color":"#2563eb"}'
+      # The e2e specs assume `qa-dev-user` is a provisioned admin (they create
+      # their own per-test data via the API). Login is invite-only with no
+      # self-signup, so the founding admin is seeded directly here.
+      - name: Provision dev-bypass user (qa-dev-user)
+        working-directory: backend
+        run: uv run python scripts/bootstrap_admin.py
+        env:
+          BOOTSTRAP_FIREBASE_UID: qa-dev-user
+          BOOTSTRAP_EMAIL: qa-dev@orion.local
+          BOOTSTRAP_NAME: QA Dev User
+          BOOTSTRAP_COMPANY_NAME: QA E2E
+          BOOTSTRAP_SUBDOMAIN: qae2e
 
       # --- Frontend setup ---
       - uses: pnpm/action-setup@v4

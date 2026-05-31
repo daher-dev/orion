@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Link, useRouter } from "@/i18n/routing";
-import { useAcceptInvite, useInvite } from "@/hooks/use-onboarding";
+import { useAcceptInvite, useInvite } from "@/hooks/use-invites";
 import { ApiError } from "@/lib/api-client";
 
 /**

@@ -1,11 +1,7 @@
-import re
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
-
-_SUBDOMAIN_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
-_HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserSummary(BaseModel):
@@ -41,33 +37,6 @@ class MeResponse(BaseModel):
     role: RoleSummary | None = None
     permissions: list[str] = Field(default_factory=list)
     companies: list[CompanyMembership] = Field(default_factory=list)
-
-
-class OnboardingRequest(BaseModel):
-    company_name: str = Field(min_length=1, max_length=120)
-    subdomain: str = Field(min_length=1, max_length=63)
-    main_color: str = Field(default="#2563eb", max_length=7)
-
-    @field_validator("subdomain")
-    @classmethod
-    def _validate_subdomain(cls, value: str) -> str:
-        normalized = value.strip().lower()
-        if not _SUBDOMAIN_RE.match(normalized):
-            raise ValueError("subdomain must be lowercase alphanumeric and may contain hyphens")
-        return normalized
-
-    @field_validator("main_color")
-    @classmethod
-    def _validate_color(cls, value: str) -> str:
-        if not _HEX_COLOR_RE.match(value):
-            raise ValueError("main_color must be a 6-digit hex color like #2563eb")
-        return value
-
-
-class OnboardingResponse(BaseModel):
-    company: CompanySummary
-    user: UserSummary
-    role: RoleSummary
 
 
 class InviteCreate(BaseModel):

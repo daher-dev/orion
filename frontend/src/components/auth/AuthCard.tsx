@@ -1,15 +1,12 @@
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { Orbit } from "lucide-react";
 
 /**
- * Shared shell for every auth/public page (login, signup, forgot-password,
- * onboarding, accept-invite). Direct port of the Orion `.card` from
+ * Shared shell for every auth/public page (login, access-denied,
+ * forgot-password, accept-invite). Direct port of the Orion `.card` from
  * /docs/design/source/styles.css — bg = --orion-surface, 1 px line border,
- * 14 px radius, overflow hidden — plus the Underground brand mark (U tile +
- * "Orion" wordmark + "por Underground" italic sub) the same way the sidebar
- * `CompanySwitcher` renders it, so the auth pages feel like one continuous
- * brand surface.
+ * 14 px radius, overflow hidden — plus the Orion brand mark (O tile +
+ * "Orion" wordmark), so the auth pages feel like one continuous brand surface.
  *
  * The card is centered by the `(public)` route layout — this component does
  * not impose its own max-width beyond `420px` so layouts that need a wider
@@ -52,15 +49,11 @@ export function AuthCard({ title, sub, children, className, banner }: AuthCardPr
               "bg-[#2563eb]"
             }
           >
-            U
+            O
           </div>
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="truncate font-serif text-[17px] font-medium leading-none tracking-[-0.01em] text-[color:var(--orion-ink)]">
               {t("wordmark")}
-            </span>
-            <span className="mt-1 inline-flex items-center gap-[5px] font-serif text-[10.5px] italic leading-none tracking-[0.06em] text-[color:var(--orion-ink-3)]">
-              <Orbit className="size-[9px] text-[#2563eb]" strokeWidth={1.8} aria-hidden />
-              <span>{t("poweredBy")}</span>
             </span>
           </div>
         </div>

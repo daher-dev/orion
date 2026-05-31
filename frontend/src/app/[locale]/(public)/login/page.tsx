@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { GoogleButton } from "@/components/auth/GoogleButton";
+import { AppleButton } from "@/components/auth/AppleButton";
 import { Link, useRouter } from "@/i18n/routing";
 import { useAuth } from "@/providers/auth-provider";
 import { isDevBypassEnabled } from "@/lib/firebase";
@@ -33,9 +34,9 @@ import { isDevBypassEnabled } from "@/lib/firebase";
  *   via signInWithPopup. Errors are translated, no raw Firebase messages bleed
  *   through.
  *
- * After a successful sign-in we push to "/". The AppShell will then either
- * render the dashboard or redirect to "/onboarding" depending on whether the
- * user has a Company row yet.
+ * After a successful sign-in we push to "/". The AppShell then establishes the
+ * backend session — rendering the dashboard for an invited user, or redirecting
+ * to "/access-denied" when the email isn't on the invite list.
  */
 const formSchema = z.object({
   email: z.string().email(),
@@ -54,7 +55,7 @@ export default function LoginPage() {
   const t = useTranslations("auth.login");
   const tAuth = useTranslations("auth");
   const router = useRouter();
-  const { signInWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithEmail, signInWithGoogle, signInWithApple } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -107,6 +108,23 @@ export default function LoginPage() {
         return;
       }
       await signInWithGoogle();
+      router.push("/");
+    } catch (err) {
+      setAuthError(mapAuthError(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleApple() {
+    setAuthError(null);
+    setSubmitting(true);
+    try {
+      if (isDevBypassEnabled) {
+        router.push("/");
+        return;
+      }
+      await signInWithApple();
       router.push("/");
     } catch (err) {
       setAuthError(mapAuthError(err));
@@ -221,16 +239,9 @@ export default function LoginPage() {
         <span className="h-px flex-1 bg-[color:var(--orion-line-soft)]" />
       </div>
 
-      <GoogleButton onClick={handleGoogle} disabled={submitting} />
-
-      <div className="flex items-center justify-center gap-1.5 pt-1 text-[12.5px] text-[color:var(--orion-ink-3)]">
-        <span>{t("noAccount")}</span>
-        <Link
-          href="/signup"
-          className="font-medium text-[color:var(--ring)] hover:underline"
-        >
-          {t("createAccount")}
-        </Link>
+      <div className="flex flex-col gap-2.5">
+        <GoogleButton onClick={handleGoogle} disabled={submitting} />
+        <AppleButton onClick={handleApple} disabled={submitting} />
       </div>
     </AuthCard>
   );

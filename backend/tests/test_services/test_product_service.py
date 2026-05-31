@@ -429,11 +429,7 @@ async def test_update_product_replaces_variations_atomically(db_session):
     assert skus == {"CAM03-G-OFF", "CAM03-GG-OFF"}
 
     # Old variations are gone.
-    remaining = (
-        await db_session.exec(
-            select(ProductVariation).where(ProductVariation.product_id == product.id)
-        )
-    ).all()
+    remaining = (await db_session.exec(select(ProductVariation).where(ProductVariation.product_id == product.id))).all()
     assert len(remaining) == 2
 
 
@@ -474,13 +470,9 @@ async def test_update_product_409_on_spec_print_conflict(db_session):
     print_a = await create_print_design(db_session, company_id=company.id, code="EST-A")
     print_b = await create_print_design(db_session, company_id=company.id, code="EST-B")
     # Existing product on (spec, print_a)
-    await create_product(
-        db_session, company_id=company.id, spec_id=spec.id, print_id=print_a.id, name="A"
-    )
+    await create_product(db_session, company_id=company.id, spec_id=spec.id, print_id=print_a.id, name="A")
     # Other product on (spec, print_b), which we'll try to move to print_a.
-    target = await create_product(
-        db_session, company_id=company.id, spec_id=spec.id, print_id=print_b.id, name="B"
-    )
+    target = await create_product(db_session, company_id=company.id, spec_id=spec.id, print_id=print_b.id, name="B")
     with pytest.raises(ConflictError):
         await product_service.update_product(
             db_session,
@@ -594,7 +586,5 @@ async def test_delete_product_writes_audit_log(db_session):
     product = await create_product(db_session, company_id=company.id, spec_id=spec.id, name="DelMe")
 
     await product_service.delete_product(db_session, company_id=company.id, user_id=user.id, product_id=product.id)
-    audit = (
-        await db_session.exec(select(AuditLog).where(AuditLog.resource_type == "products"))
-    ).all()
+    audit = (await db_session.exec(select(AuditLog).where(AuditLog.resource_type == "products"))).all()
     assert any("Deleted product DelMe" in entry.message for entry in audit)

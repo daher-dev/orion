@@ -1,0 +1,23 @@
+# Installed in the deps stage / produced by the build
+node_modules
+.next
+out
+
+# Local env (NEXT_PUBLIC_* arrive as build args, not from .env files)
+.env
+.env.*
+
+# Tests & their artifacts — not needed to build the app
+e2e
+playwright-report
+playwright/.cache
+test-results
+coverage
+
+# VCS, docker, OS noise
+.git
+.gitignore
+Dockerfile
+.dockerignore
+*.log
+.DS_Store

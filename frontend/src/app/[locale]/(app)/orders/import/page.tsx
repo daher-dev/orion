@@ -309,10 +309,12 @@ export default function OrdersImportPage() {
 
 function StepIndicator({ step }: { step: Step }) {
   const t = useTranslations("ordersImport.steps");
-  const items: { id: Step; label: string }[] = [
+  // "commit" is a virtual step (the dialog), shown in the indicator but never a
+  // real `Step` state value — so the item list widens the id union accordingly.
+  const items: { id: Step | "commit"; label: string }[] = [
     { id: "drop", label: t("drop") },
     { id: "review", label: t("review") },
-    { id: "commit", label: t("commit") as string },
+    { id: "commit", label: t("commit") },
   ];
   // "commit" is a virtual step — the dialog. The indicator highlights
   // up through the current real step.

@@ -42,7 +42,6 @@ from tests.factories import (
     create_user,
 )
 
-
 # ---------- helpers ----------
 
 
@@ -482,7 +481,7 @@ async def test_list_shipments_isolated_by_tenant(db_session):
         contractor_id=ctx["contractor"].id,
     )
 
-    items, total = await list_shipments(
+    _items, total = await list_shipments(
         db_session,
         company_id=ctx["company"].id,
         filters=ShipmentFilters(),
@@ -548,13 +547,7 @@ async def test_receive_shipment_full_match_status_received(db_session):
     assert by_size[Size.M].received_quantity == 5
     assert by_size[Size.G].received_quantity == 2
 
-    stock = list(
-        (
-            await db_session.exec(
-                select(StockEntry).where(StockEntry.shipment_id == shipment.id)
-            )
-        ).all()
-    )
+    stock = list((await db_session.exec(select(StockEntry).where(StockEntry.shipment_id == shipment.id))).all())
     assert len(stock) == 3
     assert all(e.source == StockSource.SHIPMENT for e in stock)
     assert sum(e.quantity for e in stock) == 10
@@ -598,13 +591,7 @@ async def test_receive_shipment_partial_status(db_session):
         ),
     )
     assert result.status == ShipmentStatus.PARTIAL
-    stock = list(
-        (
-            await db_session.exec(
-                select(StockEntry).where(StockEntry.shipment_id == shipment.id)
-            )
-        ).all()
-    )
+    stock = list((await db_session.exec(select(StockEntry).where(StockEntry.shipment_id == shipment.id))).all())
     assert sum(e.quantity for e in stock) == 12
 
 
@@ -644,13 +631,7 @@ async def test_receive_shipment_with_zero_quantity_skips_stock_for_that_size(db_
     )
     assert result.status == ShipmentStatus.PARTIAL
 
-    stock = list(
-        (
-            await db_session.exec(
-                select(StockEntry).where(StockEntry.shipment_id == shipment.id)
-            )
-        ).all()
-    )
+    stock = list((await db_session.exec(select(StockEntry).where(StockEntry.shipment_id == shipment.id))).all())
     assert len(stock) == 1
     assert stock[0].quantity == 5
 
@@ -918,11 +899,7 @@ async def test_create_persists_items_with_zero_received(db_session):
         payload=payload,
     )
     rows = list(
-        (
-            await db_session.exec(
-                select(SewingShipmentItem).where(SewingShipmentItem.shipment_id == result.id)
-            )
-        ).all()
+        (await db_session.exec(select(SewingShipmentItem).where(SewingShipmentItem.shipment_id == result.id))).all()
     )
     assert len(rows) == 1
     assert rows[0].received_quantity == 0
@@ -942,8 +919,6 @@ async def test_shipment_persisted_with_status_sent(db_session):
         user_id=ctx["user"].id,
         payload=payload,
     )
-    row = (
-        await db_session.exec(select(SewingShipment).where(SewingShipment.id == result.id))
-    ).first()
+    row = (await db_session.exec(select(SewingShipment).where(SewingShipment.id == result.id))).first()
     assert row is not None
     assert row.status == ShipmentStatus.SENT

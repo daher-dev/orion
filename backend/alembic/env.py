@@ -13,11 +13,10 @@ from alembic import context
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from sqlmodel import SQLModel  # noqa: E402
+from sqlmodel import SQLModel
 
-from config import config as app_config  # noqa: E402
-
-import models  # noqa: E402, F401 — register table models with SQLModel.metadata
+import models  # noqa: F401 — register table models with SQLModel.metadata
+from config import config as app_config
 
 config = context.config
 raw_url = app_config.DATABASE_URL

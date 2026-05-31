@@ -1,0 +1,13 @@
+{
+  "hosting": {
+    "site": "underground-prd",
+    "public": "frontend/.hosting-public",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": { "serviceId": "orion-frontend", "region": "us-east1" }
+      }
+    ]
+  }
+}

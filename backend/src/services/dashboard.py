@@ -83,9 +83,7 @@ def _start_of_window(days: int) -> datetime:
 # --------------------------------------------------------------------------- KPI helpers
 
 
-async def _count_orders_with_status(
-    db: AsyncSession, *, company_id: uuid.UUID, status: OrderStatus
-) -> int:
+async def _count_orders_with_status(db: AsyncSession, *, company_id: uuid.UUID, status: OrderStatus) -> int:
     stmt = scoped(
         select(func.count()).select_from(Order),
         Order,
@@ -109,9 +107,7 @@ async def _sum_revenue_since(
     return Decimal(str(raw))
 
 
-async def _count_cutting_in_progress(
-    db: AsyncSession, *, company_id: uuid.UUID
-) -> int:
+async def _count_cutting_in_progress(db: AsyncSession, *, company_id: uuid.UUID) -> int:
     stmt = scoped(
         select(func.count()).select_from(CuttingOrder),
         CuttingOrder,
@@ -120,9 +116,7 @@ async def _count_cutting_in_progress(
     return int((await db.exec(stmt)).first() or 0)
 
 
-async def _count_sewing_active(
-    db: AsyncSession, *, company_id: uuid.UUID
-) -> int:
+async def _count_sewing_active(db: AsyncSession, *, company_id: uuid.UUID) -> int:
     stmt = scoped(
         select(func.count()).select_from(SewingShipment),
         SewingShipment,
@@ -131,9 +125,7 @@ async def _count_sewing_active(
     return int((await db.exec(stmt)).first() or 0)
 
 
-async def _on_hand_per_variation(
-    db: AsyncSession, *, company_id: uuid.UUID
-) -> dict[uuid.UUID, int]:
+async def _on_hand_per_variation(db: AsyncSession, *, company_id: uuid.UUID) -> dict[uuid.UUID, int]:
     """Return a ``{variation_id: on_hand}`` map for every variation that has
     moved at least once. Variations with no history are omitted.
 
@@ -141,28 +133,22 @@ async def _on_hand_per_variation(
     query simple and works regardless of which side has rows.
     """
 
-    entries_stmt = (
-        scoped(
-            select(
-                StockEntry.variation_id,
-                func.coalesce(func.sum(StockEntry.quantity), 0).label("total"),
-            ),
-            StockEntry,
-            company_id,
-        )
-        .group_by(StockEntry.variation_id)
-    )
-    exits_stmt = (
-        scoped(
-            select(
-                StockExit.variation_id,
-                func.coalesce(func.sum(StockExit.quantity), 0).label("total"),
-            ),
-            StockExit,
-            company_id,
-        )
-        .group_by(StockExit.variation_id)
-    )
+    entries_stmt = scoped(
+        select(
+            StockEntry.variation_id,
+            func.coalesce(func.sum(StockEntry.quantity), 0).label("total"),
+        ),
+        StockEntry,
+        company_id,
+    ).group_by(StockEntry.variation_id)
+    exits_stmt = scoped(
+        select(
+            StockExit.variation_id,
+            func.coalesce(func.sum(StockExit.quantity), 0).label("total"),
+        ),
+        StockExit,
+        company_id,
+    ).group_by(StockExit.variation_id)
     levels: dict[uuid.UUID, int] = {}
     for variation_id, total in (await db.exec(entries_stmt)).all():
         levels[variation_id] = int(total or 0)
@@ -182,9 +168,7 @@ def _count_in_stock(levels: dict[uuid.UUID, int]) -> int:
 # --------------------------------------------------------------------------- pipeline
 
 
-async def _shipped_in_last(
-    db: AsyncSession, *, company_id: uuid.UUID, days: int
-) -> int:
+async def _shipped_in_last(db: AsyncSession, *, company_id: uuid.UUID, days: int) -> int:
     bound = _utc_now() - timedelta(days=days)
     stmt = scoped(
         select(func.count()).select_from(Order),
@@ -283,14 +267,10 @@ async def _count_created_in_range(
 # --------------------------------------------------------------------------- needs action
 
 
-async def _needs_action(
-    db: AsyncSession, *, company_id: uuid.UUID
-) -> list[NeedsActionItem]:
+async def _needs_action(db: AsyncSession, *, company_id: uuid.UUID) -> list[NeedsActionItem]:
     items: list[NeedsActionItem] = []
 
-    pending_orders = await _count_orders_with_status(
-        db, company_id=company_id, status=OrderStatus.PENDING
-    )
+    pending_orders = await _count_orders_with_status(db, company_id=company_id, status=OrderStatus.PENDING)
     if pending_orders > 0:
         pedido = "pedido" if pending_orders == 1 else "pedidos"
         items.append(
@@ -356,9 +336,7 @@ async def _needs_action(
 # --------------------------------------------------------------------------- activity
 
 
-async def _activity(
-    db: AsyncSession, *, company_id: uuid.UUID
-) -> list[ActivityItem]:
+async def _activity(db: AsyncSession, *, company_id: uuid.UUID) -> list[ActivityItem]:
     stmt = (
         scoped(
             select(AuditLog, User).join(User, User.id == AuditLog.user_id, isouter=True),
@@ -409,10 +387,7 @@ async def _revenue_by_channel(
         .order_by(func.sum(Order.sale_price * Order.quantity).desc())
     )
     rows = (await db.exec(stmt)).all()
-    return [
-        ChannelRevenue(channel=str(row.channel), revenue=float(row.revenue))
-        for row in rows
-    ]
+    return [ChannelRevenue(channel=str(row.channel), revenue=float(row.revenue)) for row in rows]
 
 
 # --------------------------------------------------------------------------- public
@@ -436,16 +411,12 @@ async def get_summary(
     """Return the fully aggregated dashboard payload for ``company_id``."""
 
     # ----- KPIs -----
-    orders_pending = await _count_orders_with_status(
-        db, company_id=company_id, status=OrderStatus.PENDING
-    )
+    orders_pending = await _count_orders_with_status(db, company_id=company_id, status=OrderStatus.PENDING)
 
     now = _utc_now()
     revenue_since = now - timedelta(days=REVENUE_WINDOW_DAYS)
     previous_since = now - timedelta(days=REVENUE_WINDOW_DAYS * 2)
-    revenue_30d = await _sum_revenue_since(
-        db, company_id=company_id, since=revenue_since
-    )
+    revenue_30d = await _sum_revenue_since(db, company_id=company_id, since=revenue_since)
     revenue_prev = await _sum_revenue_since(
         db,
         company_id=company_id,
@@ -466,33 +437,23 @@ async def get_summary(
 
     # Sparklines — daily creation count over last 7 days.
     orders_spark = await _created_per_day_sparkline(db, model=Order, company_id=company_id)
-    cutting_spark = await _created_per_day_sparkline(
-        db, model=CuttingOrder, company_id=company_id
-    )
-    sewing_spark = await _created_per_day_sparkline(
-        db, model=SewingShipment, company_id=company_id
-    )
+    cutting_spark = await _created_per_day_sparkline(db, model=CuttingOrder, company_id=company_id)
+    sewing_spark = await _created_per_day_sparkline(db, model=SewingShipment, company_id=company_id)
 
     # Deltas — count of entities created in last 30d vs previous 30d.
-    orders_30d = await _count_created_in_range(
-        db, model=Order, company_id=company_id, since=revenue_since
-    )
+    orders_30d = await _count_created_in_range(db, model=Order, company_id=company_id, since=revenue_since)
     orders_prev = await _count_created_in_range(
         db, model=Order, company_id=company_id, since=previous_since, until=revenue_since
     )
     orders_pending_delta = _delta_pct(float(orders_30d), float(orders_prev))
 
-    cutting_30d = await _count_created_in_range(
-        db, model=CuttingOrder, company_id=company_id, since=revenue_since
-    )
+    cutting_30d = await _count_created_in_range(db, model=CuttingOrder, company_id=company_id, since=revenue_since)
     cutting_prev = await _count_created_in_range(
         db, model=CuttingOrder, company_id=company_id, since=previous_since, until=revenue_since
     )
     cutting_delta = _delta_pct(float(cutting_30d), float(cutting_prev))
 
-    sewing_30d = await _count_created_in_range(
-        db, model=SewingShipment, company_id=company_id, since=revenue_since
-    )
+    sewing_30d = await _count_created_in_range(db, model=SewingShipment, company_id=company_id, since=revenue_since)
     sewing_prev = await _count_created_in_range(
         db, model=SewingShipment, company_id=company_id, since=previous_since, until=revenue_since
     )

@@ -436,7 +436,7 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
                 decimals={0}
                 align="right"
                 aria-invalid={!!errors.quantity}
-                value={field.value}
+                value={field.value as number | string | null | undefined}
                 onChange={(next) => field.onChange(next === "" ? 1 : Number(next))}
                 onBlur={field.onBlur}
               />
@@ -465,7 +465,7 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
                 decimals={2}
                 align="right"
                 aria-invalid={!!errors.sale_price}
-                value={field.value}
+                value={field.value as number | string | null | undefined}
                 onChange={(next) => field.onChange(next === "" ? 0 : Number(next))}
                 onBlur={field.onBlur}
               />

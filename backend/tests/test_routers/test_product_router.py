@@ -106,9 +106,7 @@ async def test_list_products_filters_by_type(authed_client: AsyncClient, db_sess
     company, _ = await _provision_manager(db_session)
     spec_a = await create_product_spec(db_session, company_id=company.id, code="FT-A")
     spec_b = await create_product_spec(db_session, company_id=company.id, code="FT-B")
-    await create_product(
-        db_session, company_id=company.id, spec_id=spec_a.id, product_type="tshirt", name="T"
-    )
+    await create_product(db_session, company_id=company.id, spec_id=spec_a.id, product_type="tshirt", name="T")
     await create_product(
         db_session,
         company_id=company.id,

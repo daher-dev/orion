@@ -211,9 +211,7 @@ async def test_list_filter_by_contractor(authed_client: AsyncClient, db_session)
     assert body["items"][0]["id"] == str(target.id)
 
 
-async def test_list_search_query_matches_contractor_name(
-    authed_client: AsyncClient, db_session
-):
+async def test_list_search_query_matches_contractor_name(authed_client: AsyncClient, db_session):
     ctx = await _bootstrap_admin(db_session)
     other = await create_sewing_contractor(
         db_session,
@@ -239,9 +237,7 @@ async def test_list_search_query_matches_contractor_name(
     assert body["items"][0]["id"] == str(target.id)
 
 
-async def test_list_does_not_leak_other_tenants(
-    authed_client: AsyncClient, db_session
-):
+async def test_list_does_not_leak_other_tenants(authed_client: AsyncClient, db_session):
     await _bootstrap_admin(db_session)
     other = await create_company(db_session)
     other_spec = await create_product_spec(db_session, company_id=other.id)
@@ -270,9 +266,7 @@ async def test_list_does_not_leak_other_tenants(
     assert body["total"] == 0
 
 
-async def test_list_forbidden_without_sewing_read(
-    authed_client: AsyncClient, db_session
-):
+async def test_list_forbidden_without_sewing_read(authed_client: AsyncClient, db_session):
     await _bootstrap_no_perms(db_session, code="no-sewing-list")
     response = await authed_client.get("/v1/sewing")
     assert response.status_code == 403
@@ -304,17 +298,13 @@ async def test_get_returns_shipment(authed_client: AsyncClient, db_session):
     assert len(body["items"]) == 1
 
 
-async def test_get_returns_404_when_unknown(
-    authed_client: AsyncClient, db_session
-):
+async def test_get_returns_404_when_unknown(authed_client: AsyncClient, db_session):
     await _bootstrap_admin(db_session)
     response = await authed_client.get(f"/v1/sewing/{uuid.uuid4()}")
     assert response.status_code == 404
 
 
-async def test_get_returns_404_for_other_tenant_row(
-    authed_client: AsyncClient, db_session
-):
+async def test_get_returns_404_for_other_tenant_row(authed_client: AsyncClient, db_session):
     await _bootstrap_admin(db_session)
     other = await create_company(db_session)
     other_spec = await create_product_spec(db_session, company_id=other.id)
@@ -364,11 +354,7 @@ async def test_create_success(authed_client: AsyncClient, db_session):
     assert all(item["received_quantity"] == 0 for item in body["items"])
 
     rows = list(
-        (
-            await db_session.exec(
-                select(SewingShipment).where(SewingShipment.company_id == ctx["company"].id)
-            )
-        ).all()
+        (await db_session.exec(select(SewingShipment).where(SewingShipment.company_id == ctx["company"].id))).all()
     )
     assert len(rows) == 1
 
@@ -385,9 +371,7 @@ async def test_create_rejects_empty_items(authed_client: AsyncClient, db_session
     assert response.status_code == 422
 
 
-async def test_create_rejects_duplicate_sizes(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_rejects_duplicate_sizes(authed_client: AsyncClient, db_session):
     ctx = await _bootstrap_admin(db_session)
     payload = {
         "cutting_order_id": str(ctx["cutting"].id),
@@ -402,9 +386,7 @@ async def test_create_rejects_duplicate_sizes(
     assert response.status_code == 422
 
 
-async def test_create_404_for_unknown_contractor(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_404_for_unknown_contractor(authed_client: AsyncClient, db_session):
     ctx = await _bootstrap_admin(db_session)
     payload = {
         "cutting_order_id": str(ctx["cutting"].id),
@@ -416,9 +398,7 @@ async def test_create_404_for_unknown_contractor(
     assert response.status_code == 404
 
 
-async def test_create_forbidden_without_sewing_write(
-    authed_client: AsyncClient, db_session
-):
+async def test_create_forbidden_without_sewing_write(authed_client: AsyncClient, db_session):
     company, _ = await _bootstrap_no_perms(db_session, code="no-sewing-write")
     # Even without sewing.write we need a cutting order for the payload —
     # so build references via the admin tenant. They will not match this
@@ -437,9 +417,7 @@ async def test_create_forbidden_without_sewing_write(
 # ---------- POST /{id}/receive ----------
 
 
-async def test_receive_full_creates_stock_and_sets_received(
-    authed_client: AsyncClient, db_session
-):
+async def test_receive_full_creates_stock_and_sets_received(authed_client: AsyncClient, db_session):
     ctx = await _bootstrap_admin(db_session)
     shipment = await create_sewing_shipment(
         db_session,
@@ -466,20 +444,12 @@ async def test_receive_full_creates_stock_and_sets_received(
     body = response.json()
     assert body["status"] == "received"
 
-    stock = list(
-        (
-            await db_session.exec(
-                select(StockEntry).where(StockEntry.shipment_id == shipment.id)
-            )
-        ).all()
-    )
+    stock = list((await db_session.exec(select(StockEntry).where(StockEntry.shipment_id == shipment.id))).all())
     assert len(stock) == 1
     assert stock[0].quantity == 5
 
 
-async def test_receive_partial_returns_partial_status(
-    authed_client: AsyncClient, db_session
-):
+async def test_receive_partial_returns_partial_status(authed_client: AsyncClient, db_session):
     ctx = await _bootstrap_admin(db_session)
     shipment = await create_sewing_shipment(
         db_session,
@@ -506,9 +476,7 @@ async def test_receive_partial_returns_partial_status(
     assert response.json()["status"] == "partial"
 
 
-async def test_receive_409_when_over_delivery(
-    authed_client: AsyncClient, db_session
-):
+async def test_receive_409_when_over_delivery(authed_client: AsyncClient, db_session):
     ctx = await _bootstrap_admin(db_session)
     shipment = await create_sewing_shipment(
         db_session,
@@ -534,9 +502,7 @@ async def test_receive_409_when_over_delivery(
     assert response.status_code == 409
 
 
-async def test_receive_409_when_double_receive(
-    authed_client: AsyncClient, db_session
-):
+async def test_receive_409_when_double_receive(authed_client: AsyncClient, db_session):
     ctx = await _bootstrap_admin(db_session)
     shipment = await create_sewing_shipment(
         db_session,
@@ -567,9 +533,7 @@ async def test_receive_409_when_double_receive(
     assert second.status_code == 409
 
 
-async def test_receive_404_when_unknown_shipment(
-    authed_client: AsyncClient, db_session
-):
+async def test_receive_404_when_unknown_shipment(authed_client: AsyncClient, db_session):
     await _bootstrap_admin(db_session)
     payload = {
         "received_at": _today_iso(),
@@ -582,9 +546,7 @@ async def test_receive_404_when_unknown_shipment(
     assert response.status_code == 404
 
 
-async def test_receive_forbidden_without_sewing_write(
-    authed_client: AsyncClient, db_session
-):
+async def test_receive_forbidden_without_sewing_write(authed_client: AsyncClient, db_session):
     company, _ = await _bootstrap_no_perms(db_session, code="no-sewing-receive")
     payload = {
         "received_at": _today_iso(),
@@ -621,9 +583,7 @@ async def test_cancel_happy_path(authed_client: AsyncClient, db_session):
     assert response.json()["status"] == "cancelled"
 
 
-async def test_cancel_409_when_already_received(
-    authed_client: AsyncClient, db_session
-):
+async def test_cancel_409_when_already_received(authed_client: AsyncClient, db_session):
     ctx = await _bootstrap_admin(db_session)
     shipment = await create_sewing_shipment(
         db_session,
@@ -642,17 +602,13 @@ async def test_cancel_409_when_already_received(
     assert response.status_code == 409
 
 
-async def test_cancel_404_when_unknown(
-    authed_client: AsyncClient, db_session
-):
+async def test_cancel_404_when_unknown(authed_client: AsyncClient, db_session):
     await _bootstrap_admin(db_session)
     response = await authed_client.post(f"/v1/sewing/{uuid.uuid4()}/cancel")
     assert response.status_code == 404
 
 
-async def test_cancel_forbidden_without_sewing_write(
-    authed_client: AsyncClient, db_session
-):
+async def test_cancel_forbidden_without_sewing_write(authed_client: AsyncClient, db_session):
     company, _ = await _bootstrap_no_perms(db_session, code="no-sewing-cancel")
     response = await authed_client.post(f"/v1/sewing/{uuid.uuid4()}/cancel")
     assert response.status_code == 403

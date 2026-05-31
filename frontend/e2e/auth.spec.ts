@@ -66,8 +66,8 @@ test.describe("Auth — /login", () => {
   test("renders the auth card with brand mark, title, and CTAs", async ({ page }) => {
     await page.goto("/pt-BR/login");
     // Brand mark + wordmark.
-    await expect(page.getByText("Orion", { exact: true })).toBeVisible();
-    await expect(page.getByText("por Underground")).toBeVisible();
+    await expect(page.getByText("Underground", { exact: true })).toBeVisible();
+    await expect(page.getByText("por Orion")).toBeVisible();
     // Page title.
     await expect(page.getByRole("heading", { name: "Entrar no Orion", level: 1 })).toBeVisible();
     // Primary + secondary CTAs.

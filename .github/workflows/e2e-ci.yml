@@ -44,7 +44,7 @@ jobs:
       FIREBASE_PROJECT_ID: orion-e2e
       NEXT_PUBLIC_API_URL: http://localhost:8000
       NEXT_PUBLIC_DEV_BYPASS_AUTH: "true"
-      NEXT_PUBLIC_DEV_BYPASS_UID: e2e-user
+      NEXT_PUBLIC_DEV_BYPASS_UID: qa-dev-user
 
     steps:
       - uses: actions/checkout@v4
@@ -86,6 +86,18 @@ jobs:
           echo "Backend failed to start"
           cat backend.log
           exit 1
+
+      # The e2e specs assume `qa-dev-user` is an onboarded admin (they create
+      # their own per-test data via the API). On a fresh CI DB nothing seeds it,
+      # so onboard it here via the real onboarding endpoint.
+      - name: Onboard dev-bypass user (qa-dev-user)
+        run: |
+          curl -fsS -X POST http://localhost:8000/v1/auth/onboarding/companies \
+            -H "Content-Type: application/json" \
+            -H "X-Dev-Bypass-Uid: qa-dev-user" \
+            -H "X-Dev-Bypass-Name: QA Dev User" \
+            -H "X-Dev-Bypass-Email: qa-dev@orion.local" \
+            -d '{"company_name":"QA E2E","subdomain":"qae2e","main_color":"#2563eb"}'
 
       # --- Frontend setup ---
       - uses: pnpm/action-setup@v4

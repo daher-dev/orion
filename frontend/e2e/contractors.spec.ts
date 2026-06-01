@@ -201,7 +201,10 @@ test.describe("Contractors page", () => {
     await installApiMocks(page, state);
     await gotoContractors(page);
 
-    await page.getByText("Banca Lúcia").click();
+    // Row/card click opens the read-only detail sheet first; the edit form
+    // sheet is reached via the detail footer "Editar banca" action.
+    await page.getByTestId("contractor-card").getByText("Banca Lúcia").click();
+    await page.getByRole("button", { name: "Editar banca" }).click();
     await expect(page.getByRole("heading", { name: "Editar banca" })).toBeVisible();
     await page.getByLabel("Telefone").fill("11 88888-7777");
     await page.getByRole("button", { name: "Salvar alterações" }).click();
@@ -224,10 +227,17 @@ test.describe("Contractors page", () => {
     await installApiMocks(page, state);
     await gotoContractors(page);
 
-    await page.getByText("Banca Bye").click();
-    await page.getByRole("button", { name: "Excluir banca" }).first().click();
+    // Per-row delete is gone: open detail -> edit form sheet -> footer
+    // "Excluir banca", then confirm inside the alert dialog (scope to the
+    // dialog so we don't re-match the sheet footer button or dialog title).
+    await page.getByTestId("contractor-card").getByText("Banca Bye").click();
+    await page.getByRole("button", { name: "Editar banca" }).click();
+    await page.getByRole("button", { name: "Excluir banca" }).click();
     await expect(page.getByText(/Tem certeza/)).toBeVisible();
-    await page.getByRole("button", { name: "Excluir banca" }).last().click();
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "Excluir banca" })
+      .click();
     await expect(page.getByText("Banca Bye")).toBeHidden();
     await expect(page.getByText("Nenhuma banca cadastrada")).toBeVisible();
   });

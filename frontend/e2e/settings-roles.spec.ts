@@ -30,12 +30,15 @@ test.describe("Settings: Roles design", () => {
 
   test("renders the five capability groups from the design source", async ({ page }) => {
     await gotoRoles(page);
-    await expect(page.getByTestId("matrix-group")).toHaveCount(5);
-    // Group labels are the PT-BR strings from roles.matrix.groups.*.
-    await expect(page.getByText("Vendas", { exact: true })).toBeVisible();
-    await expect(page.getByText("Catálogo", { exact: true })).toBeVisible();
-    await expect(page.getByText("Produção", { exact: true })).toBeVisible();
-    await expect(page.getByText("Sistema", { exact: true })).toBeVisible();
+    const groups = page.getByTestId("matrix-group");
+    await expect(groups).toHaveCount(5);
+    // Group labels are the PT-BR strings from roles.matrix.groups.*. Scope the
+    // lookup to the matrix group rows (via their data-group attribute) so we
+    // don't collide with the same words in the sidebar nav (e.g. "Vendas").
+    await expect(page.locator('[data-testid="matrix-group"][data-group="Vendas"]')).toBeVisible();
+    await expect(page.locator('[data-testid="matrix-group"][data-group="Catálogo"]')).toBeVisible();
+    await expect(page.locator('[data-testid="matrix-group"][data-group="Produção"]')).toBeVisible();
+    await expect(page.locator('[data-testid="matrix-group"][data-group="Sistema"]')).toBeVisible();
   });
 
   test("renders 16 capability rows from the design source", async ({ page }) => {

@@ -19,18 +19,29 @@ async function gotoListAndWait(page: Page) {
   await expect(page.getByTestId("specs-list-page")).toBeVisible();
 }
 
+// The numeric fields render the `NumberInput` primitive, which is controlled
+// *on blur* — it keeps a local draft while focused and only commits the parsed
+// value to form state when it loses focus. Playwright's `fill` doesn't blur, so
+// we blur explicitly or the value never reaches the payload and submit no-ops.
+async function fillNumber(page: Page, testId: string, value: string) {
+  const field = page.getByTestId(testId);
+  await field.fill(value);
+  await field.blur();
+}
+
 async function newSpec(page: Page, code: string, name: string, opts: { withRibana?: boolean; trims?: number } = {}) {
   await page.getByTestId("specs-new-cta").click();
   await expect(page).toHaveURL(/\/specs\/new$/);
   await page.getByTestId("spec-form-code").fill(code);
   await page.getByTestId("spec-form-name").fill(name);
-  await page.getByTestId("spec-form-gsm").fill("180");
-  await page.getByTestId("spec-form-weight").fill("250");
-  await page.getByTestId("spec-form-labor").fill("12");
-  await page.getByTestId("spec-form-sale").fill("99");
+  await fillNumber(page, "spec-form-gsm", "180");
+  await fillNumber(page, "spec-form-weight", "250");
+  await fillNumber(page, "spec-form-labor", "12");
+  await fillNumber(page, "spec-form-sale", "99");
 
   if (opts.withRibana) {
     await page.getByTestId("spec-form-has-ribana").click();
+    // ribana_weight_pct is a native range slider — `fill` sets it directly.
     await page.getByTestId("spec-form-ribana-pct").fill("10");
   }
 
@@ -45,8 +56,12 @@ test.describe("F-003 Specs — list + filters + empty state", () => {
   test("renders the page-head, search, fabric filter, and either a table or the empty state", async ({ page }) => {
     await gotoListAndWait(page);
 
-    await expect(page.getByTestId("spec-page-eyebrow")).toBeVisible();
-    await expect(page.getByTestId("spec-page-title")).toContainText(/Fichas técnicas/i);
+    // The page header is the shared <PageHead> component, which emits no
+    // testids — assert the rendered eyebrow text + the <h1> title instead.
+    // "Catálogo" also appears in the sidebar nav, so scope the eyebrow lookup
+    // to the page container to avoid a strict-mode collision.
+    await expect(page.getByTestId("specs-list-page").getByText("Catálogo")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/Fichas técnicas/i);
 
     await expect(page.getByTestId("specs-search")).toBeVisible();
     await expect(page.getByTestId("specs-fabric-filter")).toBeVisible();
@@ -69,7 +84,8 @@ test.describe("F-003 Specs — create happy path", () => {
     await gotoListAndWait(page);
     await newSpec(page, code, "E2E Plain Tee");
     await expect(page).toHaveURL(/\/specs\/[0-9a-f-]+$/);
-    await expect(page.getByTestId("spec-page-title")).toContainText("E2E Plain Tee");
+    // The detail page renders the spec name as its <h1> (via <PageHead title>).
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("E2E Plain Tee");
     await page.getByRole("link", { name: /voltar/i }).click();
     await expect(page.getByText(code)).toBeVisible();
   });
@@ -87,13 +103,13 @@ test.describe("F-003 Specs — create happy path", () => {
     await page.getByTestId("specs-new-cta").click();
     await page.getByTestId("spec-form-code").fill(`E2E-VAL-${Date.now()}`);
     await page.getByTestId("spec-form-name").fill("Bad ribana");
-    await page.getByTestId("spec-form-gsm").fill("180");
-    await page.getByTestId("spec-form-weight").fill("250");
-    await page.getByTestId("spec-form-labor").fill("12");
+    await fillNumber(page, "spec-form-gsm", "180");
+    await fillNumber(page, "spec-form-weight", "250");
+    await fillNumber(page, "spec-form-labor", "12");
     await page.getByTestId("spec-form-has-ribana").click();
-    // ribana pct intentionally NOT filled — slider stays at empty/0
-    // We have to manually clear so the validator catches:
-    await page.getByTestId("spec-form-ribana-pct").fill("");
+    // ribana pct intentionally left untouched — has_ribana is on but the
+    // percentage stays empty, which is exactly what the validator rejects.
+    // (The control is a range slider; calling fill("") on it is malformed.)
     await page.getByTestId("spec-form-submit").click();
     await expect(page.getByTestId("spec-form-error")).toBeVisible();
   });
@@ -127,7 +143,7 @@ test.describe("F-003 Specs — edit happy path", () => {
     await page.getByTestId("spec-form-add-trim").click();
 
     await page.getByTestId("spec-form-submit").click();
-    await expect(page.getByTestId("spec-page-title")).toContainText("Renamed");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Renamed");
   });
 });
 

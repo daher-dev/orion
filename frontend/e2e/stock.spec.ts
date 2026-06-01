@@ -104,10 +104,11 @@ test.describe("Inventory: Stock", () => {
     await page.getByTestId("drawer-adjust-button").click();
     await expect(page.getByTestId("stock-adjust-dialog")).toBeVisible();
 
-    await page.getByTestId("stock-adjust-direction-entry").click();
+    // The dialog folds direction + reason into a single move-type tile grid.
+    // "entrada-ajuste" is the entry-direction "Ajuste (+)" tile → POST /stock/entries.
+    await page.getByTestId("stock-adjust-movetype-entrada-ajuste").click();
     const qtyInput = page.getByTestId("stock-adjust-quantity");
-    await qtyInput.fill("");
-    await qtyInput.type("5");
+    await qtyInput.fill("5");
     await page.getByTestId("stock-adjust-submit").click();
 
     // Dialog closes, on-hand updates from 10 to 15.
@@ -122,10 +123,10 @@ test.describe("Inventory: Stock", () => {
     await page.getByTestId("drawer-adjust-button").click();
     await expect(page.getByTestId("stock-adjust-dialog")).toBeVisible();
 
-    await page.getByTestId("stock-adjust-direction-exit").click();
+    // "saida-pedido" is the exit-direction "Pedido" tile → POST /stock/exits.
+    await page.getByTestId("stock-adjust-movetype-saida-pedido").click();
     const qtyInput = page.getByTestId("stock-adjust-quantity");
-    await qtyInput.fill("");
-    await qtyInput.type("99");
+    await qtyInput.fill("99");
     await page.getByTestId("stock-adjust-submit").click();
 
     await expect(page.getByTestId("stock-adjust-server-error")).toContainText(/3/);

@@ -1605,7 +1605,8 @@
       },
       "helpers": {
         "emailImmutable": "Vinculado à sua conta de acesso.",
-        "roleImmutable": "Peça a um administrador para alterar sua função."
+        "roleImmutable": "Peça a um administrador para alterar sua função.",
+        "roleManagedInMembers": "Gerencie as funções da sua equipe em Ajustes → Membros."
       },
       "save": "Salvar alterações",
       "savedToast": "Perfil atualizado",

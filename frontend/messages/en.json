@@ -1605,7 +1605,8 @@
       },
       "helpers": {
         "emailImmutable": "Tied to your sign-in account.",
-        "roleImmutable": "Ask an admin to change your role."
+        "roleImmutable": "Ask an admin to change your role.",
+        "roleManagedInMembers": "Manage roles for your team in Settings → Members."
       },
       "save": "Save changes",
       "savedToast": "Profile updated",

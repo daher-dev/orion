@@ -308,11 +308,8 @@
 .ribana-slider::-moz-range-track { background: transparent; }
 
 /*
- * Orion wordmark — "Orion" in Fraunces 400, tight tracking, with the dot of
- * the "i" carrying Orion's belt: the natural i-dot is Alnilam, flanked by two
- * pseudo-dots (.wm-belt-l / .wm-belt-r) that complete the three-star belt.
- * Direct port of .wordmark / .wm-i from /docs/design/branding.html. Font size
- * is applied inline by the <Wordmark> component so the dots scale in `em`.
+ * Orion wordmark — "Orion" in Fraunces 400 with tight tracking. Font size is
+ * applied inline by the <Wordmark> component.
  */
 .orion-wordmark {
   font-family: var(--font-display);
@@ -323,24 +320,6 @@
   align-items: center;
   font-feature-settings: "ss01" 1;
 }
-.wm-i {
-  position: relative;
-  display: inline-block;
-}
-.wm-i .wm-belt-l,
-.wm-i .wm-belt-r {
-  position: absolute;
-  top: 0.17em; /* matches the Fraunces i-dot vertical position */
-  left: 50%;
-  width: 0.095em;
-  height: 0.095em;
-  margin-left: -0.0475em; /* center the dot on the 50% line */
-  border-radius: 50%;
-  background: currentColor;
-  pointer-events: none;
-}
-.wm-i .wm-belt-l { transform: translateX(-0.13em); }
-.wm-i .wm-belt-r { transform: translateX(0.13em); }
 
 /*
  * Orion belt loader — the three belt stars (Mintaka · Alnilam · Alnitak)

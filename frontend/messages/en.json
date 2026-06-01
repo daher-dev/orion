@@ -70,21 +70,44 @@
     "password": "Password",
     "google": "Continue with Google",
     "apple": "Continue with Apple",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "brandTagline": "SaaS for apparel makers",
+    "footer": {
+      "terms": "Terms",
+      "privacy": "Privacy",
+      "support": "Support"
+    },
     "brand": {
       "wordmark": "Orion",
       "sigilLabel": "Orion"
     },
     "login": {
-      "title": "Sign in to Orion",
+      "title": "Sign in",
       "sub": "Welcome back. Pick a sign-in method to continue.",
+      "providerDivider": "or with email",
       "devBypassBanner": "Dev-bypass auth is active. Sign-in inputs are ignored — click \"Sign in\" to enter as the configured dev user.",
       "submit": "Sign in",
       "submitting": "Signing in…",
       "forgotPassword": "Forgot your password?",
+      "magicCta": "Get a sign-in link by email",
+      "backToSignIn": "Back to sign in",
+      "magic": {
+        "title": "Email sign-in link",
+        "sub": "No password — we'll email you a sign-in link.",
+        "submit": "Send link",
+        "sending": "Sending…",
+        "finish": "Finish sign-in",
+        "confirmEmail": "Confirm your email to finish signing in.",
+        "sentTitle": "Check your email",
+        "sentBody": "We sent a sign-in link to {email}. Open it on this device to sign in.",
+        "completing": "Finishing sign-in…"
+      },
       "errors": {
         "invalidCredentials": "Email or password is incorrect.",
         "popupBlocked": "Pop-up was blocked. Allow pop-ups and try again.",
-        "generic": "Could not sign in. Try again."
+        "generic": "Could not sign in. Try again.",
+        "magicCompleteFailed": "That link is invalid or expired. Request a new one."
       }
     },
     "forgotPassword": {

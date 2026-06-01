@@ -1,15 +1,11 @@
 import type { ReactNode } from "react";
 
 /**
- * The Orion wordmark — "Orion" in Fraunces 400 with tight tracking, where the
- * dot of the "i" carries Orion's belt: the natural i-dot is Alnilam, flanked
- * by two pseudo-dots (.wm-belt-l / .wm-belt-r) that complete the three-star
- * belt. Styling lives in globals.css (.orion-wordmark / .wm-i); this component
- * only sets the font size so the belt dots scale in `em`.
+ * The Orion wordmark — "Orion" in Fraunces 400 with tight tracking. Styling
+ * lives in globals.css (.orion-wordmark); this component only sets the font
+ * size. Exposed as role="img" named "Orion".
  *
- * Exposed as role="img" named "Orion" so the split Or/i/on spans read as one
- * word to assistive tech. Direct port of the wordmark + lockup from
- * /docs/design/branding.html.
+ * Direct port of the wordmark + lockup from /docs/design/branding.html.
  */
 const NAMED_SIZES = { xl: 128, lg: 64, md: 36, sm: 22, xs: 16 } as const;
 
@@ -24,8 +20,6 @@ export type WordmarkProps = {
 export function Wordmark({ size = "md", tagline, className }: WordmarkProps) {
   const fontSize = typeof size === "number" ? size : NAMED_SIZES[size];
 
-  // Kept on one line so the rendered text content is exactly "Orion" (no stray
-  // whitespace from JSX), which keeps text-based queries/assertions simple.
   const wordmark = (
     <span
       className={"orion-wordmark" + (tagline || !className ? "" : " " + className)}
@@ -33,7 +27,7 @@ export function Wordmark({ size = "md", tagline, className }: WordmarkProps) {
       role="img"
       aria-label="Orion"
     >
-      Or<span className="wm-i">i<span className="wm-belt-l" aria-hidden /><span className="wm-belt-r" aria-hidden /></span>on
+      Orion
     </span>
   );
 

@@ -217,7 +217,11 @@ export default function LoginPage() {
           ) : null}
 
           <Button
-            type="submit"
+            // Dev-bypass disables the email/password inputs, so the zod resolver
+            // would reject the empty form and never reach onSubmit. Route directly
+            // instead — matching the dev-bypass banner's promise.
+            type={isDevBypassEnabled ? "button" : "submit"}
+            onClick={isDevBypassEnabled ? () => router.push("/") : undefined}
             disabled={submitting}
             // .btn-primary — Ember accent bg, Star text, 7×13 padding, 6px
             // radius, inset + outer shadow, accent-edge border.

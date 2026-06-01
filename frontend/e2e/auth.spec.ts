@@ -87,9 +87,9 @@ test.describe("Auth — /login", () => {
   test("clicking Entrar in dev-bypass mode routes to /", async ({ page }) => {
     await page.goto("/pt-BR/login");
     await page.getByRole("button", { name: "Entrar" }).click();
-    await page.waitForURL(/\/pt-BR\/?$/);
-    // AppShell renders something (heading or skeleton) — assert we left /login.
-    expect(page.url()).not.toContain("/login");
+    // Client-side SPA nav fires no `load` event, so waitForURL(default) hangs —
+    // toHaveURL polls the URL directly. We left /login = the click worked.
+    await expect(page).toHaveURL(/\/pt-BR(\/)?$/);
   });
 });
 

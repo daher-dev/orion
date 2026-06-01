@@ -96,6 +96,13 @@ def create_app() -> FastAPI:
     app.include_router(healthcheck_router, prefix="")
     app.include_router(api_router, prefix="/v1")
 
+    # Test-support endpoints (e.g. data reset for E2E) are mounted only outside
+    # production so the suite can reach a clean slate on any database.
+    if config.ENV != "prd":
+        from routers.test_support import router as test_support_router
+
+        app.include_router(test_support_router, prefix="/v1")
+
     return app
 
 

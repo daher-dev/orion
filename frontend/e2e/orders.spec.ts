@@ -46,13 +46,24 @@ async function apiDelete(request: APIRequestContext, path: string) {
 }
 
 async function cleanup(request: APIRequestContext) {
+  // Reach a clean slate via the non-prod test-support reset. This is required
+  // (not just convenient): once an order ships the backend writes an
+  // append-only StockExit and DELETE /v1/orders is permanently blocked, so an
+  // API delete-loop cannot clear shipped/delivered orders. The reset truncates
+  // tenant data tables while preserving the bootstrapped dev-bypass user.
+  const reset = await request.post(`${API_URL}/v1/test-support/reset`, {
+    headers: HEADERS,
+  });
+  if (reset.ok()) return;
+
+  // Fallback for older backends without the reset endpoint: best-effort API
+  // deletes (won't clear shipped orders, but keeps the suite usable).
   for (const endpoint of ["/v1/orders", "/v1/ads", "/v1/clients"]) {
     const data = await apiGet(request, `${endpoint}?page_size=100`);
     for (const item of (data?.items ?? []) as { id: string }[]) {
       await apiDelete(request, `${endpoint}/${item.id}`);
     }
   }
-  // Products + specs cascade to clear remaining variation refs.
   const products = await apiGet(request, "/v1/products?page_size=100");
   for (const item of (products?.items ?? []) as { id: string }[]) {
     await apiDelete(request, `/v1/products/${item.id}`);

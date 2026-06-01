@@ -66,9 +66,12 @@ test.describe("F-003 Specs — list + filters + empty state", () => {
     await expect(page.getByTestId("specs-search")).toBeVisible();
     await expect(page.getByTestId("specs-fabric-filter")).toBeVisible();
 
-    const hasTable = await page.getByTestId("specs-table").isVisible().catch(() => false);
-    const hasEmpty = await page.getByTestId("specs-empty-state").isVisible().catch(() => false);
-    expect(hasTable || hasEmpty).toBe(true);
+    // Web-first wait for the list query to settle into EITHER the table or the
+    // empty state. A point-in-time isVisible() snapshot raced the data fetch on a
+    // cold CI load — both were still the loading skeleton → flaky failure.
+    await expect(
+      page.getByTestId("specs-table").or(page.getByTestId("specs-empty-state")),
+    ).toBeVisible();
   });
 
   test("search field debounces and updates the row count", async ({ page }) => {

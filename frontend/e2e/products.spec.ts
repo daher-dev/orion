@@ -52,9 +52,14 @@ test.describe("F-005 Products — list + empty state", () => {
       pageRoot.getByRole("heading", { name: /Produtos/i }),
     ).toBeVisible(); // list.title
 
-    const hasTable = await page.getByTestId("products-table").isVisible().catch(() => false);
-    const hasEmpty = await page.getByTestId("products-empty-state").isVisible().catch(() => false);
-    expect(hasTable || hasEmpty).toBe(true);
+    // Wait (web-first) for the list query to settle into EITHER the table or the
+    // empty state. A point-in-time isVisible() snapshot raced the data fetch on a
+    // cold CI load — both were still the loading skeleton → flaky failure.
+    await expect(
+      page
+        .getByTestId("products-table")
+        .or(page.getByTestId("products-empty-state")),
+    ).toBeVisible();
   });
 
   test("filters by search and shows no rows for an unknown name", async ({ page }) => {

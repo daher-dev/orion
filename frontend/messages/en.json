@@ -15,6 +15,10 @@
     "no": "No",
     "noResults": "No results"
   },
+  "brand": {
+    "tagline": "SaaS for apparel manufacturing",
+    "taglineLong": "From cut to packing slip, all in one place."
+  },
   "appShell": {
     "loading": "Loading",
     "poweredBy": "by Orion",
@@ -1611,7 +1615,7 @@
       }
     },
     "colorPresets": {
-      "indigo": "Indigo",
+      "ember": "Ember",
       "terracotta": "Terracotta",
       "teal": "Teal",
       "aubergine": "Aubergine",

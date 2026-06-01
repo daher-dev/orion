@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Check, ChevronsUpDown, Orbit } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { BeltLoader } from "@/components/brand";
 import { useMe } from "@/hooks/use-me";
 import { useCompany } from "@/providers/company-provider";
 
@@ -43,10 +44,10 @@ export function CompanySwitcher() {
   const activeName =
     memberships.find((m) => m.id === activeId)?.name ?? current?.name ?? t("noCompany");
   const monogram = activeName.slice(0, 1).toUpperCase();
-  // Drive the tile background + orbit dot from the company's saved main_color
+  // Drive the tile background + belt glyph from the company's saved main_color
   // so the brand color picker in /settings/company is observable here. Falls
-  // back to indigo while /v1/auth/me is still loading.
-  const brandColor = current?.main_color ?? "#2563eb";
+  // back to Ember (the Orion brand accent) while /v1/auth/me is still loading.
+  const brandColor = current?.main_color ?? "var(--ember)";
 
   return (
     <DropdownMenu>
@@ -81,12 +82,8 @@ export function CompanySwitcher() {
               {activeName}
             </span>
             <span className="mt-1 inline-flex items-center gap-[5px] font-serif text-[10.5px] italic leading-none tracking-[0.06em] text-[#f5efe0]/60">
-              <Orbit
-                className="size-[9px]"
-                strokeWidth={1.8}
-                aria-hidden
-                style={{ color: brandColor }}
-              />
+              {/* Orion's belt — the three-star attribution glyph (static). */}
+              <BeltLoader animated={false} size={14} style={{ color: brandColor }} />
               <span>{t("poweredBy")}</span>
             </span>
           </div>

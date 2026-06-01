@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useTranslations } from "next-intl";
+import { Logo } from "@/components/brand";
 
 /**
  * Shared shell for every auth/public page (login, access-denied,
@@ -24,8 +24,6 @@ export type AuthCardProps = {
 };
 
 export function AuthCard({ title, sub, children, className, banner }: AuthCardProps) {
-  const t = useTranslations("auth.brand");
-
   return (
     <div
       className={
@@ -37,26 +35,10 @@ export function AuthCard({ title, sub, children, className, banner }: AuthCardPr
     >
       {/* Card pad: roomier than table cards (auth pages have low content density). */}
       <div className="flex flex-col gap-5 px-7 pt-9 pb-8">
-        {/* Brand mark row — same construction as the sidebar CompanySwitcher
-            so the visual identity travels with the user from the login page
-            into the app. */}
-        <div className="flex items-center gap-2.5">
-          <div
-            aria-hidden
-            className={
-              "grid size-8 shrink-0 place-items-center rounded-lg font-serif text-[17px] font-semibold leading-none text-white " +
-              "[box-shadow:inset_0_0_0_1px_rgba(255,255,255,.1),0_4px_12px_-4px_#2563eb] " +
-              "bg-[#2563eb]"
-            }
-          >
-            O
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate font-serif text-[17px] font-medium leading-none tracking-[-0.01em] text-[color:var(--orion-ink)]">
-              {t("wordmark")}
-            </span>
-          </div>
-        </div>
+        {/* Brand mark — the canonical Orion lockup (app-icon tile + wordmark
+            with the belt-"i"), so the visual identity travels with the user
+            from the login page into the app. */}
+        <Logo layout="horizontal" size={32} className="text-[color:var(--orion-ink)]" />
 
         {banner}
 

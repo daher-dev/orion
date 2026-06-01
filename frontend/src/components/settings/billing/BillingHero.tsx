@@ -20,7 +20,7 @@ import { useTranslations } from "next-intl";
  *  - Body copy: 13px ink-3, max-width 60ch.
  *
  * We map the design's `var(--accent)` to our `--sidebar-primary` token
- * (indigo-blue oklch) — same role, different name.
+ * (the Ember UI accent) — same role, different name.
  */
 type Props = {
   /** Display name of the active plan (e.g. "Pro"). */

@@ -5,14 +5,14 @@ import { test, expect, type Page, type Route } from "@playwright/test";
  *
  * The harness uses dev-bypass auth (NEXT_PUBLIC_DEV_BYPASS_AUTH=true), so the
  * login page never actually contacts Firebase. We mock the backend
- * `/v1/auth/...` calls per-test using `page.route` to keep the suite hermetic —
- * no real backend or seed data required.
+ * `/v1/auth/...` calls per-test using `page.route` with `**` globs (a full-URL
+ * string does NOT match in Playwright) to keep the suite hermetic — no real
+ * backend or seed data required.
  */
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 /** Default `/v1/auth/me` mock: a provisioned manager. */
 async function mockProvisionedUser(page: Page) {
-  await page.route(`${API_URL}/v1/auth/me`, async (route: Route) => {
+  await page.route(`**/v1/auth/me`, async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -41,7 +41,7 @@ async function mockProvisionedUser(page: Page) {
 
 /** `/v1/auth/me` with no membership — the pre-gate state. */
 async function mockNoMembership(page: Page) {
-  await page.route(`${API_URL}/v1/auth/me`, async (route: Route) => {
+  await page.route(`**/v1/auth/me`, async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -64,8 +64,9 @@ test.describe("Auth — /login", () => {
   test("renders the auth card with Orion brand, title, and provider CTAs", async ({ page }) => {
     await page.goto("/pt-BR/login");
     // Brand mark is the product wordmark only — never a tenant name.
-    await expect(page.getByText("Orion", { exact: true })).toBeVisible();
-    await expect(page.getByText("Underground")).toHaveCount(0);
+    // Scope to <main> so we don't collide with <title>Orion</title> in <head>.
+    await expect(page.locator("main").getByText("Orion", { exact: true }).first()).toBeVisible();
+    await expect(page.locator("main").getByText("Underground")).toHaveCount(0);
     await expect(page.getByText("por Orion")).toHaveCount(0);
     // Page title.
     await expect(page.getByRole("heading", { name: "Entrar no Orion", level: 1 })).toBeVisible();
@@ -95,7 +96,7 @@ test.describe("Auth — /login", () => {
 test.describe("Auth — access gate", () => {
   test("uninvited identity (session 403) is redirected to /access-denied", async ({ page }) => {
     await mockNoMembership(page);
-    await page.route(`${API_URL}/v1/auth/session`, async (route: Route) => {
+    await page.route(`**/v1/auth/session`, async (route: Route) => {
       await route.fulfill({
         status: 403,
         contentType: "application/json",
@@ -115,7 +116,7 @@ test.describe("Auth — access gate", () => {
     // First /me has no membership; after the session call provisions the user a
     // refetch returns the membership. We flip the mock after /session succeeds.
     let provisioned = false;
-    await page.route(`${API_URL}/v1/auth/me`, async (route: Route) => {
+    await page.route(`**/v1/auth/me`, async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -144,7 +145,7 @@ test.describe("Auth — access gate", () => {
         ),
       });
     });
-    await page.route(`${API_URL}/v1/auth/session`, async (route: Route) => {
+    await page.route(`**/v1/auth/session`, async (route: Route) => {
       provisioned = true;
       await route.fulfill({
         status: 200,
@@ -184,7 +185,7 @@ test.describe("Auth — /accept-invite/[token]", () => {
   });
 
   test("invalid token → error card with link back to /login", async ({ page }) => {
-    await page.route(`${API_URL}/v1/auth/invites/bad-token`, async (route: Route) => {
+    await page.route(`**/v1/auth/invites/bad-token`, async (route: Route) => {
       await route.fulfill({
         status: 404,
         contentType: "application/json",
@@ -198,7 +199,7 @@ test.describe("Auth — /accept-invite/[token]", () => {
   });
 
   test("valid invite → accept button calls POST and routes to /", async ({ page }) => {
-    await page.route(`${API_URL}/v1/auth/invites/good-token`, async (route: Route) => {
+    await page.route(`**/v1/auth/invites/good-token`, async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -211,7 +212,7 @@ test.describe("Auth — /accept-invite/[token]", () => {
       });
     });
     let accepted = false;
-    await page.route(`${API_URL}/v1/auth/invites/good-token/accept`, async (route: Route) => {
+    await page.route(`**/v1/auth/invites/good-token/accept`, async (route: Route) => {
       accepted = true;
       await route.fulfill({
         status: 200,

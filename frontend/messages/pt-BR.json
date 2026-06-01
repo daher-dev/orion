@@ -15,6 +15,10 @@
     "no": "Não",
     "noResults": "Nenhum resultado"
   },
+  "brand": {
+    "tagline": "SaaS para confecção",
+    "taglineLong": "Do corte ao romaneio, no mesmo lugar."
+  },
   "appShell": {
     "loading": "Carregando",
     "poweredBy": "por Orion",
@@ -1611,7 +1615,7 @@
       }
     },
     "colorPresets": {
-      "indigo": "Índigo",
+      "ember": "Ember",
       "terracotta": "Terracota",
       "teal": "Verde-petróleo",
       "aubergine": "Berinjela",

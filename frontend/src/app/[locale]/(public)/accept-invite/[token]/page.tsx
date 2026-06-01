@@ -117,8 +117,8 @@ export default function AcceptInvitePage({ params }: InvitePageProps) {
           type="button"
           onClick={handleAccept}
           disabled={acceptMutation.isPending}
-          className="h-auto w-full justify-center gap-[7px] rounded-[6px] border bg-[#2563eb] !px-[13px] py-[9px] text-[13.5px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-[color:color-mix(in_oklab,#2563eb_28%,transparent)] focus-visible:outline-none"
-          style={{ borderColor: "color-mix(in oklab, #2563eb 70%, black)" }}
+          className="h-auto w-full justify-center gap-[7px] rounded-[6px] border bg-ember !px-[13px] py-[9px] text-[13.5px] font-medium text-star shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-ember/30 focus-visible:outline-none"
+          style={{ borderColor: "color-mix(in oklab, var(--ember) 70%, black)" }}
         >
           {acceptMutation.isPending ? t("accepting") : t("accept")}
         </Button>

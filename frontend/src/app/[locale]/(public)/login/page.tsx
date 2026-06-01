@@ -219,10 +219,10 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={submitting}
-            // .btn-primary — accent indigo bg, white text, 7×13 padding, 6px
+            // .btn-primary — Ember accent bg, Star text, 7×13 padding, 6px
             // radius, inset + outer shadow, accent-edge border.
-            className="h-auto w-full justify-center gap-[7px] rounded-[6px] border bg-[#2563eb] !px-[13px] py-[9px] text-[13.5px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-[color:color-mix(in_oklab,#2563eb_28%,transparent)] focus-visible:outline-none"
-            style={{ borderColor: "color-mix(in oklab, #2563eb 70%, black)" }}
+            className="h-auto w-full justify-center gap-[7px] rounded-[6px] border bg-ember !px-[13px] py-[9px] text-[13.5px] font-medium text-star shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-ember/30 focus-visible:outline-none"
+            style={{ borderColor: "color-mix(in oklab, var(--ember) 70%, black)" }}
           >
             {submitting ? t("submitting") : t("submit")}
           </Button>

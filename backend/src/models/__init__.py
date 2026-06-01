@@ -15,6 +15,7 @@ from models.enums import (
     Ecommerce,
     FabricRollKind,
     FabricType,
+    LoginOutcome,
     OrderStatus,
     ProductType,
     ShipmentStatus,
@@ -25,6 +26,7 @@ from models.enums import (
 )
 from models.fabric_roll import FabricRoll
 from models.invite import Invite
+from models.login_attempt import LoginAttempt
 from models.order import Order
 from models.print_design import PrintDesign
 from models.product import Product, ProductVariation
@@ -50,6 +52,8 @@ __all__ = [
     "FabricRollKind",
     "FabricType",
     "Invite",
+    "LoginAttempt",
+    "LoginOutcome",
     "Order",
     "OrderStatus",
     "Permission",

@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlmodel import select
 
-from models import Invite, User
+from models import Invite, LoginOutcome, User
 from schemas.auth import InviteCreate
 from services.auth import (
     accept_invite,
@@ -13,7 +13,7 @@ from services.auth import (
     get_user_companies,
     get_user_in_company,
 )
-from shared.exceptions import AuthorizationError, ConflictError, NotFoundError
+from shared.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
 from tests.factories import create_company, create_user, get_admin_role, get_role_by_code
 
 
@@ -100,6 +100,71 @@ async def test_establish_session_rejects_unverified_email(db_session):
             db_session,
             claims=_claims("uv-uid", email="unverified@example.com", email_verified=False),
         )
+
+
+# ---------- login-attempt logging ----------
+
+
+async def _attempts(db_session, email: str | None = None):
+    from services.auth import list_login_attempts
+
+    rows, total = await list_login_attempts(db_session, email=email)
+    return rows, total
+
+
+async def test_login_attempt_recorded_on_success(db_session):
+    company = await create_company(db_session)
+    await create_user(db_session, company_id=company.id, firebase_uid="member-uid", email="m@example.com")
+
+    await establish_session(db_session, claims=_claims("member-uid", email="m@example.com"))
+
+    rows, total = await _attempts(db_session, email="m@example.com")
+    assert total == 1
+    assert rows[0].outcome == LoginOutcome.SUCCESS
+    assert rows[0].company_id == company.id
+    assert rows[0].firebase_uid == "member-uid"
+
+
+async def test_login_attempt_recorded_and_persists_on_not_invited(db_session):
+    # The gate raises 403, but the attempt row must still be committed.
+    with pytest.raises(AuthorizationError):
+        await establish_session(db_session, claims=_claims("ghost", email="ghost@example.com"))
+
+    rows, total = await _attempts(db_session, email="ghost@example.com")
+    assert total == 1
+    assert rows[0].outcome == LoginOutcome.NOT_INVITED
+    assert rows[0].email == "ghost@example.com"
+
+
+async def test_login_attempt_distinguishes_unverified_email(db_session):
+    company = await create_company(db_session)
+    inviter = await create_user(db_session, company_id=company.id)
+    role = await get_role_by_code(db_session, "manager")
+    await create_invite(
+        db_session,
+        company_id=company.id,
+        invited_by_id=inviter.id,
+        payload=InviteCreate(email="pending@example.com", role_id=role.id),
+    )
+
+    # Matching invite exists, but the email is unverified → distinct outcome.
+    with pytest.raises(AuthorizationError):
+        await establish_session(
+            db_session,
+            claims=_claims("uv2", email="pending@example.com", email_verified=False),
+        )
+
+    rows, _ = await _attempts(db_session, email="pending@example.com")
+    assert rows[0].outcome == LoginOutcome.UNVERIFIED_EMAIL
+
+
+async def test_login_attempt_recorded_on_missing_uid(db_session):
+    with pytest.raises(ValidationError):
+        await establish_session(db_session, claims={"email": "nouid@example.com", "email_verified": True})
+
+    rows, _ = await _attempts(db_session, email="nouid@example.com")
+    assert rows[0].outcome == LoginOutcome.MISSING_UID
+    assert rows[0].firebase_uid is None
 
 
 async def test_create_invite_happy_path(db_session):

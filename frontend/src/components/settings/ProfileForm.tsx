@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMyUser, useUpdateUserSelf } from "@/hooks/use-user";
+import { useCanAccess } from "@/hooks/use-permissions";
 
 type FormValues = {
   name: string;
@@ -24,6 +25,10 @@ export function ProfileForm() {
 
   const { data, isPending, isError, error } = useMyUser();
   const updateUserSelf = useUpdateUserSelf();
+  // Admins manage roles on Settings → Members, not on their own profile (you
+  // can't change your own role here either way — a self-demotion guard). Show
+  // them a useful pointer instead of the generic "ask an administrator" nag.
+  const canManageRoles = useCanAccess("users.write");
 
   const form = useForm<FormValues>({
     defaultValues: { name: "", job: "" },
@@ -160,7 +165,9 @@ export function ProfileForm() {
               className={`${FIELD_INPUT_CLASS} cursor-not-allowed opacity-70`}
             />
             <p className="text-[11px] italic text-[color:var(--orion-ink-3)]">
-              {t("helpers.roleImmutable")}
+              {canManageRoles
+                ? t("helpers.roleManagedInMembers")
+                : t("helpers.roleImmutable")}
             </p>
           </div>
         </div>

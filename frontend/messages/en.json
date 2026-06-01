@@ -15,6 +15,10 @@
     "no": "No",
     "noResults": "No results"
   },
+  "brand": {
+    "tagline": "SaaS for apparel manufacturing",
+    "taglineLong": "From cut to packing slip, all in one place."
+  },
   "appShell": {
     "loading": "Loading",
     "poweredBy": "by Orion",
@@ -65,10 +69,10 @@
     "email": "Email",
     "password": "Password",
     "google": "Continue with Google",
+    "apple": "Continue with Apple",
     "brand": {
-      "wordmark": "Underground",
-      "poweredBy": "by Orion",
-      "sigilLabel": "Underground"
+      "wordmark": "Orion",
+      "sigilLabel": "Orion"
     },
     "login": {
       "title": "Sign in to Orion",
@@ -77,51 +81,21 @@
       "submit": "Sign in",
       "submitting": "Signing in…",
       "forgotPassword": "Forgot your password?",
-      "noAccount": "Don't have an account?",
-      "createAccount": "Sign up",
       "errors": {
         "invalidCredentials": "Email or password is incorrect.",
         "popupBlocked": "Pop-up was blocked. Allow pop-ups and try again.",
         "generic": "Could not sign in. Try again."
       }
     },
-    "signup": {
-      "title": "Create your account",
-      "comingSoon": "Account self-service is coming soon. Ask your team owner to send you an invite.",
-      "backToLogin": "Back to sign in"
-    },
     "forgotPassword": {
       "title": "Forgot your password?",
       "comingSoon": "Password recovery is coming soon. Reach out to support to reset your password.",
       "backToLogin": "Back to sign in"
     },
-    "onboarding": {
-      "title": "Create your company",
-      "sub": "Just a few details so we can set up your workspace.",
-      "labels": {
-        "companyName": "Company name",
-        "subdomain": "Subdomain",
-        "mainColor": "Main color"
-      },
-      "placeholders": {
-        "companyName": "e.g. Underground Apparel",
-        "subdomain": "underground-apparel"
-      },
-      "helpers": {
-        "subdomainDerivation": "Used in your tenant URL. We derive it from the company name — feel free to override."
-      },
-      "validation": {
-        "nameRequired": "Company name is required",
-        "subdomainRequired": "Subdomain is required",
-        "subdomainSlug": "Use lowercase letters, numbers, and hyphens only.",
-        "subdomainTaken": "This subdomain is already in use."
-      },
-      "submit": "Create company",
-      "submitting": "Creating…",
-      "toasts": {
-        "created": "Company created",
-        "error": "Could not create your company."
-      }
+    "accessDenied": {
+      "title": "You're not invited",
+      "body": "This account isn't on the invite list yet. Ask your team admin to send you an invite, then sign in again.",
+      "backToLogin": "Back to sign in"
     },
     "acceptInvite": {
       "title": "You're invited",
@@ -1641,7 +1615,7 @@
       }
     },
     "colorPresets": {
-      "indigo": "Indigo",
+      "ember": "Ember",
       "terracotta": "Terracotta",
       "teal": "Teal",
       "aubergine": "Aubergine",

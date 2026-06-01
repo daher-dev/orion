@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 /**
- * Layout for public/unauthenticated routes (login, signup, onboarding,
+ * Layout for public/unauthenticated routes (login, access-denied,
  * accept-invite, forgot-password).
  *
  * The `data-orion-paper` attribute opts this surface into the paper-grain

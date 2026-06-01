@@ -4,7 +4,7 @@ import pytest
 from httpx import AsyncClient
 from sqlmodel import select
 
-from models import Company, Invite, User
+from models import Invite, User
 from tests.factories import (
     create_company,
     create_invite,
@@ -80,40 +80,52 @@ async def test_me_with_unknown_company_header_returns_companies_list_only(
     assert len(body["companies"]) == 1
 
 
-# ---------- /v1/auth/onboarding/companies ----------
+# ---------- POST /v1/auth/session (login gate) ----------
 
 
-async def test_onboarding_creates_company_and_admin(authed_client: AsyncClient, db_session):
-    payload = {"company_name": "Acme", "subdomain": "acme"}
-    response = await authed_client.post("/v1/auth/onboarding/companies", json=payload)
-    assert response.status_code == 201
+async def test_session_returns_membership_for_existing_user(authed_client: AsyncClient, db_session):
+    company = await create_company(db_session)
+    user = await create_user(db_session, company_id=company.id, firebase_uid="qa-dev-user")
+
+    response = await authed_client.post("/v1/auth/session")
+    assert response.status_code == 200
     body = response.json()
-    assert body["company"]["subdomain"] == "acme"
-    assert body["role"]["code"] == "admin"
+    assert body["user"]["id"] == str(user.id)
+    assert body["company"]["id"] == str(company.id)
 
-    company = (await db_session.exec(select(Company).where(Company.subdomain == "acme"))).first()
-    assert company is not None
+
+async def test_session_auto_provisions_from_pending_invite(authed_client: AsyncClient, db_session):
+    # The dev-bypass identity (qa-dev-user / qa-dev@orion.local) has no membership
+    # yet, but a pending invite for that email exists → it must be provisioned.
+    company = await create_company(db_session)
+    inviter = await create_user(db_session, company_id=company.id)
+    role = await get_role_by_code(db_session, "manager")
+    invite = await create_invite(
+        db_session,
+        company_id=company.id,
+        role_id=role.id,
+        email="qa-dev@orion.local",
+        invited_by_id=inviter.id,
+    )
+
+    response = await authed_client.post("/v1/auth/session")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["company"]["id"] == str(company.id)
+    assert body["role"]["code"] == "manager"
+
     user = (await db_session.exec(select(User).where(User.firebase_uid == "qa-dev-user"))).first()
     assert user is not None
-    assert user.company_id == company.id
+    refreshed = (await db_session.exec(select(Invite).where(Invite.id == invite.id))).first()
+    assert refreshed is not None
+    assert refreshed.accepted_at is not None
+    assert refreshed.accepted_by_id == user.id
 
 
-async def test_onboarding_rejects_duplicate_subdomain(authed_client: AsyncClient, db_session):
-    company = await create_company(db_session, subdomain="taken")
-    assert company.subdomain == "taken"
-    response = await authed_client.post(
-        "/v1/auth/onboarding/companies",
-        json={"company_name": "X", "subdomain": "taken"},
-    )
-    assert response.status_code == 409
-
-
-async def test_onboarding_validates_subdomain(authed_client: AsyncClient):
-    response = await authed_client.post(
-        "/v1/auth/onboarding/companies",
-        json={"company_name": "X", "subdomain": "INVALID!!"},
-    )
-    assert response.status_code == 422
+async def test_session_rejects_uninvited_user(authed_client: AsyncClient):
+    response = await authed_client.post("/v1/auth/session")
+    assert response.status_code == 403
+    assert response.json()["detail"] == "not_invited"
 
 
 # ---------- /v1/auth/invites ----------
@@ -240,7 +252,7 @@ async def test_switch_company_204_when_member(authed_client: AsyncClient, db_ses
     assert response.status_code == 204
 
 
-@pytest.mark.parametrize("path", ["/v1/auth/me", "/v1/auth/onboarding/companies", "/v1/auth/invites"])
+@pytest.mark.parametrize("path", ["/v1/auth/me", "/v1/auth/session", "/v1/auth/invites"])
 async def test_protected_endpoints_reject_anonymous(async_client: AsyncClient, path):
     response = await async_client.get(path) if path == "/v1/auth/me" else await async_client.post(path, json={})
     assert response.status_code == 401

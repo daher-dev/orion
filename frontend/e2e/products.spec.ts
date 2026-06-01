@@ -43,27 +43,40 @@ async function seedSpec(page: Page, code: string, name: string) {
 test.describe("F-005 Products — list + empty state", () => {
   test("renders eyebrow, title and either the table or the empty state", async ({ page }) => {
     await gotoListAndWait(page);
-    await expect(page.getByText(/Catálogo/i)).toBeVisible();
-    await expect(page.getByText(/Produtos/i)).toBeVisible();
+    // Scope to the page container — "Catálogo" and "Produtos" also appear in the
+    // sidebar nav (section title + nav item), which would make a global getByText
+    // ambiguous under strict mode.
+    const pageRoot = page.getByTestId("products-page");
+    await expect(pageRoot.getByText(/Catálogo/i)).toBeVisible(); // PageHead eyebrow
+    await expect(
+      pageRoot.getByRole("heading", { name: /Produtos/i }),
+    ).toBeVisible(); // list.title
 
-    const hasTable = await page.getByTestId("products-table").isVisible().catch(() => false);
-    const hasEmpty = await page.getByTestId("products-empty-state").isVisible().catch(() => false);
-    expect(hasTable || hasEmpty).toBe(true);
+    // Wait (web-first) for the list query to settle into EITHER the table or the
+    // empty state. A point-in-time isVisible() snapshot raced the data fetch on a
+    // cold CI load — both were still the loading skeleton → flaky failure.
+    await expect(
+      page
+        .getByTestId("products-table")
+        .or(page.getByTestId("products-empty-state")),
+    ).toBeVisible();
   });
 
   test("filters by search and shows no rows for an unknown name", async ({ page }) => {
     await gotoListAndWait(page);
     await page.getByTestId("products-search").fill("definitely-not-a-product-name");
-    // Either the empty hint or zero rows in the table.
-    const rowCountAfter = await page.getByTestId("products-table").locator("tbody tr").count();
-    expect(rowCountAfter).toBe(0);
+    // Search is debounced (200ms) then round-trips to the backend, so wait for the
+    // filtered result rather than reading the (stale) row count immediately. When a
+    // filter is active the page keeps the table mounted with zero rows instead of
+    // swapping in the empty state.
+    await expect(page.getByTestId("products-table").locator("tbody tr")).toHaveCount(0);
   });
 });
 
 test.describe("F-005 Products — create + detail + edit", () => {
   test("creates a product with one variation and shows the SKU on detail", async ({ page }) => {
     const stamp = Date.now();
-    const spec = await seedSpec(page, `CAM${stamp}`, "E2E Spec");
+    await seedSpec(page, `CAM${stamp}`, "E2E Spec");
     await gotoListAndWait(page);
 
     await page.getByTestId("products-new-cta").click();
@@ -102,7 +115,7 @@ test.describe("F-005 Products — create + detail + edit", () => {
 
   test("409 on duplicate (spec, print)", async ({ page }) => {
     const stamp = Date.now();
-    const spec = await seedSpec(page, `DUP${stamp}`, "Dup Test Spec");
+    await seedSpec(page, `DUP${stamp}`, "Dup Test Spec");
     await gotoListAndWait(page);
 
     // Create the first product on (spec, no-print).
@@ -155,9 +168,21 @@ test.describe("F-005 Products — delete blocked when linked Ad", () => {
       .catch(() => false);
     test.skip(!hasRows, "no products available to attempt delete");
 
-    await page.getByLabel("Excluir").first().click();
-    await page.getByRole("button", { name: /excluir/i }).last().click();
-    // Toast (sonner) surfaces the error.
-    await expect(page.getByText(/Não foi possível salvar o produto|ads are linked/i)).toBeVisible();
+    // Per-row delete buttons were removed: the table now uses a row-click → form
+    // sheet pattern. Delete lives in the sheet footer, gated by a confirm dialog.
+    await page.getByTestId("products-table").locator("tbody tr").first().click();
+    const sheet = page.getByTestId("product-form-sheet");
+    await expect(sheet).toBeVisible();
+    await sheet.getByRole("button", { name: /excluir/i }).click();
+
+    // Confirm in the alert dialog → triggers the (mocked) 409 DELETE.
+    const confirm = page.getByRole("alertdialog");
+    await expect(confirm).toBeVisible();
+    await confirm.getByRole("button", { name: /excluir/i }).click();
+
+    // Toast (sonner) surfaces the error. The 409 detail renders as the toast
+    // description; assert on the title alone to stay unambiguous (the message also
+    // echoes "ads are linked" in the description line).
+    await expect(page.getByText("Não foi possível salvar o produto.")).toBeVisible();
   });
 });

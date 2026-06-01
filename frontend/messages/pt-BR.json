@@ -15,6 +15,10 @@
     "no": "Não",
     "noResults": "Nenhum resultado"
   },
+  "brand": {
+    "tagline": "SaaS para confecção",
+    "taglineLong": "Do corte ao romaneio, no mesmo lugar."
+  },
   "appShell": {
     "loading": "Carregando",
     "poweredBy": "por Orion",
@@ -65,10 +69,10 @@
     "email": "E-mail",
     "password": "Senha",
     "google": "Continuar com Google",
+    "apple": "Continuar com a Apple",
     "brand": {
-      "wordmark": "Underground",
-      "poweredBy": "por Orion",
-      "sigilLabel": "Underground"
+      "wordmark": "Orion",
+      "sigilLabel": "Orion"
     },
     "login": {
       "title": "Entrar no Orion",
@@ -77,51 +81,21 @@
       "submit": "Entrar",
       "submitting": "Entrando…",
       "forgotPassword": "Esqueceu a senha?",
-      "noAccount": "Não tem conta?",
-      "createAccount": "Criar conta",
       "errors": {
         "invalidCredentials": "E-mail ou senha incorretos.",
         "popupBlocked": "A janela foi bloqueada. Permita pop-ups e tente novamente.",
         "generic": "Não foi possível entrar. Tente novamente."
       }
     },
-    "signup": {
-      "title": "Criar sua conta",
-      "comingSoon": "O cadastro autônomo chega em breve. Peça ao dono do time para te enviar um convite.",
-      "backToLogin": "Voltar para entrar"
-    },
     "forgotPassword": {
       "title": "Esqueceu a senha?",
       "comingSoon": "Recuperação de senha chega em breve. Fale com o suporte para redefinir sua senha.",
       "backToLogin": "Voltar para entrar"
     },
-    "onboarding": {
-      "title": "Criar sua empresa",
-      "sub": "Só alguns dados para preparar seu workspace.",
-      "labels": {
-        "companyName": "Nome da empresa",
-        "subdomain": "Subdomínio",
-        "mainColor": "Cor principal"
-      },
-      "placeholders": {
-        "companyName": "ex. Underground Apparel",
-        "subdomain": "underground-apparel"
-      },
-      "helpers": {
-        "subdomainDerivation": "Usado na URL do seu workspace. Derivamos do nome da empresa — você pode alterar."
-      },
-      "validation": {
-        "nameRequired": "Nome da empresa é obrigatório",
-        "subdomainRequired": "Subdomínio é obrigatório",
-        "subdomainSlug": "Use apenas letras minúsculas, números e hifens.",
-        "subdomainTaken": "Este subdomínio já está em uso."
-      },
-      "submit": "Criar empresa",
-      "submitting": "Criando…",
-      "toasts": {
-        "created": "Empresa criada",
-        "error": "Não foi possível criar sua empresa."
-      }
+    "accessDenied": {
+      "title": "Você não foi convidado",
+      "body": "Esta conta ainda não está na lista de convidados. Peça um convite ao admin do seu time e entre novamente.",
+      "backToLogin": "Voltar para entrar"
     },
     "acceptInvite": {
       "title": "Você foi convidado",
@@ -1641,7 +1615,7 @@
       }
     },
     "colorPresets": {
-      "indigo": "Índigo",
+      "ember": "Ember",
       "terracotta": "Terracota",
       "teal": "Verde-petróleo",
       "aubergine": "Berinjela",

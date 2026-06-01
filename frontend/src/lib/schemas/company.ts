@@ -24,10 +24,11 @@ export type CompanyUpdate = z.infer<typeof companyUpdateSchema>;
 
 /**
  * Six brand presets used in the Settings company color picker. The order
- * mirrors the design source's swatch row (indigo first; ink last).
+ * mirrors the design source's swatch row (Ember — the Orion accent — first;
+ * ink last).
  */
 export const colorPresets = [
-  { id: "indigo", hex: "#2563eb" },
+  { id: "ember", hex: "#a83227" },
   { id: "terracotta", hex: "#c2410c" },
   { id: "teal", hex: "#0f766e" },
   { id: "aubergine", hex: "#7e5bef" },

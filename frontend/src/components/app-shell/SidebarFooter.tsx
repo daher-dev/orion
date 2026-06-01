@@ -42,10 +42,10 @@ export function SidebarFooter() {
     .join("")
     .toUpperCase();
   // Use the active company's brand color so the avatar tile + bell badge
-  // pick up customization done in /settings/company. Falls back to indigo
-  // while /v1/auth/me is still loading. Matches the design source which
-  // ties accent surfaces to the company's identity (var(--accent)).
-  const brandColor = data?.company?.main_color ?? "#2563eb";
+  // pick up customization done in /settings/company. Falls back to Ember
+  // (the Orion brand accent) while /v1/auth/me is still loading. Matches the
+  // design source which ties accent surfaces to the company's identity.
+  const brandColor = data?.company?.main_color ?? "var(--ember)";
   const brandStyle = { "--sb-brand-accent": brandColor } as CSSProperties;
 
   async function handleSignOut() {

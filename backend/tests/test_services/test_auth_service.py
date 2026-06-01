@@ -3,22 +3,27 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlmodel import select
 
-from models import AuditLog, Invite, User
-from schemas.auth import InviteCreate, OnboardingRequest
+from models import Invite, User
+from schemas.auth import InviteCreate
 from services.auth import (
     accept_invite,
-    create_company_and_admin,
     create_invite,
+    establish_session,
     get_invite_by_token,
     get_user_companies,
     get_user_in_company,
 )
-from shared.exceptions import ConflictError, NotFoundError
+from shared.exceptions import AuthorizationError, ConflictError, NotFoundError
 from tests.factories import create_company, create_user, get_admin_role, get_role_by_code
 
 
 def _claims(uid: str, **extra) -> dict:
-    return {"uid": uid, "name": extra.get("name", "User"), "email": extra.get("email", f"{uid}@orion.test")}
+    return {
+        "uid": uid,
+        "name": extra.get("name", "User"),
+        "email": extra.get("email", f"{uid}@orion.test"),
+        "email_verified": extra.get("email_verified", True),
+    }
 
 
 async def test_get_user_companies_returns_memberships_in_order(db_session):
@@ -38,33 +43,63 @@ async def test_get_user_companies_empty(db_session):
     assert memberships == []
 
 
-async def test_create_company_and_admin_happy_path(db_session):
-    payload = OnboardingRequest(company_name="Acme", subdomain="acme")
-    company, user, role = await create_company_and_admin(
+async def test_establish_session_returns_existing_memberships(db_session):
+    company = await create_company(db_session)
+    await create_user(db_session, company_id=company.id, firebase_uid="member-uid")
+
+    memberships = await establish_session(db_session, claims=_claims("member-uid"))
+    assert len(memberships) == 1
+    _, company_out, role_out = memberships[0]
+    assert company_out.id == company.id
+    assert role_out.code == "admin"
+
+
+async def test_establish_session_provisions_from_pending_invite(db_session):
+    company = await create_company(db_session)
+    inviter = await create_user(db_session, company_id=company.id)
+    role = await get_role_by_code(db_session, "manager")
+    invite = await create_invite(
         db_session,
-        claims=_claims("uid-1"),
-        payload=payload,
+        company_id=company.id,
+        invited_by_id=inviter.id,
+        payload=InviteCreate(email="hire@example.com", role_id=role.id),
     )
-    assert company.subdomain == "acme"
-    assert user.firebase_uid == "uid-1"
-    assert role.code == "admin"
 
-    audit = (await db_session.exec(select(AuditLog).where(AuditLog.company_id == company.id))).all()
-    assert any("Company created" in row.message for row in audit)
+    memberships = await establish_session(
+        db_session,
+        claims=_claims("new-uid", email="hire@example.com"),
+    )
+    assert len(memberships) == 1
+    user, _, role_out = memberships[0]
+    assert user.firebase_uid == "new-uid"
+    assert role_out.id == role.id
+
+    refreshed = (await db_session.exec(select(Invite).where(Invite.id == invite.id))).first()
+    assert refreshed is not None
+    assert refreshed.accepted_at is not None
 
 
-async def test_create_company_and_admin_rejects_duplicate_subdomain(db_session):
-    payload = OnboardingRequest(company_name="Acme", subdomain="acme")
-    await create_company_and_admin(db_session, claims=_claims("uid-1"), payload=payload)
-
-    with pytest.raises(ConflictError):
-        await create_company_and_admin(db_session, claims=_claims("uid-2"), payload=payload)
+async def test_establish_session_rejects_uninvited(db_session):
+    with pytest.raises(AuthorizationError):
+        await establish_session(db_session, claims=_claims("ghost-uid", email="ghost@example.com"))
 
 
-async def test_create_company_and_admin_rejects_reserved_subdomain(db_session):
-    payload = OnboardingRequest(company_name="Acme", subdomain="www")
-    with pytest.raises(ConflictError):
-        await create_company_and_admin(db_session, claims=_claims("uid-1"), payload=payload)
+async def test_establish_session_rejects_unverified_email(db_session):
+    company = await create_company(db_session)
+    inviter = await create_user(db_session, company_id=company.id)
+    role = await get_role_by_code(db_session, "manager")
+    await create_invite(
+        db_session,
+        company_id=company.id,
+        invited_by_id=inviter.id,
+        payload=InviteCreate(email="unverified@example.com", role_id=role.id),
+    )
+
+    with pytest.raises(AuthorizationError):
+        await establish_session(
+            db_session,
+            claims=_claims("uv-uid", email="unverified@example.com", email_verified=False),
+        )
 
 
 async def test_create_invite_happy_path(db_session):

@@ -73,7 +73,7 @@ export function ActivityFeed({ items }: Props) {
                     : "border-b border-[color:var(--orion-line-soft)]")
                 }
               >
-                {/* 6×6 dot, accent (indigo) coloured. mt 7 for optical
+                {/* 6×6 dot, Ember accent coloured. mt 7 for optical
                     centering against the first text line. */}
                 <span
                   aria-hidden

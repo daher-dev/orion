@@ -11,6 +11,7 @@ import {
 } from "react";
 import {
   GoogleAuthProvider,
+  OAuthProvider,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -35,6 +36,7 @@ type AuthContextValue = {
   loading: boolean;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
   /**
    * Returns a token suitable for the Authorization header. In dev-bypass mode
@@ -108,6 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithPopup(auth, new GoogleAuthProvider());
   }, []);
 
+  const signInWithApple = useCallback(async () => {
+    if (isDevBypassEnabled) return;
+    const auth = getFirebaseAuth();
+    if (!auth) throw new Error("Firebase not initialized");
+    const provider = new OAuthProvider("apple.com");
+    provider.addScope("email");
+    provider.addScope("name");
+    await signInWithPopup(auth, provider);
+  }, []);
+
   const signOut = useCallback(async () => {
     if (isDevBypassEnabled) return;
     const auth = getFirebaseAuth();
@@ -124,8 +136,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, loading, signInWithEmail, signInWithGoogle, signOut, getIdToken }),
-    [user, loading, signInWithEmail, signInWithGoogle, signOut, getIdToken],
+    () => ({ user, loading, signInWithEmail, signInWithGoogle, signInWithApple, signOut, getIdToken }),
+    [user, loading, signInWithEmail, signInWithGoogle, signInWithApple, signOut, getIdToken],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

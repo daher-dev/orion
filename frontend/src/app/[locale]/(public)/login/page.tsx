@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { GoogleButton } from "@/components/auth/GoogleButton";
+import { AppleButton } from "@/components/auth/AppleButton";
 import { Link, useRouter } from "@/i18n/routing";
 import { useAuth } from "@/providers/auth-provider";
 import { isDevBypassEnabled } from "@/lib/firebase";
@@ -33,9 +34,9 @@ import { isDevBypassEnabled } from "@/lib/firebase";
  *   via signInWithPopup. Errors are translated, no raw Firebase messages bleed
  *   through.
  *
- * After a successful sign-in we push to "/". The AppShell will then either
- * render the dashboard or redirect to "/onboarding" depending on whether the
- * user has a Company row yet.
+ * After a successful sign-in we push to "/". The AppShell then establishes the
+ * backend session — rendering the dashboard for an invited user, or redirecting
+ * to "/access-denied" when the email isn't on the invite list.
  */
 const formSchema = z.object({
   email: z.string().email(),
@@ -54,7 +55,7 @@ export default function LoginPage() {
   const t = useTranslations("auth.login");
   const tAuth = useTranslations("auth");
   const router = useRouter();
-  const { signInWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithEmail, signInWithGoogle, signInWithApple } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -107,6 +108,23 @@ export default function LoginPage() {
         return;
       }
       await signInWithGoogle();
+      router.push("/");
+    } catch (err) {
+      setAuthError(mapAuthError(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleApple() {
+    setAuthError(null);
+    setSubmitting(true);
+    try {
+      if (isDevBypassEnabled) {
+        router.push("/");
+        return;
+      }
+      await signInWithApple();
       router.push("/");
     } catch (err) {
       setAuthError(mapAuthError(err));
@@ -199,12 +217,16 @@ export default function LoginPage() {
           ) : null}
 
           <Button
-            type="submit"
+            // Dev-bypass disables the email/password inputs, so the zod resolver
+            // would reject the empty form and never reach onSubmit. Route directly
+            // instead — matching the dev-bypass banner's promise.
+            type={isDevBypassEnabled ? "button" : "submit"}
+            onClick={isDevBypassEnabled ? () => router.push("/") : undefined}
             disabled={submitting}
-            // .btn-primary — accent indigo bg, white text, 7×13 padding, 6px
+            // .btn-primary — Ember accent bg, Star text, 7×13 padding, 6px
             // radius, inset + outer shadow, accent-edge border.
-            className="h-auto w-full justify-center gap-[7px] rounded-[6px] border bg-[#2563eb] !px-[13px] py-[9px] text-[13.5px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-[color:color-mix(in_oklab,#2563eb_28%,transparent)] focus-visible:outline-none"
-            style={{ borderColor: "color-mix(in oklab, #2563eb 70%, black)" }}
+            className="h-auto w-full justify-center gap-[7px] rounded-[6px] border bg-ember !px-[13px] py-[9px] text-[13.5px] font-medium text-star shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-ember/30 focus-visible:outline-none"
+            style={{ borderColor: "color-mix(in oklab, var(--ember) 70%, black)" }}
           >
             {submitting ? t("submitting") : t("submit")}
           </Button>
@@ -221,16 +243,9 @@ export default function LoginPage() {
         <span className="h-px flex-1 bg-[color:var(--orion-line-soft)]" />
       </div>
 
-      <GoogleButton onClick={handleGoogle} disabled={submitting} />
-
-      <div className="flex items-center justify-center gap-1.5 pt-1 text-[12.5px] text-[color:var(--orion-ink-3)]">
-        <span>{t("noAccount")}</span>
-        <Link
-          href="/signup"
-          className="font-medium text-[color:var(--ring)] hover:underline"
-        >
-          {t("createAccount")}
-        </Link>
+      <div className="flex flex-col gap-2.5">
+        <GoogleButton onClick={handleGoogle} disabled={submitting} />
+        <AppleButton onClick={handleApple} disabled={submitting} />
       </div>
     </AuthCard>
   );

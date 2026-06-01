@@ -16,11 +16,8 @@ from shared.exceptions import AuthenticationError, AuthorizationError
 security = HTTPBearer(auto_error=False)
 
 # Path prefixes that operate without a fully provisioned User row
-# (e.g. first-time onboarding, accepting an invite).
-_UNAUTH_USER_PATH_PREFIXES: tuple[str, ...] = (
-    "/v1/auth/onboarding",
-    "/v1/auth/invites/",
-)
+# (e.g. accepting an invite by token before the User row exists).
+_UNAUTH_USER_PATH_PREFIXES: tuple[str, ...] = ("/v1/auth/invites/",)
 
 
 async def get_current_user(
@@ -39,6 +36,7 @@ async def get_current_user(
                 "uid": dev_uid,
                 "name": request.headers.get("X-Dev-Bypass-Name", "Orion Dev"),
                 "email": request.headers.get("X-Dev-Bypass-Email", "dev@orion.local"),
+                "email_verified": True,
                 "picture": request.headers.get("X-Dev-Bypass-Picture"),
             }
         raise AuthenticationError(detail="Missing authentication token")

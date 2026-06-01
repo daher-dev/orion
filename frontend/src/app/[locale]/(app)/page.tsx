@@ -24,9 +24,9 @@ import { useCanAccess } from "@/hooks/use-permissions";
 const PERIOD_OPTIONS = ["last7d", "last30d", "last90d"] as const;
 type Period = (typeof PERIOD_OPTIONS)[number];
 
-// .btn.btn-primary — accent (indigo) bg, white ink, 7 13 padding, radius
-// var(--radius-sm) (6px), 13px font weight 500. The design uses --accent
-// (indigo) for the primary CTA on dashboard, not the sub-product brand.
+// .btn.btn-primary — Ember accent bg, white ink, 7 13 padding, radius
+// var(--radius-sm) (6px), 13px font weight 500. Uses --sidebar-primary
+// (the Ember UI accent) for the primary CTA, not the sub-product brand.
 const PRIMARY_BUTTON_CLASS =
   "h-auto gap-[7px] rounded-[6px] border bg-[color:var(--sidebar-primary)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95";
 

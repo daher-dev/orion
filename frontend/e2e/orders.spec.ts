@@ -167,15 +167,20 @@ test.describe("Sales: Orders", () => {
     await apiPost(request, `/v1/orders/${paidOrder.id}/status`, { status: "paid" });
 
     await gotoOrders(page);
-    // Both rows visible by default
-    await expect(page.getByText("PEND")).toBeVisible();
-    await expect(page.getByText("PAID")).toBeVisible();
+    // Both rows visible by default. Target rows by their stable row testid:
+    // the localized status pill ("Pendente"/"Pago") substring-collides with the
+    // external_order_id text ("PEND"/"PAID") under getByText's case-insensitive
+    // match, so we key off the row id instead.
+    const pendingRow = page.getByTestId(`order-row-${pendingOrder.id}`);
+    const paidRow = page.getByTestId(`order-row-${paidOrder.id}`);
+    await expect(pendingRow).toBeVisible();
+    await expect(paidRow).toBeVisible();
 
     // Open Status filter, pick Paid
     await page.getByLabel("Status").first().click();
     await page.getByRole("option", { name: "Pago" }).click();
-    await expect(page.getByText("PAID")).toBeVisible();
-    await expect(page.getByText("PEND")).not.toBeVisible();
+    await expect(paidRow).toBeVisible();
+    await expect(pendingRow).not.toBeVisible();
   });
 
   test("clicking a row opens the detail and the timeline transitions through phases", async ({
@@ -251,8 +256,11 @@ test.describe("Sales: Orders", () => {
       .getByRole("button", { name: "Excluir", exact: true })
       .click();
 
-    await expect(page.getByText("Pedido excluído")).toBeVisible();
+    // The delete succeeds (204) but the success toast + redirect only fire
+    // after React Query finishes invalidating the now-404 detail query, which
+    // retries with backoff (~6-7s). Allow generous time for the success path.
+    await expect(page.getByText("Pedido excluído")).toBeVisible({ timeout: 15000 });
     // Returned to /orders
-    await expect(page).toHaveURL(/\/orders$/);
+    await expect(page).toHaveURL(/\/orders$/, { timeout: 15000 });
   });
 });

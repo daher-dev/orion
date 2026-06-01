@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { QueryProvider } from "@/providers/query-provider";
@@ -11,10 +11,32 @@ import { CompanyProvider } from "@/providers/company-provider";
 import { fontVariableClasses } from "@/app/layout";
 import "../globals.css";
 
-export const metadata: Metadata = {
-  title: "Orion",
-  description: "Orion",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "brand" });
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+    title: { default: "Orion", template: "%s · Orion" },
+    description: `Orion — ${t("tagline")}. ${t("taglineLong")}`,
+    applicationName: "Orion",
+    openGraph: {
+      title: "Orion",
+      description: t("taglineLong"),
+      siteName: "Orion",
+      type: "website",
+      locale,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Orion",
+      description: t("taglineLong"),
+    },
+  };
+}
 
 type Props = {
   children: ReactNode;

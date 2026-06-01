@@ -29,6 +29,16 @@
   --orion-ink-3: oklch(0.516 0.018 70);         /* #7a7160 — muted text */
   --orion-ink-inv: oklch(0.971 0.011 85);       /* #fbf8f2 — inverted text */
 
+  /*
+   * Brand constants — mode-independent (defined once; they carry into .dark
+   * because that block never overrides them). Ember is the product UI accent
+   * (focus rings, primary CTA, active states, default company color); Star is
+   * the mark colour on dark tiles (app icon, splash). Per the brand sheet,
+   * Ember is the only chromatic accent the mark itself may take.
+   */
+  --ember: oklch(0.494 0.156 29);               /* #a83227 — Betelgeuse ember */
+  --star:  oklch(0.945 0.012 85);               /* #f5efe0 — mark on dark */
+
   /* shadcn semantic mapping (light) */
   --background: var(--orion-bg);
   --foreground: var(--orion-ink);
@@ -48,18 +58,18 @@
   --destructive-foreground: var(--orion-ink-inv);
   --border: var(--orion-line);
   --input: var(--orion-line);
-  --ring: oklch(0.633 0.166 250);                /* indigo-blue accent ring */
+  --ring: var(--ember);                          /* Ember accent ring */
   --radius: 0.625rem;
 
   /* Sidebar palette (light) — warm dark sidebar even in light mode */
   --sidebar: oklch(0.221 0.012 60);              /* #1c1812 */
   --sidebar-foreground: oklch(0.881 0.018 82);   /* #d9d2c2 */
-  --sidebar-primary: oklch(0.633 0.166 250);     /* indigo accent */
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: var(--ember);               /* Ember accent */
+  --sidebar-primary-foreground: var(--star);
   --sidebar-accent: oklch(0.293 0.014 60);       /* slightly lighter than sidebar */
   --sidebar-accent-foreground: oklch(0.971 0.011 85);
   --sidebar-border: oklch(0.181 0.012 60);       /* #15110b */
-  --sidebar-ring: oklch(0.633 0.166 250);
+  --sidebar-ring: var(--ember);
 
   /* Brand sub-product accents — exposed via @theme inline */
   --brand-sales: oklch(0.561 0.184 41);          /* #c2410c — terracotta */
@@ -117,17 +127,17 @@
   --destructive-foreground: var(--orion-ink);
   --border: var(--orion-line);
   --input: var(--orion-line);
-  --ring: oklch(0.633 0.166 250);
+  --ring: var(--ember);
 
   /* Sidebar palette (dark) — same warm dark surface as bg, subtly differentiated */
   --sidebar: oklch(0.181 0.012 60);
   --sidebar-foreground: oklch(0.881 0.018 82);
-  --sidebar-primary: oklch(0.633 0.166 250);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: var(--ember);
+  --sidebar-primary-foreground: var(--star);
   --sidebar-accent: oklch(0.241 0.013 62);
   --sidebar-accent-foreground: oklch(0.945 0.012 85);
   --sidebar-border: oklch(0.151 0.012 60);
-  --sidebar-ring: oklch(0.633 0.166 250);
+  --sidebar-ring: var(--ember);
 }
 
 @theme inline {
@@ -151,6 +161,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Orion brand constants — enables bg-ember / text-ember / ring-ember / text-star */
+  --color-ember: var(--ember);
+  --color-star: var(--star);
 
   /* Sidebar tokens */
   --color-sidebar: var(--sidebar);
@@ -292,3 +306,61 @@
 }
 .ribana-slider::-webkit-slider-runnable-track { background: transparent; }
 .ribana-slider::-moz-range-track { background: transparent; }
+
+/*
+ * Orion wordmark — "Orion" in Fraunces 400, tight tracking, with the dot of
+ * the "i" carrying Orion's belt: the natural i-dot is Alnilam, flanked by two
+ * pseudo-dots (.wm-belt-l / .wm-belt-r) that complete the three-star belt.
+ * Direct port of .wordmark / .wm-i from /docs/design/branding.html. Font size
+ * is applied inline by the <Wordmark> component so the dots scale in `em`.
+ */
+.orion-wordmark {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.028em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  font-feature-settings: "ss01" 1;
+}
+.wm-i {
+  position: relative;
+  display: inline-block;
+}
+.wm-i .wm-belt-l,
+.wm-i .wm-belt-r {
+  position: absolute;
+  top: 0.17em; /* matches the Fraunces i-dot vertical position */
+  left: 50%;
+  width: 0.095em;
+  height: 0.095em;
+  margin-left: -0.0475em; /* center the dot on the 50% line */
+  border-radius: 50%;
+  background: currentColor;
+  pointer-events: none;
+}
+.wm-i .wm-belt-l { transform: translateX(-0.13em); }
+.wm-i .wm-belt-r { transform: translateX(0.13em); }
+
+/*
+ * Orion belt loader — the three belt stars (Mintaka · Alnilam · Alnitak)
+ * pulse left→right as the app's canonical loading indicator (brand variant
+ * C). Direct port of .belt-loader from /docs/design/branding.html. The pulse
+ * is disabled under prefers-reduced-motion.
+ */
+.belt-loader circle {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: belt-pulse 1.4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.belt-loader circle:nth-child(1) { animation-delay: 0s; }
+.belt-loader circle:nth-child(2) { animation-delay: 0.18s; }
+.belt-loader circle:nth-child(3) { animation-delay: 0.36s; }
+@keyframes belt-pulse {
+  0%, 70%, 100% { opacity: 0.28; transform: scale(0.7); }
+  35%           { opacity: 1;    transform: scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .belt-loader circle { animation: none; opacity: 1; transform: none; }
+}

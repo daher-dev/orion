@@ -18,8 +18,10 @@ test.describe("Reports", () => {
   test("page renders all four tabs and the date range picker", async ({ page }) => {
     await gotoReports(page);
 
-    // Eyebrow chip — Reports uses the deep-blue brand colour.
-    await expect(page.getByText("Indicadores")).toBeVisible();
+    // Eyebrow chip — Reports uses the deep-blue brand colour. The eyebrow text
+    // ("Relatórios") also appears in the sidebar nav and the H1, so scope to the
+    // eyebrow div whose entire text is exactly "Relatórios".
+    await expect(page.locator("div").filter({ hasText: /^Relatórios$/ })).toBeVisible();
     // 4 tabs
     await expect(page.getByRole("tab", { name: /Vendas/ })).toBeVisible();
     await expect(page.getByRole("tab", { name: /Produção/ })).toBeVisible();
@@ -47,11 +49,11 @@ test.describe("Reports", () => {
     await expect(page.getByText("Throughput de costura")).toBeVisible();
 
     await page.getByRole("tab", { name: /Estoque/ }).click();
-    await expect(page.getByText("Estoque atual")).toBeVisible();
-    await expect(page.getByText("SKUs parados")).toBeVisible();
+    await expect(page.getByText("Níveis atuais de estoque")).toBeVisible();
+    await expect(page.getByText("Peças paradas")).toBeVisible();
 
     await page.getByRole("tab", { name: /Custos/ }).click();
-    await expect(page.getByText("Custo unitário por ficha")).toBeVisible();
+    await expect(page.getByText("Custos por ficha")).toBeVisible();
     await expect(page.getByText("Custo médio de tecido por kg")).toBeVisible();
   });
 
@@ -59,11 +61,18 @@ test.describe("Reports", () => {
     await gotoReports(page);
 
     await page.getByRole("button", { name: /Últimos 90 dias/ }).click();
-    // The popover shows three preset chips.
-    await expect(page.getByRole("button", { name: "Últimos 7 dias" })).toBeVisible();
-    await page.getByRole("button", { name: "Últimos 7 dias" }).click();
+    // The popover shows three preset chips. Scope to the chip inside the popover
+    // dialog so it doesn't ambiguously match the trigger button label.
+    const presetChip = page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Últimos 7 dias" });
+    await expect(presetChip).toBeVisible();
+    await presetChip.click();
 
-    // After selecting, the trigger label updates.
-    await expect(page.getByRole("button", { name: /Últimos 7 dias/ })).toBeVisible();
+    // After selecting, the trigger label updates. Scope to the popover trigger
+    // so the assertion targets the trigger button, not a lingering preset chip.
+    await expect(
+      page.locator('[data-slot="popover-trigger"]').filter({ hasText: /Últimos 7 dias/ }),
+    ).toBeVisible();
   });
 });

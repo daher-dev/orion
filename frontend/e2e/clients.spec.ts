@@ -104,7 +104,9 @@ test.describe("Sales: Clients", () => {
   test("edit happy path updates the row", async ({ page }) => {
     await apiCreate(page, { name: "Lucas Pereira", email: "l@example.com" });
     await gotoClients(page);
-    await page.getByLabel("Editar").first().click();
+    // Row click opens the edit sheet (per-row edit/delete buttons were
+    // consolidated into the sheet that opens on row click).
+    await page.getByText("Lucas Pereira").click();
     const nameInput = page.getByLabel("Nome");
     await nameInput.fill("Lucas Pereira Silva");
     await page.getByRole("button", { name: "Salvar" }).click();
@@ -115,8 +117,14 @@ test.describe("Sales: Clients", () => {
   test("delete with confirm removes the row", async ({ page }) => {
     await apiCreate(page, { name: "Aline Souza" });
     await gotoClients(page);
-    await page.getByLabel("Excluir").first().click();
-    await page.getByRole("button", { name: "Excluir" }).last().click();
+    // Open the sheet via row click, hit the footer delete, then confirm in the
+    // alert dialog (scope to the dialog so we don't match the footer button).
+    await page.getByText("Aline Souza").click();
+    await page.getByRole("button", { name: "Excluir" }).click();
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "Excluir" })
+      .click();
     await expect(page.getByText("Cliente excluído")).toBeVisible();
     await expect(page.getByText("Aline Souza")).not.toBeVisible();
   });

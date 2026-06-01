@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Link, useRouter } from "@/i18n/routing";
-import { useAcceptInvite, useInvite } from "@/hooks/use-onboarding";
+import { useAcceptInvite, useInvite } from "@/hooks/use-invites";
 import { ApiError } from "@/lib/api-client";
 
 /**
@@ -92,19 +92,16 @@ export default function AcceptInvitePage({ params }: InvitePageProps) {
   // Valid invite — show company + role and the accept button.
   return (
     <AuthCard title={t("title")}>
-      <p
-        className="text-[14px] leading-[1.55] text-[color:var(--orion-ink-2)]"
-        // The translated body uses <strong>…</strong> to emphasize the
-        // company and role names — `rich` would be overkill here, plain
-        // substitution + dangerously is fine because both variables come
-        // straight from the backend (already escaped at the DB layer).
-        dangerouslySetInnerHTML={{
-          __html: t("body", {
-            companyName: escapeHtml(data.company_name),
-            roleName: escapeHtml(data.role_name),
-          }),
-        }}
-      />
+      {/* The body message embeds <strong>…</strong>, which next-intl treats as
+          rich-text tags — use t.rich with a `strong` handler. Values render as
+          React text nodes, so escaping is automatic (no dangerouslySetInnerHTML). */}
+      <p className="text-[14px] leading-[1.55] text-[color:var(--orion-ink-2)]">
+        {t.rich("body", {
+          companyName: data.company_name,
+          roleName: data.role_name,
+          strong: (chunks) => <strong>{chunks}</strong>,
+        })}
+      </p>
 
       {acceptError ? (
         <p role="alert" className="text-[12px] text-[color:var(--status-err)]">
@@ -117,8 +114,8 @@ export default function AcceptInvitePage({ params }: InvitePageProps) {
           type="button"
           onClick={handleAccept}
           disabled={acceptMutation.isPending}
-          className="h-auto w-full justify-center gap-[7px] rounded-[6px] border bg-[#2563eb] !px-[13px] py-[9px] text-[13.5px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-[color:color-mix(in_oklab,#2563eb_28%,transparent)] focus-visible:outline-none"
-          style={{ borderColor: "color-mix(in oklab, #2563eb 70%, black)" }}
+          className="h-auto w-full justify-center gap-[7px] rounded-[6px] border bg-ember !px-[13px] py-[9px] text-[13.5px] font-medium text-star shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-ember/30 focus-visible:outline-none"
+          style={{ borderColor: "color-mix(in oklab, var(--ember) 70%, black)" }}
         >
           {acceptMutation.isPending ? t("accepting") : t("accept")}
         </Button>
@@ -131,20 +128,4 @@ export default function AcceptInvitePage({ params }: InvitePageProps) {
       </div>
     </AuthCard>
   );
-}
-
-/**
- * Minimal HTML escape — only the five characters that change a parsed token
- * inside the `<strong>` wrapper. The translation key controls the wrapper
- * itself, the values are user-controlled (company name from the DB) so we
- * sanitize them defensively even though SQL/Pydantic already constrain
- * input.
- */
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }

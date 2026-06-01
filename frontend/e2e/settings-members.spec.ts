@@ -48,6 +48,8 @@ test.describe("Settings: Members & Invites", () => {
     await gotoMembers(page);
     await expect(page.getByTestId("members-table")).toBeVisible();
     await expect(page.getByTestId("members-row").first()).toBeVisible();
+    // The role select now lives in the member detail sheet, opened by clicking a row.
+    await page.getByTestId("members-row").first().click();
     await expect(page.getByTestId("role-select-trigger").first()).toBeVisible();
   });
 
@@ -83,7 +85,10 @@ test.describe("Settings: Members & Invites", () => {
     expect(manager).toBeTruthy();
     await gotoMembers(page);
     // The current user is the only admin — attempting to demote them must fail.
+    // Role changes happen in the member detail sheet, opened by clicking the row.
+    await page.getByTestId("members-row").first().click();
     const trigger = page.getByTestId("role-select-trigger").first();
+    await expect(trigger).toBeVisible();
     await trigger.click();
     await page.getByRole("option", { name: /Manager/i }).click();
     await expect(page.getByText("Não é possível remover o último administrador.")).toBeVisible();

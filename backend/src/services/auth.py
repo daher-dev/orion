@@ -2,17 +2,17 @@ import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy import func
 from sqlalchemy.orm import selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from models import Company, Invite, Role, User
-from schemas.auth import InviteCreate, OnboardingRequest
+from schemas.auth import InviteCreate
 from services._audit import write_audit
-from shared.exceptions import ConflictError, NotFoundError, ValidationError
+from shared.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
 
 _TOKEN_BYTES = 32
-_RESERVED_SUBDOMAINS: frozenset[str] = frozenset({"www", "api", "admin", "app", "auth", "static"})
 
 
 async def get_user_companies(db: AsyncSession, firebase_uid: str) -> list[tuple[User, Company, Role]]:
@@ -30,61 +30,94 @@ async def get_user_companies(db: AsyncSession, firebase_uid: str) -> list[tuple[
     return list(result.all())
 
 
-async def create_company_and_admin(
-    db: AsyncSession,
-    *,
-    claims: dict,
-    payload: OnboardingRequest,
-) -> tuple[Company, User, Role]:
-    """Create a brand-new tenant and a single admin user owned by the Firebase identity."""
+async def establish_session(db: AsyncSession, *, claims: dict) -> list[tuple[User, Company, Role]]:
+    """Resolve — or provision — the memberships for an authenticated Firebase identity.
 
-    if payload.subdomain in _RESERVED_SUBDOMAINS:
-        raise ConflictError(detail="Subdomain is reserved")
-
-    existing = await db.exec(select(Company.id).where(Company.subdomain == payload.subdomain))
-    if existing.first() is not None:
-        raise ConflictError(detail="Subdomain already in use")
-
-    admin_role_result = await db.exec(select(Role).where(Role.code == "admin"))
-    admin_role = admin_role_result.first()
-    if admin_role is None:
-        raise NotFoundError(detail="Admin role not seeded")
+    This is the login gate. A sign-in only succeeds for someone who is already a
+    member, or whose *verified* email has a pending invite (which we accept on the
+    spot). Everyone else is rejected with a 403 — there is no self-signup.
+    """
 
     firebase_uid = claims.get("uid")
     if not firebase_uid:
         raise ValidationError(detail="Missing Firebase UID in token claims")
 
-    company = Company(
-        name=payload.company_name,
-        subdomain=payload.subdomain,
-        main_color=payload.main_color,
-    )
-    db.add(company)
-    await db.flush()
+    memberships = await get_user_companies(db, firebase_uid)
+    if memberships:
+        return memberships
 
-    user = User(
-        company_id=company.id,
-        firebase_uid=firebase_uid,
-        name=claims.get("name") or claims.get("email") or "Owner",
-        email=claims.get("email") or f"{firebase_uid}@orion.local",
-        role_id=admin_role.id,
-    )
-    db.add(user)
-    await db.flush()
+    email = (claims.get("email") or "").strip().lower()
+    email_verified = bool(claims.get("email_verified"))
+    if (
+        email
+        and email_verified
+        and await _accept_pending_invites_for_email(db, firebase_uid=firebase_uid, claims=claims, email=email)
+    ):
+        return await get_user_companies(db, firebase_uid)
 
-    await write_audit(
-        db,
-        company_id=company.id,
-        user_id=user.id,
-        resource_type="companies",
-        resource_id=company.id,
-        message="Company created via onboarding",
-    )
+    raise AuthorizationError(detail="not_invited")
 
-    await db.commit()
-    await db.refresh(company)
-    await db.refresh(user)
-    return company, user, admin_role
+
+async def _accept_pending_invites_for_email(
+    db: AsyncSession,
+    *,
+    firebase_uid: str,
+    claims: dict,
+    email: str,
+) -> bool:
+    """Accept every unexpired pending invite matching `email`, provisioning a User
+    per company. Returns True if at least one membership was created or confirmed."""
+
+    result = await db.exec(
+        select(Invite).where(
+            func.lower(Invite.email) == email,
+            Invite.accepted_at.is_(None),  # type: ignore[union-attr]
+        )
+    )
+    now = datetime.now(UTC)
+    accepted_any = False
+    for invite in result.all():
+        expires_at = invite.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+        if expires_at <= now:
+            continue
+
+        existing = await db.exec(
+            select(User).where(
+                User.firebase_uid == firebase_uid,
+                User.company_id == invite.company_id,
+            )
+        )
+        user = existing.first()
+        if user is None:
+            user = User(
+                company_id=invite.company_id,
+                firebase_uid=firebase_uid,
+                name=claims.get("name") or claims.get("email") or invite.email,
+                email=claims.get("email") or invite.email,
+                role_id=invite.role_id,
+            )
+            db.add(user)
+            await db.flush()
+
+        invite.accepted_at = now
+        invite.accepted_by_id = user.id
+        db.add(invite)
+
+        await write_audit(
+            db,
+            company_id=invite.company_id,
+            user_id=user.id,
+            resource_type="invites",
+            resource_id=invite.id,
+            message=f"Invite auto-accepted at login by {user.email}",
+        )
+        accepted_any = True
+
+    if accepted_any:
+        await db.commit()
+    return accepted_any
 
 
 async def create_invite(

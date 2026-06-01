@@ -15,6 +15,9 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
   signOut as firebaseSignOut,
   type User as FirebaseUser,
 } from "firebase/auth";
@@ -37,6 +40,16 @@ type AuthContextValue = {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
+  /**
+   * Passwordless "magic link": email a one-time sign-in link. `continueUrl` is
+   * where Firebase returns the user (must be a Firebase-authorized domain); the
+   * login page finishes the sign-in on return. No-op under dev-bypass.
+   */
+  sendSignInLink: (email: string, continueUrl: string) => Promise<void>;
+  /** True when `href` is a Firebase email sign-in link. */
+  isEmailSignInLink: (href: string) => boolean;
+  /** Finish a magic-link sign-in for `email` using the link in `href`. */
+  completeEmailLink: (email: string, href: string) => Promise<void>;
   signOut: () => Promise<void>;
   /**
    * Returns a token suitable for the Authorization header. In dev-bypass mode
@@ -47,6 +60,14 @@ type AuthContextValue = {
 };
 
 const DEV_BYPASS_TOKEN = "dev-bypass-token";
+
+/**
+ * localStorage key holding the address between requesting a magic link and
+ * completing it. Firebase needs the original email to finish the sign-in when
+ * the user returns via the link, so we stash it here. Exported so the login
+ * page can recover it on return.
+ */
+export const EMAIL_FOR_SIGN_IN_KEY = "orion:emailForSignIn";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -120,6 +141,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithPopup(auth, provider);
   }, []);
 
+  const sendSignInLink = useCallback(async (email: string, continueUrl: string) => {
+    if (isDevBypassEnabled) return;
+    const auth = getFirebaseAuth();
+    if (!auth) throw new Error("Firebase not initialized");
+    await sendSignInLinkToEmail(auth, email, { url: continueUrl, handleCodeInApp: true });
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(EMAIL_FOR_SIGN_IN_KEY, email);
+    }
+  }, []);
+
+  const isEmailSignInLink = useCallback((href: string): boolean => {
+    if (isDevBypassEnabled) return false;
+    const auth = getFirebaseAuth();
+    if (!auth) return false;
+    return isSignInWithEmailLink(auth, href);
+  }, []);
+
+  const completeEmailLink = useCallback(async (email: string, href: string) => {
+    if (isDevBypassEnabled) return;
+    const auth = getFirebaseAuth();
+    if (!auth) throw new Error("Firebase not initialized");
+    await signInWithEmailLink(auth, email, href);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(EMAIL_FOR_SIGN_IN_KEY);
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     if (isDevBypassEnabled) return;
     const auth = getFirebaseAuth();
@@ -136,8 +184,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, loading, signInWithEmail, signInWithGoogle, signInWithApple, signOut, getIdToken }),
-    [user, loading, signInWithEmail, signInWithGoogle, signInWithApple, signOut, getIdToken],
+    () => ({
+      user,
+      loading,
+      signInWithEmail,
+      signInWithGoogle,
+      signInWithApple,
+      sendSignInLink,
+      isEmailSignInLink,
+      completeEmailLink,
+      signOut,
+      getIdToken,
+    }),
+    [
+      user,
+      loading,
+      signInWithEmail,
+      signInWithGoogle,
+      signInWithApple,
+      sendSignInLink,
+      isEmailSignInLink,
+      completeEmailLink,
+      signOut,
+      getIdToken,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

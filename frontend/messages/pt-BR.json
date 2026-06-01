@@ -70,21 +70,44 @@
     "password": "Senha",
     "google": "Continuar com Google",
     "apple": "Continuar com a Apple",
+    "showPassword": "Mostrar senha",
+    "hidePassword": "Ocultar senha",
+    "brandTagline": "SaaS para confecção",
+    "footer": {
+      "terms": "Termos",
+      "privacy": "Privacidade",
+      "support": "Suporte"
+    },
     "brand": {
       "wordmark": "Orion",
       "sigilLabel": "Orion"
     },
     "login": {
-      "title": "Entrar no Orion",
+      "title": "Entrar",
       "sub": "Bem-vindo de volta. Escolha um método de login para continuar.",
+      "providerDivider": "ou com e-mail",
       "devBypassBanner": "Auth dev-bypass está ativo. Os campos são ignorados — clique em \"Entrar\" para acessar como o usuário dev configurado.",
       "submit": "Entrar",
       "submitting": "Entrando…",
       "forgotPassword": "Esqueceu a senha?",
+      "magicCta": "Receber um link por e-mail",
+      "backToSignIn": "Voltar para entrar",
+      "magic": {
+        "title": "Link por e-mail",
+        "sub": "Sem senha — enviamos um link de acesso para o seu e-mail.",
+        "submit": "Enviar link",
+        "sending": "Enviando…",
+        "finish": "Concluir login",
+        "confirmEmail": "Confirme seu e-mail para concluir o login.",
+        "sentTitle": "Verifique seu e-mail",
+        "sentBody": "Enviamos um link de acesso para {email}. Abra-o neste dispositivo para entrar.",
+        "completing": "Concluindo seu login…"
+      },
       "errors": {
         "invalidCredentials": "E-mail ou senha incorretos.",
         "popupBlocked": "A janela foi bloqueada. Permita pop-ups e tente novamente.",
-        "generic": "Não foi possível entrar. Tente novamente."
+        "generic": "Não foi possível entrar. Tente novamente.",
+        "magicCompleteFailed": "O link é inválido ou expirou. Solicite um novo."
       }
     },
     "forgotPassword": {

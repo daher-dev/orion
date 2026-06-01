@@ -68,8 +68,8 @@ test.describe("Auth — /login", () => {
     await expect(page.locator("main").getByText("Orion", { exact: true }).first()).toBeVisible();
     await expect(page.locator("main").getByText("Underground")).toHaveCount(0);
     await expect(page.getByText("por Orion")).toHaveCount(0);
-    // Page title.
-    await expect(page.getByRole("heading", { name: "Entrar no Orion", level: 1 })).toBeVisible();
+    // Page title. The brand chip carries "Orion"; the card title is just the verb.
+    await expect(page.getByRole("heading", { name: "Entrar", level: 1 })).toBeVisible();
     // Primary + social CTAs.
     await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible();

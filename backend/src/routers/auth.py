@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, status
+from fastapi import APIRouter, Depends, Header, Query, status
 from sqlmodel import select
 
 from dependencies import CurrentClaims, CurrentDbUser, DbSession, RequirePermission
@@ -14,6 +14,8 @@ from schemas.auth import (
     InviteCreate,
     InvitePublicResponse,
     InviteResponse,
+    LoginAttemptPage,
+    LoginAttemptRead,
     MeResponse,
     RoleSummary,
     UserSummary,
@@ -26,6 +28,7 @@ from services.auth import (
     get_invite_by_token,
     get_user_companies,
     get_user_in_company,
+    list_login_attempts,
 )
 from shared.exceptions import AuthorizationError, NotFoundError
 
@@ -101,6 +104,36 @@ async def establish_session_endpoint(
     """
     memberships = await establish_session(db, claims=claims)
     return _build_me_response(memberships, x_orion_company_id)
+
+
+@router.get("/login-attempts", response_model=LoginAttemptPage)
+async def list_login_attempts_endpoint(
+    db: DbSession,
+    _user: Annotated[User, Depends(RequirePermission("users.read"))],
+    email: Annotated[str | None, Query(max_length=255)] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+) -> LoginAttemptPage:
+    """Recent login-gate attempts (success + denied), newest first. Admin/manager only.
+
+    Denied logins (`not_invited`, `unverified_email`, `missing_uid`) leave no other
+    trace, so this is the place to see who tried to sign in and why they were blocked.
+    Optional `email` filter for a specific address.
+    """
+    rows, total = await list_login_attempts(db, email=email, limit=limit)
+    items = [
+        LoginAttemptRead(
+            id=row.id,
+            created_at=row.created_at,
+            email=row.email,
+            firebase_uid=row.firebase_uid,
+            email_verified=row.email_verified,
+            outcome=row.outcome.value,
+            company_id=row.company_id,
+            detail=row.detail,
+        )
+        for row in rows
+    ]
+    return LoginAttemptPage(items=items, total=total)
 
 
 @router.post(

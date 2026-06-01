@@ -128,6 +128,53 @@ async def test_session_rejects_uninvited_user(authed_client: AsyncClient):
     assert response.json()["detail"] == "not_invited"
 
 
+# ---------- GET /v1/auth/login-attempts ----------
+
+
+async def test_login_attempts_lists_denied_attempt(authed_client: AsyncClient, db_session):
+    # qa-dev-user must be an admin to read the log...
+    company = await create_company(db_session)
+    await create_user(db_session, company_id=company.id, firebase_uid="qa-dev-user")
+
+    # ...and a separate uninvited identity gets denied, leaving a logged attempt.
+    denied = await async_client_post_session_as(authed_client, uid="intruder", email="intruder@example.com")
+    assert denied == 403
+
+    response = await authed_client.get("/v1/auth/login-attempts?email=intruder@example.com")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 1
+    assert body["items"][0]["outcome"] == "not_invited"
+    assert body["items"][0]["email"] == "intruder@example.com"
+
+
+async def test_login_attempts_requires_users_read(authed_client: AsyncClient, db_session):
+    # Operator role lacks users.read → 403.
+    company = await create_company(db_session)
+    operator_role = await get_role_by_code(db_session, "operator")
+    await create_user(
+        db_session,
+        company_id=company.id,
+        role_id=operator_role.id,
+        firebase_uid="qa-dev-user",
+    )
+    response = await authed_client.get("/v1/auth/login-attempts")
+    assert response.status_code == 403
+
+
+async def async_client_post_session_as(authed_client: AsyncClient, *, uid: str, email: str) -> int:
+    """Hit POST /v1/auth/session as a different dev-bypass identity; return status."""
+    resp = await authed_client.post(
+        "/v1/auth/session",
+        headers={
+            "X-Dev-Bypass-Uid": uid,
+            "X-Dev-Bypass-Email": email,
+            "X-Dev-Bypass-Name": uid,
+        },
+    )
+    return resp.status_code
+
+
 # ---------- /v1/auth/invites ----------
 
 

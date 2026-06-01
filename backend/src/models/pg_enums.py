@@ -12,6 +12,7 @@ from models.enums import (
     Ecommerce,
     FabricRollKind,
     FabricType,
+    LoginOutcome,
     OrderStatus,
     ProductType,
     ShipmentStatus,
@@ -42,3 +43,4 @@ SHIPMENT_STATUS = _enum(ShipmentStatus, "shipment_status")
 STOCK_SOURCE = _enum(StockSource, "stock_source")
 STOCK_EXIT_REASON = _enum(StockExitReason, "stock_exit_reason")
 ORDER_STATUS = _enum(OrderStatus, "order_status")
+LOGIN_OUTCOME = _enum(LoginOutcome, "login_outcome")

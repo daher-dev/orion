@@ -82,3 +82,16 @@ class OrderStatus(StrEnum):
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
     RETURNED = "returned"
+
+
+class LoginOutcome(StrEnum):
+    """Result of a login-gate (`establish_session`) attempt.
+
+    Recorded for every sign-in so denied attempts are visible (the gate
+    otherwise just raises a 403 and leaves no trace).
+    """
+
+    SUCCESS = "success"  # resolved an existing membership or accepted an invite
+    NOT_INVITED = "not_invited"  # verified email, but no membership and no pending invite
+    UNVERIFIED_EMAIL = "unverified_email"  # has a matching invite path blocked by unverified email
+    MISSING_UID = "missing_uid"  # token carried no Firebase uid

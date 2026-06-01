@@ -72,3 +72,21 @@ class InviteAcceptResponse(BaseModel):
     company: CompanySummary
     user: UserSummary
     role: RoleSummary
+
+
+class LoginAttemptRead(BaseModel):
+    """A single login-gate attempt, for the admin troubleshooting view."""
+
+    id: uuid.UUID
+    created_at: datetime
+    email: str
+    firebase_uid: str | None = None
+    email_verified: bool
+    outcome: str
+    company_id: uuid.UUID | None = None
+    detail: str | None = None
+
+
+class LoginAttemptPage(BaseModel):
+    items: list[LoginAttemptRead]
+    total: int

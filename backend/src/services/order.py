@@ -50,7 +50,7 @@ _RESOURCE = "orders"
 # A single loaded read row: the Order + its ad + variation + product +
 # spec.code + client. Keep this as a plain tuple so the SQLModel rows stay
 # pristine and the router builds the wire DTO.
-OrderWithRelations = tuple[Order, Ad, ProductVariation, Product, str | None, Client]
+OrderWithRelations = tuple[Order, Ad, ProductVariation, Product, str | None, Client | None]
 
 
 # --------------------------------------------------------------------- helpers
@@ -133,7 +133,7 @@ _BASE_SELECT_COLS = (
     PrintDesign.image_url,
 )
 
-OrderWithRelations = tuple[Order, Ad, ProductVariation, Product, str | None, Client, str | None]
+OrderWithRelations = tuple[Order, Ad, ProductVariation, Product, str | None, Client | None, str | None]
 
 
 def _base_select():
@@ -144,7 +144,8 @@ def _base_select():
         .join(Product, Product.id == ProductVariation.product_id)
         .join(ProductSpec, ProductSpec.id == Product.spec_id, isouter=True)
         .join(PrintDesign, PrintDesign.id == Product.print_id, isouter=True)
-        .join(Client, Client.id == Order.client_id)
+        # Outer: marketplace-imported orders have no client.
+        .join(Client, Client.id == Order.client_id, isouter=True)
     )
 
 
@@ -183,7 +184,7 @@ async def list_orders(
         .join(Ad, Ad.id == Order.ad_id)
         .join(ProductVariation, ProductVariation.id == Order.variation_id)
         .join(Product, Product.id == ProductVariation.product_id)
-        .join(Client, Client.id == Order.client_id)
+        .join(Client, Client.id == Order.client_id, isouter=True)
         .where(Order.company_id == company_id)
     )
     count_stmt = _apply_filters(count_stmt, filters)

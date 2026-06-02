@@ -25,6 +25,7 @@ from models.enums import (
     TrimType,
 )
 from models.fabric_roll import FabricRoll
+from models.imported_order import ImportedOrder
 from models.invite import Invite
 from models.login_attempt import LoginAttempt
 from models.order import Order
@@ -51,6 +52,7 @@ __all__ = [
     "FabricRoll",
     "FabricRollKind",
     "FabricType",
+    "ImportedOrder",
     "Invite",
     "LoginAttempt",
     "LoginOutcome",

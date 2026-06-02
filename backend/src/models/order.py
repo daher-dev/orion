@@ -14,12 +14,17 @@ class Order(CompanyModel, table=True):
     __tablename__ = "orders"
     __table_args__ = (
         CheckConstraint("quantity > 0", name="quantity_positive"),
+        # NULL-safe: passes when sale_price is NULL (marketplace imports).
         CheckConstraint("sale_price >= 0", name="sale_price_non_negative"),
-        # Same external order number can't appear twice under the same ad.
+        # The same external order number can repeat across an order's line
+        # items (a multi-item marketplace order shares one platform order id),
+        # so the natural key includes the variation — a given (ad, variation)
+        # pair still can't appear twice under one external order id.
         Index(
-            "uq_orders_company_id_ad_id_external_order_id",
+            "uq_orders_company_id_ad_id_variation_id_external_order_id",
             "company_id",
             "ad_id",
+            "variation_id",
             "external_order_id",
             unique=True,
             postgresql_where=text("external_order_id IS NOT NULL"),
@@ -42,16 +47,21 @@ class Order(CompanyModel, table=True):
             index=True,
         ),
     )
-    client_id: uuid.UUID = Field(
+    # Nullable: marketplace imports (Upseller) carry no buyer identity. Manual
+    # order creation still requires a client — that is enforced at the schema
+    # layer (OrderCreate), not the column.
+    client_id: uuid.UUID | None = Field(
+        default=None,
         sa_column=Column(
             Uuid,
             ForeignKey("clients.id", ondelete="RESTRICT"),
-            nullable=False,
+            nullable=True,
             index=True,
         ),
     )
     quantity: int = Field(gt=0)
-    sale_price: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
+    # Nullable: marketplace imports carry no price. Backfilled later via update.
+    sale_price: Decimal | None = Field(default=None, max_digits=12, decimal_places=2, ge=0)
     ordered_at: datetime = Field(sa_type=DateTime(timezone=True))
     status: OrderStatus = Field(default=OrderStatus.PENDING, sa_type=ORDER_STATUS)
     external_order_id: str | None = Field(default=None, max_length=120)

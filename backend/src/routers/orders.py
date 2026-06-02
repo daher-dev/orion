@@ -45,7 +45,7 @@ def _to_read(
     variation: ProductVariation,
     product: Product,
     spec_code: str | None,
-    client: Client,
+    client: Client | None,
     image_url: str | None = None,
 ) -> OrderRead:
     return OrderRead(
@@ -59,7 +59,7 @@ def _to_read(
             color_code=variation.color_code,
             product=OrderProductMini(id=product.id, name=product.name, code=spec_code, image_url=image_url),
         ),
-        client=OrderClientRead(id=client.id, name=client.name, email=client.email),
+        client=(OrderClientRead(id=client.id, name=client.name, email=client.email) if client is not None else None),
         quantity=order.quantity,
         sale_price=order.sale_price,
         ordered_at=order.ordered_at,

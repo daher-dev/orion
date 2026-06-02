@@ -111,7 +111,7 @@ async def sales_report(
             select(
                 Ad.ecommerce,
                 func.count(Order.id).label("count"),
-                func.coalesce(func.sum(Order.sale_price * Order.quantity), 0).label("revenue"),
+                func.coalesce(func.sum(func.coalesce(Order.sale_price, 0) * Order.quantity), 0).label("revenue"),
             ),
             Order,
             company_id,
@@ -153,7 +153,7 @@ async def sales_report(
             select(
                 sales_day_expr.label("day"),
                 func.count(Order.id).label("count"),
-                func.coalesce(func.sum(Order.sale_price * Order.quantity), 0).label("revenue"),
+                func.coalesce(func.sum(func.coalesce(Order.sale_price, 0) * Order.quantity), 0).label("revenue"),
             ),
             Order,
             company_id,

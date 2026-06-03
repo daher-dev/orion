@@ -11,3 +11,8 @@ dist/
 build/
 .env
 .env.local
+
+# base44 migration dumps & reports (never commit legacy data)
+scripts/base44/raw/
+scripts/base44/discovery/
+scripts/base44/last_run_report.md

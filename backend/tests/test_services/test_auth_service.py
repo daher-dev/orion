@@ -310,3 +310,70 @@ async def test_get_user_in_company(db_session):
     none = await get_user_in_company(db_session, firebase_uid="me", company_id=other.id)
     assert none is None
     assert isinstance(user, User)
+
+
+# ---------- imported-user rebind (base44 migration) ----------
+
+
+async def test_establish_session_rebinds_imported_user(db_session):
+    # The base44 importer pre-creates users with a placeholder uid + a pending
+    # invite. On first real login the existing row must be rebound, not
+    # duplicated (which would hit the (company_id, email) unique constraint).
+    company = await create_company(db_session)
+    role = await get_role_by_code(db_session, "manager")
+    imported = await create_user(
+        db_session,
+        company_id=company.id,
+        firebase_uid="base44:legacy-7",
+        email="hire@example.com",
+        role_id=role.id,
+    )
+    inviter = await create_user(db_session, company_id=company.id)
+    await create_invite(
+        db_session,
+        company_id=company.id,
+        invited_by_id=inviter.id,
+        payload=InviteCreate(email="hire@example.com", role_id=role.id),
+    )
+
+    memberships = await establish_session(db_session, claims=_claims("real-uid", email="hire@example.com"))
+    assert len(memberships) == 1
+    user, _, _ = memberships[0]
+    assert user.id == imported.id  # same row, rebound
+    assert user.firebase_uid == "real-uid"
+
+    rows = (await db_session.exec(select(User).where(User.email == "hire@example.com"))).all()
+    assert len(rows) == 1  # no duplicate
+
+
+async def test_accept_invite_rebinds_imported_user(db_session):
+    company = await create_company(db_session)
+    role = await get_role_by_code(db_session, "manager")
+    imported = await create_user(
+        db_session,
+        company_id=company.id,
+        firebase_uid="base44:legacy-9",
+        email="claim@example.com",
+        role_id=role.id,
+    )
+    inviter = await create_user(db_session, company_id=company.id)
+    invite = await create_invite(
+        db_session,
+        company_id=company.id,
+        invited_by_id=inviter.id,
+        payload=InviteCreate(email="claim@example.com", role_id=role.id),
+    )
+
+    _, user, _ = await accept_invite(
+        db_session,
+        claims=_claims("claimer-uid", email="claim@example.com"),
+        token=invite.token,
+    )
+    assert user.id == imported.id
+    assert user.firebase_uid == "claimer-uid"
+
+    rows = (await db_session.exec(select(User).where(User.email == "claim@example.com"))).all()
+    assert len(rows) == 1
+    refreshed = (await db_session.exec(select(Invite).where(Invite.id == invite.id))).first()
+    assert refreshed is not None
+    assert refreshed.accepted_by_id == imported.id

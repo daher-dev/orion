@@ -196,6 +196,59 @@ async def _has_pending_invite_for_email(db: AsyncSession, *, email: str) -> bool
     return False
 
 
+async def _provision_or_rebind_user(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    firebase_uid: str,
+    name: str,
+    email: str,
+    role_id: uuid.UUID,
+) -> User:
+    """Resolve the User for a Firebase identity joining a company, creating it if needed.
+
+    Three cases, in order:
+    1. A membership already exists for this ``firebase_uid`` — return it (idempotent).
+    2. A row with the same email exists but a different uid — this is an *imported*
+       user (placeholder ``base44:`` uid) being claimed by its real owner. Rebind
+       its ``firebase_uid`` instead of inserting, which would otherwise violate the
+       ``(company_id, email)`` unique constraint. Curated fields (name/role) are kept.
+    3. Nobody matches — create a fresh user.
+    """
+
+    by_uid = (
+        await db.exec(select(User).where(User.firebase_uid == firebase_uid, User.company_id == company_id))
+    ).first()
+    if by_uid is not None:
+        return by_uid
+
+    if email:
+        by_email = (
+            await db.exec(
+                select(User).where(
+                    User.company_id == company_id,
+                    func.lower(User.email) == email.strip().lower(),
+                )
+            )
+        ).first()
+        if by_email is not None:
+            by_email.firebase_uid = firebase_uid
+            db.add(by_email)
+            await db.flush()
+            return by_email
+
+    user = User(
+        company_id=company_id,
+        firebase_uid=firebase_uid,
+        name=name,
+        email=email,
+        role_id=role_id,
+    )
+    db.add(user)
+    await db.flush()
+    return user
+
+
 async def _accept_pending_invites_for_email(
     db: AsyncSession,
     *,
@@ -221,23 +274,14 @@ async def _accept_pending_invites_for_email(
         if expires_at <= now:
             continue
 
-        existing = await db.exec(
-            select(User).where(
-                User.firebase_uid == firebase_uid,
-                User.company_id == invite.company_id,
-            )
+        user = await _provision_or_rebind_user(
+            db,
+            company_id=invite.company_id,
+            firebase_uid=firebase_uid,
+            name=claims.get("name") or claims.get("email") or invite.email,
+            email=claims.get("email") or invite.email,
+            role_id=invite.role_id,
         )
-        user = existing.first()
-        if user is None:
-            user = User(
-                company_id=invite.company_id,
-                firebase_uid=firebase_uid,
-                name=claims.get("name") or claims.get("email") or invite.email,
-                email=claims.get("email") or invite.email,
-                role_id=invite.role_id,
-            )
-            db.add(user)
-            await db.flush()
 
         invite.accepted_at = now
         invite.accepted_by_id = user.id
@@ -352,23 +396,14 @@ async def accept_invite(
     if role is None:
         raise NotFoundError(detail="Role not found")
 
-    existing = await db.exec(
-        select(User).where(
-            User.firebase_uid == firebase_uid,
-            User.company_id == invite.company_id,
-        )
+    user = await _provision_or_rebind_user(
+        db,
+        company_id=invite.company_id,
+        firebase_uid=firebase_uid,
+        name=name_override or claims.get("name") or claims.get("email") or invite.email,
+        email=claims.get("email") or invite.email,
+        role_id=invite.role_id,
     )
-    user = existing.first()
-    if user is None:
-        user = User(
-            company_id=invite.company_id,
-            firebase_uid=firebase_uid,
-            name=name_override or claims.get("name") or claims.get("email") or invite.email,
-            email=claims.get("email") or invite.email,
-            role_id=invite.role_id,
-        )
-        db.add(user)
-        await db.flush()
 
     invite.accepted_at = datetime.now(UTC)
     invite.accepted_by_id = user.id

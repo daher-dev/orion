@@ -104,9 +104,10 @@ class OrderRead(BaseModel):
     id: uuid.UUID
     ad: OrderAdRead
     variation: OrderVariationRead
-    client: OrderClientRead
+    # Nullable for marketplace imports, which carry no buyer/price.
+    client: OrderClientRead | None = None
     quantity: int
-    sale_price: Decimal
+    sale_price: Decimal | None = None
     ordered_at: datetime
     status: OrderStatus
     external_order_id: str | None = None

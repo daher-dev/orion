@@ -54,6 +54,18 @@ tasks:
     cmds:
       - uv run python scripts/seed_dev.py
 
+  db:base44:discover:
+    desc: Sample base44 entities and write a schema report (PHASE 0)
+    dir: backend
+    cmds:
+      - uv run python scripts/base44/discover.py
+
+  db:base44:import:
+    desc: 'Import base44 data into the target company. Flags: task db:base44:import -- --from-files --dry-run'
+    dir: backend
+    cmds:
+      - uv run python scripts/base44/import_base44.py {{.CLI_ARGS}}
+
   dev:
     desc: Start both frontend and backend dev servers
     deps: [dev:backend, dev:frontend]

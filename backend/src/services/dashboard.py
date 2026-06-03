@@ -96,7 +96,7 @@ async def _sum_revenue_since(
     db: AsyncSession, *, company_id: uuid.UUID, since: datetime, until: datetime | None = None
 ) -> Decimal:
     stmt = scoped(
-        select(func.coalesce(func.sum(Order.sale_price * Order.quantity), 0)),
+        select(func.coalesce(func.sum(func.coalesce(Order.sale_price, 0) * Order.quantity), 0)),
         Order,
         company_id,
     ).where(Order.ordered_at >= since)
@@ -200,7 +200,7 @@ async def _orders_revenue_sparkline(
         scoped(
             select(
                 day_expr.label("day"),
-                func.coalesce(func.sum(Order.sale_price * Order.quantity), 0).label("revenue"),
+                func.coalesce(func.sum(func.coalesce(Order.sale_price, 0) * Order.quantity), 0).label("revenue"),
             ),
             Order,
             company_id,
@@ -377,14 +377,14 @@ async def _revenue_by_channel(
         scoped(
             select(
                 Ad.ecommerce.label("channel"),
-                func.coalesce(func.sum(Order.sale_price * Order.quantity), 0).label("revenue"),
+                func.coalesce(func.sum(func.coalesce(Order.sale_price, 0) * Order.quantity), 0).label("revenue"),
             ).join(Ad, Order.ad_id == Ad.id),
             Order,
             company_id,
         )
         .where(Order.ordered_at >= since)
         .group_by(Ad.ecommerce)
-        .order_by(func.sum(Order.sale_price * Order.quantity).desc())
+        .order_by(func.sum(func.coalesce(Order.sale_price, 0) * Order.quantity).desc())
     )
     rows = (await db.exec(stmt)).all()
     return [ChannelRevenue(channel=str(row.channel), revenue=float(row.revenue)) for row in rows]

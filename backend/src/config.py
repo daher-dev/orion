@@ -30,6 +30,23 @@ class Settings(BaseSettings):
         description="Default Anthropic model id (override per-tenant later if needed)",
     )
 
+    # base44 → Orion data migration. Only the importer scripts under
+    # `backend/scripts/base44/` read these; the running app ignores them.
+    # Leave blank everywhere except where the migration is actually run.
+    BASE44_API_URL: str = Field(
+        default="https://base44.app",
+        description="base44 server URL; the REST base is this + '/api'",
+    )
+    BASE44_APP_ID: str = Field(default="", description="base44 application id of the legacy app")
+    BASE44_API_TOKEN: str = Field(
+        default="",
+        description="base44 bearer token used to read entity data (sent as 'Authorization: Bearer …')",
+    )
+    BASE44_TARGET_SUBDOMAIN: str = Field(
+        default="",
+        description="Subdomain of the Orion company the base44 data is imported into",
+    )
+
     @property
     def is_cloud_run(self) -> bool:
         return bool(self.K_SERVICE)

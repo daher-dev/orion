@@ -73,11 +73,11 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
   const form = useForm<OrderFormValues, unknown, OrderFormPayload>({
     resolver: zodResolver(orderFormSchema),
     defaultValues: {
-      client_id: initial?.client.id ?? "",
+      client_id: initial?.client?.id ?? "",
       ad_id: initial?.ad.id ?? "",
       variation_id: initial?.variation.id ?? "",
       quantity: initial?.quantity ?? 1,
-      sale_price: initial ? Number(initial.sale_price) : 0,
+      sale_price: initial?.sale_price != null ? Number(initial.sale_price) : 0,
       ordered_at: initial
         ? initial.ordered_at.slice(0, 16)
         : nowLocalIso(),

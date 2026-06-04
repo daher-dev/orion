@@ -62,7 +62,7 @@ const secondOrder: Order = {
   id: "66666666-6666-6666-6666-666666666666",
   status: "shipped",
   ad: { ...baseOrder.ad, ecommerce: "instagram", title: "IG Drop" },
-  client: { ...baseOrder.client, name: "Felipe Andrade", email: null },
+  client: { id: "55555555-5555-5555-5555-555555555555", name: "Felipe Andrade", email: null },
   external_order_id: null,
 };
 

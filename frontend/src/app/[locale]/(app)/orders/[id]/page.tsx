@@ -213,18 +213,24 @@ function CustomerBlock({ order }: { order: Order }) {
   const t = useTranslations("orders.detail");
   return (
     <Card title={t("customerBlock")}>
-      <Link
-        href="/clients"
-        className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[color:var(--orion-ink)] hover:underline"
-      >
-        {order.client.name}
-        <ExternalLink size={11} strokeWidth={1.8} className="text-[color:var(--orion-ink-3)]" />
-      </Link>
-      {order.client.email ? (
-        <p className="mt-1 text-[12px] text-[color:var(--orion-ink-3)]">
-          {order.client.email}
-        </p>
-      ) : null}
+      {order.client ? (
+        <>
+          <Link
+            href="/clients"
+            className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[color:var(--orion-ink)] hover:underline"
+          >
+            {order.client.name}
+            <ExternalLink size={11} strokeWidth={1.8} className="text-[color:var(--orion-ink-3)]" />
+          </Link>
+          {order.client.email ? (
+            <p className="mt-1 text-[12px] text-[color:var(--orion-ink-3)]">
+              {order.client.email}
+            </p>
+          ) : null}
+        </>
+      ) : (
+        <span className="text-[14px] text-[color:var(--orion-ink-3)]">—</span>
+      )}
     </Card>
   );
 }

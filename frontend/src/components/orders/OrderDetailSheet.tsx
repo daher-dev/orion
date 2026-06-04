@@ -182,22 +182,28 @@ export function OrderDetailSheet({ order, open, onOpenChange }: Props) {
                     <h3 className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
                       {t("detail.customerBlock")}
                     </h3>
-                    <Link
-                      href="/clients"
-                      className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[color:var(--orion-ink)] hover:underline"
-                    >
-                      {displayed.client.name}
-                      <ExternalLink
-                        size={10}
-                        strokeWidth={1.8}
-                        className="text-[color:var(--orion-ink-3)]"
-                      />
-                    </Link>
-                    {displayed.client.email ? (
-                      <p className="mt-0.5 text-[11.5px] text-[color:var(--orion-ink-3)]">
-                        {displayed.client.email}
-                      </p>
-                    ) : null}
+                    {displayed.client ? (
+                      <>
+                        <Link
+                          href="/clients"
+                          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[color:var(--orion-ink)] hover:underline"
+                        >
+                          {displayed.client.name}
+                          <ExternalLink
+                            size={10}
+                            strokeWidth={1.8}
+                            className="text-[color:var(--orion-ink-3)]"
+                          />
+                        </Link>
+                        {displayed.client.email ? (
+                          <p className="mt-0.5 text-[11.5px] text-[color:var(--orion-ink-3)]">
+                            {displayed.client.email}
+                          </p>
+                        ) : null}
+                      </>
+                    ) : (
+                      <span className="text-[13px] text-[color:var(--orion-ink-3)]">—</span>
+                    )}
                   </section>
                   <section className="rounded-[12px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-4">
                     <h3 className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
@@ -238,7 +244,7 @@ export function OrderDetailSheet({ order, open, onOpenChange }: Props) {
                       className="font-serif text-[20px] text-[color:var(--orion-ink)]"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
-                      {currency.format(Number(displayed.sale_price) * displayed.quantity)}
+                      {displayed.sale_price != null ? currency.format(Number(displayed.sale_price) * displayed.quantity) : "—"}
                     </span>
                   </div>
                 </section>

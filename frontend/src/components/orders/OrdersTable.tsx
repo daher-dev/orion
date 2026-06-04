@@ -94,7 +94,7 @@ export function OrdersTable({ rows, onView }: Props) {
         header: () => t("table.columns.client"),
         cell: ({ row }) => (
           <span className="text-[13px] text-[color:var(--orion-ink)]">
-            {row.original.client.name}
+            {row.original.client?.name ?? "—"}
           </span>
         ),
       },
@@ -177,8 +177,11 @@ export function OrdersTable({ rows, onView }: Props) {
         id: "value",
         header: () => t("table.columns.value"),
         cell: ({ row }) => {
-          const unit = Number(row.original.sale_price);
-          const total = unit * row.original.quantity;
+          const price = row.original.sale_price;
+          if (price == null) {
+            return <span className="text-[13px] text-[color:var(--orion-ink-3)]">—</span>;
+          }
+          const total = Number(price) * row.original.quantity;
           return (
             <span
               className="text-[13px] font-medium text-[color:var(--orion-ink)] whitespace-nowrap"

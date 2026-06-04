@@ -28,8 +28,8 @@ export function OrderLineItem({ order }: Props) {
     currency: locale === "pt-BR" ? "BRL" : "USD",
   });
 
-  const unit = Number(order.sale_price);
-  const total = unit * order.quantity;
+  const unit = order.sale_price != null ? Number(order.sale_price) : null;
+  const total = unit != null ? unit * order.quantity : null;
 
   return (
     <div
@@ -77,9 +77,11 @@ export function OrderLineItem({ order }: Props) {
           <span className="font-mono text-[11px] text-[color:var(--orion-ink-3)]">
             {order.variation.sku}
           </span>
-          <span className="text-[color:var(--orion-ink-3)]">
-            · {currency.format(unit)} {t("unitPrice").toLowerCase()}
-          </span>
+          {unit != null && (
+            <span className="text-[color:var(--orion-ink-3)]">
+              · {currency.format(unit)} {t("unitPrice").toLowerCase()}
+            </span>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -93,7 +95,7 @@ export function OrderLineItem({ order }: Props) {
           className="min-w-[80px] text-right text-[13px] font-medium text-[color:var(--orion-ink)]"
           style={{ fontVariantNumeric: "tabular-nums" }}
         >
-          {currency.format(total)}
+          {total != null ? currency.format(total) : "—"}
         </span>
       </div>
     </div>

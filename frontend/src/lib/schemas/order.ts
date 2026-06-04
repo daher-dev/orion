@@ -61,9 +61,9 @@ export const orderReadSchema = z.object({
   id: z.string(),
   ad: orderAdReadSchema,
   variation: orderVariationReadSchema,
-  client: orderClientReadSchema,
+  client: orderClientReadSchema.nullable().optional(),
   quantity: z.number().int(),
-  sale_price: z.string(), // Decimal serialised as a string by FastAPI
+  sale_price: z.string().nullable().optional(), // Decimal serialised as a string by FastAPI; null for marketplace imports
   ordered_at: z.string(),
   status: orderStatusSchema,
   external_order_id: z.string().nullable().optional(),

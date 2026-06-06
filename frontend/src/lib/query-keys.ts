@@ -19,6 +19,12 @@ export const qk = {
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("orders", "list", filters),
     detail: (id: string) => tuple("orders", "detail", id),
   },
+  batches: {
+    all: () => tuple("batches"),
+    lists: () => tuple("batches", "list"),
+    list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("batches", "list", filters),
+    detail: (id: string) => tuple("batches", "detail", id),
+  },
   clients: {
     all: () => tuple("clients"),
     lists: () => tuple("clients", "list"),

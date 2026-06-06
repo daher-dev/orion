@@ -29,6 +29,9 @@ const buildQuery = (filters: OrderFilters | undefined) => {
   if (filters.ad_id) query.ad_id = filters.ad_id;
   if (filters.date_from) query.date_from = filters.date_from;
   if (filters.date_to) query.date_to = filters.date_to;
+  if (filters.unbatched) query.unbatched = "true";
+  if (filters.batch_id) query.batch_id = filters.batch_id;
+  if (filters.product_id) query.product_id = filters.product_id;
   if (filters.page) query.page = String(filters.page);
   if (filters.page_size) query.page_size = String(filters.page_size);
   return Object.keys(query).length > 0 ? query : undefined;

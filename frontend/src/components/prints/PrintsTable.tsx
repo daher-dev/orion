@@ -66,19 +66,15 @@ function ArtTile({ id, src }: { id: string; src: string | null }) {
 
 export type PrintsTableProps = {
   rows: Print[];
-  onEdit: (print: Print) => void;
+  onOpen: (print: Print) => void;
 };
 
 /**
- * Prints list table — direct port of `Prints` from
- * `/docs/design/source/pages/catalog.jsx`. Column order:
- *   art tile + code (mono) + name + cost (num) + chevron.
- *
- * The design source also surfaces a `technique` + `tag` column, but our
- * `Print` schema doesn't carry those fields yet — when the backend ships
- * them they slot in between name and cost without other layout changes.
+ * Prints list table — ports `Prints` from `docs/design/pages/catalog.jsx`.
+ * Column order: art tile + code (mono) + name + technique + cost (num) + tag + chevron.
+ * A row opens the print detail view.
  */
-export function PrintsTable({ rows, onEdit }: PrintsTableProps) {
+export function PrintsTable({ rows, onOpen }: PrintsTableProps) {
   const t = useTranslations("prints");
   const format = useFormatter();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -105,6 +101,13 @@ export function PrintsTable({ rows, onEdit }: PrintsTableProps) {
         cell: ({ row }) => <span className={cellInkStrong}>{row.original.name}</span>,
       },
       {
+        accessorKey: "technique",
+        header: () => t("table.columns.technique"),
+        cell: ({ row }) => (
+          <span className={cellInk}>{t(`techniques.${row.original.technique}`)}</span>
+        ),
+      },
+      {
         accessorKey: "cost_per_unit",
         header: () => t("table.columns.costPerUnit"),
         cell: ({ row }) => (
@@ -119,10 +122,22 @@ export function PrintsTable({ rows, onEdit }: PrintsTableProps) {
         sortingFn: (a, b) =>
           Number(a.original.cost_per_unit ?? 0) - Number(b.original.cost_per_unit ?? 0),
       },
+      {
+        accessorKey: "tag",
+        header: () => t("table.columns.tag"),
+        enableSorting: false,
+        cell: ({ row }) =>
+          row.original.tag ? (
+            <span className="inline-flex items-center rounded-full bg-[color:var(--orion-surface-2)] px-2 py-[2px] text-[11px] text-[color:var(--orion-ink-2)]">
+              {row.original.tag}
+            </span>
+          ) : (
+            <span className="text-[color:var(--orion-ink-3)]">—</span>
+          ),
+      },
     ];
 
-    // Row-end chevron — entire row is the click target. Delete lives in
-    // the edit drawer that opens on click.
+    // Row-end chevron — entire row is the click target, opening the detail view.
     base.push({
       id: "chevron",
       header: () => null,
@@ -196,7 +211,7 @@ export function PrintsTable({ rows, onEdit }: PrintsTableProps) {
             <tr
               key={row.id}
               className="group/tbl-row cursor-pointer hover:[&_td]:bg-[color:var(--orion-bg)]"
-              onClick={() => onEdit(row.original)}
+              onClick={() => onOpen(row.original)}
             >
               {row.getVisibleCells().map((cell) => {
                 const align = (cell.column.columnDef.meta as { align?: string } | undefined)

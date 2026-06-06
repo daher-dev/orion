@@ -84,6 +84,39 @@ class OrderStatus(StrEnum):
     RETURNED = "returned"
 
 
+class PrintTechnique(StrEnum):
+    """Application method for an estampa (print design)."""
+
+    DTF = "dtf"
+    SILKSCREEN = "silkscreen"
+    SUBLIMATION = "sublimation"
+
+
+class BatchStatus(StrEnum):
+    """Lifecycle of a production/dispatch batch (lote).
+
+    OPEN: just created, print quantities not yet finalized.
+    ADJUSTED: per-stamp print quantities reviewed and saved.
+    PRINTED: separation labels generated/printed.
+    DONE: batch finished.
+    CANCELLED: batch abandoned (member orders unlinked).
+    """
+
+    OPEN = "open"
+    ADJUSTED = "adjusted"
+    PRINTED = "printed"
+    DONE = "done"
+    CANCELLED = "cancelled"
+
+
+class SeparationStatus(StrEnum):
+    """Per-piece separation-label workflow status."""
+
+    PENDING = "pending"  # no label printed yet
+    LABEL_PRINTED = "label_printed"  # 100x50mm label printed, piece ready to pick
+    CHECKED = "checked"  # scanned/verified at checkout
+
+
 class LoginOutcome(StrEnum):
     """Result of a login-gate (`establish_session`) attempt.
 

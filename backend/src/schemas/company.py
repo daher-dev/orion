@@ -10,6 +10,7 @@ _HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 class CompanyUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     main_color: str | None = Field(default=None, max_length=7)
+    montador_user_email: str | None = Field(default=None, max_length=255)
 
     @field_validator("main_color")
     @classmethod
@@ -26,5 +27,6 @@ class CompanyRead(BaseModel):
     name: str
     subdomain: str
     main_color: str
+    montador_user_email: str | None = None
     created_at: datetime
     updated_at: datetime

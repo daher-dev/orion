@@ -59,6 +59,17 @@ class Order(CompanyModel, table=True):
             index=True,
         ),
     )
+    # Nullable: an order belongs to at most one production batch (lote). SET NULL
+    # so deleting a batch unlinks its orders rather than cascading them away.
+    batch_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(
+            Uuid,
+            ForeignKey("batches.id", ondelete="SET NULL"),
+            nullable=True,
+            index=True,
+        ),
+    )
     quantity: int = Field(gt=0)
     # Nullable: marketplace imports carry no price. Backfilled later via update.
     sale_price: Decimal | None = Field(default=None, max_digits=12, decimal_places=2, ge=0)

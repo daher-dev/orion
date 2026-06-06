@@ -84,10 +84,10 @@ export function ProductFormSheet({ open, onOpenChange, initial }: ProductFormShe
       >
         <SheetHeader className="gap-1 border-b border-[color:var(--orion-line-soft)] px-[22px] py-[18px]">
           <SheetTitle className="font-serif text-[18px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
-            {isEdit ? t("title.edit") : t("title.new")}
+            {isEdit ? tForm("title.edit") : tForm("title.new")}
           </SheetTitle>
           <SheetDescription className="sr-only">
-            {isEdit ? t("title.edit") : t("title.new")}
+            {isEdit ? tForm("title.edit") : tForm("title.new")}
           </SheetDescription>
         </SheetHeader>
 

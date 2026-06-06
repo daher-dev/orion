@@ -10,7 +10,7 @@ from decimal import Decimal
 import pytest
 from sqlmodel import select
 
-from models import AuditLog, PrintDesign
+from models import AuditLog, PrintDesign, PrintTechnique
 from schemas._common import PageParams
 from schemas.print_design import PrintCreate, PrintFilters, PrintUpdate
 from services.print_design import (
@@ -168,6 +168,45 @@ async def test_create_print_with_image_url(db_session):
         payload=payload,
     )
     assert print_design.image_url == "https://example.com/art.png"
+
+
+async def test_create_print_defaults_technique_to_dtf(db_session):
+    company = await create_company(db_session)
+    user = await create_user(db_session, company_id=company.id)
+    print_design = await create_print(db_session, company_id=company.id, user_id=user.id, payload=_payload())
+    assert print_design.technique == PrintTechnique.DTF
+    assert print_design.tag is None
+
+
+async def test_create_and_update_print_technique_and_tag(db_session):
+    company = await create_company(db_session)
+    user = await create_user(db_session, company_id=company.id)
+    created = await create_print(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        payload=_payload(
+            technique=PrintTechnique.SILKSCREEN,
+            tag="verão",
+            image_url_front="https://cdn/f.png",
+            width_cm=Decimal("28.00"),
+            height_cm=Decimal("35.00"),
+        ),
+    )
+    assert created.technique == PrintTechnique.SILKSCREEN
+    assert created.tag == "verão"
+    assert created.image_url_front == "https://cdn/f.png"
+    assert created.width_cm == Decimal("28.00")
+
+    updated = await update_print(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        print_id=created.id,
+        payload=PrintUpdate(technique=PrintTechnique.SUBLIMATION, tag="outono"),
+    )
+    assert updated.technique == PrintTechnique.SUBLIMATION
+    assert updated.tag == "outono"
 
 
 async def test_create_print_rejects_duplicate_code(db_session):

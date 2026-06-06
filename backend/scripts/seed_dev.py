@@ -71,6 +71,8 @@ async def _wipe_existing_company(db: AsyncSession, subdomain: str) -> None:
         "stock_entries",
         "sewing_shipments",
         "cutting_orders",
+        "batch_print_adjustments",
+        "batches",
         "orders",
         "ads",
         "product_variations",

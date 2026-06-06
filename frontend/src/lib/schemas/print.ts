@@ -9,6 +9,10 @@
 
 import { z } from "zod";
 
+export const PRINT_TECHNIQUES = ["dtf", "silkscreen", "sublimation"] as const;
+export type PrintTechnique = (typeof PRINT_TECHNIQUES)[number];
+export const printTechniqueSchema = z.enum(PRINT_TECHNIQUES);
+
 export const printReadSchema = z.object({
   id: z.string(),
   company_id: z.string(),
@@ -16,6 +20,12 @@ export const printReadSchema = z.object({
   name: z.string(),
   image_url: z.string().nullable(),
   cost_per_unit: z.string(),
+  technique: printTechniqueSchema,
+  tag: z.string().nullable().optional(),
+  image_url_front: z.string().nullable().optional(),
+  image_url_back: z.string().nullable().optional(),
+  width_cm: z.string().nullable().optional(),
+  height_cm: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -47,6 +57,22 @@ const decimalString = z
   })
   .transform((value) => value.replace(",", "."));
 
+const optionalUrl = z
+  .string()
+  .trim()
+  .max(512)
+  .optional()
+  .transform((value) => (value ? value : undefined));
+
+const optionalDecimal = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value ? value.replace(",", ".") : undefined))
+  .refine((value) => value === undefined || /^\d+(\.\d+)?$/.test(value), {
+    message: "validation.numeric",
+  });
+
 export const printFormSchema = z.object({
   code: z
     .string()
@@ -58,13 +84,19 @@ export const printFormSchema = z.object({
     .trim()
     .min(1, { message: "validation.nameRequired" })
     .max(120),
-  image_url: z
+  image_url: optionalUrl,
+  cost_per_unit: decimalString,
+  technique: printTechniqueSchema,
+  tag: z
     .string()
     .trim()
-    .max(512)
+    .max(60)
     .optional()
     .transform((value) => (value ? value : undefined)),
-  cost_per_unit: decimalString,
+  image_url_front: optionalUrl,
+  image_url_back: optionalUrl,
+  width_cm: optionalDecimal,
+  height_cm: optionalDecimal,
 });
 
 export type PrintFormValues = z.input<typeof printFormSchema>;

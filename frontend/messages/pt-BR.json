@@ -61,7 +61,8 @@
     "fabric": "Tecidos",
     "stock": "Estoque",
     "reports": "Relatórios",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "batches": "Lotes"
   },
   "auth": {
     "signIn": "Entrar",
@@ -736,6 +737,54 @@
         "spec": "Ficha técnica",
         "print": "Estampa",
         "noPrint": "Sem estampa"
+      },
+      "tabs": {
+        "overview": "Visão geral",
+        "variations": "Variações",
+        "orders": "Pedidos",
+        "ads": "Anúncios",
+        "cost": "Custo"
+      },
+      "overview": {
+        "spec": "Ficha técnica",
+        "print": "Estampa",
+        "stock": "Estoque total",
+        "colors": "Cores disponíveis",
+        "sizes": "Tamanhos",
+        "noPrint": "Sem estampa"
+      },
+      "variationsTab": {
+        "color": "Cor",
+        "total": "Total",
+        "lowStockNote": "Variações em vermelho estão abaixo do estoque mínimo (4 un)."
+      },
+      "ordersTab": {
+        "empty": "Nenhum pedido",
+        "emptyBody": "Este produto ainda não foi vendido."
+      },
+      "adsTab": {
+        "empty": "Sem anúncios",
+        "emptyBody": "Crie um anúncio para começar a vender este produto."
+      },
+      "cost": {
+        "spec": "Ficha técnica (CMT)",
+        "print": "Estampa",
+        "packaging": "Embalagem",
+        "packagingSub": "Saco kraft + tag",
+        "total": "Custo total por unidade",
+        "margin": "Margem sugerida (4×)"
+      }
+    },
+    "help": {
+      "title": "Produtos — ficha técnica + estampa, em cores e tamanhos",
+      "body": "Um produto nasce ao juntar uma ficha técnica (tecido e modelagem) com uma estampa. Cada combinação de cor e tamanho vira uma variação (SKU) — a unidade que estoque, anúncios e produção realmente movimentam.",
+      "flow": {
+        "recipe": "Ficha + estampa",
+        "recipeSub": "tecido + arte",
+        "product": "Produto",
+        "productSub": "modelo à venda",
+        "variations": "Variações · SKU",
+        "variationsSub": "cor × tamanho"
       }
     }
   },
@@ -880,14 +929,17 @@
     },
     "filters": {
       "searchPlaceholder": "Procurar estampa…",
-      "itemCount": "estampas"
+      "itemCount": "estampas",
+      "allTechniques": "Todas"
     },
     "table": {
       "columns": {
         "code": "Código",
         "name": "Nome",
         "costPerUnit": "Custo/un",
-        "actions": "Ações"
+        "actions": "Ações",
+        "technique": "Técnica",
+        "tag": "Tag"
       }
     },
     "actions": {
@@ -905,13 +957,21 @@
         "code": "Código",
         "name": "Nome da estampa",
         "imageUrl": "URL da arte",
-        "costPerUnit": "Custo por peça (R$)"
+        "costPerUnit": "Custo por peça (R$)",
+        "technique": "Técnica",
+        "tag": "Tag / coleção",
+        "artFront": "URL da arte (frente)",
+        "artBack": "URL da arte (costas)",
+        "widthCm": "Largura da arte",
+        "heightCm": "Altura da arte"
       },
       "placeholders": {
         "code": "EST-001",
         "name": "Ex: Aurora — Sol nascente",
         "imageUrl": "https://…/arte.png",
-        "costPerUnit": "0,00"
+        "costPerUnit": "0,00",
+        "tag": "verão, atemporal, edição limitada…",
+        "artUrl": "https://…/arte.png"
       },
       "helpers": {
         "imageUrl": "Cole o link público da arte final."
@@ -929,6 +989,46 @@
         "updated": "Estampa atualizada",
         "deleted": "Estampa excluída",
         "error": "Não foi possível salvar a estampa."
+      }
+    },
+    "techniques": {
+      "dtf": "DTF",
+      "silkscreen": "Silkscreen",
+      "sublimation": "Sublimação"
+    },
+    "help": {
+      "title": "Estampas — o catálogo de artes que vão na peça",
+      "body": "Cada estampa guarda a arte e o método de aplicação — DTF, silk ou sublimação — com tamanho de impressão. É o que o Montador encaixa na folha e o que a etiqueta de cada peça mostra.",
+      "flow": {
+        "artwork": "Arte enviada",
+        "artworkSub": "arquivo .png",
+        "print": "Estampa",
+        "printSub": "método & tamanho",
+        "applied": "Aplicada",
+        "appliedSub": "no produto"
+      }
+    },
+    "detail": {
+      "back": "Voltar às estampas",
+      "notFound": "Estampa não encontrada.",
+      "download": "Baixar arte",
+      "fields": {
+        "technique": "Técnica",
+        "cost": "Custo por unidade",
+        "tag": "Categoria",
+        "colors": "Cores aplicadas"
+      },
+      "specs": {
+        "title": "Especificações de aplicação",
+        "size": "Tamanho da arte",
+        "temperature": "Temperatura",
+        "pressTime": "Tempo de prensa",
+        "position": "Posição padrão",
+        "positionValue": "Centro frontal · 8cm da gola"
+      },
+      "usedBy": {
+        "title": "Produtos que usam esta estampa",
+        "empty": "Nenhum produto usa esta estampa ainda."
       }
     }
   },
@@ -1426,12 +1526,30 @@
         "recent": "Últimas movimentações"
       },
       "moveTypes": {
-        "shipment": { "label": "Recebimento", "desc": "Peças vindas da costura" },
-        "return": { "label": "Devolução", "desc": "Retorno de cliente" },
-        "entryAdjustment": { "label": "Ajuste (+)", "desc": "Correção de inventário" },
-        "sale": { "label": "Pedido", "desc": "Despacho para cliente" },
-        "loss": { "label": "Avaria", "desc": "Peça danificada" },
-        "exitAdjustment": { "label": "Ajuste (−)", "desc": "Correção de inventário" }
+        "shipment": {
+          "label": "Recebimento",
+          "desc": "Peças vindas da costura"
+        },
+        "return": {
+          "label": "Devolução",
+          "desc": "Retorno de cliente"
+        },
+        "entryAdjustment": {
+          "label": "Ajuste (+)",
+          "desc": "Correção de inventário"
+        },
+        "sale": {
+          "label": "Pedido",
+          "desc": "Despacho para cliente"
+        },
+        "loss": {
+          "label": "Avaria",
+          "desc": "Peça danificada"
+        },
+        "exitAdjustment": {
+          "label": "Ajuste (−)",
+          "desc": "Correção de inventário"
+        }
       },
       "preview": {
         "current": "Atual",
@@ -1926,5 +2044,83 @@
   "home": {
     "title": "Bem-vindo ao Orion",
     "subtitle": "Escolha uma seção no menu lateral para começar."
+  },
+  "batches": {
+    "page": {
+      "eyebrow": "Vendas"
+    },
+    "list": {
+      "title": "Produção",
+      "titleEm": "em lotes",
+      "sub": "Agrupe pedidos em um lote, ajuste as impressões e então imprima etiquetas e despache.",
+      "loadError": "Não foi possível carregar os lotes.",
+      "noResults": "Nenhum lote ainda.",
+      "empty": "Nenhum lote ainda. Crie um a partir dos pedidos selecionados."
+    },
+    "actions": {
+      "create": "Novo lote",
+      "back": "Voltar aos lotes"
+    },
+    "create": {
+      "title": "Novo lote",
+      "namePlaceholder": "Nome do lote (opcional)",
+      "selectOrders": "Selecione os pedidos para incluir",
+      "noOrders": "Nenhum pedido sem lote disponível.",
+      "selected": "{count} selecionados",
+      "submit": "Criar lote",
+      "hint": "Outros itens do mesmo pedido são incluídos automaticamente."
+    },
+    "columns": {
+      "code": "Código",
+      "name": "Nome",
+      "status": "Status",
+      "orders": "Pedidos",
+      "pieces": "Peças",
+      "created": "Criado"
+    },
+    "statuses": {
+      "open": "Aberto",
+      "adjusted": "Ajustado",
+      "printed": "Impresso",
+      "done": "Concluído",
+      "cancelled": "Cancelado"
+    },
+    "summary": {
+      "orders": "Pedidos",
+      "pieces": "Peças",
+      "needed": "Necessário",
+      "toPrint": "A imprimir"
+    },
+    "adjustments": {
+      "title": "Estampas",
+      "stamp": "Estampa",
+      "color": "Cor",
+      "needed": "Necessário",
+      "toPrint": "A imprimir",
+      "sent": "Enviado",
+      "empty": "Nenhuma estampa neste lote.",
+      "save": "Salvar ajustes"
+    },
+    "detail": {
+      "printLabels": "Imprimir etiquetas",
+      "sendMontador": "Enviar para o Montador DTF",
+      "printShipping": "Imprimir etiquetas de envio",
+      "markDone": "Concluir",
+      "cancel": "Cancelar lote",
+      "delete": "Excluir lote",
+      "deleteConfirm": "Excluir este lote? Os pedidos serão desvinculados.",
+      "notFound": "Lote não encontrado."
+    },
+    "toast": {
+      "created": "Lote criado",
+      "saved": "Ajustes salvos",
+      "montadorOk": "Enviado ao Montador: {ok} ok, {failed} falhas",
+      "montadorErr": "Não foi possível enviar ao Montador DTF",
+      "deleted": "Lote excluído",
+      "noShippingLabels": "Nenhuma etiqueta de envio disponível para este lote."
+    },
+    "fallback": {
+      "forbidden": "Você não tem acesso aos lotes."
+    }
   }
 }

@@ -6,6 +6,14 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  PRINT_TECHNIQUES,
   printFormSchema,
   type Print,
   type PrintFormPayload,
@@ -25,6 +33,7 @@ const FIELD_INPUT_CLASS =
 
 export function PrintForm({ formId, initial, onSubmit }: Props) {
   const t = useTranslations("prints.form");
+  const tTech = useTranslations("prints.techniques");
   const tValidation = useTranslations("prints.form.validation");
 
   const defaultValues: PrintFormValues = {
@@ -32,6 +41,12 @@ export function PrintForm({ formId, initial, onSubmit }: Props) {
     name: initial?.name ?? "",
     image_url: initial?.image_url ?? "",
     cost_per_unit: initial?.cost_per_unit ?? "0",
+    technique: initial?.technique ?? "dtf",
+    tag: initial?.tag ?? "",
+    image_url_front: initial?.image_url_front ?? "",
+    image_url_back: initial?.image_url_back ?? "",
+    width_cm: initial?.width_cm ?? "",
+    height_cm: initial?.height_cm ?? "",
   };
 
   const form = useForm<PrintFormValues>({
@@ -104,6 +119,123 @@ export function PrintForm({ formId, initial, onSubmit }: Props) {
         <p className="text-[11px] italic text-[color:var(--orion-ink-3)]">
           {t("helpers.imageUrl")}
         </p>
+      </div>
+
+      {/* Technique + collection tag */}
+      <div className="grid gap-[16px] sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <label className={FIELD_LABEL_CLASS}>{t("labels.technique")}</label>
+          <Controller
+            control={form.control}
+            name="technique"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className={FIELD_INPUT_CLASS} aria-label={t("labels.technique")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRINT_TECHNIQUES.map((tech) => (
+                    <SelectItem key={tech} value={tech}>
+                      {tTech(tech)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="print-tag" className={FIELD_LABEL_CLASS}>
+            {t("labels.tag")}
+          </label>
+          <Input
+            id="print-tag"
+            autoComplete="off"
+            className={FIELD_INPUT_CLASS}
+            placeholder={t("placeholders.tag")}
+            {...form.register("tag")}
+          />
+        </div>
+      </div>
+
+      {/* Production artwork (front / back) sent to the DTF assembler */}
+      <div className="grid gap-[16px] sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="print-art-front" className={FIELD_LABEL_CLASS}>
+            {t("labels.artFront")}
+          </label>
+          <Input
+            id="print-art-front"
+            type="url"
+            autoComplete="off"
+            className={FIELD_INPUT_CLASS}
+            placeholder={t("placeholders.artUrl")}
+            {...form.register("image_url_front")}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="print-art-back" className={FIELD_LABEL_CLASS}>
+            {t("labels.artBack")}
+          </label>
+          <Input
+            id="print-art-back"
+            type="url"
+            autoComplete="off"
+            className={FIELD_INPUT_CLASS}
+            placeholder={t("placeholders.artUrl")}
+            {...form.register("image_url_back")}
+          />
+        </div>
+      </div>
+
+      {/* Print size in cm ("Tamanho da arte") */}
+      <div className="grid gap-[16px] sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="print-width" className={FIELD_LABEL_CLASS}>
+            {t("labels.widthCm")}
+          </label>
+          <Controller
+            control={form.control}
+            name="width_cm"
+            render={({ field }) => (
+              <NumberInput
+                id="print-width"
+                tone="catalog"
+                suffix="cm"
+                step={0.5}
+                decimals={2}
+                min={0}
+                align="right"
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+              />
+            )}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="print-height" className={FIELD_LABEL_CLASS}>
+            {t("labels.heightCm")}
+          </label>
+          <Controller
+            control={form.control}
+            name="height_cm"
+            render={({ field }) => (
+              <NumberInput
+                id="print-height"
+                tone="catalog"
+                suffix="cm"
+                step={0.5}
+                decimals={2}
+                min={0}
+                align="right"
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+              />
+            )}
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">

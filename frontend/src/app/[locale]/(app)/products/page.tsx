@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, Shirt } from "lucide-react";
+import { FileText, Hash, Search, Shirt } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { PageHead } from "@/components/page/PageHead";
+import { HelpCard } from "@/components/page/HelpCard";
+import { useRouter } from "@/i18n/routing";
 import { ProductFormSheet } from "@/components/products/ProductFormSheet";
 import { ProductsEmptyState } from "@/components/products/ProductsEmptyState";
 import { ProductsTable } from "@/components/products/ProductsTable";
@@ -21,7 +23,7 @@ import { useCanAccess } from "@/hooks/use-permissions";
 import { usePrints } from "@/hooks/use-prints";
 import { useProducts } from "@/hooks/use-products";
 import { useSpecs } from "@/hooks/use-specs";
-import { PRODUCT_TYPES, type Product, type ProductType } from "@/lib/schemas/product";
+import { PRODUCT_TYPES, type ProductType } from "@/lib/schemas/product";
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -34,9 +36,9 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 
 export default function ProductsPage() {
   const t = useTranslations("products");
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [productType, setProductType] = useState<"all" | ProductType>("all");
-  const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const canWrite = useCanAccess("products.write");
   const debouncedSearch = useDebouncedValue(search, 200);
@@ -100,6 +102,19 @@ export default function ProductsPage() {
         }
       />
 
+      <HelpCard
+        icon={Shirt}
+        tone="var(--brand-catalog)"
+        title={t("help.title")}
+        steps={[
+          { icon: FileText, label: t("help.flow.recipe"), sub: t("help.flow.recipeSub") },
+          { icon: Shirt, label: t("help.flow.product"), sub: t("help.flow.productSub"), accent: true },
+          { icon: Hash, label: t("help.flow.variations"), sub: t("help.flow.variationsSub") },
+        ]}
+      >
+        {t("help.body")}
+      </HelpCard>
+
       <div className="overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)]">
         <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface)] px-4 py-3">
           <div className="flex min-w-[220px] items-center gap-1.5 rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-2.5 py-[5px] text-[12.5px] text-[color:var(--orion-ink-2)]">
@@ -156,19 +171,12 @@ export default function ProductsPage() {
             specCodeById={specCodeById}
             printCodeById={printCodeById}
             printImageById={printImageById}
-            onEdit={(p) => setEditing(p)}
+            onEdit={(p) => router.push(`/products/${p.id}`)}
           />
         )}
       </div>
 
       <ProductFormSheet open={creating} onOpenChange={setCreating} />
-      <ProductFormSheet
-        open={editing !== null}
-        onOpenChange={(o) => {
-          if (!o) setEditing(null);
-        }}
-        initial={editing}
-      />
     </div>
   );
 }

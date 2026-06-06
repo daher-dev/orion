@@ -10,6 +10,16 @@ const Reports = () => {
                   <button className="btn"><Icon name="calendar" size={14}/> Últimos 90 dias</button>
                   <button className="btn"><Icon name="download" size={14}/> Exportar CSV</button>
                 </>}/>
+      <HelpCard id="reports" icon="bar-chart-3" tone="var(--brand-reports)" title="Relatórios — cruze vendas, produção, estoque e custo">
+        <HelpBody>
+          Todos os dados do Orion num só lugar para <b>analisar</b>: o que mais vende, gargalos de <b>produção</b>, giro de <b>estoque</b> e a <b>margem</b> real por produto. Filtre por período e <b>exporte</b> quando precisar.
+        </HelpBody>
+        <Flow accent="var(--brand-reports)" steps={[
+          { icon: 'database', label: 'Dados', sub: 'vendas · produção' },
+          { icon: 'bar-chart-3', label: 'Relatórios', sub: 'gráficos & filtros', tone: 'accent' },
+          { icon: 'lightbulb', label: 'Decisões', sub: 'o que produzir', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       <div style={{ marginBottom: 16 }}>
         <Seg value={tab} onChange={setTab} options={[
           {value:'sales',label:'Vendas'},{value:'production',label:'Produção'},

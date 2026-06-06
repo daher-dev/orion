@@ -278,6 +278,17 @@ const Cutting = () => {
                   <Seg value={view} onChange={setView} options={[{value:'kanban',label:'Kanban'},{value:'table',label:'Tabela'}]}/>
                   <button className="btn btn-primary" onClick={openNew}><Icon name="scissors" size={14}/> Nova ordem</button>
                 </>}/>
+      <HelpCard id="cutting" icon="scissors" tone="var(--brand-prod)" maxW={720} title="Corte — planeje lotes contra suas bobinas">
+        <HelpBody>
+          Você planeja uma <b>ordem de corte</b> escolhendo a ficha, os tamanhos e as quantidades; o Orion calcula o <b>consumo de tecido</b> e <b>abate da bobina</b>. As peças cortadas seguem para a costura nas bancas.
+        </HelpBody>
+        <Flow accent="var(--brand-prod)" steps={[
+          { icon: 'layers', label: 'Bobina', sub: 'tecido em estoque' },
+          { icon: 'scissors', label: 'Corte', sub: 'abate o saldo', tone: 'accent' },
+          { icon: 'shirt', label: 'Cortadas', sub: 'por tamanho' },
+          { icon: 'send', label: 'Costura', sub: 'nas bancas', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       {view === 'kanban' ? (
         <div className="grid g-cols-3">
           {groups.map(g => {
@@ -295,7 +306,7 @@ const Cutting = () => {
                     <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{colItems.length}</span>
                   </div>
                   {g.id === 'pendente' && (
-                    <button className="btn btn-sm btn-ghost" onClick={openNew}><Icon name="plus" size={12}/></button>
+                    <button className="btn btn-sm btn-ghost" onClick={openNew}><Icon name="scissors" size={12}/></button>
                   )}
                 </div>
                 <div style={{ display: 'grid', gap: 8, minHeight: 40 }}>
@@ -349,6 +360,7 @@ const Cutting = () => {
              title={open ? `Ordem ${open.code}` : ''}
              sub={open ? <span style={{fontSize:12,color:'var(--ink-3)'}}>{open.product}</span> : null}
              footer={<>
+               <button className="btn btn-ghost" style={{ color: 'var(--err)', marginRight: 'auto' }}><Icon name="trash-2" size={13}/> Excluir ordem</button>
                <button className="btn" onClick={() => setOpen(null)}>Fechar</button>
                <button className="btn btn-primary" onClick={() => setOpen(null)}><Icon name="check" size={13}/> Salvar alterações</button>
              </>}>
@@ -375,6 +387,17 @@ const Sewing = () => {
       <PageHead sub="sewing" title="Costura" titleEm="em bancas"
                 desc="Acompanhe remessas enviadas e recebidas das bancas terceirizadas."
                 actions={<button className="btn btn-primary"><Icon name="send" size={14}/> Nova remessa</button>}/>
+      <HelpCard id="sewing" icon="send" tone="var(--brand-prod)" maxW={720} title="Costura — remessas que vão e voltam das bancas">
+        <HelpBody>
+          Peças cortadas viram uma <b>remessa</b> enviada a uma <b>banca</b> terceirizada. Aqui você acompanha o que <b>saiu</b>, o que <b>voltou</b> costurado e o saldo em produção — ao retornar, entra no estoque.
+        </HelpBody>
+        <Flow accent="var(--brand-prod)" steps={[
+          { icon: 'scissors', label: 'Cortadas', sub: 'prontas p/ enviar' },
+          { icon: 'send', label: 'Remessa', sub: 'à banca', tone: 'accent' },
+          { icon: 'factory', label: 'Costura', sub: 'na banca' },
+          { icon: 'package-check', label: 'Retorno', sub: 'entra no estoque', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       <div className="card">
         <TableToolbar>
           <SearchInput placeholder="Buscar remessa…"/>
@@ -412,6 +435,7 @@ const Sewing = () => {
              title={open ? `Remessa ${open.id}` : ''}
              sub={open ? <span style={{fontSize:12,color:'var(--ink-3)'}}>{open.banca}</span> : null}
              footer={<>
+               <button className="btn btn-ghost" style={{ color: 'var(--err)', marginRight: 'auto' }}><Icon name="trash-2" size={13}/> Excluir remessa</button>
                <button className="btn" onClick={() => setOpen(null)}>Fechar</button>
                <button className="btn"><Icon name="printer" size={13}/> Etiqueta</button>
                <button className="btn btn-primary"><Icon name="package-check" size={13}/> Receber remessa</button>
@@ -505,7 +529,17 @@ const Contractors = () => {
     <div className="page">
       <PageHead sub="contractors" title="Bancas" titleEm="parceiras"
                 desc="Diretório de bancas de costura e suas métricas."
-                actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="plus" size={14}/> Nova banca</button>}/>
+                actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="factory" size={14}/> Nova banca</button>}/>
+      <HelpCard id="contractors" icon="factory" tone="var(--brand-prod)" title="Bancas — seu time de costura terceirizado">
+        <HelpBody>
+          Um diretório das <b>bancas</b> parceiras com contato, <b>capacidade</b> e <b>métricas</b> de prazo e qualidade. É daqui que você escolhe para onde enviar cada remessa de costura.
+        </HelpBody>
+        <Flow accent="var(--brand-prod)" steps={[
+          { icon: 'factory', label: 'Banca', sub: 'cadastrada', tone: 'accent' },
+          { icon: 'send', label: 'Remessas', sub: 'recebe de corte' },
+          { icon: 'gauge', label: 'Métricas', sub: 'prazo & qualidade', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       <div className="grid g-cols-2">
         {ORION_DATA.bancas.map(b => (
           <div key={b.id} className="card card-pad" onClick={() => setOpen(b)} style={{ cursor: 'pointer' }}>
@@ -537,6 +571,7 @@ const Contractors = () => {
              title={open ? open.name : ''}
              sub={open ? <span className="mono" style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-3)'}}>{open.id}</span> : null}
              footer={<>
+               <button className="btn btn-ghost" style={{ color: 'var(--err)', marginRight: 'auto' }}><Icon name="trash-2" size={13}/> Excluir banca</button>
                <button className="btn" onClick={() => setOpen(null)}>Fechar</button>
                <button className="btn" style={{ color: '#25D366' }}><WhatsappIcon size={13}/> WhatsApp</button>
                <button className="btn btn-primary"><Icon name="pencil" size={13}/> Editar banca</button>

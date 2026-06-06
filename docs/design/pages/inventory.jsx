@@ -32,7 +32,17 @@ const Fabric = () => {
     <div className="page">
       <PageHead sub="fabric" title="Bobinas" titleEm="de tecido"
                 desc="Cada bobina recebida e o quanto resta. Saldo é abatido a cada corte."
-                actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="plus" size={14}/> Receber bobina</button>}/>
+                actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="layers" size={14}/> Receber bobina</button>}/>
+      <HelpCard id="fabric" icon="layers" tone="var(--brand-inv)" title="Bobinas — quanto de tecido você tem, em tempo real">
+        <HelpBody>
+          Cada <b>bobina</b> recebida entra com seu peso e metragem. A cada <b>ordem de corte</b> o Orion <b>abate o saldo</b> automaticamente — então você sempre sabe o que resta e quando <b>repor</b>.
+        </HelpBody>
+        <Flow accent="var(--brand-inv)" steps={[
+          { icon: 'layers', label: 'Bobina recebida', sub: 'peso & metragem', tone: 'accent' },
+          { icon: 'scissors', label: 'Corte', sub: 'abate o saldo' },
+          { icon: 'gauge', label: 'Saldo restante', sub: 'avisa p/ repor', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       <div className="card">
         <TableToolbar>
           <SearchInput placeholder="Buscar por tipo, fornecedor…" value={q} onChange={e => setQ(e.target.value)}/>
@@ -94,6 +104,7 @@ const Fabric = () => {
              title={open ? open.type : ''}
              sub={open ? <span className="mono" style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-3)'}}>{open.id}</span> : null}
              footer={<>
+               <button className="btn btn-ghost" style={{ color: 'var(--err)', marginRight: 'auto' }}><Icon name="trash-2" size={13}/> Excluir bobina</button>
                <button className="btn" onClick={() => setOpen(null)}>Fechar</button>
                <button className="btn"><Icon name="scissors" size={13}/> Lançar consumo</button>
                <button className="btn btn-primary"><Icon name="pencil" size={13}/> Editar bobina</button>
@@ -175,6 +186,11 @@ const NewFabricSheet = ({ open, onClose }) => {
   const [peso, setPeso] = React.useState(20.0);
   const [supplier, setSupplier] = React.useState('');
   const [color, setColor] = React.useState('Off-white');
+  const [receivedAt, setReceivedAt] = React.useState(() => {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  });
   return (
     <Sheet open={open} onClose={onClose}
       title="Receber bobina"
@@ -248,6 +264,11 @@ const NewFabricSheet = ({ open, onClose }) => {
           <label>Fornecedor</label>
           <input value={supplier} onChange={e => setSupplier(e.target.value)} placeholder="Ex: Malharia Estrela"/>
         </div>
+        <div className="field">
+          <label>Recebido em</label>
+          <DateTimeField value={receivedAt} onChange={setReceivedAt}/>
+          <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>Data e hora em que a bobina foi recebida no estoque.</div>
+        </div>
       </div>
     </Sheet>
   );
@@ -318,6 +339,16 @@ const Stock = () => {
                 actions={<>
                   <button className="btn btn-primary" onClick={() => setAdjustOpen(true)}><Icon name="arrow-down-up" size={14}/> Lançar movimentação</button>
                 </>}/>
+      <HelpCard id="stock" icon="boxes" tone="var(--brand-inv)" title="Estoque — peças prontas por SKU">
+        <HelpBody>
+          O inventário de <b>produtos acabados</b>: cada <b>variação (SKU)</b> <b>entra</b> quando volta da costura e <b>sai</b> quando um pedido é expedido. Defina o <b>mínimo</b> para o Orion avisar antes de faltar.
+        </HelpBody>
+        <Flow accent="var(--brand-inv)" steps={[
+          { icon: 'package-check', label: 'Costura retorna', sub: 'entrada' },
+          { icon: 'boxes', label: 'Estoque por SKU', sub: 'posição atual', tone: 'accent' },
+          { icon: 'truck', label: 'Pedido expede', sub: 'saída', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       <div className="card">
         <TableToolbar>
           <Seg value={tab} onChange={setTab} options={[

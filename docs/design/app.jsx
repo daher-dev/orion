@@ -9,7 +9,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 const ROUTES = {
   dashboard: 'Dashboard',
-  orders: 'Orders', clients: 'Clients', ads: 'Ads',
+  orders: 'Pedidos', clients: 'Clients', ads: 'Ads',
   products: 'Products', specs: 'Specs', prints: 'Prints',
   cutting: 'Cutting', sewing: 'Sewing', contractors: 'Contractors',
   fabric: 'Fabric', stock: 'Stock',
@@ -20,6 +20,12 @@ function App() {
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [route, setRoute] = React.useState('dashboard');
   const [collapsed, setCollapsed] = React.useState(false);
+
+  // Entered from the Console via "Entrar como" — show a clear banner.
+  const impersonating = React.useMemo(() => {
+    try { return new URLSearchParams(window.location.search).get('impersonate'); } catch (e) { return null; }
+  }, []);
+  const companyName = impersonating || tweaks.companyName;
 
   // Apply accent
   React.useEffect(() => {
@@ -40,12 +46,20 @@ function App() {
   return (
     <div className={`app ${collapsed ? 'collapsed' : ''}`}>
       <Sidebar route={route} setRoute={setRoute} role={tweaks.role}
-               accent={tweaks.accent} companyName={tweaks.companyName}/>
+               accent={tweaks.accent} companyName={companyName}/>
       <Topbar onBurger={() => setCollapsed(c => !c)}
-              companyName={tweaks.companyName}
+              companyName={companyName}
               role={tweaks.role}
               setRoute={setRoute}/>
       <main className="main" data-screen-label={route}>
+        {impersonating && (
+          <div className="imp-banner">
+            <Icon name="orbit" size={15}/>
+            <span>Você está dentro de <b>{impersonating}</b> como equipe Orion — sessão de suporte.</span>
+            <span className="imp-spacer"/>
+            <a href="Orion Backoffice.html"><Icon name="arrow-left" size={13}/> Sair e voltar ao Console</a>
+          </div>
+        )}
         <PageEl role={tweaks.role} setRoute={setRoute} tweaks={tweaks} setTweak={setTweak}/>
       </main>
 

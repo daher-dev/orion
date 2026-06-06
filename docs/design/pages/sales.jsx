@@ -148,6 +148,7 @@ const Orders = ({ setRoute }) => {
              title={open ? `Pedido #${open.id}` : ''}
              sub={open ? <ChannelChip id={open.channel}/> : null}
              footer={<>
+               <button className="btn btn-ghost" style={{ color: 'var(--err)', marginRight: 'auto' }}><Icon name="trash-2" size={13}/> Excluir pedido</button>
                <button className="btn" onClick={() => setOpen(null)}>Fechar</button>
                <button className="btn btn-primary"><Icon name="check" size={13}/> Salvar</button>
              </>}>
@@ -457,6 +458,16 @@ const Clients = () => {
     <div className="page">
       <PageHead sub="clients" title="Clientes" desc="Diretório de clientes através de todos os canais."
                 actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="users" size={14}/> Novo cliente</button>}/>
+      <HelpCard id="clients" icon="users" tone="var(--brand-sales)" title="Clientes — uma ficha por pessoa, somando todos os canais">
+        <HelpBody>
+          Cada pedido, de qualquer canal, é ligado a um <b>cliente</b>. A ficha reúne <b>contato</b>, histórico de compras e o <b>total gerado</b> (LTV) — marque <b>VIPs</b> e recorrentes para atender melhor.
+        </HelpBody>
+        <Flow accent="var(--brand-sales)" steps={[
+          { icon: 'shopping-bag', label: 'Pedidos', sub: 'todos os canais' },
+          { icon: 'user', label: 'Cliente', sub: 'contato & perfil', tone: 'accent' },
+          { icon: 'heart', label: 'Histórico & LTV', sub: 'VIP · recorrente', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       <div className="card">
         <TableToolbar>
           <SearchInput placeholder="Procurar cliente…" value={search} onChange={setSearch}/>
@@ -504,6 +515,7 @@ const Clients = () => {
              title={open ? open.name : ''}
              sub={open ? <span style={{ color: 'var(--ink-3)', fontSize: 12 }}>{open.city}</span> : null}
              footer={<>
+               <button className="btn btn-ghost" style={{ color: 'var(--err)', marginRight: 'auto' }}><Icon name="trash-2" size={13}/> Excluir cliente</button>
                <button className="btn" onClick={() => setOpen(null)}>Fechar</button>
                <button className="btn btn-primary"><Icon name="message-circle" size={13}/> Contatar</button>
              </>}>
@@ -650,6 +662,16 @@ const Ads = () => {
       <PageHead sub="ads" title="Anúncios" titleEm="por canal"
                 desc="Gerencie suas listagens em ecommerces e redes sociais."
                 actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="megaphone" size={14}/> Novo anúncio</button>}/>
+      <HelpCard id="ads" icon="megaphone" tone="var(--brand-sales)" title="Anúncios — sua vitrine em cada canal">
+        <HelpBody>
+          Um <b>anúncio</b> é como um <b>produto</b> aparece à venda num canal (Shopee, ML, Instagram…). Quando chega um pedido, o Orion usa o anúncio para descobrir <b>qual produto e variação</b> preparar — por isso mantenha título, foto e status sempre em dia.
+        </HelpBody>
+        <Flow accent="var(--brand-sales)" steps={[
+          { icon: 'shirt', label: 'Produto', sub: 'do catálogo' },
+          { icon: 'megaphone', label: 'Anúncio', sub: 'por canal', tone: 'accent' },
+          { icon: 'shopping-bag', label: 'Pedido entra', sub: 'vira venda', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       <div className="card">
         <TableToolbar>
           <SearchInput placeholder="Procurar anúncio…" value={search} onChange={setSearch}/>
@@ -695,6 +717,7 @@ const Ads = () => {
              title={open ? open.title : ''}
              sub={open ? <ChannelChip id={open.channel}/> : null}
              footer={<>
+               <button className="btn btn-ghost" style={{ color: 'var(--err)', marginRight: 'auto' }}><Icon name="trash-2" size={13}/> Excluir anúncio</button>
                <button className="btn" onClick={() => setOpen(null)}>Fechar</button>
                {open && open.status === 'ativo'
                  ? <button className="btn"><Icon name="pause" size={13}/> Pausar anúncio</button>

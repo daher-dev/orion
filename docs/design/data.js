@@ -22,6 +22,37 @@ const ORION_DATA = {
     revenue30d:        { value: "R$ 184.530", delta: +18.2, label: "Receita 30d", spark: [120,140,135,160,155,170,175,180,178,184] },
   },
 
+  // Conferência (order-checking) — the operational core the client tracks daily.
+  // Real-time snapshot of today's batch of imported orders being conferred.
+  conference: {
+    totals: { orders: 859, items: 1077, mappedPct: 100, pending: 0 },
+    progress: {
+      ordersDone: 486, ordersTotal: 859,   // pedidos 100% conferidos
+      piecesDone: 612, piecesTotal: 1077,   // peças conferidas
+      partial: 23,                           // pedidos parcialmente conferidos
+      problems: 5,                           // divergências encontradas
+      toCheck: 350,                          // ainda sem nenhuma peça conferida
+    },
+    topProducts: [
+      { rank: 1, code: "2055",             name: "Camiseta 2055",      pieces: 175, orders: 152, tone: "moss"  },
+      { rank: 2, code: "2047",             name: "Camiseta 2047",      pieces: 94,  orders: 87,  tone: "stone" },
+      { rank: 3, code: "Punisher",         name: "Bermuda Punisher",   pieces: 63,  orders: 53,  tone: "bone"  },
+      { rank: 4, code: "Jiu Jitsu Shopee", name: "Bermuda Jiu Jitsu",  pieces: 37,  orders: 29,  tone: "sand"  },
+      { rank: 5, code: "2303",             name: "Camiseta 2303",      pieces: 31,  orders: 10,  tone: "warm"  },
+    ],
+    // Relatório de Pedidos — order-level breakdown, each metric drills into a filtered list.
+    report: [
+      { key: "orders",  label: "Pedidos",   value: 859,  icon: "file-text",       color: "var(--accent)",       to: "orders" },
+      { key: "pieces",  label: "Peças",     value: 1077, icon: "package",         color: "var(--brand-catalog)", to: "orders" },
+      { key: "mapped",  label: "Mapeadas",  value: 1077, icon: "tag",             color: "var(--ok)",            to: "prints" },
+      { key: "pending", label: "Pendentes", value: 0,    icon: "alert-circle",    color: "var(--warn)",          to: "prints" },
+      { key: "done",    label: "Conferidos",value: 486,  icon: "check-circle-2",  color: "var(--ok)",            to: "orders" },
+      { key: "tocheck", label: "A conferir",value: 373,  icon: "clock",           color: "var(--ink-3)",         to: "orders" },
+      { key: "inbatch", label: "Em lote",   value: 101,  icon: "boxes",           color: "var(--brand-catalog)", to: "orders" },
+      { key: "nobatch", label: "Sem lote",  value: 758,  icon: "box",             color: "var(--ink-3)",         to: "orders" },
+    ],
+  },
+
   // Pipeline counts
   pipeline: [
     { stage: "Pedidos",  short: "Aguardando produção",       count: 47, color: "var(--brand-sales)" },
@@ -193,6 +224,116 @@ const ORION_DATA = {
     { when: "06/05 18:02", who: "Rafael Mendes", action: "order.ship",     target: "Pedido #10485", note: "Correios PAC" },
     { when: "06/05 14:30", who: "Sistema",       action: "order.import",   target: "Shopee · 12 pedidos", note: "webhook" },
   ],
+
+  // ───────── Separação / Checkout / Lotes (expedição de pedidos) ─────────
+  // The fulfillment workspace: importação de pedidos de marketplaces, mapeamento
+  // de SKU→estampa, separação com etiquetas por peça, e agrupamento em lotes.
+  fulfillment: {
+    meta: { ads: 63, orders: 175, items: 190 },
+    platforms: {
+      ml:      { id: "ml",      name: "Mercado Libre" },
+      shopee:  { id: "shopee",  name: "Shopee" },
+      shopify: { id: "shopify", name: "Shopify" },
+    },
+    imports: [
+      { id: "imp-0604-0912", label: "04/06 · 09:12", count: 92 },
+      { id: "imp-0604-1340", label: "04/06 · 13:40", count: 58 },
+      { id: "imp-0603-1805", label: "03/06 · 18:05", count: 25 },
+    ],
+    // Estampa = a arte aplicada. png: arquivo pronto p/ o montador DTF ("ok"|"pendente").
+    estampas: {
+      "2039": { code: "2039", name: "Jujutsu Kaisen — Gojo",  png: "ok",       garments: ["Moletom Canguru"],            tone: "moss"  },
+      "2055": { code: "2055", name: "Naruto — Akatsuki",       png: "ok",       garments: ["Camiseta","Cropped","Bolsa ecobag"], tone: "warm"  },
+      "2170": { code: "2170", name: "One Piece — Luffy",       png: "ok",       garments: ["Ecobag","Camiseta"],          tone: "sand"  },
+      "2047": { code: "2047", name: "Demon Slayer — Tanjiro",  png: "ok",       garments: ["Camiseta"],                   tone: "stone" },
+      "2303": { code: "2303", name: "Chainsaw Man — Denji",    png: "pendente", garments: ["Camiseta","Moletom"],         tone: "bone"  },
+      "2301": { code: "2301", name: "Berserk — Guts",          png: "ok",       garments: ["Camiseta"],                   tone: "moss"  },
+    },
+    // status: a_imprimir | impresso | conferido
+    orders: [
+      { id: "UPTHK249567", platform: "ml",      importId: "imp-0604-0912", status: "a_imprimir", lote: null, items: [
+        { estampa: "2039", garment: "Moletom Canguru", product: "Moletom Canguru Unissex Jujutsu Kaisen Gojo Anime", color: "Preto", size: "M", qty: 1 } ] },
+      { id: "UPTHK251213", platform: "ml",      importId: "imp-0604-0912", status: "a_imprimir", lote: null, items: [
+        { estampa: "2055", garment: "Camiseta", product: "Camiseta Naruto Shippuden Akatsuki", color: "Branco", size: "G", qty: 1 },
+        { estampa: "2047", garment: "Camiseta", product: "Camiseta Demon Slayer Tanjiro",     color: "Preto",  size: "M", qty: 1 } ] },
+      { id: "UPTHK251900", platform: "ml",      importId: "imp-0604-0912", status: "a_imprimir", lote: null, items: [
+        { estampa: "2170", garment: "Camiseta", product: "Camiseta One Piece Luffy Gear 5", color: "Off-white", size: "P", qty: 1 } ] },
+      { id: "UPTHK253371", platform: "ml",      importId: "imp-0604-1340", status: "a_imprimir", lote: null, items: [
+        { estampa: "2301", garment: "Camiseta", product: "Camiseta Berserk Guts Armadura", color: "Preto", size: "GG", qty: 1 } ] },
+      { id: "UPTHK253608", platform: "ml",      importId: "imp-0604-1340", status: "impresso",   lote: null, items: [
+        { estampa: "2055", garment: "Cropped", product: "Cropped Naruto Akatsuki", color: "Preto", size: "M", qty: 1 } ] },
+      { id: "UPTHK253654", platform: "shopee",  importId: "imp-0604-1340", status: "a_imprimir", lote: null, items: [
+        { estampa: "2303", garment: "Camiseta", product: "Camiseta Chainsaw Man Denji", color: "Branco", size: "G", qty: 1 } ] },
+      { id: "UPTHK253825", platform: "ml",      importId: "imp-0604-1340", status: "a_imprimir", lote: null, items: [
+        { estampa: "2170", garment: "Bolsa ecobag", product: "Bolsa Ecobag One Piece", color: "Cru", size: "Unico", qty: 1 } ] },
+      { id: "UPTHK253865", platform: "ml",      importId: "imp-0604-0912", status: "a_imprimir", lote: null, items: [
+        { estampa: "2039", garment: "Moletom Canguru", product: "Moletom Canguru Jujutsu Kaisen Gojo", color: "Preto", size: "G", qty: 1 } ] },
+      { id: "UPTHK254020", platform: "ml",      importId: "imp-0604-0912", status: "a_imprimir", lote: null, items: [
+        { estampa: "2047", garment: "Camiseta", product: "Camiseta Demon Slayer Tanjiro", color: "Preto", size: "M", qty: 1 } ] },
+      { id: "UPTHK254118", platform: "shopify", importId: "imp-0603-1805", status: "a_imprimir", lote: null, items: [
+        { estampa: "2055", garment: "Bolsa ecobag", product: "Bolsa Ecobag Naruto Akatsuki", color: "Cru", size: "Unico", qty: 2 } ] },
+      { id: "UPTHK254233", platform: "ml",      importId: "imp-0604-1340", status: "a_imprimir", lote: null, items: [
+        { estampa: "2301", garment: "Camiseta", product: "Camiseta Berserk Guts",       color: "Branco", size: "M", qty: 1 },
+        { estampa: "2047", garment: "Camiseta", product: "Camiseta Demon Slayer Tanjiro", color: "Branco", size: "G", qty: 1 },
+        { estampa: "2170", garment: "Camiseta", product: "Camiseta One Piece Luffy",    color: "Preto",  size: "P", qty: 1 } ] },
+      { id: "UPTHK254301", platform: "ml",      importId: "imp-0604-1340", status: "a_imprimir", lote: null, items: [
+        { estampa: "2303", garment: "Moletom", product: "Moletom Chainsaw Man Denji", color: "Preto", size: "GG", qty: 1 } ] },
+      { id: "UPTHK254420", platform: "shopee",  importId: "imp-0603-1805", status: "impresso",   lote: null, items: [
+        { estampa: "2039", garment: "Moletom Canguru", product: "Moletom Canguru Jujutsu Kaisen Gojo", color: "Preto", size: "M", qty: 1 } ] },
+      { id: "UPTHK254512", platform: "ml",      importId: "imp-0604-0912", status: "a_imprimir", lote: "LOTE-20260604-9142", items: [
+        { estampa: "2055", garment: "Camiseta", product: "Camiseta Naruto Shippuden Akatsuki", color: "Off-white", size: "G", qty: 1 } ] },
+      { id: "UPTHK254633", platform: "ml",      importId: "imp-0604-1340", status: "a_imprimir", lote: "LOTE-20260604-9142", items: [
+        { estampa: "2170", garment: "Camiseta", product: "Camiseta One Piece Luffy", color: "Branco", size: "M", qty: 1 } ] },
+      { id: "UPTHK254780", platform: "ml",      importId: "imp-0603-1805", status: "a_imprimir", lote: null, items: [
+        { estampa: "2301", garment: "Camiseta", product: "Camiseta Berserk Guts", color: "Preto", size: "P", qty: 1 } ] },
+    ],
+    // Lote = grupo de pedidos despachados juntos. A grade de estampas mostra só as
+    // artes que precisam ser montadas/impressas (necessário), não todas as peças.
+    lotes: [
+      { id: "LOTE-20260604-9142", num: 1, status: "aberto",      created: "04/06/2026 · 14:02", pedidos: 58, pecas: 77, estampas: [
+        { code: "2055", items: 1,  toPrint: 1, montado: false, enviado: false },
+        { code: "2170", items: 1,  toPrint: 1, montado: false, enviado: false },
+      ] },
+      { id: "LOTE-20260603-4471", num: 2, status: "em_producao", created: "03/06/2026 · 16:20", pedidos: 41, pecas: 53, estampas: [
+        { code: "2039", items: 14, toPrint: 0, montado: true,  enviado: true  },
+        { code: "2047", items: 9,  toPrint: 0, montado: true,  enviado: true  },
+        { code: "2303", items: 6,  toPrint: 2, montado: false, enviado: false },
+      ] },
+      { id: "LOTE-20260602-1188", num: 3, status: "despachado",  created: "02/06/2026 · 11:08", pedidos: 63, pecas: 80, estampas: [
+        { code: "2055", items: 20, toPrint: 0, montado: true,  enviado: true  },
+        { code: "2301", items: 11, toPrint: 0, montado: true,  enviado: true  },
+      ] },
+    ],
+    // Catálogo interno — Product < ProductVariation (SKU). A estampa é propriedade
+    // do produto (sai daqui para a produção); a variação carrega cor/tamanho/SKU.
+    catalogProducts: [
+      { id: "p-2055-cam", code: "CAM-2055", name: "Camiseta Naruto Akatsuki",  garment: "Camiseta", estampa: "2055", colors: ["Preto","Branco","Off-white"], sizes: ["P","M","G","GG"] },
+      { id: "p-2055-crp", code: "CRP-2055", name: "Cropped Naruto Akatsuki",   garment: "Cropped",  estampa: "2055", colors: ["Preto","Branco"],            sizes: ["P","M","G"] },
+      { id: "p-2055-eco", code: "ECO-2055", name: "Ecobag Naruto Akatsuki",    garment: "Ecobag",   estampa: "2055", colors: ["Cru"],                        sizes: ["Unico"] },
+      { id: "p-2039-mol", code: "MOL-2039", name: "Moletom Canguru JJK Gojo",  garment: "Moletom",  estampa: "2039", colors: ["Preto"],                      sizes: ["M","G","GG"] },
+      { id: "p-2170-cam", code: "CAM-2170", name: "Camiseta One Piece Luffy",  garment: "Camiseta", estampa: "2170", colors: ["Preto","Branco","Off-white"], sizes: ["P","M","G","GG"] },
+      { id: "p-2170-eco", code: "ECO-2170", name: "Ecobag One Piece Luffy",    garment: "Ecobag",   estampa: "2170", colors: ["Cru"],                        sizes: ["Unico"] },
+      { id: "p-2047-cam", code: "CAM-2047", name: "Camiseta Demon Slayer Tanjiro", garment: "Camiseta", estampa: "2047", colors: ["Preto","Branco"],         sizes: ["P","M","G","GG"] },
+      { id: "p-2301-cam", code: "CAM-2301", name: "Camiseta Berserk Guts",     garment: "Camiseta", estampa: "2301", colors: ["Preto","Branco"],            sizes: ["P","M","G","GG"] },
+      { id: "p-2303-cam", code: "CAM-2303", name: "Camiseta Chainsaw Man Denji", garment: "Camiseta", estampa: "2303", colors: ["Preto","Branco"],          sizes: ["P","M","G","GG"] },
+      { id: "p-2303-mol", code: "MOL-2303", name: "Moletom Chainsaw Man Denji", garment: "Moletom",  estampa: "2303", colors: ["Preto"],                     sizes: ["M","G","GG"] },
+    ],
+    // De/Para — Item do pedido (como veio do anúncio) → variação interna (SKU) de um produto.
+    // productId+sku = mapeado; null = pendente (não vai para a Separação até resolver).
+    orderItems: [
+      { id: "oi-7741", platform: "ml",      adTitle: "Camiseta Naruto Shippuden Akatsuki Anime Algodão", adSku: "MLB3398-PRET-G",  variation: "Preto · G",     qty: 31, productId: "p-2055-cam", sku: "CAM-2055-PRT-G" },
+      { id: "oi-7742", platform: "shopee",  adTitle: "Camiseta Naruto Akatsuki Nuvem Vermelha",          adSku: "SHP-NAR-AKT-PT-M", variation: "Preto · M",    qty: 12, productId: "p-2055-cam", sku: "CAM-2055-PRT-M" },
+      { id: "oi-7743", platform: "ml",      adTitle: "Moletom Canguru Jujutsu Kaisen Gojo Unissex",      adSku: "MLB7720-PRET-GG", variation: "Preto · GG",    qty: 14, productId: "p-2039-mol", sku: "MOL-2039-PRT-GG" },
+      { id: "oi-7744", platform: "ml",      adTitle: "Camiseta One Piece Luffy Gear 5 Sun God",          adSku: "MLB5510-OFF-P",   variation: "Off-white · P", qty: 18, productId: "p-2170-cam", sku: "CAM-2170-OFF-P" },
+      { id: "oi-7745", platform: "shopify", adTitle: "Bolsa Ecobag One Piece Luffy",                     adSku: "SHF-ECO-OP-UNI",  variation: "Cru · Único",   qty:  6, productId: "p-2170-eco", sku: "ECO-2170-CRU-UNICO" },
+      { id: "oi-7746", platform: "ml",      adTitle: "Camiseta Demon Slayer Tanjiro Kamado",             adSku: "MLB6101-PRET-M",  variation: "Preto · M",     qty: 22, productId: "p-2047-cam", sku: "CAM-2047-PRT-M" },
+      { id: "oi-7747", platform: "shopify", adTitle: "Camiseta Berserk Guts Armadura do Berserker",      adSku: "SHF-BSK-GUTS-PT", variation: "Preto · G",     qty: 11, productId: "p-2301-cam", sku: "CAM-2301-PRT-G" },
+      // Pendentes — itens novos que o sistema ainda não reconhece
+      { id: "oi-7748", platform: "ml",      adTitle: "Camiseta Chainsaw Man Denji Motosserra",           adSku: "MLB8890-BRAN-G",  variation: "Branco · G",    qty:  7, productId: null, sku: null },
+      { id: "oi-7749", platform: "ml",      adTitle: "Moletom Chainsaw Man Denji Hibrido",               adSku: "MLB8891-PRET-M",  variation: "Preto · M",     qty:  4, productId: null, sku: null },
+      { id: "oi-7750", platform: "shopee",  adTitle: "Camiseta Naruto Akatsuki (sem variação no anúncio)", adSku: "",              variation: "Branco · GG",   qty:  3, productId: null, sku: null },
+    ],
+  },
 };
 
 window.ORION_DATA = ORION_DATA;

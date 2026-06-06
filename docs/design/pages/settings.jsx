@@ -163,6 +163,16 @@ const Settings = ({ tweaks, setTweak }) => {
     <div className="page">
       <PageHead sub="settings" title="Ajustes"
         desc="Configure sua conta, equipe, integrações e como você quer ser avisado."/>
+      <HelpCard id="settings" icon="settings" tone="var(--brand-settings)" title="Ajustes — sua conta, equipe e integrações">
+        <HelpBody>
+          Configure os dados da <b>empresa</b>, convide a <b>equipe</b> e defina <b>funções</b> (quem vê e edita o quê), conecte <b>canais e integrações</b> e escolha como quer ser <b>avisado</b>.
+        </HelpBody>
+        <Flow accent="var(--brand-settings)" steps={[
+          { icon: 'users', label: 'Equipe', sub: 'empresa & membros' },
+          { icon: 'shield', label: 'Funções', sub: 'quem vê o quê', tone: 'accent' },
+          { icon: 'plug', label: 'Integrações', sub: 'canais & avisos', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       <div className="settings-grid">
         <aside style={{ position: 'sticky', top: 8 }}>
           {panes.map((g, gi) => (
@@ -277,7 +287,7 @@ const CompanyPane = ({ tweaks, setTweak }) => (
 // ───────── Pane: Membros ─────────
 const MembersPane = () => (
   <Card title="Membros" sub={`${ORION_DATA.members.length} pessoas`}
-        action={<button className="btn btn-primary"><Icon name="plus" size={13}/> Convidar</button>} pad={false}>
+        action={<button className="btn btn-primary"><Icon name="users" size={13}/> Convidar</button>} pad={false}>
     <table className="tbl">
       <thead><tr><th>Nome</th><th>E-mail</th><th>Função</th><th>Status</th><th>Visto por último</th></tr></thead>
       <tbody>
@@ -367,7 +377,7 @@ const RolesPane = () => (
     </div>
 
     <Card title="Matriz de permissões" sub="O que cada função pode fazer no sistema" pad={false}
-          action={<button className="btn"><Icon name="plus" size={13}/> Criar função personalizada</button>}>
+          action={<button className="btn"><Icon name="shield" size={13}/> Criar função personalizada</button>}>
       <table className="tbl">
         <thead>
           <tr>

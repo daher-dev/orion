@@ -39,6 +39,16 @@ const Products = ({ setRoute }) => {
       <PageHead sub="products" title="Produtos" titleEm="à venda"
                 desc="Combinações de ficha técnica + estampa, organizadas por tamanho e cor."
                 actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="shirt" size={14}/> Novo produto</button>}/>
+      <HelpCard id="products" icon="shirt" tone="var(--brand-catalog)" title="Produtos — ficha técnica + estampa, em cores e tamanhos">
+        <HelpBody>
+          Um <b>produto</b> nasce ao juntar uma <b>ficha técnica</b> (tecido e modelagem) com uma <b>estampa</b>. Cada combinação de <b>cor e tamanho</b> vira uma <b>variação (SKU)</b> — a unidade que estoque, anúncios e produção realmente movimentam.
+        </HelpBody>
+        <Flow accent="var(--brand-catalog)" steps={[
+          { icon: 'file-text', label: 'Ficha + estampa', sub: 'tecido + arte' },
+          { icon: 'shirt', label: 'Produto', sub: 'modelo à venda', tone: 'accent' },
+          { icon: 'hash', label: 'Variações · SKU', sub: 'cor × tamanho', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       <div className="card">
         <TableToolbar>
           <SearchInput placeholder="Procurar produto…" value={search} onChange={setSearch}/>
@@ -89,6 +99,7 @@ const Products = ({ setRoute }) => {
              title={open ? open.name : ''}
              sub={open ? <span className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-3)' }}>{open.code}</span> : null}
              footer={<>
+               <button className="btn btn-ghost" style={{ color: 'var(--err)', marginRight: 'auto' }}><Icon name="trash-2" size={13}/> Excluir produto</button>
                <button className="btn" onClick={() => setOpen(null)}>Fechar</button>
                <button className="btn"><Icon name="copy" size={13}/> Duplicar</button>
                <button className="btn btn-primary"><Icon name="pencil" size={13}/> Editar</button>
@@ -679,6 +690,16 @@ const Specs = () => {
       <PageHead sub="specs" title="Fichas técnicas"
                 desc="Receitas de produção: tecido, gramatura, ribana e custo CMT."
                 actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="file-text" size={14}/> Nova ficha</button>}/>
+      <HelpCard id="specs" icon="file-text" tone="var(--brand-catalog)" title="Fichas técnicas — a receita de produção de cada peça">
+        <HelpBody>
+          A ficha é a <b>receita</b>: tecido, <b>gramatura</b>, ribana, consumo por tamanho e o <b>custo CMT</b>. É ela que diz ao Corte quanto de tecido usar e à gestão quanto cada peça custa para produzir.
+        </HelpBody>
+        <Flow accent="var(--brand-catalog)" steps={[
+          { icon: 'file-text', label: 'Ficha técnica', sub: 'tecido & custo', tone: 'accent' },
+          { icon: 'shirt', label: 'Base do produto', sub: 'a modelagem' },
+          { icon: 'scissors', label: 'Corte usa', sub: 'consumo p/ tam', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       <div className="card">
         <TableToolbar>
           <SearchInput placeholder="Procurar ficha…" value={search} onChange={setSearch}/>
@@ -719,6 +740,7 @@ const Specs = () => {
              title={open ? open.name : ''}
              sub={open ? <span className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-3)' }}>{open.id}</span> : null}
              footer={<>
+               <button className="btn btn-ghost" style={{ color: 'var(--err)', marginRight: 'auto' }}><Icon name="trash-2" size={13}/> Excluir ficha</button>
                <button className="btn" onClick={() => setOpen(null)}>Fechar</button>
                <button className="btn btn-primary"><Icon name="pencil" size={13}/> Editar ficha</button>
              </>}>
@@ -834,6 +856,16 @@ const Prints = () => {
       <PageHead sub="prints" title="Estampas" titleEm="& artes"
                 desc="Catálogo de artes aplicadas — DTF, silk, sublimação."
                 actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="palette" size={14}/> Nova estampa</button>}/>
+      <HelpCard id="prints" icon="palette" tone="var(--brand-catalog)" title="Estampas — o catálogo de artes que vão na peça">
+        <HelpBody>
+          Cada <b>estampa</b> guarda a <b>arte</b> e o <b>método</b> de aplicação — DTF, silk ou sublimação — com posição e tamanho de impressão. É o que o Montador encaixa na folha e o que a etiqueta de cada peça mostra.
+        </HelpBody>
+        <Flow accent="var(--brand-catalog)" steps={[
+          { icon: 'image', label: 'Arte enviada', sub: 'arquivo .png' },
+          { icon: 'palette', label: 'Estampa', sub: 'método & tamanho', tone: 'accent' },
+          { icon: 'shirt', label: 'Aplicada', sub: 'no produto', tone: 'ok' },
+        ]}/>
+      </HelpCard>
       <div className="card">
         <TableToolbar>
           <SearchInput placeholder="Procurar estampa…" value={search} onChange={setSearch}/>
@@ -870,6 +902,7 @@ const Prints = () => {
              title={open ? open.name : ''}
              sub={open ? <span className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-3)' }}>{open.id}</span> : null}
              footer={<>
+               <button className="btn btn-ghost" style={{ color: 'var(--err)', marginRight: 'auto' }}><Icon name="trash-2" size={13}/> Excluir estampa</button>
                <button className="btn" onClick={() => setOpen(null)}>Fechar</button>
                <button className="btn"><Icon name="download" size={13}/> Baixar arte</button>
                <button className="btn btn-primary"><Icon name="pencil" size={13}/> Editar</button>

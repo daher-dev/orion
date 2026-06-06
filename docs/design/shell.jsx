@@ -32,12 +32,26 @@ const ROLE_HIDE = {
   admin:    new Set([]),
 };
 
+// Other companies this user could belong to (prototype) + the admin bridge.
+const SIBLING_COS = [
+  { name: 'Maré Alta', city: 'Florianópolis, SC', accent: '#0f766e' },
+  { name: 'Vértice',   city: 'Curitiba, PR',      accent: '#9333ea' },
+];
+
 const Sidebar = ({ route, setRoute, role, accent, companyName }) => {
   const hidden = ROLE_HIDE[role] || new Set();
   const isItemVisible = (id) => !hidden.has(id);
+  const [sw, setSw] = React.useState(false);
+  const isAdmin = role === 'admin';
+  const CoMark = ({ name, ac, size = 30 }) => (
+    <span style={{ width: size, height: size, borderRadius: 8, background: ac, color: '#fff',
+      display: 'grid', placeItems: 'center', fontFamily: 'var(--font-display)', fontWeight: 600,
+      fontSize: Math.round(size * 0.46), flexShrink: 0 }}>{name[0].toUpperCase()}</span>
+  );
   return (
+    <>
     <aside className="sidebar">
-      <div className="sb-brand sb-co-picker" onClick={() => alert('Trocar de empresa — protótipo')}>
+      <div className="sb-brand sb-co-picker" onClick={() => setSw(s => !s)}>
         <div className="sb-brand-mark">{companyName ? companyName[0].toUpperCase() : 'A'}</div>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div className="sb-brand-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{companyName}</div>
@@ -98,6 +112,50 @@ const Sidebar = ({ route, setRoute, role, accent, companyName }) => {
         </button>
       </div>
     </aside>
+
+    {sw && (
+      <>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100 }} onClick={() => setSw(false)}/>
+        <div className="sw-pop" style={{ left: 12, top: 56 }} onClick={e => e.stopPropagation()}>
+          <div className="sw-sect">Empresa</div>
+          <div className="sw-item" style={{ cursor: 'default' }}>
+            <CoMark name={companyName || 'A'} ac={accent}/>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="sw-item-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{companyName}</div>
+              <div className="sw-item-sub">Sua conta de confecção</div>
+            </div>
+            <Icon name="check" size={15} style={{ color: 'var(--accent)' }}/>
+          </div>
+          {SIBLING_COS.map(c => (
+            <div key={c.name} className="sw-item" onClick={() => { setSw(false); alert('Trocar para ' + c.name + ' — protótipo'); }}>
+              <CoMark name={c.name} ac={c.accent} size={28}/>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="sw-item-name">{c.name}</div>
+                <div className="sw-item-sub">{c.city}</div>
+              </div>
+            </div>
+          ))}
+
+          {isAdmin && (
+            <>
+              <div className="sw-div"/>
+              <div className="sw-sect">Plataforma</div>
+              <div className="sw-app" onClick={() => { window.location.href = 'Orion Backoffice.html'; }}>
+                <span className="sb-brand-mark" style={{ width: 30, height: 30, fontSize: 14, background: 'linear-gradient(150deg,#6d5cff,#4f46e5)' }}>
+                  <Icon name="orbit" size={15} strokeWidth={2} style={{ color: '#fff' }}/>
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="sw-item-name">Orion Console</div>
+                  <div className="sw-item-sub">Administração da plataforma</div>
+                </div>
+                <Icon name="arrow-up-right" size={15} style={{ color: 'var(--accent)' }}/>
+              </div>
+            </>
+          )}
+        </div>
+      </>
+    )}
+    </>
   );
 };
 

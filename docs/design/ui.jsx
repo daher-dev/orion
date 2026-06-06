@@ -60,6 +60,14 @@ const STATUS_MAP = {
   ativo:     { kind: 'ok',   label: 'Ativo',     icon: 'circle-dot' },
   pausado:   { kind: 'muted',label: 'Pausado',   icon: 'pause' },
   convidado: { kind: 'warn', label: 'Convidado', icon: 'mail' },
+  // Fulfillment — separação / lotes
+  a_imprimir:  { kind: 'neutral', label: 'A imprimir',   icon: 'printer' },
+  impresso:    { kind: 'info',    label: 'Impresso',     icon: 'check' },
+  conferido:   { kind: 'ok',      label: 'Conferido',    icon: 'check-circle-2' },
+  aberto:      { kind: 'neutral', label: 'Aberto',       icon: 'circle-dot' },
+  em_producao: { kind: 'warn',    label: 'Em produção',  icon: 'loader' },
+  despachado:  { kind: 'ok',      label: 'Despachado',   icon: 'truck' },
+  mapeado:     { kind: 'ok',      label: 'Mapeado',      icon: 'check' },
 };
 const StatusPill = ({ s }) => {
   const m = STATUS_MAP[s] || { kind: '', label: s, icon: 'circle' };
@@ -159,7 +167,7 @@ const PageHead = ({ sub, title, titleEm, desc, actions }) => {
         <h1 className="page-title">{title} {titleEm && <em>{titleEm}</em>}</h1>
         {desc && <div className="page-sub">{desc}</div>}
       </div>
-      {actions && <div className="page-head-r">{actions}</div>}
+      <div className="page-head-r" id="page-head-actions">{actions}</div>
     </div>
   );
 };
@@ -215,22 +223,197 @@ const FabricThumb = ({ tone = 'warm', size = 36 }) => {
 };
 
 // Custom select (dropdown) — matches our visual style, replaces native <select>
+// Dismissible "how it works" explainer. Collapses to a small pill that
+// "How it works" explainer — a trigger icon (lives in the page header slot) that
+// opens its content as a popover anchored to the icon. Reusable app-wide.
+const HelpCard = ({ id, icon = 'help-circle', title, label = 'Como funciona?', slotId = 'page-head-actions', tone, maxW = 600, children }) => {
+  const [open, setOpen] = React.useState(false);
+  const [slot, setSlot] = React.useState(null);
+  const [pos, setPos] = React.useState(null);
+  const triggerRef = React.useRef(null);
+  const popRef = React.useRef(null);
+
+  React.useLayoutEffect(() => { setSlot(document.getElementById(slotId) || null); }, [slotId]);
+
+  const measure = React.useCallback(() => {
+    const el = triggerRef.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const margin = 12, gap = 10;
+    const width = Math.min(maxW, window.innerWidth - margin * 2);
+    let left = r.right - width;
+    left = Math.max(margin, Math.min(left, window.innerWidth - margin - width));
+    const caret = Math.max(16, Math.min(width - 16, r.left + r.width / 2 - left));
+    setPos({ left, top: r.bottom + gap, width, caret });
+  }, [maxW]);
+
+  React.useLayoutEffect(() => { if (open) measure(); }, [open, measure]);
+  React.useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => { if (!popRef.current?.contains(e.target) && !triggerRef.current?.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    const onMove = () => measure();
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', onMove, true);
+    window.addEventListener('resize', onMove);
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); window.removeEventListener('scroll', onMove, true); window.removeEventListener('resize', onMove); };
+  }, [open, measure]);
+
+  const trigger = (
+    <button ref={triggerRef} className={"help-pill" + (open ? " on" : "")} onClick={() => setOpen(v => !v)} title={label} aria-label={label}>
+      <Icon name="help-circle" size={15} style={{ flexShrink: 0 }}/>
+      <span className="help-pill-label">{label}</span>
+    </button>
+  );
+
+  const pop = open && pos && ReactDOM.createPortal(
+    <div ref={popRef} className="help-pop" style={{ left: pos.left, top: pos.top, width: pos.width, zIndex: 300, '--flow-accent': tone || 'var(--accent)' }}>
+      <span className="help-pop-caret" style={{ left: pos.caret }}/>
+      <button className="help-pop-x" onClick={() => setOpen(false)} aria-label="Fechar"><Icon name="x" size={15}/></button>
+      <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start' }}>
+        <span className="help-pop-badge" style={tone ? { background: `color-mix(in oklab, ${tone} 15%, var(--surface))`, color: tone } : undefined}><Icon name={icon} size={15}/></span>
+        <div style={{ flex: 1, minWidth: 0, paddingRight: 22 }}>
+          {title && <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{title}</div>}
+          {children}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+
+  const triggerNode = slot
+    ? ReactDOM.createPortal(trigger, slot)
+    : <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, marginTop: -2 }}>{trigger}</div>;
+
+  return <>{triggerNode}{pop}</>;
+};
+
+// ── Animated flow diagram for HelpCards ───────────────────────────────────────
+// A row of labelled nodes joined by arrows. A pulse travels left→right through
+// the chain (sequential highlight) and each arrow carries a continuous moving
+// dot — together they make the pipeline direction legible at a glance.
+const FlowNode = ({ icon, label, sub, tone, on }) => (
+  <div className={"flow-nd" + (tone ? " t-" + tone : "") + (on ? " on" : "")}>
+    <span className="flow-nd-ic"><Icon name={icon} size={15}/></span>
+    <span className="flow-nd-tx">
+      <span className="flow-nd-lb">{label}</span>
+      {sub && <span className="flow-nd-sb">{sub}</span>}
+    </span>
+  </div>
+);
+
+const FlowArrow = ({ on }) => (
+  <span className={"flow-ar" + (on ? " on" : "")} aria-hidden="true">
+    <span className="flow-ar-line"/>
+    <span className="flow-ar-dot"/>
+    <svg className="flow-ar-head" width="7" height="10" viewBox="0 0 7 10">
+      <path d="M1 1l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  </span>
+);
+
+const Flow = ({ steps = [], accent }) => {
+  const [i, setI] = React.useState(0);
+  React.useEffect(() => {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (steps.length < 2) return;
+    const id = setInterval(() => setI(v => (v + 1) % steps.length), 1050);
+    return () => clearInterval(id);
+  }, [steps.length]);
+  return (
+    <div className="flow" style={accent ? { '--flow-accent': accent } : undefined}>
+      {steps.map((s, idx) => (
+        <React.Fragment key={idx}>
+          {idx > 0 && <FlowArrow on={i === idx}/>}
+          <FlowNode {...s} on={i === idx}/>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+// Educational paragraph inside a HelpCard popover. Bold key terms with <b>.
+const HelpBody = ({ children }) => <p className="help-pop-body">{children}</p>;
+
 const Select = ({ value, onChange, options, placeholder = "Selecione…", searchable = true, renderOption }) => {
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState('');
+  const [pos, setPos] = React.useState(null);
   const ref = React.useRef(null);
+  const menuRef = React.useRef(null);
   const searchRef = React.useRef(null);
+
+  const measure = React.useCallback(() => {
+    const el = ref.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const gap = 4, menuMax = 280, margin = 12;
+    const spaceBelow = window.innerHeight - r.bottom;
+    const spaceAbove = r.top;
+    const openUp = spaceBelow < Math.min(menuMax, 220) && spaceAbove > spaceBelow;
+    const avail = (openUp ? spaceAbove : spaceBelow) - margin;
+    setPos({
+      left: r.left, width: r.width,
+      top: openUp ? null : r.bottom + gap,
+      bottom: openUp ? (window.innerHeight - r.top + gap) : null,
+      maxHeight: Math.max(120, Math.min(menuMax, avail)),
+    });
+  }, []);
+
+  React.useLayoutEffect(() => { if (open) measure(); }, [open, measure]);
   React.useEffect(() => {
     if (!open) return;
-    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onDoc = (e) => { if (!ref.current?.contains(e.target) && !menuRef.current?.contains(e.target)) setOpen(false); };
+    const onMove = () => measure();
     document.addEventListener('mousedown', onDoc);
+    window.addEventListener('scroll', onMove, true);
+    window.addEventListener('resize', onMove);
     if (searchable) setTimeout(() => searchRef.current?.focus(), 30);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [open, searchable]);
+    return () => { document.removeEventListener('mousedown', onDoc); window.removeEventListener('scroll', onMove, true); window.removeEventListener('resize', onMove); };
+  }, [open, searchable, measure]);
   React.useEffect(() => { if (!open) setQ(''); }, [open]);
+
   const opts = options.map(o => typeof o === 'string' ? { value: o, label: o } : o);
   const current = opts.find(o => o.value === value);
   const filtered = q ? opts.filter(o => (o.label + ' ' + (o.sub || '')).toLowerCase().includes(q.toLowerCase())) : opts;
+
+  const menu = open && pos && ReactDOM.createPortal(
+    <div ref={menuRef} className="cs-menu" style={{
+      position: 'fixed', left: pos.left, width: pos.width, right: 'auto',
+      top: pos.top != null ? pos.top : 'auto', bottom: pos.bottom != null ? pos.bottom : 'auto',
+      maxHeight: pos.maxHeight,
+    }}>
+      {searchable && (
+        <div style={{ padding: 8, borderBottom: '1px solid var(--line-soft)', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1 }}>
+          <div style={{ position: 'relative' }}>
+            <Icon name="search" size={13} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }}/>
+            <input ref={searchRef} value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar…"
+              style={{ width: '100%', padding: '7px 10px 7px 28px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--surface)', color: 'var(--ink)', font: 'inherit', fontSize: 12.5, outline: 'none' }}/>
+          </div>
+        </div>
+      )}
+      {filtered.length === 0 && (
+        <div style={{ padding: '14px 12px', fontSize: 12, color: 'var(--ink-3)', textAlign: 'center' }}>Nada encontrado</div>
+      )}
+      {filtered.map(o => (
+        <button key={o.value} type="button"
+          className={"cs-opt" + (o.value === value ? ' active' : '')}
+          onClick={() => { onChange(o.value); setOpen(false); }}>
+          {renderOption ? renderOption(o) : (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+              {o.icon && <Icon name={o.icon} size={13} style={{ color: 'var(--ink-3)' }}/>}
+              <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.label}</span>
+                {o.sub && <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{o.sub}</span>}
+              </span>
+            </span>
+          )}
+          {o.value === value && <Icon name="check" size={13} style={{ color: 'var(--accent)' }}/>}
+        </button>
+      ))}
+    </div>,
+    document.body
+  );
+
   return (
     <div ref={ref} className="cs-wrap">
       <button type="button" className={"cs-trigger" + (open ? ' open' : '')} onClick={() => setOpen(v => !v)}>
@@ -240,38 +423,7 @@ const Select = ({ value, onChange, options, placeholder = "Selecione…", search
         </span>
         <Icon name="chevron-down" size={14} style={{ color: 'var(--ink-3)', transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none', flexShrink: 0 }}/>
       </button>
-      {open && (
-        <div className="cs-menu">
-          {searchable && (
-            <div style={{ padding: 8, borderBottom: '1px solid var(--line-soft)', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1 }}>
-              <div style={{ position: 'relative' }}>
-                <Icon name="search" size={13} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }}/>
-                <input ref={searchRef} value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar…"
-                  style={{ width: '100%', padding: '7px 10px 7px 28px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--surface)', color: 'var(--ink)', font: 'inherit', fontSize: 12.5, outline: 'none' }}/>
-              </div>
-            </div>
-          )}
-          {filtered.length === 0 && (
-            <div style={{ padding: '14px 12px', fontSize: 12, color: 'var(--ink-3)', textAlign: 'center' }}>Nada encontrado</div>
-          )}
-          {filtered.map(o => (
-            <button key={o.value} type="button"
-              className={"cs-opt" + (o.value === value ? ' active' : '')}
-              onClick={() => { onChange(o.value); setOpen(false); }}>
-              {renderOption ? renderOption(o) : (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-                  {o.icon && <Icon name={o.icon} size={13} style={{ color: 'var(--ink-3)' }}/>}
-                  <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.label}</span>
-                    {o.sub && <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{o.sub}</span>}
-                  </span>
-                </span>
-              )}
-              {o.value === value && <Icon name="check" size={13} style={{ color: 'var(--accent)' }}/>}
-            </button>
-          ))}
-        </div>
-      )}
+      {menu}
     </div>
   );
 };
@@ -364,4 +516,69 @@ const makeCmp = (sort, getters) => (a, b) => {
   return String(va ?? '').localeCompare(String(vb ?? ''), 'pt-BR') * dir;
 };
 
-Object.assign(window, { SubBadge, ChannelChip, StatusPill, Card, Av, Spark, Modal, Sheet, PageHead, Empty, TableToolbar, SearchInput, Seg, FabricThumb, Select, NumField, SortHeader, makeCmp });
+// Date + time field — styled wrapper around native datetime-local.
+// Matches NumField visuals (framed group, focus ring, leading affix icon).
+const DateTimeField = ({ value, onChange, withTime = true, min, max, style }) => {
+  const [focused, setFocused] = React.useState(false);
+  const ref = React.useRef(null);
+  const type = withTime ? 'datetime-local' : 'date';
+  // Display in pt-BR even though the input value uses ISO
+  const display = (() => {
+    if (!value) return '';
+    const d = new Date(value);
+    if (isNaN(d)) return '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = d.getFullYear();
+    if (!withTime) return `${dd}/${mm}/${yy}`;
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${dd}/${mm}/${yy} · ${hh}:${mi}`;
+  })();
+  const setNow = () => {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const iso = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}` +
+                (withTime ? `T${pad(d.getHours())}:${pad(d.getMinutes())}` : '');
+    onChange(iso);
+  };
+  return (
+    <div className={"numfield" + (focused ? ' focus' : '')} style={{ cursor: 'pointer', ...style }}
+         onClick={() => { ref.current?.showPicker ? ref.current.showPicker() : ref.current?.focus(); }}>
+      <span className="numfield-affix numfield-prefix" style={{ color: 'var(--ink-3)' }}>
+        <Icon name={withTime ? 'calendar-clock' : 'calendar'} size={14}/>
+      </span>
+      <input
+        ref={ref}
+        type={type}
+        value={value || ''}
+        min={min}
+        max={max}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          position: 'absolute', opacity: 0, pointerEvents: 'none',
+          width: 1, height: 1,
+        }}
+      />
+      <span style={{
+        flex: 1, padding: '8px 11px 8px 6px',
+        fontVariantNumeric: 'tabular-nums',
+        color: display ? 'var(--ink)' : 'var(--ink-3)',
+        fontSize: 13.5,
+        userSelect: 'none',
+      }}>{display || 'Selecionar data'}</span>
+      <button type="button" tabIndex={-1} onClick={(e) => { e.stopPropagation(); setNow(); }}
+        title="Agora"
+        style={{
+          background: 'transparent', border: 0, borderLeft: '1px solid var(--line)',
+          padding: '0 10px', cursor: 'pointer',
+          fontSize: 11, color: 'var(--ink-3)', letterSpacing: '.06em',
+          textTransform: 'uppercase', fontWeight: 600, fontFamily: 'inherit',
+        }}>Agora</button>
+    </div>
+  );
+};
+
+Object.assign(window, { SubBadge, ChannelChip, StatusPill, Card, Av, Spark, Modal, Sheet, PageHead, Empty, TableToolbar, SearchInput, Seg, FabricThumb, Select, HelpCard, Flow, FlowNode, FlowArrow, HelpBody, NumField, DateTimeField, SortHeader, makeCmp });

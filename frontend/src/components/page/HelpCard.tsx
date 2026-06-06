@@ -39,7 +39,9 @@ export function HelpCard({ icon: Icon, title, children, steps, tone = "var(--bra
           <Icon size={13} strokeWidth={2} />
         </span>
         <div className="min-w-0">
-          <h2 className="text-[13px] font-semibold text-[color:var(--orion-ink)]">{title}</h2>
+          {/* Not a heading element: the page's PageHead owns the single main
+              heading; this supplementary card title must not collide with it. */}
+          <p className="text-[13px] font-semibold text-[color:var(--orion-ink)]">{title}</p>
           {children ? (
             <div className="mt-1 max-w-[70ch] text-[12.5px] leading-[1.5] text-[color:var(--orion-ink-2)]">
               {children}

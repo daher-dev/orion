@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from routers.ads import router as ads_router
 from routers.audit_log import router as audit_log_router
 from routers.auth import router as auth_router
+from routers.batches import router as batches_router
 from routers.clients import router as clients_router
 from routers.company import router as company_router
 from routers.contractors import router as contractors_router
@@ -28,6 +29,7 @@ api_router = APIRouter()
 api_router.include_router(ads_router)
 api_router.include_router(audit_log_router)
 api_router.include_router(auth_router)
+api_router.include_router(batches_router)
 api_router.include_router(clients_router)
 api_router.include_router(company_router)
 api_router.include_router(contractors_router)
@@ -52,6 +54,7 @@ __all__ = [
     "api_router",
     "audit_log_router",
     "auth_router",
+    "batches_router",
     "clients_router",
     "company_router",
     "contractors_router",

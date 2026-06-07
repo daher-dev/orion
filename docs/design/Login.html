@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Entrar — Orion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..600,30..100,0..1&family=Inter+Tight:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+
+<style>
+/* ────────── Orion login — focused, centered ────────── */
+html, body, #root { background: var(--bg); height: 100%; }
+body { overflow-y: auto; }
+
+.lf-shell {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 48px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle paper grain */
+.lf-shell::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(31,27,21,.025) 1px, transparent 1px);
+  background-size: 4px 4px;
+  z-index: 0;
+}
+/* A whisper of accent glow behind the mark */
+.lf-shell::after {
+  content: '';
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 900px; height: 900px;
+  background: radial-gradient(closest-side,
+    color-mix(in oklab, var(--accent) 9%, transparent) 0%,
+    transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ────────── Background watermark ────────── */
+.lf-watermark {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--accent);
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: 0;
+}
+@media (min-width: 920px) {
+  .lf-watermark { transform: translate(-58%, -50%); opacity: 0.20; }
+}
+
+/* ────────── Brand chip (top-left) ────────── */
+.lf-brand-chip {
+  position: fixed;
+  top: 28px; left: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 2;
+}
+.lf-chip-mark { color: var(--accent); display: inline-flex; }
+.lf-chip-text { display: inline-flex; flex-direction: column; gap: 2px; line-height: 1; }
+.lf-chip-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.lf-chip-sub {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ────────── Floating card ────────── */
+.lf-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 40px 44px 36px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.6) inset,
+    0 1px 2px rgba(31,27,21,.04),
+    0 18px 40px -12px rgba(31,27,21,.18),
+    0 40px 80px -24px rgba(31,27,21,.22);
+}
+
+/* ────────── Form ────────── */
+.lf-form { display: flex; flex-direction: column; gap: 16px; }
+
+.lf-head { margin-bottom: 2px; text-align: center; }
+.lf-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.022em;
+  color: var(--ink);
+  line-height: 1.1;
+  margin: 0 0 4px;
+}
+.lf-sub {
+  font-size: 13.5px;
+  color: var(--ink-3);
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* Provider buttons */
+.prov-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.prov-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, box-shadow .12s;
+}
+.prov-btn:hover {
+  background: var(--bg);
+  border-color: color-mix(in oklab, var(--ink) 18%, var(--line));
+  box-shadow: 0 1px 2px rgba(31,27,21,.04);
+}
+.prov-btn:active { transform: translateY(0.5px); }
+.prov-mark { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; }
+
+/* "ou" divider */
+.lf-or {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 0;
+}
+.lf-or-line { height: 1px; background: var(--line); display: block; }
+.lf-or-text {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Field */
+.lf-field { display: flex; flex-direction: column; gap: 6px; }
+.lf-lab-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+}
+.lf-lab {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+.lf-inp-wrap { position: relative; display: flex; }
+.lf-inp {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 9px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  outline: 0;
+  transition: border-color .12s, box-shadow .12s, background .12s;
+  font-family: var(--font-body);
+}
+.lf-inp:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 16%, transparent);
+}
+.lf-eye {
+  position: absolute;
+  right: 4px; top: 50%;
+  transform: translateY(-50%);
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--ink-3);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.lf-eye:hover { color: var(--ink); background: var(--surface-2); }
+.lf-inp-wrap .lf-inp { padding-right: 40px; }
+
+.lf-help {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  margin-top: 2px;
+  font-style: italic;
+}
+.lf-link-mini {
+  font-size: 11.5px;
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 500;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.lf-link-mini:hover { text-decoration: underline; }
+
+/* Checkbox */
+.lf-check {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  align-items: start;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  cursor: pointer;
+  user-select: none;
+}
+.lf-check a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.lf-check-box {
+  width: 18px; height: 18px;
+  border-radius: 5px;
+  background: var(--accent);
+  color: white;
+  display: grid; place-items: center;
+  margin-top: 1px;
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 70%, black) inset;
+}
+
+/* Primary submit */
+.lf-submit {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 18px;
+  background: var(--ink);
+  color: var(--ink-inv);
+  border: 1px solid var(--ink);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: transform .08s, background .12s;
+  box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 6px 18px -8px rgba(31,27,21,.4);
+}
+.lf-submit:hover { background: color-mix(in oklab, var(--ink) 90%, var(--accent)); }
+.lf-submit:active { transform: translateY(0.5px); }
+.lf-submit svg { transition: transform .15s; }
+.lf-submit:hover svg { transform: translateX(2px); }
+
+/* Magic-link — equal-weight secondary action */
+.lf-magic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 12px 18px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s, border-color .12s, box-shadow .12s, color .12s;
+}
+.lf-magic:hover {
+  background: color-mix(in oklab, var(--accent) 6%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 35%, var(--line));
+  box-shadow: 0 1px 2px rgba(31,27,21,.04);
+}
+.lf-magic:active { transform: translateY(0.5px); }
+.lf-magic svg { color: var(--accent); }
+
+/* Mode switch footer of the form */
+.lf-switch {
+  margin-top: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.lf-link {
+  background: transparent;
+  border: 0;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  margin-left: 6px;
+  cursor: pointer;
+  padding: 0;
+}
+.lf-link:hover { text-decoration: underline; }
+
+/* Page footer */
+.lf-foot {
+  position: relative;
+  z-index: 1;
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  flex-wrap: wrap;
+}
+.lf-foot a { color: var(--ink-3); }
+.lf-foot a:hover { color: var(--ink); text-decoration: underline; }
+.lf-foot-sep { color: var(--ink-3); opacity: 0.5; }
+.lf-foot-lang {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 10.5px;
+  margin-left: 6px;
+}
+
+@media (max-width: 540px) {
+  .lf-card { padding: 32px 26px 28px; max-width: 100%; }
+  .lf-brand-chip { top: 20px; left: 20px; }
+  .lf-watermark { opacity: 0.10; }
+}
+@media (max-width: 480px) {
+  .prov-row { grid-template-columns: 1fr; }
+  .prov-btn { justify-content: flex-start; padding: 11px 14px; }
+  .prov-btn .prov-label::before { content: 'Continuar com '; }
+}
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="login.jsx"></script>
+</body>
+</html>

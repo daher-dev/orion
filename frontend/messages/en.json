@@ -61,7 +61,8 @@
     "fabric": "Fabrics",
     "stock": "Stock",
     "reports": "Reports",
-    "settings": "Settings"
+    "settings": "Settings",
+    "batches": "Batches"
   },
   "auth": {
     "signIn": "Sign in",
@@ -736,6 +737,54 @@
         "spec": "Tech spec",
         "print": "Print",
         "noPrint": "No print"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "variations": "Variations",
+        "orders": "Orders",
+        "ads": "Ads",
+        "cost": "Cost"
+      },
+      "overview": {
+        "spec": "Tech spec",
+        "print": "Print",
+        "stock": "Total stock",
+        "colors": "Available colors",
+        "sizes": "Sizes",
+        "noPrint": "No print"
+      },
+      "variationsTab": {
+        "color": "Color",
+        "total": "Total",
+        "lowStockNote": "Variations in red are below the minimum stock (4 units)."
+      },
+      "ordersTab": {
+        "empty": "No orders",
+        "emptyBody": "This product hasn't been sold yet."
+      },
+      "adsTab": {
+        "empty": "No ads",
+        "emptyBody": "Create an ad to start selling this product."
+      },
+      "cost": {
+        "spec": "Tech spec (CMT)",
+        "print": "Print",
+        "packaging": "Packaging",
+        "packagingSub": "Kraft bag + tag",
+        "total": "Total cost per unit",
+        "margin": "Suggested margin (4×)"
+      }
+    },
+    "help": {
+      "title": "Products — tech spec + print, in colors and sizes",
+      "body": "A product is born by joining a tech spec (fabric and fit) with a print. Each color-and-size combination becomes a variation (SKU) — the unit that stock, ads and production actually move.",
+      "flow": {
+        "recipe": "Spec + print",
+        "recipeSub": "fabric + art",
+        "product": "Product",
+        "productSub": "model for sale",
+        "variations": "Variations · SKU",
+        "variationsSub": "color × size"
       }
     }
   },
@@ -880,14 +929,17 @@
     },
     "filters": {
       "searchPlaceholder": "Search print…",
-      "itemCount": "prints"
+      "itemCount": "prints",
+      "allTechniques": "All"
     },
     "table": {
       "columns": {
         "code": "Code",
         "name": "Name",
         "costPerUnit": "Cost/unit",
-        "actions": "Actions"
+        "actions": "Actions",
+        "technique": "Technique",
+        "tag": "Tag"
       }
     },
     "actions": {
@@ -905,13 +957,21 @@
         "code": "Code",
         "name": "Print name",
         "imageUrl": "Artwork URL",
-        "costPerUnit": "Cost per piece ($)"
+        "costPerUnit": "Cost per piece ($)",
+        "technique": "Technique",
+        "tag": "Tag / collection",
+        "artFront": "Front artwork URL",
+        "artBack": "Back artwork URL",
+        "widthCm": "Print width",
+        "heightCm": "Print height"
       },
       "placeholders": {
         "code": "PRT-001",
         "name": "e.g. Aurora — Sunrise",
         "imageUrl": "https://…/artwork.png",
-        "costPerUnit": "0.00"
+        "costPerUnit": "0.00",
+        "tag": "summer, timeless, limited edition…",
+        "artUrl": "https://…/art.png"
       },
       "helpers": {
         "imageUrl": "Paste the public URL of the final artwork."
@@ -929,6 +989,46 @@
         "updated": "Print updated",
         "deleted": "Print deleted",
         "error": "Could not save the print."
+      }
+    },
+    "techniques": {
+      "dtf": "DTF",
+      "silkscreen": "Silkscreen",
+      "sublimation": "Sublimation"
+    },
+    "help": {
+      "title": "Prints — the catalog of artwork applied to garments",
+      "body": "Each print holds the artwork and the application method — DTF, silk or sublimation — with its print size. It is what the Montador lays out on the sheet and what each piece's label shows.",
+      "flow": {
+        "artwork": "Artwork sent",
+        "artworkSub": ".png file",
+        "print": "Print",
+        "printSub": "method & size",
+        "applied": "Applied",
+        "appliedSub": "on the product"
+      }
+    },
+    "detail": {
+      "back": "Back to prints",
+      "notFound": "Print not found.",
+      "download": "Download artwork",
+      "fields": {
+        "technique": "Technique",
+        "cost": "Cost per unit",
+        "tag": "Category",
+        "colors": "Applied colors"
+      },
+      "specs": {
+        "title": "Application specs",
+        "size": "Artwork size",
+        "temperature": "Temperature",
+        "pressTime": "Press time",
+        "position": "Default position",
+        "positionValue": "Front center · 8cm from collar"
+      },
+      "usedBy": {
+        "title": "Products using this print",
+        "empty": "No product uses this print yet."
       }
     }
   },
@@ -1426,12 +1526,30 @@
         "recent": "Recent movements"
       },
       "moveTypes": {
-        "shipment": { "label": "Receipt", "desc": "Pieces back from sewing" },
-        "return": { "label": "Return", "desc": "Customer return" },
-        "entryAdjustment": { "label": "Adjust (+)", "desc": "Inventory correction" },
-        "sale": { "label": "Order", "desc": "Shipped to customer" },
-        "loss": { "label": "Damage", "desc": "Damaged piece" },
-        "exitAdjustment": { "label": "Adjust (−)", "desc": "Inventory correction" }
+        "shipment": {
+          "label": "Receipt",
+          "desc": "Pieces back from sewing"
+        },
+        "return": {
+          "label": "Return",
+          "desc": "Customer return"
+        },
+        "entryAdjustment": {
+          "label": "Adjust (+)",
+          "desc": "Inventory correction"
+        },
+        "sale": {
+          "label": "Order",
+          "desc": "Shipped to customer"
+        },
+        "loss": {
+          "label": "Damage",
+          "desc": "Damaged piece"
+        },
+        "exitAdjustment": {
+          "label": "Adjust (−)",
+          "desc": "Inventory correction"
+        }
       },
       "preview": {
         "current": "Current",
@@ -1926,5 +2044,83 @@
   "home": {
     "title": "Welcome to Orion",
     "subtitle": "Pick a section from the sidebar to get started."
+  },
+  "batches": {
+    "page": {
+      "eyebrow": "Sales"
+    },
+    "list": {
+      "title": "Production",
+      "titleEm": "batches",
+      "sub": "Pack orders into a batch, adjust print runs, then print labels and dispatch.",
+      "loadError": "Could not load batches.",
+      "noResults": "No batches yet.",
+      "empty": "No batches yet. Create one from selected orders."
+    },
+    "actions": {
+      "create": "New batch",
+      "back": "Back to batches"
+    },
+    "create": {
+      "title": "New batch",
+      "namePlaceholder": "Batch name (optional)",
+      "selectOrders": "Select orders to include",
+      "noOrders": "No unbatched orders available.",
+      "selected": "{count} selected",
+      "submit": "Create batch",
+      "hint": "Other lines of the same order are added automatically."
+    },
+    "columns": {
+      "code": "Code",
+      "name": "Name",
+      "status": "Status",
+      "orders": "Orders",
+      "pieces": "Pieces",
+      "created": "Created"
+    },
+    "statuses": {
+      "open": "Open",
+      "adjusted": "Adjusted",
+      "printed": "Printed",
+      "done": "Done",
+      "cancelled": "Cancelled"
+    },
+    "summary": {
+      "orders": "Orders",
+      "pieces": "Pieces",
+      "needed": "Needed",
+      "toPrint": "To print"
+    },
+    "adjustments": {
+      "title": "Print designs",
+      "stamp": "Design",
+      "color": "Color",
+      "needed": "Needed",
+      "toPrint": "To print",
+      "sent": "Sent",
+      "empty": "No print designs in this batch.",
+      "save": "Save adjustments"
+    },
+    "detail": {
+      "printLabels": "Print labels",
+      "sendMontador": "Send to Montador DTF",
+      "printShipping": "Print shipping labels",
+      "markDone": "Mark done",
+      "cancel": "Cancel batch",
+      "delete": "Delete batch",
+      "deleteConfirm": "Delete this batch? Orders will be unlinked.",
+      "notFound": "Batch not found."
+    },
+    "toast": {
+      "created": "Batch created",
+      "saved": "Adjustments saved",
+      "montadorOk": "Sent to Montador: {ok} ok, {failed} failed",
+      "montadorErr": "Could not send to Montador DTF",
+      "deleted": "Batch deleted",
+      "noShippingLabels": "No shipping labels available for this batch."
+    },
+    "fallback": {
+      "forbidden": "You don't have access to batches."
+    }
   }
 }

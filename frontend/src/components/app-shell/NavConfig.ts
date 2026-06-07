@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   ShoppingBag,
+  Package,
   Users,
   Megaphone,
   Shirt,
@@ -66,6 +67,13 @@ export const navSections: NavSection[] = [
         href: "/orders",
         icon: ShoppingBag,
         labelKey: "nav.orders",
+        permission: "orders.read",
+        subColor: "var(--brand-sales)",
+      },
+      {
+        href: "/orders/batches",
+        icon: Package,
+        labelKey: "nav.batches",
         permission: "orders.read",
         subColor: "var(--brand-sales)",
       },

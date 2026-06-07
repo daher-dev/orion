@@ -1,0 +1,202 @@
+/* Orion Console (backoffice) — overrides on top of styles.css.
+   Scoped to .console so it never leaks into the tenant app.
+   Distinct identity: deep "Orion indigo" accent + an indigo-ink sidebar,
+   so an admin always knows they're in the platform console. */
+
+.console {
+  /* Fixed Orion-indigo console accent — distinct from any tenant accent. */
+  --accent:      #4f46e5;
+  --accent-soft: color-mix(in oklab, var(--accent) 14%, var(--surface));
+  --accent-ink:  #ffffff;
+  --accent-edge: color-mix(in oklab, var(--accent) 30%, var(--ink));
+
+  /* Console-only plan + status tones */
+  --plan-gratis:  #78716c;
+  --plan-atelie:  #0f766e;
+  --plan-pro:     #4f46e5;
+  --plan-fabrica: #7e5bef;
+
+  --night:   #171528;  /* console sidebar ink */
+  --night-2: #1d1a35;
+}
+
+/* Sidebar: deep indigo-ink instead of the tenant's warm brown */
+.console .sidebar {
+  background: linear-gradient(180deg, var(--night) 0%, var(--night-2) 100%);
+  border-right: 1px solid #100d1f;
+}
+.console .sb-item.active::before { background: var(--sub-color, var(--accent)); }
+
+/* Console wordmark lockup in the sidebar brand */
+.console .sb-brand { cursor: default; }
+.console .sb-brand-mark {
+  background: linear-gradient(150deg, #6d5cff 0%, var(--accent) 100%);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.14) inset, 0 4px 14px -4px var(--accent);
+}
+.console .sb-console-tag {
+  font-size: 9px; letter-spacing: .18em; text-transform: uppercase;
+  color: rgba(199,194,255,.72); font-weight: 700;
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 4px;
+}
+.console .sb-console-tag::before {
+  content: ''; width: 5px; height: 5px; border-radius: 999px;
+  background: #8b7bff; box-shadow: 0 0 0 3px rgba(139,123,255,.22);
+}
+
+/* Topbar: a hairline ribbon that reinforces "internal console" */
+.console .tb-console-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 11px 5px 9px; border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-edge);
+  border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--surface));
+  font-size: 11.5px; font-weight: 600; letter-spacing: .02em;
+}
+.console .tb-env {
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-3);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+
+/* ───────── App switcher popover (company picker → console / app) ───────── */
+.sw-pop {
+  position: absolute; z-index: 1200;
+  width: 300px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: swPop .14s ease both;
+}
+@keyframes swPop { from { transform: translateY(-6px); } to { transform: none; } }
+.sw-sect {
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 700; padding: 12px 14px 6px;
+}
+.sw-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 14px; cursor: default;
+}
+.sw-item:hover { background: var(--surface-2); }
+.sw-item-name { font-size: 13.5px; color: var(--ink); font-weight: 500; line-height: 1.15; }
+.sw-item-sub  { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+.sw-div { height: 1px; background: var(--line-soft); margin: 4px 0; }
+.sw-app {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 14px; cursor: default;
+  background: color-mix(in oklab, var(--accent) 6%, var(--surface));
+}
+.sw-app:hover { background: color-mix(in oklab, var(--accent) 12%, var(--surface)); }
+
+/* ───────── Org identity mark ───────── */
+.org-mark {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: grid; place-items: center; flex-shrink: 0;
+  color: #fff; font-family: var(--font-display); font-weight: 600; font-size: 15px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.16), 0 2px 6px -2px rgba(31,27,21,.25);
+}
+
+/* ───────── Plan tag ───────── */
+.plan-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 9px 2px 7px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600; letter-spacing: .01em;
+  white-space: nowrap;
+  background: color-mix(in oklab, var(--pc) 12%, var(--surface));
+  color: var(--pc);
+  border: 1px solid color-mix(in oklab, var(--pc) 26%, var(--surface));
+}
+.plan-tag .pill-dot { background: var(--pc); }
+
+/* ───────── Mini bar chart (MRR over months) ───────── */
+.bars { display: flex; align-items: stretch; gap: 7px; height: 150px; padding-top: 6px; }
+.bars-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 8px; min-width: 0; height: 100%; }
+.bars-bar {
+  width: 100%; border-radius: 5px 5px 2px 2px;
+  background: linear-gradient(180deg, var(--accent) 0%, color-mix(in oklab, var(--accent) 72%, #fff) 100%);
+  transition: height .4s cubic-bezier(.3,.7,.4,1);
+  min-height: 4px;
+}
+.bars-bar.ghost { background: var(--surface-2); }
+.bars-x { font-size: 10px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* ───────── Health bar (integrations / plan mix) ───────── */
+.mix-rail {
+  display: flex; height: 12px; border-radius: 999px; overflow: hidden;
+  background: var(--bg); border: 1px solid var(--line-soft);
+}
+.mix-seg { height: 100%; }
+.mix-legend { display: flex; flex-wrap: wrap; gap: 14px 20px; margin-top: 14px; }
+.mix-key { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
+.mix-key b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.mix-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+/* Status dot with glow */
+.sdot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; display: inline-block; }
+.sdot.ok    { background: var(--ok);   box-shadow: 0 0 0 3px color-mix(in oklab, var(--ok) 22%, transparent); }
+.sdot.warn  { background: var(--warn); box-shadow: 0 0 0 3px color-mix(in oklab, var(--warn) 22%, transparent); }
+.sdot.err   { background: var(--err);  box-shadow: 0 0 0 3px color-mix(in oklab, var(--err) 22%, transparent); }
+.sdot.info  { background: var(--info); box-shadow: 0 0 0 3px color-mix(in oklab, var(--info) 22%, transparent); }
+.sdot.muted { background: var(--ink-3); }
+
+/* Detail page: back link + header layout */
+.org-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; color: var(--ink-3); font-weight: 500;
+  cursor: default; margin-bottom: 14px;
+}
+.org-back:hover { color: var(--ink); }
+
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 10px 18px; align-items: center; }
+.kv dt { font-size: 12px; color: var(--ink-3); }
+.kv dd { margin: 0; font-size: 13px; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Usage meter */
+.meter { height: 7px; background: var(--bg); border-radius: 999px; overflow: hidden; }
+.meter > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .35s; }
+.meter > span.warn { background: var(--warn); }
+.meter > span.err  { background: var(--err); }
+
+/* Impersonation banner (lives in the tenant app when entered from console) */
+.imp-banner {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 20px;
+  background: linear-gradient(90deg, #4f46e5, #6d5cff);
+  color: #fff; font-size: 13px;
+}
+.imp-banner b { font-weight: 600; }
+.imp-banner .imp-spacer { flex: 1; }
+.imp-banner a, .imp-banner button {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,.16); color: #fff;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 999px; padding: 4px 12px; font-size: 12.5px; font-weight: 600;
+  cursor: pointer;
+}
+.imp-banner a:hover, .imp-banner button:hover { background: rgba(255,255,255,.26); }
+
+/* Section divider with label */
+.row-div {
+  display: flex; align-items: center; gap: 12px; margin: 4px 2px 0;
+}
+.row-div span:first-child { font-family: var(--font-display); font-size: 17px; color: var(--ink); font-weight: 500; }
+.row-div .ln { flex: 1; height: 1px; background: var(--line-soft); }
+.row-div .ct { font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* Compact density */
+.console.dense .page { padding-top: 16px; padding-bottom: 48px; }
+.console.dense .tbl td { padding: 8px 14px; }
+.console.dense .tbl th { padding: 8px 14px; }
+.console.dense .kpi { padding: 13px 15px; }
+.console.dense .card-pad, .console.dense .card > div { }
+
+/* Hover affordance on clickable rows */
+.console .hoverrow:hover { background: var(--bg); }
+.console .tbl tbody tr { cursor: default; }
+
+/* Keep content visible regardless of entrance animation state.
+   styles.css animates .page>* from opacity:0 with fill:both, which leaves
+   content invisible if animations are paused (reduced-motion / offscreen). */
+.console .page-head,
+.console .page > * { animation: none; }

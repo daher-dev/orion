@@ -8,13 +8,16 @@ emitting duplicate CREATE TYPE statements.
 from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 
 from models.enums import (
+    BatchStatus,
     CuttingStatus,
     Ecommerce,
     FabricRollKind,
     FabricType,
     LoginOutcome,
     OrderStatus,
+    PrintTechnique,
     ProductType,
+    SeparationStatus,
     ShipmentStatus,
     Size,
     StockExitReason,
@@ -44,3 +47,6 @@ STOCK_SOURCE = _enum(StockSource, "stock_source")
 STOCK_EXIT_REASON = _enum(StockExitReason, "stock_exit_reason")
 ORDER_STATUS = _enum(OrderStatus, "order_status")
 LOGIN_OUTCOME = _enum(LoginOutcome, "login_outcome")
+BATCH_STATUS = _enum(BatchStatus, "batch_status")
+SEPARATION_STATUS = _enum(SeparationStatus, "separation_status")
+PRINT_TECHNIQUE = _enum(PrintTechnique, "print_technique")

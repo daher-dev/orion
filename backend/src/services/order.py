@@ -27,6 +27,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from models import (
     Ad,
     Client,
+    ImportedOrder,
     Order,
     OrderStatus,
     PrintDesign,
@@ -90,6 +91,13 @@ def _apply_filters(stmt, filters: OrderFilters):
         stmt = stmt.where(Order.ordered_at >= filters.date_from)
     if filters.date_to is not None:
         stmt = stmt.where(Order.ordered_at <= filters.date_to)
+    if filters.unbatched:
+        stmt = stmt.where(Order.batch_id.is_(None))  # type: ignore[union-attr]
+    if filters.batch_id is not None:
+        stmt = stmt.where(Order.batch_id == filters.batch_id)
+    if filters.product_id is not None:
+        # ProductVariation is already joined in both the rows and count selects.
+        stmt = stmt.where(ProductVariation.product_id == filters.product_id)
     return stmt
 
 
@@ -131,9 +139,22 @@ _BASE_SELECT_COLS = (
     ProductSpec.code,
     Client,
     PrintDesign.image_url,
+    # Fulfillment artifacts from the marketplace import (1:1, may be absent).
+    ImportedOrder.shipping_label_url,
+    ImportedOrder.tracking_code,
 )
 
-OrderWithRelations = tuple[Order, Ad, ProductVariation, Product, str | None, Client | None, str | None]
+OrderWithRelations = tuple[
+    Order,
+    Ad,
+    ProductVariation,
+    Product,
+    str | None,
+    Client | None,
+    str | None,
+    str | None,
+    str | None,
+]
 
 
 def _base_select():
@@ -146,6 +167,8 @@ def _base_select():
         .join(PrintDesign, PrintDesign.id == Product.print_id, isouter=True)
         # Outer: marketplace-imported orders have no client.
         .join(Client, Client.id == Order.client_id, isouter=True)
+        # Outer: only marketplace-imported orders have a companion row.
+        .join(ImportedOrder, ImportedOrder.order_id == Order.id, isouter=True)
     )
 
 

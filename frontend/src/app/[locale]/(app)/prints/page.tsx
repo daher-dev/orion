@@ -1,18 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Palette, Search } from "lucide-react";
+import { Image as ImageIcon, Palette, Search, Shirt } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageHead } from "@/components/page/PageHead";
+import { HelpCard } from "@/components/page/HelpCard";
 import { PrintsTable } from "@/components/prints/PrintsTable";
 import { PrintsEmptyState } from "@/components/prints/PrintsEmptyState";
 import { PrintFormSheet } from "@/components/prints/PrintFormSheet";
 import { usePrints } from "@/hooks/use-prints";
 import { useCanAccess } from "@/hooks/use-permissions";
-import type { Print } from "@/lib/schemas/print";
+import { useRouter } from "@/i18n/routing";
+import { PRINT_TECHNIQUES, type PrintTechnique } from "@/lib/schemas/print";
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -25,14 +34,16 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 
 export default function PrintsPage() {
   const t = useTranslations("prints");
+  const router = useRouter();
   const [search, setSearch] = useState("");
-  const [editing, setEditing] = useState<Print | null>(null);
+  const [technique, setTechnique] = useState<PrintTechnique | "all">("all");
   const [creating, setCreating] = useState(false);
   const canWrite = useCanAccess("prints.write");
   const debouncedSearch = useDebouncedValue(search, 200);
   const { data, isPending, isError } = usePrints({ q: debouncedSearch || undefined });
 
-  const rows = data?.items ?? [];
+  const allRows = data?.items ?? [];
+  const rows = technique === "all" ? allRows : allRows.filter((p) => p.technique === technique);
   const total = data?.total ?? 0;
   const showEmpty = !isPending && !isError && total === 0 && !debouncedSearch;
 
@@ -62,6 +73,19 @@ export default function PrintsPage() {
         }
       />
 
+      <HelpCard
+        icon={Palette}
+        tone="var(--brand-catalog)"
+        title={t("help.title")}
+        steps={[
+          { icon: ImageIcon, label: t("help.flow.artwork"), sub: t("help.flow.artworkSub") },
+          { icon: Palette, label: t("help.flow.print"), sub: t("help.flow.printSub"), accent: true },
+          { icon: Shirt, label: t("help.flow.applied"), sub: t("help.flow.appliedSub") },
+        ]}
+      >
+        {t("help.body")}
+      </HelpCard>
+
       <div className="overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)]">
         <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface)] px-4 py-3">
           <div className="flex min-w-[220px] items-center gap-1.5 rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-2.5 py-[5px] text-[12.5px] text-[color:var(--orion-ink-2)]">
@@ -74,6 +98,22 @@ export default function PrintsPage() {
               data-testid="prints-search"
             />
           </div>
+          <Select value={technique} onValueChange={(v) => setTechnique(v as PrintTechnique | "all")}>
+            <SelectTrigger
+              aria-label={t("table.columns.technique")}
+              className="h-auto min-w-[140px] rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-2.5 py-[5px] text-[12.5px] text-[color:var(--orion-ink-2)]"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("filters.allTechniques")}</SelectItem>
+              {PRINT_TECHNIQUES.map((tech) => (
+                <SelectItem key={tech} value={tech}>
+                  {t(`techniques.${tech}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {data ? (
             <span className="ml-auto text-[12px] tabular-nums text-[color:var(--orion-ink-3)]">
               {total} {t("filters.itemCount")}
@@ -92,18 +132,11 @@ export default function PrintsPage() {
         ) : showEmpty ? (
           <PrintsEmptyState onCreate={canWrite ? () => setCreating(true) : undefined} />
         ) : (
-          <PrintsTable rows={rows} onEdit={(p) => setEditing(p)} />
+          <PrintsTable rows={rows} onOpen={(p) => router.push(`/prints/${p.id}`)} />
         )}
       </div>
 
       <PrintFormSheet open={creating} onOpenChange={(o) => setCreating(o)} />
-      <PrintFormSheet
-        open={editing !== null}
-        onOpenChange={(o) => {
-          if (!o) setEditing(null);
-        }}
-        initial={editing ?? undefined}
-      />
     </div>
   );
 }

@@ -221,7 +221,17 @@ async def test_get_order_returns_joined_data(db_session):
     )
 
     row = await get_order(db_session, company_id=company.id, order_id=order.id)
-    fetched_order, fetched_ad, fetched_variation, fetched_product, code, fetched_client, image_url = row
+    (
+        fetched_order,
+        fetched_ad,
+        fetched_variation,
+        fetched_product,
+        code,
+        fetched_client,
+        image_url,
+        _shipping_label_url,
+        _tracking_code,
+    ) = row
     assert fetched_order.id == order.id
     assert fetched_ad.id == ad.id
     assert fetched_variation.id == variation.id
@@ -465,6 +475,86 @@ async def test_list_orders_filters_by_date_range(db_session):
     )
     assert total2 == 1
     assert rows2[0][0].ordered_at == early
+
+
+async def test_list_orders_filters_by_unbatched_and_batch_id(db_session):
+    from models import Batch, BatchStatus
+
+    company, _, _, variation, client, ad = await _scaffold(db_session)
+    batched = await factory_create_order(
+        db_session,
+        company_id=company.id,
+        ad_id=ad.id,
+        variation_id=variation.id,
+        client_id=client.id,
+        external_order_id="B1",
+    )
+    await factory_create_order(
+        db_session,
+        company_id=company.id,
+        ad_id=ad.id,
+        variation_id=variation.id,
+        client_id=client.id,
+        external_order_id="U1",
+    )
+    batch = Batch(company_id=company.id, code="BATCH-X", status=BatchStatus.OPEN)
+    db_session.add(batch)
+    await db_session.flush()
+    batched.batch_id = batch.id
+    db_session.add(batched)
+    await db_session.commit()
+
+    _rows, unbatched_total = await list_orders(
+        db_session,
+        company_id=company.id,
+        filters=OrderFilters(unbatched=True),
+        page=PageParams(),
+    )
+    assert unbatched_total == 1
+
+    rows, batch_total = await list_orders(
+        db_session,
+        company_id=company.id,
+        filters=OrderFilters(batch_id=batch.id),
+        page=PageParams(),
+    )
+    assert batch_total == 1
+    assert rows[0][0].id == batched.id
+
+
+async def test_list_orders_filters_by_product_id(db_session):
+    company, _, product, variation, client, ad = await _scaffold(db_session)
+    # A second product (own spec/product/variation/ad) in the same company.
+    spec2 = await create_product_spec(db_session, company_id=company.id)
+    product2 = await create_product(db_session, company_id=company.id, spec_id=spec2.id)
+    variation2 = await create_product_variation(db_session, company_id=company.id, product_id=product2.id)
+    ad2 = await create_ad(db_session, company_id=company.id, product_id=product2.id)
+
+    await factory_create_order(
+        db_session,
+        company_id=company.id,
+        ad_id=ad.id,
+        variation_id=variation.id,
+        client_id=client.id,
+        external_order_id="P1",
+    )
+    await factory_create_order(
+        db_session,
+        company_id=company.id,
+        ad_id=ad2.id,
+        variation_id=variation2.id,
+        client_id=client.id,
+        external_order_id="P2",
+    )
+
+    rows, total = await list_orders(
+        db_session,
+        company_id=company.id,
+        filters=OrderFilters(product_id=product.id),
+        page=PageParams(),
+    )
+    assert total == 1
+    assert rows[0][3].id == product.id
 
 
 async def test_list_orders_paginates(db_session):

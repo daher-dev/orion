@@ -111,6 +111,9 @@ class OrderRead(BaseModel):
     ordered_at: datetime
     status: OrderStatus
     external_order_id: str | None = None
+    # Fulfillment artifacts surfaced from the marketplace import (when present).
+    shipping_label_url: str | None = None
+    tracking_code: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -123,6 +126,12 @@ class OrderFilters(BaseModel):
     ad_id: uuid.UUID | None = None
     date_from: datetime | None = None
     date_to: datetime | None = None
+    # When true, only orders not yet assigned to a production batch.
+    unbatched: bool | None = None
+    # Restrict to the orders belonging to a specific batch.
+    batch_id: uuid.UUID | None = None
+    # Restrict to orders of a given product (via its variations).
+    product_id: uuid.UUID | None = None
 
 
 OrderPage = Page[OrderRead]

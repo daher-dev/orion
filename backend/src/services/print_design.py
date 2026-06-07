@@ -89,6 +89,12 @@ async def create_print(
         name=payload.name,
         image_url=payload.image_url,
         cost_per_unit=payload.cost_per_unit,
+        technique=payload.technique,
+        tag=payload.tag,
+        image_url_front=payload.image_url_front,
+        image_url_back=payload.image_url_back,
+        width_cm=payload.width_cm,
+        height_cm=payload.height_cm,
     )
     db.add(print_design)
     try:

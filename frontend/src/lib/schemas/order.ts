@@ -67,6 +67,9 @@ export const orderReadSchema = z.object({
   ordered_at: z.string(),
   status: orderStatusSchema,
   external_order_id: z.string().nullable().optional(),
+  // Fulfillment artifacts from the marketplace import (when present).
+  shipping_label_url: z.string().nullable().optional(),
+  tracking_code: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -91,6 +94,9 @@ export type OrderFilters = {
   ad_id?: string;
   date_from?: string;
   date_to?: string;
+  unbatched?: boolean;
+  batch_id?: string;
+  product_id?: string;
   page?: number;
   page_size?: number;
 };

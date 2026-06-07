@@ -35,6 +35,9 @@ Features created through the `/pm` workflow are tracked here. Add a line when a 
 | F-015 | Dashboard + Reports | in-progress | 5 | `feature/015-dashboard-reports` |
 | F-016 | Settings: Company + Profile | in-progress | 1 | `feature/016-settings-basics` |
 | F-018 | Settings: Audit Log Viewer | in-progress | 2 | `feature/018-audit-log` |
+| F-022 | Sales: Batches (lotes — pack orders, adjust print runs) | in-progress | 5 | `feature/022-batches-labels-montador` |
+| F-023 | Sales: Shipping-label printing (etiquetas) | in-progress | 5 | `feature/022-batches-labels-montador` |
+| F-024 | Production: Montador DTF integration (send estampas) | in-progress | 5 | `feature/022-batches-labels-montador` |
 | F-019 | Settings: Integrations (webhook tokens, channel auth) | planned | 6 | `feature/019-integrations` |
 | F-020 | Settings: Notifications | planned | 6 | `feature/020-notifications` |
 | F-021 | Settings: Billing (v2 stub) | planned | 6 | `feature/021-billing` |

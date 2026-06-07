@@ -47,6 +47,8 @@ def _to_read(
     spec_code: str | None,
     client: Client | None,
     image_url: str | None = None,
+    shipping_label_url: str | None = None,
+    tracking_code: str | None = None,
 ) -> OrderRead:
     return OrderRead(
         id=order.id,
@@ -65,6 +67,8 @@ def _to_read(
         ordered_at=order.ordered_at,
         status=order.status,
         external_order_id=order.external_order_id,
+        shipping_label_url=shipping_label_url,
+        tracking_code=tracking_code,
         created_at=order.created_at,
         updated_at=order.updated_at,
     )
@@ -81,6 +85,9 @@ async def list_orders_endpoint(
     ad_id: Annotated[uuid.UUID | None, Query()] = None,
     date_from: Annotated[datetime | None, Query()] = None,
     date_to: Annotated[datetime | None, Query()] = None,
+    unbatched: Annotated[bool | None, Query()] = None,
+    batch_id: Annotated[uuid.UUID | None, Query()] = None,
+    product_id: Annotated[uuid.UUID | None, Query()] = None,
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> OrderPage:
@@ -93,6 +100,9 @@ async def list_orders_endpoint(
         ad_id=ad_id,
         date_from=date_from,
         date_to=date_to,
+        unbatched=unbatched,
+        batch_id=batch_id,
+        product_id=product_id,
     )
     rows, total = await order_service.list_orders(
         db,

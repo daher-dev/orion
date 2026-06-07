@@ -7,17 +7,21 @@ picks it up via `SQLModel.metadata`.
 from models.ad import Ad
 from models.audit_log import AuditLog
 from models.base import BaseModel, CompanyModel
+from models.batch import Batch, BatchPrintAdjustment
 from models.client import Client
 from models.company import Company
 from models.cutting_order import CuttingOrder, CuttingOrderOutput
 from models.enums import (
+    BatchStatus,
     CuttingStatus,
     Ecommerce,
     FabricRollKind,
     FabricType,
     LoginOutcome,
     OrderStatus,
+    PrintTechnique,
     ProductType,
+    SeparationStatus,
     ShipmentStatus,
     Size,
     StockExitReason,
@@ -42,6 +46,9 @@ __all__ = [
     "Ad",
     "AuditLog",
     "BaseModel",
+    "Batch",
+    "BatchPrintAdjustment",
+    "BatchStatus",
     "Client",
     "Company",
     "CompanyModel",
@@ -60,12 +67,14 @@ __all__ = [
     "OrderStatus",
     "Permission",
     "PrintDesign",
+    "PrintTechnique",
     "Product",
     "ProductSpec",
     "ProductType",
     "ProductVariation",
     "Role",
     "RolePermission",
+    "SeparationStatus",
     "SewingContractor",
     "SewingShipment",
     "SewingShipmentItem",

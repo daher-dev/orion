@@ -63,8 +63,8 @@ async def test_list_ads_returns_only_tenant_rows(authed_client: AsyncClient, db_
     body = response.json()
     assert body["total"] == 1
     assert body["items"][0]["title"] == "Ad A"
-    assert body["items"][0]["product"]["name"] == "Mine"
-    assert body["items"][0]["product"]["code"]  # spec code surfaces
+    assert body["items"][0]["products"][0]["name"] == "Mine"
+    assert body["items"][0]["products"][0]["code"]  # spec code surfaces
 
 
 async def test_list_ads_filters_by_query(authed_client: AsyncClient, db_session):
@@ -164,8 +164,8 @@ async def test_get_ad_detail(authed_client: AsyncClient, db_session):
     assert response.status_code == 200
     body = response.json()
     assert body["title"] == "A"
-    assert body["product"]["id"] == str(product.id)
-    assert body["product"]["code"] == spec.code
+    assert body["products"][0]["id"] == str(product.id)
+    assert body["products"][0]["code"] == spec.code
 
 
 async def test_get_ad_404_when_unknown(authed_client: AsyncClient, db_session):
@@ -197,7 +197,7 @@ async def test_create_ad_201(authed_client: AsyncClient, db_session):
             "title": "New Ad",
             "ecommerce": "shopee",
             "external_id": "SH-1",
-            "product_id": str(product.id),
+            "product_ids": [str(product.id)],
         },
     )
     assert response.status_code == 201
@@ -213,7 +213,7 @@ async def test_create_ad_422_when_title_missing(authed_client: AsyncClient, db_s
 
     response = await authed_client.post(
         "/v1/ads",
-        json={"ecommerce": "shopee", "product_id": str(product.id)},
+        json={"ecommerce": "shopee", "product_ids": [str(product.id)]},
     )
     assert response.status_code == 422
 
@@ -227,7 +227,7 @@ async def test_create_ad_422_when_channel_invalid(authed_client: AsyncClient, db
         json={
             "title": "X",
             "ecommerce": "not-a-channel",
-            "product_id": str(product.id),
+            "product_ids": [str(product.id)],
         },
     )
     assert response.status_code == 422
@@ -241,7 +241,7 @@ async def test_create_ad_422_when_product_missing(authed_client: AsyncClient, db
         json={
             "title": "X",
             "ecommerce": "shopee",
-            "product_id": str(uuid.uuid4()),
+            "product_ids": [str(uuid.uuid4())],
         },
     )
     assert response.status_code == 422  # ValidationError → 422
@@ -256,7 +256,7 @@ async def test_create_ad_403_for_operator(authed_client: AsyncClient, db_session
         json={
             "title": "X",
             "ecommerce": "shopee",
-            "product_id": str(product.id),
+            "product_ids": [str(product.id)],
         },
     )
     assert response.status_code == 403
@@ -268,7 +268,7 @@ async def test_create_ad_401_anonymous(async_client: AsyncClient):
         json={
             "title": "X",
             "ecommerce": "shopee",
-            "product_id": str(uuid.uuid4()),
+            "product_ids": [str(uuid.uuid4())],
         },
     )
     assert response.status_code == 401

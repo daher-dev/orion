@@ -26,6 +26,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from models import (
     Ad,
+    AdProduct,
     Client,
     ImportedOrder,
     Order,
@@ -248,12 +249,18 @@ async def create_order(
     variation = await _ensure_variation(db, company_id=company_id, variation_id=payload.variation_id)
     await _ensure_client(db, company_id=company_id, client_id=payload.client_id)
 
-    # The variation must belong to the same product the ad points at. This
-    # keeps reporting honest: an order on an Ad for product X cannot
-    # decrement stock of product Y just because the operator picked the
-    # wrong variation.
-    if variation.product_id != ad.product_id:
-        raise ValidationError(detail="Variation does not belong to the ad's product")
+    # The variation must belong to one of the products the ad lists. This
+    # keeps reporting honest: an order on an Ad cannot decrement stock of a
+    # product the listing doesn't even sell.
+    ad_product_ids = set(
+        (
+            await db.exec(
+                select(AdProduct.product_id).where(AdProduct.ad_id == ad.id, AdProduct.company_id == company_id)
+            )
+        ).all()
+    )
+    if variation.product_id not in ad_product_ids:
+        raise ValidationError(detail="Variation does not belong to any of the ad's products")
 
     order = Order(
         company_id=company_id,

@@ -584,12 +584,12 @@
       },
       "labels": {
         "title": "Ad title",
-        "product": "Linked product",
+        "product": "Linked products",
         "externalId": "External listing code"
       },
       "placeholders": {
         "title": "e.g. Cropped Oversized — Summer 2026",
-        "product": "Pick a product…",
+        "product": "Pick one or more products…",
         "searchProduct": "Search products…",
         "externalId": {
           "shopee": "e.g. SH-99812",
@@ -607,7 +607,7 @@
       "validation": {
         "titleRequired": "Title is required",
         "titleTooLong": "Title is too long",
-        "productRequired": "Pick a product"
+        "productRequired": "Pick at least one product"
       },
       "save": "Save changes",
       "submitNew": "Create ad",

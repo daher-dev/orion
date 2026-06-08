@@ -39,7 +39,7 @@ vi.mock("@/hooks/use-ads", () => ({
           title: "Cropped Verão",
           ecommerce: "shopee",
           external_id: null,
-          product: { id: "product-1", name: "Cropped Oversized", code: "CAM01" },
+          products: [{ id: "product-1", name: "Cropped Oversized", code: "CAM01" }],
           created_at: "2026-05-10T12:00:00Z",
           updated_at: "2026-05-10T12:00:00Z",
         },
@@ -49,27 +49,31 @@ vi.mock("@/hooks/use-ads", () => ({
 }));
 
 vi.mock("@/hooks/use-products", () => ({
-  useProduct: () => ({
+  useProducts: () => ({
     data: {
-      id: "product-1",
-      company_id: "co-1",
-      name: "Cropped Oversized",
-      product_type: "tshirt",
-      spec_id: "spec-1",
-      print_id: null,
-      variations: [
+      items: [
         {
-          id: "var-1",
-          size: "m",
-          color: "Preto",
-          color_code: "BLK",
-          sku: "CAM01-M-BLK",
+          id: "product-1",
+          company_id: "co-1",
+          name: "Cropped Oversized",
+          product_type: "tshirt",
+          spec_id: "spec-1",
+          print_id: null,
+          variations: [
+            {
+              id: "var-1",
+              size: "m",
+              color: "Preto",
+              color_code: "BLK",
+              sku: "CAM01-M-BLK",
+              created_at: "2026-05-10T12:00:00Z",
+              updated_at: "2026-05-10T12:00:00Z",
+            },
+          ],
           created_at: "2026-05-10T12:00:00Z",
           updated_at: "2026-05-10T12:00:00Z",
         },
       ],
-      created_at: "2026-05-10T12:00:00Z",
-      updated_at: "2026-05-10T12:00:00Z",
     },
   }),
 }));

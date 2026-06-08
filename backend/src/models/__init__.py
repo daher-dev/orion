@@ -5,6 +5,7 @@ picks it up via `SQLModel.metadata`.
 """
 
 from models.ad import Ad
+from models.ad_products import AdProduct
 from models.audit_log import AuditLog
 from models.base import BaseModel, CompanyModel
 from models.batch import Batch, BatchPrintAdjustment
@@ -33,6 +34,7 @@ from models.imported_order import ImportedOrder
 from models.invite import Invite
 from models.login_attempt import LoginAttempt
 from models.order import Order
+from models.order_item import OrderItem
 from models.print_design import PrintDesign
 from models.product import Product, ProductVariation
 from models.product_spec import ProductSpec, SpecTrim
@@ -44,6 +46,7 @@ from models.user import User
 
 __all__ = [
     "Ad",
+    "AdProduct",
     "AuditLog",
     "BaseModel",
     "Batch",
@@ -64,6 +67,7 @@ __all__ = [
     "LoginAttempt",
     "LoginOutcome",
     "Order",
+    "OrderItem",
     "OrderStatus",
     "Permission",
     "PrintDesign",

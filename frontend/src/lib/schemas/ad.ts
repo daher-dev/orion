@@ -39,7 +39,7 @@ export const adReadSchema = z.object({
   title: z.string(),
   ecommerce: ecommerceSchema,
   external_id: z.string().nullable().optional(),
-  product: adProductMiniSchema,
+  products: z.array(adProductMiniSchema),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -82,7 +82,7 @@ export const adFormSchema = z.object({
     .max(120)
     .optional()
     .transform((value) => (value && value.length > 0 ? value : undefined)),
-  product_id: z.string().min(1, { message: "validation.productRequired" }),
+  product_ids: z.array(z.string()).min(1, { message: "validation.productRequired" }),
 });
 
 export type AdFormValues = z.input<typeof adFormSchema>;

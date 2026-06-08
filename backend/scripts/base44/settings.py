@@ -10,12 +10,14 @@ guessed past the default.
 from __future__ import annotations
 
 from models import (
+    BatchStatus,
     CuttingStatus,
     Ecommerce,
     FabricRollKind,
     FabricType,
     OrderStatus,
     ProductType,
+    SeparationStatus,
     ShipmentStatus,
     Size,
     StockExitReason,
@@ -214,3 +216,22 @@ TRIM_TYPE_KEYWORDS: list[tuple[str, TrimType]] = [
     ("botão de pressão", TrimType.SNAP),
     ("colchete", TrimType.HOOK),
 ]
+
+# ── Lotes (LoteProducao.status → BatchStatus) ──────────────────────────────
+DEFAULT_BATCH_STATUS = BatchStatus.OPEN
+BATCH_STATUS_MAP: dict[str, BatchStatus] = {
+    "aberto": BatchStatus.OPEN,
+    "ajustado": BatchStatus.ADJUSTED,
+    "impresso": BatchStatus.PRINTED,
+    "concluido": BatchStatus.DONE,
+    "concluído": BatchStatus.DONE,
+    "cancelado": BatchStatus.CANCELLED,
+}
+
+# ── Separação (ItemPedido.status_separacao → SeparationStatus) ─────────────
+DEFAULT_SEPARATION_STATUS = SeparationStatus.PENDING
+SEPARATION_STATUS_MAP: dict[str, SeparationStatus] = {
+    "pendente": SeparationStatus.PENDING,
+    "etiqueta_impressa": SeparationStatus.LABEL_PRINTED,
+    "conferido": SeparationStatus.CHECKED,
+}

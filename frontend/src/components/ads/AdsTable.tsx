@@ -111,16 +111,21 @@ export function AdsTable({ rows, onEdit }: Props) {
       {
         id: "product",
         header: () => t("table.columns.product"),
-        cell: ({ row }) => (
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-[13px] text-[color:var(--orion-ink-2)]">
-              {row.original.product.name}
-            </span>
-            <span className="font-mono text-[11px] text-[color:var(--orion-ink-3)]">
-              {row.original.product.code}
-            </span>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const products = row.original.products;
+          const first = products[0];
+          return (
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="truncate text-[13px] text-[color:var(--orion-ink-2)]">
+                {first ? first.name : "—"}
+                {products.length > 1 ? ` +${products.length - 1}` : ""}
+              </span>
+              <span className="font-mono text-[11px] text-[color:var(--orion-ink-3)]">
+                {first ? first.code : ""}
+              </span>
+            </div>
+          );
+        },
       },
     ];
 

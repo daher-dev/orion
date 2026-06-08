@@ -128,11 +128,18 @@ export function AdsGrid({ rows, onEdit }: Props) {
                         {ad.title}
                       </h3>
                       <div className="flex items-center gap-2 text-[11.5px] text-[color:var(--orion-ink-3)]">
-                        <span className="font-mono text-[11px] text-[color:var(--orion-ink-2)]">
-                          {ad.product.code}
-                        </span>
-                        <span className="text-[color:var(--orion-line)]">·</span>
-                        <span className="truncate">{ad.product.name}</span>
+                        {ad.products[0] ? (
+                          <>
+                            <span className="font-mono text-[11px] text-[color:var(--orion-ink-2)]">
+                              {ad.products[0].code}
+                            </span>
+                            <span className="text-[color:var(--orion-line)]">·</span>
+                            <span className="truncate">{ad.products[0].name}</span>
+                            {ad.products.length > 1 ? (
+                              <span className="shrink-0">+{ad.products.length - 1}</span>
+                            ) : null}
+                          </>
+                        ) : null}
                       </div>
                     </div>
                     <div className="mt-1 flex items-center justify-between gap-2 border-t border-[color:var(--orion-line-soft)] pt-2 text-[11px] text-[color:var(--orion-ink-3)]">

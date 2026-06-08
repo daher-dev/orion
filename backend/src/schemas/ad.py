@@ -1,9 +1,10 @@
 """Pydantic schemas for the Ads (anúncios) feature.
 
-An Ad links a Product in the catalog to an ecommerce channel listing.
-The wire shape is symmetric on create/update (PATCH allows partials)
-and the read shape embeds a small product mini-card so the grouped
-grid in the UI can render without a second fetch.
+An Ad is an ecommerce listing that sells one or more catalog Products
+(many-to-many). The wire shape is symmetric on create/update (PATCH allows
+partials); ``product_ids`` is the full set of products the listing offers
+(update replaces the set). The read shape embeds the product mini-cards so
+the grid renders without a second fetch.
 """
 
 import uuid
@@ -19,14 +20,15 @@ class AdCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     ecommerce: Ecommerce
     external_id: str | None = Field(default=None, max_length=120)
-    product_id: uuid.UUID
+    product_ids: list[uuid.UUID] = Field(min_length=1)
 
 
 class AdUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
     ecommerce: Ecommerce | None = None
     external_id: str | None = Field(default=None, max_length=120)
-    product_id: uuid.UUID | None = None
+    # When present, the full product set is replaced with these ids.
+    product_ids: list[uuid.UUID] | None = Field(default=None, min_length=1)
 
 
 class AdProductMini(BaseModel):
@@ -46,7 +48,7 @@ class AdRead(BaseModel):
     title: str
     ecommerce: Ecommerce
     external_id: str | None = None
-    product: AdProductMini
+    products: list[AdProductMini]
     created_at: datetime
     updated_at: datetime
 
@@ -54,7 +56,7 @@ class AdRead(BaseModel):
 class AdFilters(BaseModel):
     q: str | None = Field(default=None, max_length=120)
     ecommerce: Ecommerce | None = None
-    product_id: uuid.UUID | None = None
+    product_id: uuid.UUID | None = None  # ads containing this product
 
 
 AdPage = Page[AdRead]

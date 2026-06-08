@@ -110,12 +110,12 @@ export function AdForm({ formId, initial, onSubmit }: Props) {
       title: initial?.title ?? "",
       ecommerce: initial?.ecommerce ?? "shopee",
       external_id: initial?.external_id ?? "",
-      product_id: initial?.product.id ?? "",
+      product_ids: initial?.products.map((p) => p.id) ?? [],
     },
   });
 
   const errors = form.formState.errors;
-  const productId = form.watch("product_id");
+  const productIds = form.watch("product_ids");
   const channel = form.watch("ecommerce");
 
   function translateError(key: string | undefined): string | undefined {
@@ -127,9 +127,9 @@ export function AdForm({ formId, initial, onSubmit }: Props) {
     () => products.data?.items ?? [],
     [products.data?.items],
   );
-  const selectedProduct = useMemo(
-    () => productOptions.find((p) => p.id === productId),
-    [productOptions, productId],
+  const selectedProducts = useMemo(
+    () => productOptions.filter((p) => productIds.includes(p.id)),
+    [productOptions, productIds],
   );
 
   return (
@@ -214,45 +214,44 @@ export function AdForm({ formId, initial, onSubmit }: Props) {
       </div>
 
       <div className="mb-[14px] flex flex-col gap-1.5">
-        <label htmlFor={`${formId}-product_id`} className={FIELD_LABEL_CLASS}>
+        <label htmlFor={`${formId}-product_ids`} className={FIELD_LABEL_CLASS}>
           {t("labels.product")}
         </label>
         <Controller
           control={form.control}
-          name="product_id"
+          name="product_ids"
           render={({ field }) => (
             <Popover open={productOpen} onOpenChange={setProductOpen}>
               <PopoverTrigger asChild>
                 <Button
-                  id={`${formId}-product_id`}
+                  id={`${formId}-product_ids`}
                   type="button"
                   variant="outline"
                   role="combobox"
                   aria-expanded={productOpen}
                   className={cn(
-                    "h-auto w-full justify-between gap-2",
+                    "h-auto min-h-[38px] w-full justify-between gap-2",
                     FIELD_INPUT_CLASS,
                     "font-normal",
                   )}
-                  aria-invalid={!!errors.product_id}
+                  aria-invalid={!!errors.product_ids}
                 >
-                  {selectedProduct ? (
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span
-                        className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface-2)] text-[color:var(--orion-ink-2)]"
-                        aria-hidden="true"
-                      >
-                        <GarmentGlyph
-                          productType={selectedProduct.product_type}
-                          size={14}
-                        />
-                      </span>
-                      <span className="truncate text-[13px] text-[color:var(--orion-ink)]">
-                        {selectedProduct.name}
-                      </span>
-                      <span className="font-mono text-[10.5px] text-[color:var(--orion-ink-3)]">
-                        {productCode(selectedProduct)}
-                      </span>
+                  {selectedProducts.length > 0 ? (
+                    <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+                      {selectedProducts.map((sp) => (
+                        <span
+                          key={sp.id}
+                          className="flex min-w-0 items-center gap-1.5 rounded-[5px] border border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface-2)] px-1.5 py-0.5"
+                        >
+                          <GarmentGlyph productType={sp.product_type} size={12} />
+                          <span className="truncate text-[12px] text-[color:var(--orion-ink)]">
+                            {sp.name}
+                          </span>
+                          <span className="font-mono text-[10px] text-[color:var(--orion-ink-3)]">
+                            {productCode(sp)}
+                          </span>
+                        </span>
+                      ))}
                     </span>
                   ) : (
                     <span className="text-[13px] text-[color:var(--orion-ink-3)]">
@@ -281,14 +280,16 @@ export function AdForm({ formId, initial, onSubmit }: Props) {
                       {productOptions.map((p) => {
                         const colors = distinctColors(p);
                         const sizes = distinctSizes(p);
-                        const selected = field.value === p.id;
+                        const selected = field.value.includes(p.id);
                         return (
                           <CommandItem
                             key={p.id}
                             value={`${p.name} ${productCode(p)} ${p.product_type}`}
                             onSelect={() => {
-                              field.onChange(p.id);
-                              setProductOpen(false);
+                              const next = new Set(field.value);
+                              if (next.has(p.id)) next.delete(p.id);
+                              else next.add(p.id);
+                              field.onChange([...next]);
                             }}
                             className="gap-2.5"
                           >
@@ -357,9 +358,9 @@ export function AdForm({ formId, initial, onSubmit }: Props) {
             </Popover>
           )}
         />
-        {errors.product_id?.message ? (
+        {errors.product_ids?.message ? (
           <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
-            {translateError(errors.product_id.message)}
+            {translateError(errors.product_ids.message)}
           </p>
         ) : null}
       </div>

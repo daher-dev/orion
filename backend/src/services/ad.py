@@ -41,7 +41,11 @@ def _apply_filters(stmt, filters: AdFilters, company_id: uuid.UUID):
         by_product = (
             select(AdProduct.ad_id)
             .join(Product, Product.id == AdProduct.product_id)
-            .where(AdProduct.company_id == company_id, func.lower(Product.name).like(needle))
+            .where(
+                AdProduct.company_id == company_id,
+                Product.company_id == company_id,
+                func.lower(Product.name).like(needle),
+            )
         )
         stmt = stmt.where(
             or_(
@@ -88,7 +92,11 @@ async def _products_for_ads(
         select(AdProduct.ad_id, Product.id, Product.name, ProductSpec.code)
         .join(Product, Product.id == AdProduct.product_id)
         .join(ProductSpec, ProductSpec.id == Product.spec_id)
-        .where(AdProduct.company_id == company_id, AdProduct.ad_id.in_(ad_ids))
+        .where(
+            AdProduct.company_id == company_id,
+            Product.company_id == company_id,
+            AdProduct.ad_id.in_(ad_ids),
+        )
         .order_by(Product.name.asc())  # type: ignore[attr-defined]
     )
     for ad_id, pid, name, code in (await db.exec(stmt)).all():

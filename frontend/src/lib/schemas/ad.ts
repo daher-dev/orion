@@ -82,7 +82,7 @@ export const adFormSchema = z.object({
     .max(120)
     .optional()
     .transform((value) => (value && value.length > 0 ? value : undefined)),
-  product_ids: z.array(z.string()).min(1, { message: "validation.productRequired" }),
+  product_ids: z.array(z.string().min(1)).min(1, { message: "validation.productRequired" }),
 });
 
 export type AdFormValues = z.input<typeof adFormSchema>;

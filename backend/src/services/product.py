@@ -303,11 +303,10 @@ async def delete_product(
     if product is None:
         raise NotFoundError(detail="Product not found")
 
-    linked_ads = await db.exec(
-        select(func.count())
-        .select_from(AdProduct)
-        .where(AdProduct.product_id == product.id, AdProduct.company_id == company_id)
-    )
+    # The ad_products → products FK is global RESTRICT (not company-scoped), so
+    # count ALL referencing rows (not just this tenant's) to surface a clean 409
+    # rather than letting the DELETE hit the FK and 500.
+    linked_ads = await db.exec(select(func.count()).select_from(AdProduct).where(AdProduct.product_id == product.id))
     if int(linked_ads.first() or 0) > 0:
         raise ConflictError(detail="Cannot delete product — ads are linked to it")
 

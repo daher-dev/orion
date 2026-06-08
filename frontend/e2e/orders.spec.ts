@@ -107,7 +107,7 @@ async function seedRefs(request: APIRequestContext): Promise<SeedRefs> {
     title: "Cropped Verão 2026",
     ecommerce: "shopee",
     external_id: "SH-AD-99",
-    product_id: product.id,
+    product_ids: [product.id],
   });
 
   return {

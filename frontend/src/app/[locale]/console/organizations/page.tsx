@@ -106,8 +106,16 @@ export default function ConsoleOrganizationsPage() {
               rows.map((o) => (
                 <tr
                   key={o.id}
+                  tabIndex={0}
+                  aria-label={t("organizations.openAria", { name: o.name })}
                   onClick={() => router.push(`/console/organizations/${o.id}`)}
-                  className="cursor-pointer border-t border-[color:var(--orion-line-soft)] hover:bg-[color:var(--orion-surface-2)]"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      router.push(`/console/organizations/${o.id}`);
+                    }
+                  }}
+                  className="cursor-pointer border-t border-[color:var(--orion-line-soft)] outline-none hover:bg-[color:var(--orion-surface-2)] focus-visible:bg-[color:var(--orion-surface-2)] focus-visible:ring-2 focus-visible:ring-[color:var(--console-accent)] focus-visible:ring-inset"
                 >
                   <Td>
                     <div className="flex items-center gap-3">

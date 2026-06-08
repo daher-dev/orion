@@ -4,10 +4,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 
 from dependencies import DbSession, RequirePermission
-from models import Role, User
+from models import User
 from schemas._common import PageParams
 from schemas.member import MemberPage, MemberRead, MemberRoleUpdate
-from schemas.role import PermissionRead, RoleRead
 from services.member import (
     get_member,
     list_members,
@@ -22,26 +21,8 @@ router = APIRouter(
 )
 
 
-def _role_to_read(role: Role) -> RoleRead:
-    return RoleRead(
-        id=role.id,
-        code=role.code,
-        name=role.name,
-        description=role.description,
-        permissions=[PermissionRead(code=p.code, description=p.description) for p in role.permissions],
-    )
-
-
 def _to_read(member: User) -> MemberRead:
-    return MemberRead(
-        id=member.id,
-        name=member.name,
-        email=member.email,
-        job=member.job,
-        is_operator=member.is_operator,
-        role=_role_to_read(member.role),
-        created_at=member.created_at,
-    )
+    return MemberRead.from_user(member)
 
 
 @router.get("", response_model=MemberPage)

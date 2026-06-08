@@ -2207,7 +2207,8 @@
         "ownerEmail": "Owner email",
         "ownerEmailHint": "We'll send an invite to set the password and claim the workspace.",
         "submit": "Create organization"
-      }
+      },
+      "openAria": "Open {name} details"
     },
     "orgDetail": {
       "since": "since {date}",

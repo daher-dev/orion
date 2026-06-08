@@ -2207,7 +2207,8 @@
         "ownerEmail": "E-mail do titular",
         "ownerEmailHint": "Enviaremos um convite para definir a senha e assumir o workspace.",
         "submit": "Criar organização"
-      }
+      },
+      "openAria": "Abrir detalhes de {name}"
     },
     "orgDetail": {
       "since": "desde {date}",

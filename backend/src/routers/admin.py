@@ -14,7 +14,7 @@ from schemas.admin import (
     OrgRow,
     OverviewStats,
 )
-from schemas.member import MemberPage
+from schemas.member import MemberPage, MemberRead
 from services.admin import (
     create_organization,
     get_organization,
@@ -70,11 +70,9 @@ async def list_org_members_endpoint(
     page_size: Annotated[int, Query(ge=1, le=100)] = 100,
 ) -> MemberPage:
     # Reuse the tenant member service with the target company id (operator scope).
-    from routers.members import _to_read
-
     params = PageParams(page=page, page_size=page_size)
     rows, total = await list_members(db, company_id, params)
-    return MemberPage.build([_to_read(r) for r in rows], total, params)
+    return MemberPage.build([MemberRead.from_user(r) for r in rows], total, params)
 
 
 @router.post("/organizations/{company_id}/impersonate", response_model=ImpersonateResponse)

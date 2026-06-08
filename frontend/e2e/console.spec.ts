@@ -77,10 +77,19 @@ test.describe("Platform Console — operator", () => {
   });
 
   test("impersonating a non-member org shows the support-session banner", async ({ page }) => {
+    // Create a fresh org the dev-bypass user is NOT a member of (entering its own
+    // company would not impersonate). Owning the data keeps the test independent
+    // of the seed, which only guarantees the caller's own company exists.
+    const suffix = Date.now();
+    const name = `Banca E2E ${suffix}`;
+    const created = await page.request.post(`${API_URL}/v1/admin/organizations`, {
+      headers: QA_HEADERS,
+      data: { name, subdomain: `banca-e2e-${suffix}`, owner_email: `owner-${suffix}@example.com` },
+    });
+    expect(created.ok()).toBeTruthy();
+
     await page.goto("/pt-BR/console/organizations");
-    // Underground is seeded with its own admins — qa-dev-user is not a member,
-    // so entering it is a real impersonation (its own company would not be).
-    const row = page.locator("tr", { hasText: "Underground" });
+    const row = page.locator("tr", { hasText: name });
     await expect(row).toBeVisible();
     await row.getByRole("button", { name: "Entrar" }).click();
     await expect(page).toHaveURL(/\/pt-BR(\/|$)/);

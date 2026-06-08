@@ -39,7 +39,8 @@
   "topbar": {
     "search": "Search",
     "searchPlaceholder": "What are we doing now?",
-    "toggleSidebar": "Toggle sidebar"
+    "toggleSidebar": "Toggle sidebar",
+    "console": "Console"
   },
   "nav": {
     "sections": {
@@ -2121,6 +2122,186 @@
     },
     "fallback": {
       "forbidden": "You don't have access to batches."
+    }
+  },
+  "console": {
+    "nav": {
+      "overview": "Overview",
+      "platform": "Platform",
+      "organizations": "Organizations",
+      "users": "Users",
+      "plans": "Plans",
+      "integrations": "Integrations"
+    },
+    "sidebar": {
+      "you": "You · Orion",
+      "team": "Platform team",
+      "backToApp": "Back to the app"
+    },
+    "topbar": {
+      "searchPlaceholder": "Search organization, person or email…",
+      "env": "production",
+      "internalAccess": "Internal access"
+    },
+    "common": {
+      "cancel": "Cancel"
+    },
+    "overview": {
+      "title": "Platform",
+      "titleEm": "health",
+      "desc": "Organizations, people and usage across the whole Orion base.",
+      "seeOrgs": "View organizations",
+      "kpis": {
+        "organizations": "Organizations",
+        "organizationsFoot": "tenant workspaces",
+        "operators": "Operators",
+        "operatorsFoot": "Orion staff with console access",
+        "ordersMonth": "Orders this month",
+        "ordersMonthFoot": "across the platform",
+        "members": "Members",
+        "membersFoot": "people across all orgs"
+      },
+      "revenue": {
+        "title": "Recurring revenue",
+        "sub": "Contracted MRR",
+        "soon": "Revenue and MRR tracking are coming soon."
+      },
+      "planMix": {
+        "title": "Plan distribution",
+        "soon": "Plans aren't modeled yet."
+      },
+      "attention": {
+        "title": "Needs attention",
+        "soon": "Trial and billing signals are coming soon."
+      },
+      "activity": {
+        "title": "Platform activity",
+        "soon": "A cross-tenant audit feed is coming soon."
+      }
+    },
+    "organizations": {
+      "title": "Organizations",
+      "desc": "Every Orion customer is an organization. Manage team, usage and access.",
+      "new": "New organization",
+      "searchPlaceholder": "Search by name or subdomain…",
+      "count": "{count} organizations",
+      "empty": "No organizations match your search.",
+      "enter": "Enter",
+      "cols": {
+        "org": "Organization",
+        "plan": "Plan",
+        "status": "Status",
+        "team": "Team",
+        "ordersMonth": "Orders/month",
+        "mrr": "MRR"
+      },
+      "created": "Organization \"{name}\" created",
+      "createdDesc": "An invite was sent to {email} to claim the workspace.",
+      "createError": "Could not create the organization.",
+      "sheet": {
+        "title": "New organization",
+        "sub": "Create a workspace and invite its owner to take it over.",
+        "name": "Organization name",
+        "subdomain": "Subdomain",
+        "subdomainHint": "Lowercase, unique. Used to identify the tenant.",
+        "ownerEmail": "Owner email",
+        "ownerEmailHint": "We'll send an invite to set the password and claim the workspace.",
+        "submit": "Create organization"
+      }
+    },
+    "orgDetail": {
+      "since": "since {date}",
+      "enterAs": "Enter as {name}",
+      "usage": {
+        "title": "Plan usage",
+        "sub": "current cycle",
+        "ordersMonth": "Orders this month",
+        "members": "Team seats",
+        "noLimit": "no limit"
+      },
+      "members": {
+        "title": "Team",
+        "count": "{count} people",
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "empty": "No members yet."
+      },
+      "billing": {
+        "title": "Billing",
+        "soon": "Invoices and billing are coming soon."
+      },
+      "summary": {
+        "title": "Summary",
+        "ordersMonth": "Orders/month",
+        "team": "Team",
+        "subdomain": "Subdomain",
+        "created": "Created"
+      },
+      "changePlan": {
+        "title": "Change plan",
+        "soon": "Plan management is coming soon."
+      },
+      "integrations": {
+        "title": "Integrations",
+        "soon": "Per-org integrations are coming soon."
+      },
+      "danger": {
+        "title": "Danger zone",
+        "sub": "Actions that affect the organization's access",
+        "pause": "Pause account",
+        "pauseDesc": "Suspends the team's access without deleting data.",
+        "pauseAction": "Pause",
+        "delete": "Delete organization",
+        "deleteDesc": "Removes all data after 30 days. Irreversible.",
+        "deleteAction": "Delete"
+      }
+    },
+    "users": {
+      "title": "Console",
+      "titleEm": "users",
+      "desc": "The Orion team with access to platform administration — not organization members.",
+      "invite": "Invite to console",
+      "inviteSoon": "Console invites are coming soon.",
+      "empty": "No platform staff yet.",
+      "hint": "Looking for an organization's members? They live inside each organization, under Team.",
+      "kpis": {
+        "members": "Console members",
+        "membersFoot": "Orion team",
+        "active": "Active",
+        "invites": "Pending invites",
+        "twofa": "Without 2FA"
+      },
+      "cols": {
+        "member": "Member",
+        "role": "Role",
+        "company": "Company",
+        "twofa": "2FA"
+      }
+    },
+    "plans": {
+      "title": "Plans",
+      "desc": "The Orion plan catalog, its limits and what each one earns.",
+      "ribbon": "Coming soon · illustrative data. Plans and billing aren't wired yet.",
+      "free": "Free",
+      "perMonth": "/mo"
+    },
+    "integrations": {
+      "title": "Integrations",
+      "desc": "Health of the connectors that feed every organization.",
+      "ribbon": "Coming soon · illustrative data. Integration health telemetry isn't wired yet.",
+      "connector": "connector"
+    },
+    "impersonation": {
+      "started": "Support session started for {name}",
+      "error": "Could not start the support session.",
+      "confirmTitle": "Enter as organization",
+      "confirmDesc": "You'll enter the {name} workspace with full access to the organization's data.",
+      "bullet1": "This is an invasive action and is logged in the platform audit.",
+      "bullet2": "The team will see a banner indicating an Orion support session.",
+      "bullet3": "End the session as soon as you're done.",
+      "banner": "Support session · you're acting inside {name}",
+      "end": "End session"
     }
   }
 }

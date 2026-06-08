@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Menu, Search } from "lucide-react";
+import { Menu, Search, Shield } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
+import { Link } from "@/i18n/routing";
+import { useMe } from "@/hooks/use-me";
 import { CommandPalette } from "./CommandPalette";
 
 /**
@@ -21,6 +23,8 @@ export function Topbar() {
   const t = useTranslations("topbar");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const { toggleSidebar } = useSidebar();
+  const { data: me } = useMe();
+  const isOperator = me?.user?.is_operator === true;
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -78,6 +82,15 @@ export function Topbar() {
 
       {/* .tb-spacer — flex 1 — fills the gap between search and the right side */}
       <div className="flex-1" />
+      {isOperator ? (
+        <Link
+          href="/console"
+          title={t("console")}
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-[color:var(--console-accent)] transition-colors hover:bg-[color:color-mix(in_oklab,var(--console-accent)_10%,var(--orion-surface))]"
+        >
+          <Shield size={13} strokeWidth={2.2} /> {t("console")}
+        </Link>
+      ) : null}
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </header>
   );

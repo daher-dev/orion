@@ -23,10 +23,13 @@ production.
 """
 
 from fastapi import APIRouter, status
+from pydantic import BaseModel
 from sqlalchemy import text
+from sqlmodel import select
 
 from config import config
-from dependencies import CurrentClaims, DbSession
+from dependencies import CurrentClaims, CurrentDbUser, DbSession
+from models import User
 from shared.exceptions import AuthorizationError
 
 router = APIRouter(prefix="/test-support", tags=["test-support"])
@@ -72,4 +75,25 @@ async def reset_data(claims: CurrentClaims, db: DbSession) -> None:
     quoted = ", ".join(f'"{t}"' for t in _DATA_TABLES)
     conn = await db.connection()
     await conn.execute(text(f"TRUNCATE {quoted} RESTART IDENTITY CASCADE"))
+    await db.commit()
+
+
+class SetOperatorBody(BaseModel):
+    value: bool = True
+
+
+@router.post("/set-operator", status_code=status.HTTP_204_NO_CONTENT)
+async def set_operator(body: SetOperatorBody, user: CurrentDbUser, db: DbSession) -> None:
+    """Flip the caller's ``is_operator`` flag. Non-prod only.
+
+    Lets the Console E2E suite self-provision a platform operator (and reset the
+    flag afterwards) without a dedicated seed, since the dev-bypass identity is a
+    plain tenant admin by default.
+    """
+    if config.ENV == "prd":
+        raise AuthorizationError(detail="Not available in production")
+    rows = (await db.exec(select(User).where(User.firebase_uid == user.firebase_uid))).all()
+    for row in rows:
+        row.is_operator = body.value
+        db.add(row)
     await db.commit()

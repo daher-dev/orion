@@ -121,6 +121,14 @@ export const qk = {
     company: () => tuple("settings", "company"),
     profile: () => tuple("settings", "profile"),
   },
+  admin: {
+    all: () => tuple("admin"),
+    overview: () => tuple("admin", "overview"),
+    organizations: () => tuple("admin", "organizations"),
+    organization: (id: string) => tuple("admin", "organization", id),
+    orgMembers: (id: string) => tuple("admin", "organization", id, "members"),
+    operators: () => tuple("admin", "operators"),
+  },
 } as const;
 
 export type QueryKey = ReturnType<

@@ -86,6 +86,21 @@
   --status-info: oklch(0.402 0.171 263);         /* #1e40af */
 
   /*
+   * Platform Console (super-admin backoffice) — a distinct indigo identity so
+   * operators always know they're in platform administration, not a tenant.
+   * Scoped under `.console-scope` (see below) for the accent; these raw tokens
+   * are the source values. Plan colors back the (illustrative) Plans page.
+   */
+  --console-accent: #4f46e5;                      /* indigo — console CTA/active */
+  --console-accent-soft: #eef2ff;
+  --console-night: #1c1830;                       /* sidebar top */
+  --console-night-2: #251f3f;                     /* sidebar bottom */
+  --plan-gratis: #78716c;
+  --plan-atelie: #0f766e;
+  --plan-pro: #4f46e5;
+  --plan-fabrica: #b45309;
+
+  /*
    * Typography is wired by next/font (src/app/layout.tsx) which exposes
    *   --font-body     ← Inter Tight
    *   --font-display  ← Fraunces
@@ -189,6 +204,9 @@
   --color-status-warn: var(--status-warn);
   --color-status-err: var(--status-err);
   --color-status-info: var(--status-info);
+
+  /* Platform Console tokens — enables bg-console-accent / text-console-accent */
+  --color-console-accent: var(--console-accent);
 
   /* Radius */
   --radius-sm: calc(var(--radius) - 4px);

@@ -2,6 +2,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, Query, status
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 
 from dependencies import CurrentClaims, CurrentDbUser, DbSession, RequirePermission
@@ -75,6 +76,40 @@ def _build_me_response(
     )
 
 
+async def _build_impersonation_me(
+    db: DbSession,
+    operator: User,
+    company_id: uuid.UUID,
+    companies: list[CompanyMembership],
+) -> MeResponse | None:
+    """Synthesize a `MeResponse` for an operator impersonating a non-member company.
+
+    Returns None when the target company doesn't exist (caller falls back to the
+    normal envelope). The operator gets the admin role + permissions for the
+    company so the tenant app renders during the support session.
+    """
+    company = (await db.exec(select(Company).where(Company.id == company_id))).first()
+    if company is None:
+        return None
+    admin_role = (
+        await db.exec(select(Role).where(Role.code == "admin").options(selectinload(Role.permissions)))
+    ).first()
+    if admin_role is None:  # pragma: no cover — seeded by migration
+        return None
+    return MeResponse(
+        user=UserSummary(id=operator.id, name=operator.name, email=operator.email, is_operator=True),
+        company=CompanySummary(
+            id=company.id, name=company.name, subdomain=company.subdomain, main_color=company.main_color
+        ),
+        role=RoleSummary(
+            id=admin_role.id, code=admin_role.code, name=admin_role.name, description=admin_role.description
+        ),
+        permissions=sorted({perm.code for perm in admin_role.permissions}),
+        companies=companies,
+        impersonating=True,
+    )
+
+
 @router.get("/me", response_model=MeResponse)
 async def get_me(
     claims: CurrentClaims,
@@ -85,6 +120,22 @@ async def get_me(
     ] = None,
 ) -> MeResponse:
     memberships = await get_user_companies(db, claims["uid"])
+
+    # Operator impersonation: the active company header points somewhere the
+    # operator is not a member. Build a support-session envelope instead of an
+    # empty one so the tenant app doesn't bounce them to /access-denied.
+    if x_orion_company_id is not None and memberships:
+        is_member = any(company.id == x_orion_company_id for _, company, _ in memberships)
+        operator_user = memberships[0][0]
+        if not is_member and operator_user.is_operator:
+            companies = [
+                CompanyMembership(id=company.id, name=company.name, role_code=role.code)
+                for _, company, role in memberships
+            ]
+            impersonated = await _build_impersonation_me(db, operator_user, x_orion_company_id, companies)
+            if impersonated is not None:
+                return impersonated
+
     return _build_me_response(memberships, x_orion_company_id)
 
 

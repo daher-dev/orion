@@ -38,6 +38,7 @@ export type MeResponse = {
   role: MeRole | null;
   permissions: string[];
   companies: MeCompanyMembership[];
+  impersonating?: boolean;
 };
 
 const EMPTY_ME: MeResponse = {
@@ -46,6 +47,7 @@ const EMPTY_ME: MeResponse = {
   role: null,
   permissions: [],
   companies: [],
+  impersonating: false,
 };
 
 /**

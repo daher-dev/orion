@@ -41,7 +41,7 @@ async def test_create_ad_persists_and_audits(db_session):
     company, user = await _company_user(db_session)
     product, _ = await _product_with_spec(db_session, company_id=company.id)
 
-    ad, embedded_product, code = await create_ad(
+    ad, products = await create_ad(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -49,17 +49,36 @@ async def test_create_ad_persists_and_audits(db_session):
             title="Cropped Verão 2026",
             ecommerce=Ecommerce.SHOPEE,
             external_id="SH-AD-99",
-            product_id=product.id,
+            product_ids=[product.id],
         ),
     )
     assert ad.id is not None
     assert ad.company_id == company.id
     assert ad.ecommerce == Ecommerce.SHOPEE
-    assert embedded_product.id == product.id
-    assert code  # spec.code surfaced
+    assert [p.id for p in products] == [product.id]
+    assert products[0].code  # spec.code surfaced
 
     audits = (await db_session.exec(select(AuditLog).where(AuditLog.resource_id == ad.id))).all()
     assert any("Created ad Cropped Verão 2026" in a.message for a in audits)
+
+
+async def test_create_ad_links_multiple_products(db_session):
+    company, user = await _company_user(db_session)
+    p1, _ = await _product_with_spec(db_session, company_id=company.id, name="Alpha")
+    p2, _ = await _product_with_spec(db_session, company_id=company.id, name="Beta")
+
+    _, products = await create_ad(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        payload=AdCreate(
+            title="Combo listing",
+            ecommerce=Ecommerce.SHOPEE,
+            external_id=None,
+            product_ids=[p1.id, p2.id],
+        ),
+    )
+    assert {p.id for p in products} == {p1.id, p2.id}
 
 
 async def test_create_ad_rejects_unknown_product(db_session):
@@ -73,7 +92,7 @@ async def test_create_ad_rejects_unknown_product(db_session):
                 title="X",
                 ecommerce=Ecommerce.SHOPEE,
                 external_id=None,
-                product_id=uuid.uuid4(),
+                product_ids=[uuid.uuid4()],
             ),
         )
 
@@ -92,7 +111,7 @@ async def test_create_ad_rejects_product_from_other_tenant(db_session):
                 title="X",
                 ecommerce=Ecommerce.SHOPEE,
                 external_id=None,
-                product_id=other_product.id,
+                product_ids=[other_product.id],
             ),
         )
 
@@ -101,7 +120,7 @@ async def test_create_ad_allows_optional_external_id(db_session):
     company, user = await _company_user(db_session)
     product, _ = await _product_with_spec(db_session, company_id=company.id)
 
-    ad, _, _ = await create_ad(
+    ad, _ = await create_ad(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -109,7 +128,7 @@ async def test_create_ad_allows_optional_external_id(db_session):
             title="No external id",
             ecommerce=Ecommerce.INSTAGRAM,
             external_id=None,
-            product_id=product.id,
+            product_ids=[product.id],
         ),
     )
     assert ad.external_id is None
@@ -123,10 +142,10 @@ async def test_get_ad_returns_product_and_code(db_session):
     product, spec = await _product_with_spec(db_session, company_id=company.id)
     ad = await factory_create_ad(db_session, company_id=company.id, product_id=product.id, title="A1")
 
-    fetched_ad, fetched_product, code = await get_ad(db_session, company_id=company.id, ad_id=ad.id)
+    fetched_ad, products = await get_ad(db_session, company_id=company.id, ad_id=ad.id)
     assert fetched_ad.id == ad.id
-    assert fetched_product.id == product.id
-    assert code == spec.code
+    assert products[0].id == product.id
+    assert products[0].code == spec.code
 
 
 async def test_get_ad_raises_not_found_for_missing(db_session):
@@ -178,9 +197,9 @@ async def test_list_ads_eager_loads_product(db_session):
         page=PageParams(),
     )
     assert len(rows) == 1
-    _, embedded_product, code = rows[0]
-    assert embedded_product.name == "Cropped Oversized"
-    assert code == spec.code
+    _, products = rows[0]
+    assert products[0].name == "Cropped Oversized"
+    assert products[0].code == spec.code
 
 
 async def test_list_ads_filters_by_channel(db_session):
@@ -303,7 +322,7 @@ async def test_update_ad_changes_fields_and_audits(db_session):
     product, _ = await _product_with_spec(db_session, company_id=company.id)
     ad = await factory_create_ad(db_session, company_id=company.id, product_id=product.id, title="Old")
 
-    updated, _, _ = await update_ad(
+    updated, _ = await update_ad(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -317,20 +336,20 @@ async def test_update_ad_changes_fields_and_audits(db_session):
     assert any("Updated ad New" in a.message for a in audits)
 
 
-async def test_update_ad_can_swap_product(db_session):
+async def test_update_ad_can_replace_products(db_session):
     company, user = await _company_user(db_session)
     product1, _ = await _product_with_spec(db_session, company_id=company.id)
     product2, _ = await _product_with_spec(db_session, company_id=company.id, name="Other")
     ad = await factory_create_ad(db_session, company_id=company.id, product_id=product1.id, title="A")
 
-    _, fetched_product, _ = await update_ad(
+    _, products = await update_ad(
         db_session,
         company_id=company.id,
         user_id=user.id,
         ad_id=ad.id,
-        payload=AdUpdate(product_id=product2.id),
+        payload=AdUpdate(product_ids=[product2.id]),
     )
-    assert fetched_product.id == product2.id
+    assert [p.id for p in products] == [product2.id]
 
 
 async def test_update_ad_rejects_product_from_other_tenant(db_session):
@@ -347,7 +366,7 @@ async def test_update_ad_rejects_product_from_other_tenant(db_session):
             company_id=company_a.id,
             user_id=user_a.id,
             ad_id=ad.id,
-            payload=AdUpdate(product_id=other_product.id),
+            payload=AdUpdate(product_ids=[other_product.id]),
         )
 
 
@@ -390,7 +409,7 @@ async def test_update_ad_partial_keeps_other_fields(db_session):
         ecommerce=Ecommerce.SHOPIFY,
     )
 
-    updated, _, _ = await update_ad(
+    updated, _ = await update_ad(
         db_session,
         company_id=company.id,
         user_id=user.id,

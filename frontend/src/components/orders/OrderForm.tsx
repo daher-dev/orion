@@ -26,7 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { useAds } from "@/hooks/use-ads";
 import { useClients } from "@/hooks/use-clients";
-import { useProduct } from "@/hooks/use-products";
+import { useProducts } from "@/hooks/use-products";
 import { CHANNEL_THEME } from "@/components/ads/AdsGrid";
 import {
   orderFormSchema,
@@ -107,9 +107,15 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
   );
   const selectedAd = useMemo(() => adOptions.find((a) => a.id === adId), [adOptions, adId]);
 
-  // Cascade: load variations for the product the selected ad points at.
-  const product = useProduct(selectedAd?.product.id ?? null);
-  const variations = product.data?.variations ?? [];
+  // Cascade: load variations across all products the selected ad lists.
+  const productsQuery = useProducts({ page_size: 100 });
+  const variations = useMemo(() => {
+    if (!selectedAd) return [];
+    const ids = new Set(selectedAd.products.map((p) => p.id));
+    return (productsQuery.data?.items ?? [])
+      .filter((p) => ids.has(p.id))
+      .flatMap((p) => p.variations);
+  }, [selectedAd, productsQuery.data?.items]);
 
   return (
     <form
@@ -315,7 +321,7 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
                       {adOptions.map((a) => (
                         <CommandItem
                           key={a.id}
-                          value={`${a.title} ${a.product.name}`}
+                          value={`${a.title} ${a.products.map((p) => p.name).join(" ")}`}
                           onSelect={() => {
                             field.onChange(a.id);
                             // Reset variation when ad changes — the product cascades.
@@ -345,7 +351,9 @@ export function OrderForm({ formId, initial, onSubmit }: Props) {
                                 {a.title}
                               </span>
                               <span className="text-[11px] text-[color:var(--orion-ink-3)]">
-                                {a.product.name} · {tChannels(a.ecommerce)}
+                                {a.products[0]?.name ?? "—"}
+                                {a.products.length > 1 ? ` +${a.products.length - 1}` : ""} ·{" "}
+                                {tChannels(a.ecommerce)}
                               </span>
                             </span>
                           </span>

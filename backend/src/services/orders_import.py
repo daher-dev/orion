@@ -45,6 +45,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from config import config
 from models import (
     Ad,
+    AdProduct,
     Client,
     Order,
     OrderStatus,
@@ -523,6 +524,7 @@ class _ResolveContext:
     products: dict[uuid.UUID, Product]
     clients_by_email: dict[str, Client]
     clients_by_name: dict[str, Client]
+    ad_product_ids: dict[uuid.UUID, list[uuid.UUID]]
 
 
 async def _build_resolve_context(db: AsyncSession, *, company_id: uuid.UUID) -> _ResolveContext:
@@ -563,6 +565,12 @@ async def _build_resolve_context(db: AsyncSession, *, company_id: uuid.UUID) -> 
             clients_by_email[client.email.lower()] = client
         clients_by_name.setdefault(client.name.lower(), client)
 
+    ad_product_ids: dict[uuid.UUID, list[uuid.UUID]] = {}
+    for ad_id, product_id in (
+        await db.exec(select(AdProduct.ad_id, AdProduct.product_id).where(AdProduct.company_id == company_id))
+    ).all():
+        ad_product_ids.setdefault(ad_id, []).append(product_id)
+
     return _ResolveContext(
         company_id=company_id,
         ads_by_external=ads_by_external,
@@ -570,6 +578,7 @@ async def _build_resolve_context(db: AsyncSession, *, company_id: uuid.UUID) -> 
         products=products,
         clients_by_email=clients_by_email,
         clients_by_name=clients_by_name,
+        ad_product_ids=ad_product_ids,
     )
 
 
@@ -614,13 +623,14 @@ def _resolve_variation(
     if not hint_tokens:
         return None
 
-    same_product = [v for v in ctx.variations if v.product_id == ad.product_id]
+    ad_pids = set(ctx.ad_product_ids.get(ad.id, []))
+    same_product = [v for v in ctx.variations if v.product_id in ad_pids]
     if not same_product:
         return None
 
     # If there's only one variation and any token overlap, accept it.
     if len(same_product) == 1:
-        product = ctx.products.get(ad.product_id)
+        product = ctx.products.get(same_product[0].product_id)
         if product is None:
             return None
         score = _score_variation(hint_tokens, same_product[0], product)

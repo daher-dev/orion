@@ -28,7 +28,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from config import config
-from models import FabricType, ProductVariation, Size
+from models import FabricType, PrintTechnique, ProductVariation, Size
 from scripts.base44 import settings
 
 # Deterministic namespace from the app id, so re-runs are stable and references
@@ -41,6 +41,7 @@ _NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, f"base44:{config.BASE44_APP_ID or 'u
 TABLE_ORDER: list[str] = [
     "product_spec",
     "spec_trim",
+    "print_design",
     "product",
     "product_variation",
     "fabric_roll",
@@ -50,9 +51,13 @@ TABLE_ORDER: list[str] = [
     "sewing_shipment",
     "sewing_shipment_item",
     "client",
+    "batch",
     "ad",
+    "ad_products",
     "order",
+    "order_item",
     "imported_order",
+    "batch_print_adjustment",
     "stock_entry",
     "stock_exit",
 ]
@@ -459,7 +464,13 @@ def convert(
             }
         )
         report.add("product")
-        product_by_b44[b44] = {"company_id": cid, "product_id": product_id, "spec_code": spec_code}
+        product_by_b44[b44] = {
+            "company_id": cid,
+            "product_id": product_id,
+            "spec_code": spec_code,
+            "product_type": product_type,
+            "name": (p.get("nome") or spec_code),
+        }
 
         for v in p.get("variacoes") or []:
             if not isinstance(v, dict):
@@ -721,16 +732,61 @@ def convert(
         report.add("stock_exit")
     report.fetched["stock_exit"] = len(_records(raw, "SaidaEstoque"))
 
-    # 10) PedidoImportado → order + imported_order.
-    # Legacy marketplace orders carry no client/price and no product link. We
-    # synthesize a minimal per-company catalog (one Ad per channel + a single
-    # "Pedidos importados" product whose variations are auto-created per
-    # size/color) so the strict Order(ad_id, variation_id) holds, and keep the
-    # verbatim marketplace data in ImportedOrder (client_id/sale_price stay NULL).
+    # ── Mapeamento: print catalog (StampaMemory → PrintDesign) + indexes ──
+    products_by_company: dict[uuid.UUID, list[dict]] = {}
+    for _info in product_by_b44.values():
+        products_by_company.setdefault(_info["company_id"], []).append(_info)
+
+    stampa_title_type: dict[tuple[uuid.UUID, str], str] = {}
+    print_design_index: dict[tuple[uuid.UUID, str], uuid.UUID] = {}
+    _seen_designs: set[tuple[uuid.UUID, str]] = set()
+    for sm in _records(raw, "StampaMemory"):
+        scid = company_of(sm)
+        if scid is None:
+            continue
+        stitle = norm(sm.get("titulo_anuncio"))
+        if stitle and sm.get("tipo_produto") and (scid, stitle) not in stampa_title_type:
+            stampa_title_type[(scid, stitle)] = str(sm.get("tipo_produto"))
+        ename = str(sm.get("estampa_nome") or "").strip()
+        if not ename or norm(ename) in {"n/a", "-"}:
+            continue
+        dkey = (scid, norm(ename))
+        if dkey in _seen_designs:
+            continue
+        _seen_designs.add(dkey)
+        did = derive_id("print_design", scid, norm(ename))
+        data.rows["print_design"].append(
+            {
+                "id": did,
+                "company_id": scid,
+                "code": codes.make(scid, ename),
+                "name": ename[:120],
+                "image_url": (str(sm.get("foto_estampa_url")).strip() or None) if sm.get("foto_estampa_url") else None,
+                "cost_per_unit": Decimal("0"),
+                "technique": PrintTechnique.DTF,
+            }
+        )
+        print_design_index[dkey] = did
+        report.add("print_design")
+    report.fetched["print_design"] = len(_records(raw, "StampaMemory"))
+
+    def _types_in(text) -> set:
+        n = norm(text)
+        return {pt for kw, pt in settings.PRODUCT_TYPE_KEYWORDS if strip_accents(kw) in n}
+
+    # 10) PedidoImportado → order + imported_order. Each order resolves to a REAL
+    # product within its Ad's product set (an Ad lists many products via
+    # ad_products); when no real product matches it falls back to a synthetic
+    # "Pedidos importados" product. client_id/sale_price stay NULL.
     synth: dict[uuid.UUID, dict] = {}
-    ad_index: dict[tuple[uuid.UUID, str], uuid.UUID] = {}
+    ad_index: dict[tuple, uuid.UUID] = {}
+    ad_products_index: dict[uuid.UUID, list[dict]] = {}
     order_keys: set[tuple] = set()
     import_keys: set[tuple] = set()
+    order_row_by_pi: dict[str, dict] = {}
+    order_by_natkey: dict[tuple, uuid.UUID] = {}
+    real_matches = 0
+    synth_matches = 0
 
     def _synth_product(company_id: uuid.UUID) -> dict:
         info = synth.get(company_id)
@@ -771,25 +827,46 @@ def convert(
         synth[company_id] = info
         return info
 
-    def _synth_ad(company_id: uuid.UUID, marketplace: str) -> uuid.UUID:
+    def _get_or_build_ad(company_id: uuid.UUID, marketplace: str, title_raw) -> uuid.UUID:
         eco, _ = keyword_match(marketplace, settings.ECOMMERCE_KEYWORDS, settings.DEFAULT_ECOMMERCE)
-        key = (company_id, eco.value)
+        title = str(title_raw or "").strip()
+        tnorm = norm(title)
+        key = (company_id, eco.value, tnorm)
         if key in ad_index:
             return ad_index[key]
-        info = _synth_product(company_id)
-        ad_id = derive_id("ad", company_id, eco.value)
+        ad_id = derive_id("ad", company_id, eco.value, tnorm or "untitled")
+        types = _types_in(f"{title} {stampa_title_type.get((company_id, tnorm), '')}")
+        candidates = [i for i in products_by_company.get(company_id, []) if i["product_type"] in types] if types else []
+        if not candidates:
+            candidates = [_synth_product(company_id)]
+            report.skip("ad:no_real_product_match", title[:60] or "(untitled)")
         data.rows["ad"].append(
             {
                 "id": ad_id,
                 "company_id": company_id,
-                "title": f"Importados — {eco.value}"[:200],
+                "title": (title or f"Importados — {eco.value}")[:200],
                 "ecommerce": eco,
                 "external_id": None,
-                "product_id": info["product_id"],
             }
         )
-        ad_index[key] = ad_id
         report.add("ad")
+        seen_p: set[uuid.UUID] = set()
+        for info in candidates:
+            pid = info["product_id"]
+            if pid in seen_p:
+                continue
+            seen_p.add(pid)
+            data.rows["ad_products"].append(
+                {
+                    "id": derive_id("ad_product", ad_id, pid),
+                    "company_id": company_id,
+                    "ad_id": ad_id,
+                    "product_id": pid,
+                }
+            )
+            report.add("ad_products")
+        ad_index[key] = ad_id
+        ad_products_index[ad_id] = candidates
         return ad_id
 
     for po in _records(raw, "PedidoImportado"):
@@ -806,9 +883,13 @@ def convert(
             report.skip("order:qty", str(po.get("quantidade")))
             continue
         marketplace = str(po.get("marketplace") or "Não informado").strip() or "Não informado"
-        ad_id = _synth_ad(cid, marketplace)
-        info = synth[cid]
-        vid = register_variation(cid, info["product_id"], info["spec_code"], size, po.get("cor"))
+        ad_id = _get_or_build_ad(cid, marketplace, po.get("titulo_anuncio"))
+        chosen = (ad_products_index.get(ad_id) or [_synth_product(cid)])[0]
+        vid = register_variation(cid, chosen["product_id"], chosen["spec_code"], size, po.get("cor"))
+        if chosen["product_id"] == synth.get(cid, {}).get("product_id"):
+            synth_matches += 1
+        else:
+            real_matches += 1
         external = str(po.get("numero_pedido") or "").strip() or None
         sku = str(po.get("sku") or "").strip()
         platform_order_id = external or str(po.get("id"))
@@ -822,21 +903,23 @@ def convert(
             continue
         ordered_at = to_dmy_datetime(po.get("data_pedido")) or to_datetime(po.get("created_date")) or datetime.now(UTC)
         oid = derive_id("order", str(po.get("id")))
-        data.rows["order"].append(
-            {
-                "id": oid,
-                "company_id": cid,
-                "ad_id": ad_id,
-                "variation_id": vid,
-                "client_id": None,
-                "quantity": qty,
-                "sale_price": None,
-                "ordered_at": ordered_at,
-                "status": settings.DEFAULT_ORDER_STATUS,
-                "external_order_id": external[:120] if external else None,
-            }
-        )
+        order_row = {
+            "id": oid,
+            "company_id": cid,
+            "ad_id": ad_id,
+            "variation_id": vid,
+            "client_id": None,
+            "quantity": qty,
+            "sale_price": None,
+            "ordered_at": ordered_at,
+            "status": settings.DEFAULT_ORDER_STATUS,
+            "external_order_id": external[:120] if external else None,
+            "batch_id": None,
+        }
+        data.rows["order"].append(order_row)
         report.add("order")
+        order_row_by_pi[str(po.get("id"))] = order_row
+        order_by_natkey[(cid, norm(po.get("numero_pedido")), norm(po.get("cor")), norm(po.get("tamanho")))] = oid
         data.rows["imported_order"].append(
             {
                 "id": derive_id("imported_order", str(po.get("id"))),
@@ -859,5 +942,103 @@ def convert(
         import_keys.add(import_key)
     report.fetched["order"] = len(_records(raw, "PedidoImportado"))
     report.fetched["imported_order"] = len(_records(raw, "PedidoImportado"))
+    report.notes.append(f"order→product match: {real_matches} real, {synth_matches} synthetic")
+
+    # 11) LoteProducao → batch (+ Order.batch_id backfill + print adjustments)
+    order_id_by_pi = {pi: row["id"] for pi, row in order_row_by_pi.items()}
+    for lote in _records(raw, "LoteProducao"):
+        cid = company_of(lote)
+        if cid is None:
+            report.skip("batch:unknown_company")
+            continue
+        b44 = str(lote.get("id"))
+        batch_id = derive_id("batch", b44)
+        data.rows["batch"].append(
+            {
+                "id": batch_id,
+                "company_id": cid,
+                "code": str(lote.get("codigo") or b44)[:40],
+                "name": (str(lote.get("nome")).strip()[:120] if lote.get("nome") else None),
+                "status": settings.BATCH_STATUS_MAP.get(norm(lote.get("status")), settings.DEFAULT_BATCH_STATUS),
+                "total_orders": to_int(lote.get("total_pedidos")) or 0,
+                "total_pieces": to_int(lote.get("total_pecas")) or 0,
+                "labels_printed_at": to_datetime(lote.get("etiquetas_impressas_em")),
+                "prints_sent_at": to_datetime(lote.get("estampas_enviadas_em")),
+                "completed_at": to_datetime(lote.get("concluido_em")),
+                "notes": (str(lote.get("observacoes")).strip()[:500] if lote.get("observacoes") else None),
+            }
+        )
+        report.add("batch")
+        for pi in lote.get("pedido_ids") or []:
+            row = order_row_by_pi.get(str(pi))
+            if row is not None:
+                row["batch_id"] = batch_id
+                report.default("batch.order_linked")
+            else:
+                report.skip("batch:pedido_unresolved", str(pi))
+        for idx, adj in enumerate(lote.get("ajustes_estampas") or []):
+            if not isinstance(adj, dict):
+                continue
+            ename = str(adj.get("estampa_nome") or "").strip()
+            pdid = print_design_index.get((cid, norm(ename)))
+            if pdid is None:
+                report.skip("batch_adj:no_print_design", ename)
+                continue
+            data.rows["batch_print_adjustment"].append(
+                {
+                    "id": derive_id("batch_print_adjustment", b44, idx),
+                    "company_id": cid,
+                    "batch_id": batch_id,
+                    "print_design_id": pdid,
+                    "product_color": clean_color(adj.get("cor_produto") or adj.get("cor"))[:80],
+                    "qty_needed": to_int(adj.get("qtd_necessaria")) or 0,
+                    "qty_stock": to_int(adj.get("qtd_estoque_disponivel")) or 0,
+                    "qty_to_print": to_int(adj.get("qtd_imprimir")) or 0,
+                    "prints_sent": to_bool(adj.get("baixa_estoque_realizada")),
+                }
+            )
+            report.add("batch_print_adjustment")
+    report.fetched["batch"] = len(_records(raw, "LoteProducao"))
+
+    # 12) ItemPedido → order_items (Separação). Many reference superseded order
+    # generations and are skipped + reported.
+    for ip in _records(raw, "ItemPedido"):
+        cid = company_of(ip)
+        if cid is None:
+            report.skip("order_item:unknown_company")
+            continue
+        pi = str(ip.get("pedido_importado_id") or "")
+        oid = order_id_by_pi.get(pi) or order_by_natkey.get(
+            (cid, norm(ip.get("numero_pedido")), norm(ip.get("cor")), norm(ip.get("tamanho")))
+        )
+        if oid is None:
+            report.skip("order_item:no_order", f"{ip.get('numero_pedido')}/{ip.get('cor')}/{ip.get('tamanho')}")
+            continue
+        rastreio = str(ip.get("codigo_rastreio_unico") or "").strip()
+        if not rastreio:
+            report.skip("order_item:no_tracking")
+            continue
+        estampa = str(ip.get("estampa_mapeada") or "").strip()
+        if norm(estampa) in {"n/a", "-"}:
+            estampa = ""
+        data.rows["order_item"].append(
+            {
+                "id": derive_id("order_item", cid, rastreio),
+                "company_id": cid,
+                "order_id": oid,
+                "variation_id": order_row_by_pi.get(pi, {}).get("variation_id"),
+                "tracking_code": rastreio[:120],
+                "status": settings.SEPARATION_STATUS_MAP.get(
+                    norm(ip.get("status_separacao")), settings.DEFAULT_SEPARATION_STATUS
+                ),
+                "checked_at": to_datetime(ip.get("conferido_em")),
+                "checked_by": str(ip.get("conferido_por")).strip()[:255] if ip.get("conferido_por") else None,
+                "mapped_print": estampa[:120] if estampa else None,
+                "item_index": to_int(ip.get("indice_item")) or 0,
+                "total_items": to_int(ip.get("total_itens_pedido")) or 0,
+            }
+        )
+        report.add("order_item")
+    report.fetched["order_item"] = len(_records(raw, "ItemPedido"))
 
     return data

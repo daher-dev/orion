@@ -38,7 +38,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from models import Ad, Ecommerce, ImportedOrder, Order, OrderStatus, ProductVariation, Size
+from models import Ad, AdProduct, Ecommerce, ImportedOrder, Order, OrderStatus, ProductVariation, Size
 from schemas.imported_orders import UpsellerImportError, UpsellerImportSummary
 from services._audit import write_audit
 from services._base import scoped
@@ -355,6 +355,7 @@ class _ResolveContext:
     ads: list[Ad]
     ads_by_external: dict[str, Ad]
     variations_by_product: dict[uuid.UUID, list[ProductVariation]]
+    ad_product_ids: dict[uuid.UUID, list[uuid.UUID]]
 
 
 async def _build_resolve_context(db: AsyncSession, *, company_id: uuid.UUID) -> _ResolveContext:
@@ -366,7 +367,18 @@ async def _build_resolve_context(db: AsyncSession, *, company_id: uuid.UUID) -> 
     for variation in variations:
         by_product.setdefault(variation.product_id, []).append(variation)
 
-    return _ResolveContext(ads=ads, ads_by_external=ads_by_external, variations_by_product=by_product)
+    ad_product_ids: dict[uuid.UUID, list[uuid.UUID]] = {}
+    for ad_id, product_id in (
+        await db.exec(select(AdProduct.ad_id, AdProduct.product_id).where(AdProduct.company_id == company_id))
+    ).all():
+        ad_product_ids.setdefault(ad_id, []).append(product_id)
+
+    return _ResolveContext(
+        ads=ads,
+        ads_by_external=ads_by_external,
+        variations_by_product=by_product,
+        ad_product_ids=ad_product_ids,
+    )
 
 
 def _channel_of(marketplace: str) -> Ecommerce | None:
@@ -432,9 +444,9 @@ def _sku_matches(variation_sku: str, row_sku: str) -> bool:
 def _resolve_variation(ctx: _ResolveContext, ad: Ad, row: _ParsedRow) -> tuple[ProductVariation | None, str | None]:
     """Strict variation match within the ad's product. Ambiguity is rejected."""
 
-    variations = ctx.variations_by_product.get(ad.product_id, [])
+    variations = [v for pid in ctx.ad_product_ids.get(ad.id, []) for v in ctx.variations_by_product.get(pid, [])]
     if not variations:
-        return None, "ad's product has no variations"
+        return None, "ad has no product variations"
 
     if row.sku:
         sku_hits = [v for v in variations if v.sku and _sku_matches(v.sku, row.sku)]

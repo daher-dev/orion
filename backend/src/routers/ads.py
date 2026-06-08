@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 
 from dependencies import DbSession, RequirePermission
-from models import Ad, Product, User
+from models import Ad, User
 from models.enums import Ecommerce
 from schemas._common import PageParams
 from schemas.ad import (
@@ -26,13 +26,13 @@ router = APIRouter(
 )
 
 
-def _to_read(ad: Ad, product: Product, code: str) -> AdRead:
+def _to_read(ad: Ad, products: list[AdProductMini]) -> AdRead:
     return AdRead(
         id=ad.id,
         title=ad.title,
         ecommerce=ad.ecommerce,
         external_id=ad.external_id,
-        product=AdProductMini(id=product.id, name=product.name, code=code),
+        products=products,
         created_at=ad.created_at,
         updated_at=ad.updated_at,
     )
@@ -56,7 +56,7 @@ async def list_ads_endpoint(
         filters=filters,
         page=params,
     )
-    items = [_to_read(ad, product, code) for ad, product, code in rows]
+    items = [_to_read(ad, products) for ad, products in rows]
     return AdPage.build(items=items, total=total, params=params)
 
 
@@ -66,12 +66,12 @@ async def get_ad_endpoint(
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("ads.read"))],
 ) -> AdRead:
-    ad, product, code = await ad_service.get_ad(
+    ad, products = await ad_service.get_ad(
         db,
         company_id=user.company_id,
         ad_id=ad_id,
     )
-    return _to_read(ad, product, code)
+    return _to_read(ad, products)
 
 
 @router.post("", response_model=AdRead, status_code=status.HTTP_201_CREATED)
@@ -80,13 +80,13 @@ async def create_ad_endpoint(
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("ads.write"))],
 ) -> AdRead:
-    ad, product, code = await ad_service.create_ad(
+    ad, products = await ad_service.create_ad(
         db,
         company_id=user.company_id,
         user_id=user.id,
         payload=payload,
     )
-    return _to_read(ad, product, code)
+    return _to_read(ad, products)
 
 
 @router.patch("/{ad_id}", response_model=AdRead)
@@ -96,14 +96,14 @@ async def update_ad_endpoint(
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("ads.write"))],
 ) -> AdRead:
-    ad, product, code = await ad_service.update_ad(
+    ad, products = await ad_service.update_ad(
         db,
         company_id=user.company_id,
         user_id=user.id,
         ad_id=ad_id,
         payload=payload,
     )
-    return _to_read(ad, product, code)
+    return _to_read(ad, products)
 
 
 @router.delete("/{ad_id}", status_code=status.HTTP_204_NO_CONTENT)

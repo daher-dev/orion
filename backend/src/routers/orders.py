@@ -30,7 +30,9 @@ from schemas.order import (
     OrderUpdate,
     OrderVariationRead,
 )
+from schemas.order_item import OrderItemRead
 from services import order as order_service
+from services import order_item as order_item_service
 
 router = APIRouter(
     prefix="/orders",
@@ -126,6 +128,16 @@ async def get_order_endpoint(
         order_id=order_id,
     )
     return _to_read(*row)
+
+
+@router.get("/{order_id}/items", response_model=list[OrderItemRead])
+async def list_order_items_endpoint(
+    order_id: uuid.UUID,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.read"))],
+) -> list[OrderItemRead]:
+    items = await order_item_service.list_order_items(db, company_id=user.company_id, order_id=order_id)
+    return [OrderItemRead.model_validate(item) for item in items]
 
 
 @router.post("", response_model=OrderRead, status_code=status.HTTP_201_CREATED)

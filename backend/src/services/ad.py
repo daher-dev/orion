@@ -1,20 +1,19 @@
 """Service layer for Ads (anúncios).
 
-An ``Ad`` links a ``Product`` to an ecommerce channel. Mutations are
-audited; reads eager-load the product + its spec so the AdRead can
-expose `product.code` (the spec code, e.g. ``FT-014``) without a
-second round-trip.
+An ``Ad`` is an ecommerce listing that sells one or more ``Product``s
+(many-to-many via ``ad_products``). Mutations are audited; reads batch-load
+each ad's products + spec code so ``AdRead.products`` renders without an
+N+1.
 
 Tenant safety
 -------------
-Every query is scoped to ``company_id`` on the ``Ad`` table; the
-product join is also scoped to the same tenant to make cross-tenant
-poisoning impossible even if a stale id is passed in a filter.
+Every query is scoped to ``company_id``; the product lookups are scoped to the
+same tenant so a stale id in a filter can't poison across tenants.
 
 Delete guard
 ------------
-Ads referenced by at least one ``Order`` raise :class:`ConflictError`
-so we never orphan sales history.
+Ads referenced by at least one ``Order`` raise :class:`ConflictError` so we
+never orphan sales history. ``ad_products`` rows cascade with the ad.
 """
 
 from __future__ import annotations
@@ -25,67 +24,89 @@ from sqlalchemy import func, or_
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from models import Ad, Order, Product, ProductSpec
+from models import Ad, AdProduct, Order, Product, ProductSpec
 from schemas._common import PageParams
-from schemas.ad import AdCreate, AdFilters, AdUpdate
+from schemas.ad import AdCreate, AdFilters, AdProductMini, AdUpdate
 from services._audit import write_audit
 from services._base import scoped
 from shared.exceptions import ConflictError, NotFoundError, ValidationError
 
-# A single read row: the Ad + its Product + the spec code. We return a
-# tuple instead of stuffing it onto the SQLModel instance to keep the
-# Ad table object plain.
-AdWithProduct = tuple[Ad, Product, str]
+# A read row: the Ad + the mini-cards of every product it lists.
+AdWithProducts = tuple[Ad, list[AdProductMini]]
 
 
-def _apply_filters(stmt, filters: AdFilters):
+def _apply_filters(stmt, filters: AdFilters, company_id: uuid.UUID):
     if filters.q:
         needle = f"%{filters.q.lower()}%"
+        by_product = (
+            select(AdProduct.ad_id)
+            .join(Product, Product.id == AdProduct.product_id)
+            .where(AdProduct.company_id == company_id, func.lower(Product.name).like(needle))
+        )
         stmt = stmt.where(
             or_(
                 func.lower(Ad.title).like(needle),
                 func.lower(Ad.external_id).like(needle),
-                func.lower(Product.name).like(needle),
+                Ad.id.in_(by_product),
             )
         )
     if filters.ecommerce is not None:
         stmt = stmt.where(Ad.ecommerce == filters.ecommerce)
     if filters.product_id is not None:
-        stmt = stmt.where(Ad.product_id == filters.product_id)
+        owners = select(AdProduct.ad_id).where(
+            AdProduct.company_id == company_id, AdProduct.product_id == filters.product_id
+        )
+        stmt = stmt.where(Ad.id.in_(owners))
     return stmt
 
 
-async def _ensure_product(
+async def _ensure_products(
     db: AsyncSession,
     *,
     company_id: uuid.UUID,
-    product_id: uuid.UUID,
-) -> Product:
-    stmt = scoped(select(Product), Product, company_id).where(Product.id == product_id)
-    product = (await db.exec(stmt)).first()
-    if product is None:
-        raise ValidationError(detail="Product not found for this company")
-    return product
+    product_ids: list[uuid.UUID],
+) -> list[uuid.UUID]:
+    """Validate every product id exists for the tenant; return deduped ids (order kept)."""
+    ids = list(dict.fromkeys(product_ids))
+    found = set((await db.exec(scoped(select(Product.id), Product, company_id).where(Product.id.in_(ids)))).all())
+    missing = [pid for pid in ids if pid not in found]
+    if missing:
+        raise ValidationError(detail="One or more products not found for this company")
+    return ids
 
 
-async def _load_with_product(
+async def _products_for_ads(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    ad_ids: list[uuid.UUID],
+) -> dict[uuid.UUID, list[AdProductMini]]:
+    out: dict[uuid.UUID, list[AdProductMini]] = {aid: [] for aid in ad_ids}
+    if not ad_ids:
+        return out
+    stmt = (
+        select(AdProduct.ad_id, Product.id, Product.name, ProductSpec.code)
+        .join(Product, Product.id == AdProduct.product_id)
+        .join(ProductSpec, ProductSpec.id == Product.spec_id)
+        .where(AdProduct.company_id == company_id, AdProduct.ad_id.in_(ad_ids))
+        .order_by(Product.name.asc())  # type: ignore[attr-defined]
+    )
+    for ad_id, pid, name, code in (await db.exec(stmt)).all():
+        out.setdefault(ad_id, []).append(AdProductMini(id=pid, name=name, code=code))
+    return out
+
+
+async def _load_with_products(
     db: AsyncSession,
     *,
     company_id: uuid.UUID,
     ad_id: uuid.UUID,
-) -> AdWithProduct:
-    """Fetch one ad joined with its product + spec.code, scoped to tenant."""
-
-    stmt = (
-        select(Ad, Product, ProductSpec.code)
-        .join(Product, Product.id == Ad.product_id)
-        .join(ProductSpec, ProductSpec.id == Product.spec_id)
-        .where(Ad.company_id == company_id, Ad.id == ad_id)
-    )
-    row = (await db.exec(stmt)).first()
-    if row is None:
+) -> AdWithProducts:
+    ad = (await db.exec(scoped(select(Ad), Ad, company_id).where(Ad.id == ad_id))).first()
+    if ad is None:
         raise NotFoundError(detail="Ad not found")
-    return row  # type: ignore[return-value]
+    products = (await _products_for_ads(db, company_id=company_id, ad_ids=[ad.id]))[ad.id]
+    return ad, products
 
 
 # --------------------------------------------------------------------- list
@@ -97,34 +118,24 @@ async def list_ads(
     company_id: uuid.UUID,
     filters: AdFilters | None = None,
     page: PageParams | None = None,
-) -> tuple[list[AdWithProduct], int]:
+) -> tuple[list[AdWithProducts], int]:
     filters = filters or AdFilters()
     page = page or PageParams()
 
-    base = (
-        select(Ad, Product, ProductSpec.code)
-        .join(Product, Product.id == Ad.product_id)
-        .join(ProductSpec, ProductSpec.id == Product.spec_id)
-        .where(Ad.company_id == company_id)
+    count_stmt = _apply_filters(
+        select(func.count()).select_from(Ad).where(Ad.company_id == company_id), filters, company_id
     )
-    base = _apply_filters(base, filters)
-
-    count_stmt = (
-        select(func.count())
-        .select_from(Ad)
-        .join(Product, Product.id == Ad.product_id)
-        .where(Ad.company_id == company_id)
-    )
-    count_stmt = _apply_filters(count_stmt, filters)
     total = int((await db.exec(count_stmt)).one() or 0)
 
     rows_stmt = (
-        base.order_by(Ad.ecommerce.asc(), Ad.created_at.desc())  # type: ignore[attr-defined]
+        _apply_filters(scoped(select(Ad), Ad, company_id), filters, company_id)
+        .order_by(Ad.ecommerce.asc(), Ad.created_at.desc())  # type: ignore[attr-defined]
         .offset(page.offset)
         .limit(page.page_size)
     )
-    rows = list((await db.exec(rows_stmt)).all())
-    return rows, total  # type: ignore[return-value]
+    ads = list((await db.exec(rows_stmt)).all())
+    products_by_ad = await _products_for_ads(db, company_id=company_id, ad_ids=[a.id for a in ads])
+    return [(a, products_by_ad.get(a.id, [])) for a in ads], total
 
 
 # ---------------------------------------------------------------------- get
@@ -135,8 +146,8 @@ async def get_ad(
     *,
     company_id: uuid.UUID,
     ad_id: uuid.UUID,
-) -> AdWithProduct:
-    return await _load_with_product(db, company_id=company_id, ad_id=ad_id)
+) -> AdWithProducts:
+    return await _load_with_products(db, company_id=company_id, ad_id=ad_id)
 
 
 # ------------------------------------------------------------------- create
@@ -148,17 +159,19 @@ async def create_ad(
     company_id: uuid.UUID,
     user_id: uuid.UUID | None,
     payload: AdCreate,
-) -> AdWithProduct:
-    await _ensure_product(db, company_id=company_id, product_id=payload.product_id)
+) -> AdWithProducts:
+    product_ids = await _ensure_products(db, company_id=company_id, product_ids=payload.product_ids)
 
     ad = Ad(
         company_id=company_id,
         title=payload.title,
         ecommerce=payload.ecommerce,
         external_id=payload.external_id,
-        product_id=payload.product_id,
     )
     db.add(ad)
+    await db.flush()
+    for pid in product_ids:
+        db.add(AdProduct(company_id=company_id, ad_id=ad.id, product_id=pid))
     await db.flush()
 
     await write_audit(
@@ -170,8 +183,7 @@ async def create_ad(
         message=f"Created ad {ad.title}",
     )
     await db.commit()
-    await db.refresh(ad)
-    return await _load_with_product(db, company_id=company_id, ad_id=ad.id)
+    return await _load_with_products(db, company_id=company_id, ad_id=ad.id)
 
 
 # ------------------------------------------------------------------- update
@@ -184,15 +196,20 @@ async def update_ad(
     user_id: uuid.UUID | None,
     ad_id: uuid.UUID,
     payload: AdUpdate,
-) -> AdWithProduct:
-    stmt = scoped(select(Ad), Ad, company_id).where(Ad.id == ad_id)
-    ad = (await db.exec(stmt)).first()
+) -> AdWithProducts:
+    ad = (await db.exec(scoped(select(Ad), Ad, company_id).where(Ad.id == ad_id))).first()
     if ad is None:
         raise NotFoundError(detail="Ad not found")
 
     data = payload.model_dump(exclude_unset=True)
-    if "product_id" in data and data["product_id"] is not None:
-        await _ensure_product(db, company_id=company_id, product_id=data["product_id"])
+    new_product_ids = data.pop("product_ids", None)
+    if new_product_ids is not None:
+        product_ids = await _ensure_products(db, company_id=company_id, product_ids=new_product_ids)
+        existing = (await db.exec(select(AdProduct).where(AdProduct.ad_id == ad.id))).all()
+        for link in existing:
+            await db.delete(link)
+        for pid in product_ids:
+            db.add(AdProduct(company_id=company_id, ad_id=ad.id, product_id=pid))
 
     for field, value in data.items():
         setattr(ad, field, value)
@@ -209,8 +226,7 @@ async def update_ad(
         message=f"Updated ad {ad.title}",
     )
     await db.commit()
-    await db.refresh(ad)
-    return await _load_with_product(db, company_id=company_id, ad_id=ad.id)
+    return await _load_with_products(db, company_id=company_id, ad_id=ad.id)
 
 
 # ------------------------------------------------------------------- delete
@@ -233,7 +249,7 @@ async def delete_ad(
         raise ConflictError(detail="Cannot delete ad — orders are linked to it")
 
     title = ad.title
-    await db.delete(ad)
+    await db.delete(ad)  # ad_products cascade
     await write_audit(
         db,
         company_id=company_id,
@@ -246,7 +262,7 @@ async def delete_ad(
 
 
 __all__ = [
-    "AdWithProduct",
+    "AdWithProducts",
     "create_ad",
     "delete_ad",
     "get_ad",

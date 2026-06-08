@@ -27,7 +27,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from models import Ad, PrintDesign, Product, ProductSpec, ProductVariation
+from models import AdProduct, PrintDesign, Product, ProductSpec, ProductVariation
 from schemas._common import PageParams
 from schemas.product import ProductCreate, ProductFilters, ProductUpdate, VariationItem
 from services._audit import write_audit
@@ -303,7 +303,7 @@ async def delete_product(
     if product is None:
         raise NotFoundError(detail="Product not found")
 
-    linked_ads = await db.exec(select(func.count()).select_from(Ad).where(Ad.product_id == product.id))
+    linked_ads = await db.exec(select(func.count()).select_from(AdProduct).where(AdProduct.product_id == product.id))
     if int(linked_ads.first() or 0) > 0:
         raise ConflictError(detail="Cannot delete product — ads are linked to it")
 

@@ -583,12 +583,12 @@
       },
       "labels": {
         "title": "Título do anúncio",
-        "product": "Produto vinculado",
+        "product": "Produtos vinculados",
         "externalId": "Código externo da listagem"
       },
       "placeholders": {
         "title": "Ex: Cropped Oversized — Verão 2026",
-        "product": "Selecione um produto…",
+        "product": "Selecione um ou mais produtos…",
         "searchProduct": "Procurar produtos…",
         "externalId": {
           "shopee": "Ex: SH-99812",
@@ -606,7 +606,7 @@
       "validation": {
         "titleRequired": "Informe o título",
         "titleTooLong": "Título muito longo",
-        "productRequired": "Selecione um produto"
+        "productRequired": "Selecione ao menos um produto"
       },
       "save": "Salvar alterações",
       "submitNew": "Criar anúncio",

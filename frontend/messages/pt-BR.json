@@ -39,7 +39,8 @@
   "topbar": {
     "search": "Buscar",
     "searchPlaceholder": "O que vamos fazer agora?",
-    "toggleSidebar": "Alternar barra lateral"
+    "toggleSidebar": "Alternar barra lateral",
+    "console": "Console"
   },
   "nav": {
     "sections": {
@@ -2121,6 +2122,187 @@
     },
     "fallback": {
       "forbidden": "Você não tem acesso aos lotes."
+    }
+  },
+  "console": {
+    "nav": {
+      "overview": "Visão geral",
+      "platform": "Plataforma",
+      "organizations": "Organizações",
+      "users": "Usuários",
+      "plans": "Planos",
+      "integrations": "Integrações"
+    },
+    "sidebar": {
+      "you": "Você · Orion",
+      "team": "Equipe da plataforma",
+      "backToApp": "Voltar ao app"
+    },
+    "topbar": {
+      "searchPlaceholder": "Buscar organização, pessoa ou e-mail…",
+      "env": "produção",
+      "internalAccess": "Acesso interno"
+    },
+    "common": {
+      "cancel": "Cancelar"
+    },
+    "overview": {
+      "title": "Saúde da",
+      "titleEm": "plataforma",
+      "desc": "Organizações, pessoas e uso em toda a base Orion.",
+      "seeOrgs": "Ver organizações",
+      "kpis": {
+        "organizations": "Organizações",
+        "organizationsFoot": "workspaces de clientes",
+        "operators": "Operadores",
+        "operatorsFoot": "equipe Orion com acesso ao console",
+        "ordersMonth": "Pedidos no mês",
+        "ordersMonthFoot": "em toda a plataforma",
+        "members": "Membros",
+        "membersFoot": "pessoas em todas as orgs"
+      },
+      "revenue": {
+        "title": "Receita recorrente",
+        "sub": "MRR contratado",
+        "soon": "Receita e MRR chegam em breve."
+      },
+      "planMix": {
+        "title": "Distribuição por plano",
+        "soon": "Planos ainda não modelados."
+      },
+      "attention": {
+        "title": "Precisa de atenção",
+        "soon": "Sinais de trial e cobrança chegam em breve."
+      },
+      "activity": {
+        "title": "Atividade da plataforma",
+        "soon": "O log entre organizações chega em breve."
+      }
+    },
+    "organizations": {
+      "title": "Organizações",
+      "desc": "Cada cliente Orion é uma organização. Gerencie equipe, uso e acesso.",
+      "new": "Nova organização",
+      "searchPlaceholder": "Buscar por nome ou subdomínio…",
+      "count": "{count} organizações",
+      "empty": "Nenhuma organização corresponde à busca.",
+      "enter": "Entrar",
+      "cols": {
+        "org": "Organização",
+        "plan": "Plano",
+        "status": "Status",
+        "team": "Equipe",
+        "ordersMonth": "Pedidos/mês",
+        "mrr": "MRR"
+      },
+      "created": "Organização \"{name}\" criada",
+      "createdDesc": "Um convite foi enviado para {email} assumir o workspace.",
+      "createError": "Não foi possível criar a organização.",
+      "sheet": {
+        "title": "Nova organização",
+        "sub": "Crie um workspace e convide o titular para assumir a conta.",
+        "name": "Nome da organização",
+        "subdomain": "Subdomínio",
+        "subdomainHint": "Minúsculo e único. Identifica a organização.",
+        "ownerEmail": "E-mail do titular",
+        "ownerEmailHint": "Enviaremos um convite para definir a senha e assumir o workspace.",
+        "submit": "Criar organização"
+      },
+      "openAria": "Abrir detalhes de {name}"
+    },
+    "orgDetail": {
+      "since": "desde {date}",
+      "enterAs": "Entrar como {name}",
+      "usage": {
+        "title": "Uso no plano",
+        "sub": "ciclo atual",
+        "ordersMonth": "Pedidos no mês",
+        "members": "Assentos de equipe",
+        "noLimit": "sem limite"
+      },
+      "members": {
+        "title": "Equipe",
+        "count": "{count} pessoas",
+        "name": "Nome",
+        "email": "E-mail",
+        "role": "Função",
+        "empty": "Nenhum membro ainda."
+      },
+      "billing": {
+        "title": "Cobrança",
+        "soon": "Faturas e cobrança chegam em breve."
+      },
+      "summary": {
+        "title": "Resumo",
+        "ordersMonth": "Pedidos/mês",
+        "team": "Equipe",
+        "subdomain": "Subdomínio",
+        "created": "Criada"
+      },
+      "changePlan": {
+        "title": "Mudar plano",
+        "soon": "Gestão de planos chega em breve."
+      },
+      "integrations": {
+        "title": "Integrações",
+        "soon": "Integrações por organização chegam em breve."
+      },
+      "danger": {
+        "title": "Zona crítica",
+        "sub": "Ações que afetam o acesso da organização",
+        "pause": "Pausar conta",
+        "pauseDesc": "Suspende o acesso da equipe sem apagar dados.",
+        "pauseAction": "Pausar",
+        "delete": "Apagar organização",
+        "deleteDesc": "Remove todos os dados após 30 dias. Irreversível.",
+        "deleteAction": "Apagar"
+      }
+    },
+    "users": {
+      "title": "Usuários",
+      "titleEm": "do console",
+      "desc": "A equipe Orion com acesso à administração da plataforma — não os membros das organizações.",
+      "invite": "Convidar para o console",
+      "inviteSoon": "Convites para o console chegam em breve.",
+      "empty": "Nenhum membro da plataforma ainda.",
+      "hint": "Procurando membros de uma organização? Eles ficam dentro de cada organização, na aba Equipe.",
+      "kpis": {
+        "members": "Membros do console",
+        "membersFoot": "equipe Orion",
+        "active": "Ativos",
+        "invites": "Convites pendentes",
+        "twofa": "Sem 2FA"
+      },
+      "cols": {
+        "member": "Membro",
+        "role": "Função",
+        "company": "Empresa",
+        "twofa": "2FA"
+      }
+    },
+    "plans": {
+      "title": "Planos",
+      "desc": "O catálogo de planos Orion, seus limites e quanto cada um gera.",
+      "ribbon": "Em breve · dados ilustrativos. Planos e cobrança ainda não estão conectados.",
+      "free": "Grátis",
+      "perMonth": "/mês"
+    },
+    "integrations": {
+      "title": "Integrações",
+      "desc": "Saúde dos conectores que abastecem todas as organizações.",
+      "ribbon": "Em breve · dados ilustrativos. A telemetria de saúde das integrações ainda não está conectada.",
+      "connector": "conector"
+    },
+    "impersonation": {
+      "started": "Sessão de suporte iniciada para {name}",
+      "error": "Não foi possível iniciar a sessão de suporte.",
+      "confirmTitle": "Entrar como organização",
+      "confirmDesc": "Você entrará no workspace de {name} com acesso total aos dados da organização.",
+      "bullet1": "É uma ação invasiva e fica registrada no log da plataforma.",
+      "bullet2": "A equipe verá uma faixa indicando uma sessão de suporte Orion.",
+      "bullet3": "Encerre a sessão assim que concluir o atendimento.",
+      "banner": "Sessão de suporte · você está em {name}",
+      "end": "Encerrar"
     }
   }
 }

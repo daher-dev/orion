@@ -14,6 +14,7 @@ import { ApiError } from "@/lib/api-client";
 import { useRouter } from "@/i18n/routing";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import { SupportSessionBanner } from "./SupportSessionBanner";
 
 /**
  * AppShell wraps every authenticated page.
@@ -105,6 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <SidebarProvider style={shellStyle}>
       <Sidebar />
       <SidebarInset>
+        <SupportSessionBanner />
         <Topbar />
         {/* .page from design: padding 22 28 64, max-w 1480, centered */}
         <main className="flex-1 px-7 pt-[22px] pb-16">

@@ -10,8 +10,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from config import config
 from database import get_db
-from models import Role, User
-from shared.exceptions import AuthenticationError, AuthorizationError
+from models import Company, Role, User
+from shared.exceptions import AuthenticationError, AuthorizationError, NotFoundError
 
 security = HTTPBearer(auto_error=False)
 
@@ -83,6 +83,20 @@ async def get_current_db_user(
         scoped_stmt = base_stmt.where(User.company_id == x_orion_company_id)
         user = (await db.exec(scoped_stmt)).first()
 
+    # No membership in the requested company. If the identity is a platform
+    # operator, grant an impersonation context for that company (real support
+    # session): a transient admin-scoped User bound to the target company. Every
+    # tenant endpoint then operates inside that company with full permissions,
+    # while audit entries still reference the operator's real user id.
+    if user is None and x_orion_company_id is not None:
+        base_user = (await db.exec(base_stmt)).first()
+        if base_user is not None and base_user.is_operator:
+            impersonated = await _impersonation_user(db, base_user, x_orion_company_id, request)
+            # A missing target company (e.g. a stale localStorage id) falls through
+            # to the operator's own membership rather than 404-ing the request.
+            if impersonated is not None:
+                return impersonated
+
     # If the requested company header didn't match (e.g. localStorage still
     # carries an id from a previous tenant before a re-seed), or no header was
     # sent, fall back to the user's first membership. This keeps the app
@@ -100,6 +114,58 @@ async def get_current_db_user(
 
 
 CurrentDbUser = Annotated[User, Depends(get_current_db_user)]
+
+_ADMIN_ROLE_CODE = "admin"
+
+
+async def _impersonation_user(
+    db: AsyncSession,
+    operator: User,
+    company_id: uuid.UUID,
+    request: Request,
+) -> User | None:
+    """Build a transient admin-scoped `User` for an operator impersonating a company.
+
+    The returned row is never added to the session: it carries the operator's real
+    `id` (so `AuditLog.user_id` stays a valid FK) but the target `company_id` and the
+    global admin role, granting full tenant access for the support session. Returns
+    None when the target company doesn't exist so the caller can fall back to the
+    operator's own membership (e.g. a stale localStorage company id).
+    """
+    company = (await db.exec(select(Company).where(Company.id == company_id))).first()
+    if company is None:
+        return None
+
+    admin_role = (
+        await db.exec(select(Role).where(Role.code == _ADMIN_ROLE_CODE).options(selectinload(Role.permissions)))
+    ).first()
+    if admin_role is None:  # pragma: no cover — seeded by migration
+        raise NotFoundError(detail="Admin role not seeded")
+
+    request.state.impersonating = True
+    request.state.impersonated_company_id = company_id
+
+    impersonated = User(
+        firebase_uid=operator.firebase_uid,
+        name=operator.name,
+        email=operator.email,
+        is_operator=True,
+        company_id=company_id,
+        role_id=admin_role.id,
+    )
+    impersonated.id = operator.id
+    impersonated.role = admin_role
+    return impersonated
+
+
+async def get_operator_user(user: CurrentDbUser) -> User:
+    """Dependency: require the caller to be a platform operator (Console access)."""
+    if not user.is_operator:
+        raise AuthorizationError(detail="Operator access required")
+    return user
+
+
+CurrentOperator = Annotated[User, Depends(get_operator_user)]
 
 
 def RequirePermission(*codes: str):  # noqa: N802 — FastAPI dependency factory convention

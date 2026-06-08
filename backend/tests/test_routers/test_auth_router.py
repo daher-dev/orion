@@ -26,6 +26,7 @@ async def test_me_returns_empty_envelope_for_unprovisioned_user(authed_client: A
         "role": None,
         "permissions": [],
         "companies": [],
+        "impersonating": False,
     }
 
 

@@ -37,6 +37,9 @@ class MeResponse(BaseModel):
     role: RoleSummary | None = None
     permissions: list[str] = Field(default_factory=list)
     companies: list[CompanyMembership] = Field(default_factory=list)
+    # True when the active company is one the operator is impersonating (a
+    # support session), not a real membership. Drives the support-session banner.
+    impersonating: bool = False
 
 
 class InviteCreate(BaseModel):

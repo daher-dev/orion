@@ -61,9 +61,13 @@
     "contractors": "Workshops",
     "fabric": "Fabrics",
     "stock": "Stock",
+    "printStock": "Print stock",
+    "supplies": "Supplies",
     "reports": "Reports",
     "settings": "Settings",
-    "batches": "Batches"
+    "batches": "Batches",
+    "separation": "Separation",
+    "mapping": "De/Para"
   },
   "auth": {
     "signIn": "Sign in",
@@ -1148,6 +1152,20 @@
       "actualOutputs": "Cut pieces by size",
       "close": "Close",
       "save": "Save"
+    },
+    "cost": {
+      "title": "Production cost",
+      "fabric": "Fabric",
+      "fabricSub": "{kg} kg @ {price}/kg",
+      "ribana": "Ribana",
+      "ribanaSub": "{kg} kg @ {price}/kg",
+      "trims": "Trims",
+      "trimsSub": "{pieces} pieces",
+      "labor": "Labor",
+      "laborSub": "{pieces} pieces",
+      "total": "Total cost",
+      "perPiece": "{value} per piece",
+      "yield": "{value} pieces/kg"
     }
   },
   "sewing": {
@@ -1618,6 +1636,216 @@
       "forbidden": "You don't have access to stock."
     }
   },
+  "printStock": {
+    "page": {
+      "eyebrow": "Inventory"
+    },
+    "list": {
+      "title": "Print stock",
+      "titleEm": "of printed stamps",
+      "sub": "Printed-stamp inventory by design and color.",
+      "empty": {
+        "title": "No printed stamps registered yet",
+        "body": "Entries appear when you record a print run or a manual adjustment.",
+        "cta": "Record a movement"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search design, code, color…"
+    },
+    "table": {
+      "columns": {
+        "design": "Design",
+        "color": "Color",
+        "onHand": "On hand",
+        "status": "Status",
+        "lastMovement": "Last move",
+        "actions": "Actions"
+      }
+    },
+    "statuses": {
+      "low": "Low",
+      "ok": "OK"
+    },
+    "actions": {
+      "viewFullLedger": "Full ledger",
+      "confirmAdjust": "Record movement"
+    },
+    "adjust": {
+      "title": "Record movement",
+      "sub": "Add or remove printed stamps for a design and color.",
+      "fields": {
+        "direction": "Direction",
+        "design": "Design",
+        "designPlaceholder": "Select a design…",
+        "color": "Color",
+        "colorPlaceholder": "e.g. Preto",
+        "quantity": "Quantity",
+        "notes": "Notes",
+        "notesPlaceholder": "Optional notes…"
+      },
+      "directions": {
+        "entry": "Entry",
+        "exit": "Exit"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "confirm": "Save"
+      },
+      "toasts": {
+        "success": "Movement recorded",
+        "error": "Operation failed",
+        "insufficient": "Insufficient print stock for this exit."
+      }
+    },
+    "validation": {
+      "designRequired": "Select a design",
+      "colorRequired": "Enter a color",
+      "quantityPositive": "Quantity must be greater than zero"
+    },
+    "movements": {
+      "title": "Movements",
+      "titleEm": "full ledger",
+      "sub": "Every print-stock entry and exit, newest first.",
+      "columns": {
+        "when": "When",
+        "design": "Design",
+        "color": "Color",
+        "direction": "Direction",
+        "quantity": "Qty",
+        "notes": "Notes"
+      },
+      "directions": {
+        "entry": "Entry",
+        "exit": "Exit",
+        "adjustment": "Adjustment",
+        "all": "All"
+      },
+      "empty": "No movements recorded yet."
+    },
+    "drawer": {
+      "title": "Movement history",
+      "close": "Close",
+      "empty": "This design / color hasn't moved yet."
+    }
+  },
+  "supplies": {
+    "page": {
+      "eyebrow": "Inventory"
+    },
+    "list": {
+      "title": "Supplies",
+      "titleEm": "consumables",
+      "sub": "Consumable supplies (insumos) and their on-hand balance.",
+      "empty": {
+        "title": "No supplies registered yet",
+        "body": "Add a supply to the catalog, then record purchases and consumption to track its on-hand balance.",
+        "cta": "New supply"
+      }
+    },
+    "tabs": {
+      "levels": "Current position",
+      "movements": "Movements"
+    },
+    "filters": {
+      "searchPlaceholder": "Search supply, unit…",
+      "lowStockOnly": "Low stock only"
+    },
+    "kinds": {
+      "entry": "Entry",
+      "exit": "Exit",
+      "adjustment": "Adjustment"
+    },
+    "table": {
+      "columns": {
+        "name": "Supply",
+        "onHand": "On hand",
+        "unitCost": "Unit cost",
+        "lastMovement": "Last move",
+        "actions": "Actions"
+      }
+    },
+    "movements": {
+      "empty": "No movements recorded yet.",
+      "columns": {
+        "when": "When",
+        "supply": "Supply",
+        "kind": "Type",
+        "quantity": "Qty",
+        "notes": "Notes"
+      }
+    },
+    "actions": {
+      "recordMovement": "Record movement",
+      "delete": "Delete",
+      "confirmDelete": "This supply will be permanently removed. Supplies with stock movements cannot be deleted."
+    },
+    "form": {
+      "title": {
+        "new": "New supply"
+      },
+      "labels": {
+        "name": "Name",
+        "unit": "Unit",
+        "unitCost": "Unit cost",
+        "minStock": "Reorder threshold",
+        "notes": "Notes"
+      },
+      "placeholders": {
+        "name": "e.g. White thread",
+        "unit": "m, kg, un…",
+        "unitCost": "0,00",
+        "minStock": "0",
+        "notes": "Optional notes…"
+      },
+      "hints": {
+        "minStock": "On-hand at or below this flags low stock. Leave empty to disable."
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "unitRequired": "Unit is required",
+        "required": "Required",
+        "numeric": "Enter a valid number"
+      },
+      "save": "Save",
+      "submitNew": "Create supply",
+      "cancel": "Cancel"
+    },
+    "adjust": {
+      "title": "Record movement",
+      "subtitle": "Pick a supply and a movement type.",
+      "labels": {
+        "moveType": "Movement type",
+        "supply": "Supply",
+        "quantity": "Quantity",
+        "notes": "Notes"
+      },
+      "placeholders": {
+        "search": "Search supply…",
+        "notes": "Optional notes…"
+      },
+      "preview": {
+        "current": "Current",
+        "entry": "Entry",
+        "exit": "Exit",
+        "final": "Final",
+        "negativeWarning": "On-hand would go negative."
+      },
+      "noSupplies": "No supplies found.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "toasts": {
+        "created": "Movement recorded",
+        "error": "Operation failed"
+      }
+    },
+    "toast": {
+      "created": "Supply created",
+      "updated": "Supply updated",
+      "deleted": "Supply deleted",
+      "error": "Operation failed"
+    }
+  },
   "reports": {
     "page": {
       "eyebrow": "Reports"
@@ -1631,7 +1859,8 @@
       "sales": "Sales",
       "production": "Production",
       "inventory": "Inventory",
-      "costs": "Costs"
+      "costs": "Costs",
+      "turnover": "Turnover"
     },
     "actions": {
       "exportCsv": "Export CSV",
@@ -1676,6 +1905,16 @@
       "trimCost": "Trim cost",
       "total": "Total",
       "fabricCost": "Average fabric cost per kg"
+    },
+    "turnover": {
+      "title": "Inventory turnover",
+      "velocity": "Turnover by SKU",
+      "perSku": "Turnover per SKU",
+      "sku": "SKU",
+      "unitsSold": "Units sold",
+      "avgOnHand": "Avg on-hand",
+      "turnoverRatio": "Turnover",
+      "dio": "Days inventory"
     }
   },
   "settings": {
@@ -1698,7 +1937,8 @@
       "audit": "Audit",
       "integrations": "Integrations",
       "profile": "Profile",
-      "notifications": "Notifications"
+      "notifications": "Notifications",
+      "stockAlerts": "Stock alerts"
     },
     "company": {
       "title": "Company identity",
@@ -1784,6 +2024,8 @@
       "hero": {
         "eyebrow": "Current plan",
         "betaPill": "Private beta",
+        "perMonth": "/mo",
+        "free": "Free",
         "body": "You're part of the early group — billing isn't enabled yet. When it is, we'll let you know well in advance."
       },
       "usage": {
@@ -1792,6 +2034,21 @@
         "of": "of {max} people",
         "remaining": "{count, plural, one {<b>#</b> seat left} other {<b>#</b> seats left}} on this account.",
         "limitReached": "Limit reached — get in touch to unlock more seats."
+      },
+      "grid": {
+        "title": "Usage",
+        "sub": "Live usage measured against your plan limits",
+        "metric": {
+          "members": "Members",
+          "orders_month": "Orders this month",
+          "integrations": "Integrations",
+          "storage": "Storage"
+        },
+        "of": "of {max}",
+        "ofUnlimited": "of unlimited",
+        "unlimited": "Unlimited",
+        "notTracked": "Not tracked yet",
+        "limitReached": "Limit reached on your current plan."
       },
       "features": {
         "title": "What's included",
@@ -1808,7 +2065,53 @@
     "forbidden": {
       "company": "You don't have access to company settings.",
       "members": "You don't have access to members.",
-      "roles": "You don't have access to roles."
+      "roles": "You don't have access to roles.",
+      "stockAlerts": "You don't have access to stock alerts.",
+      "integrations": "You don't have access to integrations."
+    },
+    "integrations": {
+      "summary": "<b>{connected}</b> of <b>{total}</b> integrations active",
+      "summarySub": "Connect Orion to your marketplaces, logistics, and communication channels.",
+      "syncAll": "Sync now",
+      "nothingToSync": "Connect a channel first to sync.",
+      "groupActive": "{active} of {total} active",
+      "notConnected": "Not connected",
+      "syncedAgo": "synced {ago}",
+      "never": "never",
+      "syncJustNow": "just now",
+      "syncMinutesAgo": "{count, plural, one {# min ago} other {# min ago}}",
+      "syncHoursAgo": "{count, plural, one {# hour ago} other {# hours ago}}",
+      "syncDaysAgo": "{count, plural, one {# day ago} other {# days ago}}",
+      "account": "Account {id}",
+      "readOnly": "Read-only",
+      "loadError": "Could not load integrations.",
+      "connectStarted": "Authorization started",
+      "connectError": "Could not start the connection.",
+      "disconnected": "Channel disconnected",
+      "disconnectError": "Could not disconnect the channel.",
+      "syncDone": "Sync complete — {count} imported",
+      "syncError": "Could not sync the channel.",
+      "actions": {
+        "connect": "Connect",
+        "disconnect": "Disconnect",
+        "sync": "Sync"
+      }
+    },
+    "stockAlerts": {
+      "title": "Stock alerts",
+      "sub": "Set the on-hand quantity at or below which a SKU is flagged as low stock.",
+      "labels": {
+        "threshold": "Low-stock threshold"
+      },
+      "helpers": {
+        "threshold": "A variation is considered low when its on-hand quantity is at or below this number. Per-variation overrides take precedence."
+      },
+      "save": "Save",
+      "savedToast": "Stock alert settings saved.",
+      "errorToast": "Could not save stock alert settings.",
+      "validation": {
+        "invalid": "Enter a whole number of 0 or more."
+      }
     }
   },
   "members": {
@@ -1970,6 +2273,39 @@
       "all": "Can edit",
       "view": "View only",
       "none": "No access"
+    },
+    "editor": {
+      "title": {
+        "new": "New custom role",
+        "edit": "Edit role"
+      },
+      "subtitle": "Name the role and choose what it can read or edit.",
+      "fields": {
+        "name": "Name",
+        "code": "Code",
+        "codePlaceholder": "e.g. sales",
+        "codeHint": "Lowercase letters, numbers and underscores. Cannot be changed later.",
+        "description": "Description",
+        "permissions": "Permissions"
+      },
+      "columns": {
+        "domain": "Area",
+        "read": "View",
+        "write": "Edit"
+      },
+      "actions": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "edit": "Edit",
+        "delete": "Delete role",
+        "confirmDelete": "This role will be permanently removed. Members must be reassigned first."
+      },
+      "toasts": {
+        "created": "Role created",
+        "updated": "Role updated",
+        "deleted": "Role deleted",
+        "error": "Could not save the role"
+      }
     }
   },
   "audit": {
@@ -2046,6 +2382,92 @@
     "title": "Welcome to Orion",
     "subtitle": "Pick a section from the sidebar to get started."
   },
+  "mapping": {
+    "page": {
+      "eyebrow": "Sales",
+      "title": "Item",
+      "titleEm": "mapping",
+      "sub": "Link each imported order item to the right internal product variation (SKU). The print follows from the product."
+    },
+    "help": {
+      "title": "De/Para — order item → internal variation (SKU)",
+      "body": "Each order item arrives from the marketplace with the ad's variation (colour/size from the title). Here you link it to the internal variation (SKU) of the right product — that's where stock, print and production come from. Anything the system can't yet recognise stays pending and only moves to Separation once linked.",
+      "steps": {
+        "item": "Order item",
+        "itemSub": "ad variation",
+        "sku": "Product · SKU",
+        "skuSub": "internal variation",
+        "stock": "Stock",
+        "stockSub": "ready to separate"
+      }
+    },
+    "progress": {
+      "awaiting": "{count, plural, one {item awaiting link} other {items awaiting link}}",
+      "withSuggestion": "{count, plural, one {# suggestion ready} other {# suggestions ready}}",
+      "linkedOf": "of {total} items linked",
+      "allLinked": "All items are linked — orders can move on to Separation."
+    },
+    "filters": {
+      "searchPlaceholder": "Search ad, ad SKU or internal SKU…",
+      "filter": "Filter",
+      "pending": "Pending ({count})",
+      "linked": "Linked ({count})",
+      "all": "All ({count})"
+    },
+    "actions": {
+      "accept": "Accept",
+      "swap": "Change",
+      "acceptAll": "{count, plural, one {Accept # suggestion} other {Accept # suggestions}}"
+    },
+    "columns": {
+      "orderItem": "Order item",
+      "orderItemSub": "(from the ad)",
+      "adVariation": "Ad variation",
+      "internalSku": "Product → Variation (internal SKU)",
+      "status": "Status"
+    },
+    "suggestion": {
+      "label": "System suggestion"
+    },
+    "manual": {
+      "chooseProduct": "Choose product…",
+      "chooseVariation": "Variation (SKU)…",
+      "pickProductFirst": "Choose the product",
+      "backToSuggestion": "Back to suggestion"
+    },
+    "row": {
+      "noAdSku": "no SKU in the ad"
+    },
+    "status": {
+      "pending": "Pending",
+      "linked": "Linked"
+    },
+    "estampa": {
+      "none": "no print"
+    },
+    "empty": {
+      "pending": {
+        "title": "No pending items",
+        "desc": "Every order item is already linked to an internal SKU."
+      },
+      "other": {
+        "title": "Nothing here",
+        "desc": "No item matches the filters."
+      }
+    },
+    "list": {
+      "loadError": "Could not load mapping items."
+    },
+    "toast": {
+      "accepted": "Suggestion accepted · {sku}",
+      "linked": "Item linked to SKU {sku}",
+      "acceptedAll": "{count, plural, one {# suggestion accepted} other {# suggestions accepted}}",
+      "error": "Something went wrong. Please try again."
+    },
+    "fallback": {
+      "forbidden": "You don't have permission to view order mapping."
+    }
+  },
   "batches": {
     "page": {
       "eyebrow": "Sales"
@@ -2097,10 +2519,23 @@
       "stamp": "Design",
       "color": "Color",
       "needed": "Needed",
+      "onHand": "On hand",
       "toPrint": "To print",
       "sent": "Sent",
       "empty": "No print designs in this batch.",
       "save": "Save adjustments"
+    },
+    "printQueue": {
+      "title": "Print queue",
+      "totalToPrint": "{count} to print",
+      "design": "Design",
+      "color": "Color",
+      "needed": "Needed",
+      "onHand": "On hand",
+      "toPrint": "To print",
+      "batches": "Batches",
+      "emptyTitle": "Nothing to print",
+      "emptyDesc": "Stamp stock covers all open batches."
     },
     "detail": {
       "printLabels": "Print labels",
@@ -2122,6 +2557,96 @@
     },
     "fallback": {
       "forbidden": "You don't have access to batches."
+    }
+  },
+  "separation": {
+    "page": {
+      "eyebrow": "Sales"
+    },
+    "list": {
+      "title": "Separation",
+      "titleEm": "& check-out",
+      "sub": "Turn each linked order into a labelled piece, print 100×50mm labels, then scan to check pieces out.",
+      "loadError": "Could not load orders.",
+      "empty": "No orders to separate. Adjust the filters above."
+    },
+    "fallback": {
+      "forbidden": "You don't have access to separation."
+    },
+    "filters": {
+      "searchPlaceholder": "Search order, title, SKU…",
+      "status": "Status",
+      "statusAll": "All statuses",
+      "channel": "Channel",
+      "channelAll": "All channels"
+    },
+    "orderStatuses": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "returned": "Returned"
+    },
+    "channels": {
+      "shopee": "Shopee",
+      "mercado_livre": "Mercado Livre",
+      "shopify": "Shopify",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "other": "Other"
+    },
+    "status": {
+      "pending": "To print",
+      "label_printed": "Printed",
+      "checked": "Checked",
+      "mixed": "Partial"
+    },
+    "bar": {
+      "selectAll": "Select all",
+      "clear": "Clear",
+      "selectedCount": "{orders, plural, one {# order} other {# orders}} · {pieces, plural, one {# piece} other {# pieces}}",
+      "totalCount": "{orders, plural, one {# order} other {# orders}}",
+      "printLabels": "Print labels"
+    },
+    "row": {
+      "select": "Select order {code}",
+      "expand": "Expand pieces",
+      "collapse": "Collapse pieces",
+      "pieces": "{count, plural, one {# piece} other {# pieces}}",
+      "etiquetas": "Labels",
+      "loading": "Loading pieces…",
+      "noPieces": "No pieces yet — print labels to materialise them.",
+      "checkedProgress": "{checked} of {total} checked"
+    },
+    "scan": {
+      "placeholder": "Scan a label's QR / tracking code…",
+      "toast": {
+        "checked": "Piece {index}/{total} checked",
+        "alreadyChecked": "Piece {code} was already checked",
+        "unknown": "No piece matches {code}",
+        "notPrinted": "Print the label for {code} before scanning",
+        "error": "Could not check that piece."
+      }
+    },
+    "etiqueta": {
+      "title": "Separation labels — 100×50mm",
+      "subtitle": "{count, plural, one {# label} other {# labels}} (1 per piece)",
+      "previewLabel": "Preview of the first label",
+      "empty": "No piece selected.",
+      "cancel": "Cancel",
+      "print": "Print {count, plural, one {# label} other {# labels}}",
+      "howto": {
+        "title": "How to use:",
+        "step1": "Print and stick 1 label on each piece during separation / pressing.",
+        "step2": "At check-out, scan each label's QR. When every piece of an order is scanned, release the shipping label.",
+        "chrome": "In Chrome: paper 100×50mm, margins None, scale 100%."
+      }
+    },
+    "toast": {
+      "printed": "{count, plural, one {# label} other {# labels}} sent to print",
+      "noPieces": "This order has no pieces to label.",
+      "generateError": "Could not generate labels."
     }
   },
   "console": {
@@ -2282,10 +2807,20 @@
     },
     "plans": {
       "title": "Plans",
-      "desc": "The Orion plan catalog, its limits and what each one earns.",
-      "ribbon": "Coming soon · illustrative data. Plans and billing aren't wired yet.",
+      "desc": "The Orion plan catalog and its limits.",
+      "ribbon": "Read-only catalog. Plan editing and billing aren't wired yet.",
       "free": "Free",
-      "perMonth": "/mo"
+      "perMonth": "/mo",
+      "unlimited": "Unlimited",
+      "empty": "No plans in the catalog yet.",
+      "limit": {
+        "members": "Members",
+        "orders": "Orders",
+        "integrations": "Integrations",
+        "storage": "Storage"
+      },
+      "ordersPerMonth": "{count}/mo",
+      "storageGb": "{count} GB"
     },
     "integrations": {
       "title": "Integrations",

@@ -109,7 +109,10 @@ const LoteDetail = ({ lote, orders, onBack, setLotes, openEtiquetas, removeFromL
   const loteOrders = orders.filter(o => o.lote === lote.id);
 
   const patch = (fn) => setLotes(ls => ls.map(l => l.id === lote.id ? fn(l) : l));
-  const toggleMontar = (code) => patch(l => ({ ...l, estampas: l.estampas.map(e => e.code === code ? { ...e, montado: !e.montado, toPrint: !e.montado ? 0 : e.items } : e) }));
+  const toggleMontar = (e) => {
+    if (!e.montado) window.StockStore.printEstampa(e.code, e.items, lote.id); // imprime: −papel, +impressos
+    patch(l => ({ ...l, estampas: l.estampas.map(x => x.code === e.code ? { ...x, montado: !x.montado, toPrint: !x.montado ? 0 : x.items } : x) }));
+  };
   const confirmMontador = () => {
     patch(l => ({ ...l, status: 'em_producao', estampas: l.estampas.map(e => ({ ...e, enviado: true, montado: true, toPrint: 0 })) }));
     showToast(`Estampas enviadas ao Montador DTF · ${lote.id} em produção`);
@@ -187,11 +190,11 @@ const LoteDetail = ({ lote, orders, onBack, setLotes, openEtiquetas, removeFromL
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: e.toPrint > 0 ? 'var(--accent)' : 'var(--ink-3)' }}>{e.toPrint}</div>
                   <div style={{ fontSize: 10.5, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>a imprimir</div>
                 </div>
-                <button className="btn btn-sm" onClick={() => toggleMontar(e.code)}
+                <button className="btn btn-sm" onClick={() => toggleMontar(e)}
                   style={e.montado
                     ? { color: 'var(--ok)', background: 'var(--ok-bg)', borderColor: 'color-mix(in oklab, var(--ok) 25%, var(--surface))' }
                     : { color: 'var(--accent)', background: 'var(--surface)', borderColor: 'color-mix(in oklab, var(--accent) 30%, var(--surface))' }}>
-                  {e.montado ? <><Icon name="check" size={13}/> Montado</> : <><Icon name="send" size={13}/> Montar</>}
+                  {e.montado ? <><Icon name="check" size={13}/> Impresso</> : <><Icon name="printer" size={13}/> Imprimir</>}
                 </button>
               </div>
             );

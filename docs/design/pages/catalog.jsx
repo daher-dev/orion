@@ -24,6 +24,39 @@ const productBg = (colors = []) => {
 };
 const productInk = (colors = []) => 'var(--accent-edge)';
 
+// Shared color name lookup — seed names plus any configured in Ajustes.
+const COLOR_NAMES = { '#1f1f1f': 'Preto', '#7a4b2a': 'Marrom', '#c9b9a3': 'Areia', '#efe6d3': 'Off-white', '#cfb98e': 'Bege', '#7a8a76': 'Verde-musgo', '#3a4a3d': 'Verde escuro', '#6b4a2e': 'Caramelo', '#f4f1ea': 'Branco', '#b03a2e': 'Vermelho', '#2a3b5a': 'Azul-marinho' };
+const colorName = (hex) => {
+  if (COLOR_NAMES[hex]) return COLOR_NAMES[hex];
+  try { const c = window.CatalogConfig.get(); const f = [...c.productColors, ...c.printColors].find(x => x.hex === hex); if (f) return f.name; } catch (e) {}
+  return hex;
+};
+// Default print ink for a material: most-contrasting ink available in the print palette.
+const defaultPrintFor = (hex, printColors) => {
+  const want = _hexLum(hex) < 0.45 ? '#f4f1ea' : '#1f1f1f';
+  if (!printColors || !printColors.length || printColors.some(c => c.hex === want)) return want;
+  const lum = _hexLum(hex);
+  return printColors.slice().sort((a, b) => Math.abs(_hexLum(b.hex) - lum) - Math.abs(_hexLum(a.hex) - lum))[0].hex;
+};
+// Live subscription to the configurable catalog options.
+function useCatalogConfig() {
+  const [cfg, setCfg] = React.useState(window.CatalogConfig.get());
+  React.useEffect(() => window.CatalogConfig.subscribe(setCfg), []);
+  return cfg;
+}
+
+// A garment swatch with the matching print ink(s) shown as inset pip(s).
+const ColorPairSwatch = ({ material, prints = [], size = 16 }) => {
+  const list = prints.slice(0, 2);
+  return (
+    <span style={{ position: 'relative', width: size, height: size, borderRadius: 999, background: material, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)', display: 'inline-block', flexShrink: 0 }}>
+      {list.map((pr, i) => (
+        <span key={i} style={{ position: 'absolute', right: -2 - i * (size * 0.32), bottom: -2, width: size * 0.5, height: size * 0.5, borderRadius: 999, background: pr, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)' }}/>
+      ))}
+    </span>
+  );
+};
+
 const Products = ({ setRoute }) => {
   const [open, setOpen] = React.useState(null);
   const [newOpen, setNewOpen] = React.useState(false);
@@ -37,7 +70,7 @@ const Products = ({ setRoute }) => {
   return (
     <div className="page">
       <PageHead sub="products" title="Produtos" titleEm="à venda"
-                desc="Combinações de ficha técnica + estampa, organizadas por tamanho e cor."
+                desc="Ficha técnica + estampa, por cor e tamanho."
                 actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="shirt" size={14}/> Novo produto</button>}/>
       <HelpCard id="products" icon="shirt" tone="var(--brand-catalog)" title="Produtos — ficha técnica + estampa, em cores e tamanhos">
         <HelpBody>
@@ -80,11 +113,11 @@ const Products = ({ setRoute }) => {
                   <td><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--ink-2)' }}>{garment ? React.cloneElement(GARMENT_GLYPHS[garment.id], { width: 13, height: 13, strokeWidth: 1.6 }) : <Icon name="file-text" size={12}/>} {p.spec}</span></td>
                   <td><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--ink-2)' }}><Icon name="palette" size={12}/> {p.print}</span></td>
                   <td>
-                    <span style={{ display: 'inline-flex', gap: 3 }}>
+                    <span style={{ display: 'inline-flex', gap: 5, alignItems: 'center' }}>
                       {p.colors.slice(0, 4).map((c, i) => (
-                        <span key={i} style={{ width: 14, height: 14, borderRadius: 999, background: c, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)' }}/>
+                        <ColorPairSwatch key={i} material={c.material} prints={c.prints} size={15}/>
                       ))}
-                      {p.colors.length > 4 && <span style={{ fontSize: 11, color: 'var(--ink-3)', marginLeft: 4 }}>+{p.colors.length - 4}</span>}
+                      {p.colors.length > 4 && <span style={{ fontSize: 11, color: 'var(--ink-3)', marginLeft: 2 }}>+{p.colors.length - 4}</span>}
                     </span>
                   </td>
                   <td><span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{p.sizes.join(' · ')}</span></td>
@@ -112,26 +145,21 @@ const Products = ({ setRoute }) => {
   );
 };
 
-const PALETTE = [
-  { hex: '#1f1f1f', name: 'Preto' },
-  { hex: '#f4f1ea', name: 'Off-white' },
-  { hex: '#7a4b2a', name: 'Marrom' },
-  { hex: '#c9b9a3', name: 'Areia' },
-  { hex: '#cfb98e', name: 'Bege' },
-  { hex: '#7a8a76', name: 'Verde-musgo' },
-  { hex: '#3a4a3d', name: 'Verde escuro' },
-  { hex: '#6b4a2e', name: 'Caramelo' },
-  { hex: '#b03a2e', name: 'Vermelho' },
-  { hex: '#2a3b5a', name: 'Azul-marinho' },
-];
-const SIZES = ['P','M','G','GG','U'];
-
 const NewProductSheet = ({ open, onClose }) => {
+  const cfg = useCatalogConfig();
+  const PRODUCT_COLORS = cfg.productColors;
+  const PRINT_COLORS = cfg.printColors;
+  const SIZES = cfg.sizes;
   const [nome, setNome] = React.useState('');
+  const [thumb, setThumb] = React.useState(null);
   const [specId, setSpecId] = React.useState(ORION_DATA.specs[0]?.id || '');
   const [printId, setPrintId] = React.useState(ORION_DATA.prints[0]?.id || '');
   const [sizes, setSizes] = React.useState(['P','M','G']);
-  const [colors, setColors] = React.useState(['#1f1f1f','#f4f1ea']);
+  const [colors, setColors] = React.useState([
+    { material: '#1f1f1f', prints: ['#f4f1ea'] },
+    { material: '#f4f1ea', prints: ['#1f1f1f'] },
+  ]);
+  const [addingColor, setAddingColor] = React.useState(false);
   const spec = ORION_DATA.specs.find(s => s.id === specId);
   const print = ORION_DATA.prints.find(p => p.id === printId);
   const garment = spec && GARMENT_TYPES.find(g => g.id === spec.tipo);
@@ -141,6 +169,10 @@ const NewProductSheet = ({ open, onClose }) => {
   })();
 
   const toggle = (arr, v, set) => set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
+  const addColor = (hex) => { setColors(cs => cs.some(c => c.material === hex) ? cs : [...cs, { material: hex, prints: [defaultPrintFor(hex, PRINT_COLORS)] }]); setAddingColor(false); };
+  const removeColor = (hex) => setColors(cs => cs.filter(c => c.material !== hex));
+  const togglePrint = (hex, pr) => setColors(cs => cs.map(c => c.material !== hex ? c
+    : { ...c, prints: c.prints.includes(pr) ? (c.prints.length > 1 ? c.prints.filter(x => x !== pr) : c.prints) : [...c.prints, pr] }));
 
   const specOpts = ORION_DATA.specs.map(s => {
     const g = GARMENT_TYPES.find(gt => gt.id === s.tipo);
@@ -163,6 +195,7 @@ const NewProductSheet = ({ open, onClose }) => {
           <label>Nome do produto</label>
           <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Cropped Oversized"/>
         </div>
+        <ThumbUpload value={thumb} onChange={setThumb} label="Miniatura do produto" aspect="4 / 5"/>
       </div>
 
       <div style={{ marginBottom: 22 }}>
@@ -228,28 +261,66 @@ const NewProductSheet = ({ open, onClose }) => {
       </div>
 
       <div style={{ marginBottom: 22 }}>
-        <SectionTitle>Cores disponíveis</SectionTitle>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
-          {PALETTE.map(c => {
-            const active = colors.includes(c.hex);
-            return (
-              <button key={c.hex} type="button" onClick={() => toggle(colors, c.hex, setColors)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '7px 9px', borderRadius: 8,
-                  border: active ? '1.5px solid var(--accent)' : '1px solid var(--line)',
-                  background: active ? 'var(--accent-soft)' : 'var(--surface)',
-                  cursor: 'pointer', textAlign: 'left', position: 'relative',
-                }}>
-                <span style={{ width: 18, height: 18, borderRadius: 999, background: c.hex, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)', flexShrink: 0 }}/>
-                <span style={{ fontSize: 11.5, color: active ? 'var(--ink)' : 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
-                {active && <Icon name="check" size={11} style={{ color: 'var(--accent)', marginLeft: 'auto', flexShrink: 0 }}/>}
+        <SectionTitle>Cores & estampas</SectionTitle>
+        <div style={{ display: 'grid', gap: 1, background: 'var(--line-soft)', border: '1px solid var(--line-soft)', borderRadius: 10, overflow: 'hidden' }}>
+          {colors.map(c => (
+            <div key={c.material} style={{ background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 12px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 132, flexShrink: 0 }}>
+                <span style={{ width: 18, height: 18, borderRadius: 999, background: c.material, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)', flexShrink: 0 }}/>
+                <span style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 500 }}>{colorName(c.material)}</span>
+              </span>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 5, flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 10, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600 }}>Estampas ({c.prints.length})</span>
+                <span style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  {PRINT_COLORS.map(pc => {
+                    const sel = c.prints.includes(pc.hex);
+                    return (
+                      <button key={pc.hex} type="button" title={pc.name} onClick={() => togglePrint(c.material, pc.hex)}
+                        aria-label={`Estampa ${pc.name}`} aria-pressed={sel}
+                        style={{ width: 22, height: 22, borderRadius: 999, background: pc.hex, padding: 0, cursor: 'pointer',
+                          border: sel ? '2px solid var(--ink)' : '1px solid var(--line)',
+                          boxShadow: sel ? '0 0 0 2px var(--surface), 0 0 0 3px var(--ink)' : 'inset 0 0 0 1px rgba(0,0,0,.04)' }}/>
+                    );
+                  })}
+                </span>
+              </span>
+              <button type="button" className="btn btn-ghost btn-sm" title="Remover cor" onClick={() => removeColor(c.material)}
+                disabled={colors.length <= 1}
+                style={{ padding: 6, flexShrink: 0, color: 'var(--ink-3)', opacity: colors.length <= 1 ? 0.4 : 1 }}>
+                <Icon name="trash-2" size={14}/>
               </button>
-            );
-          })}
+            </div>
+          ))}
+
+          <div style={{ background: 'var(--surface)' }}>
+            {!addingColor ? (
+              <button type="button" onClick={() => setAddingColor(true)}
+                disabled={colors.length >= PRODUCT_COLORS.length}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '11px 12px', background: 'transparent', border: 'none', cursor: colors.length >= PRODUCT_COLORS.length ? 'default' : 'pointer', color: 'var(--accent)', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 500, opacity: colors.length >= PRODUCT_COLORS.length ? 0.4 : 1 }}>
+                <Icon name="plus" size={14}/> Adicionar cor
+              </button>
+            ) : (
+              <div style={{ padding: '11px 12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600 }}>Escolha a cor do material</span>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAddingColor(false)} style={{ padding: 4, color: 'var(--ink-3)' }}><Icon name="x" size={14}/></button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(116px, 1fr))', gap: 8 }}>
+                  {PRODUCT_COLORS.filter(pc => !colors.some(c => c.material === pc.hex)).map(pc => (
+                    <button key={pc.hex} type="button" onClick={() => addColor(pc.hex)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 9px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', cursor: 'pointer', textAlign: 'left' }}>
+                      <span style={{ width: 18, height: 18, borderRadius: 999, background: pc.hex, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)', flexShrink: 0 }}/>
+                      <span style={{ fontSize: 11.5, color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pc.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 8 }}>
-          {colors.length} cor{colors.length !== 1 ? 'es' : ''} · {sizes.length} tamanho{sizes.length !== 1 ? 's' : ''} = <strong style={{ color: 'var(--ink-2)' }}>{colors.length * sizes.length} variações</strong>
+
+        <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 10 }}>
+          {colors.length} cor{colors.length !== 1 ? 'es' : ''} · {sizes.filter(s => SIZES.includes(s)).length} tamanho{sizes.filter(s => SIZES.includes(s)).length !== 1 ? 's' : ''} = <strong style={{ color: 'var(--ink-2)' }}>{colors.length * sizes.filter(s => SIZES.includes(s)).length} variações</strong>
         </div>
       </div>
 
@@ -260,7 +331,7 @@ const NewProductSheet = ({ open, onClose }) => {
           const specCode = spec?.id?.toUpperCase() || 'SPEC';
           const printCode = print?.id ? `-${print.id.toUpperCase()}` : '';
           const skus = [];
-          for (const sz of sizes) for (const c of colors) skus.push(`${specCode}-${sz}-${COLOR_CODE[c] || 'COR'}${printCode}`);
+          for (const sz of sizes.filter(s => SIZES.includes(s))) for (const c of colors) skus.push(`${specCode}-${sz}-${COLOR_CODE[c.material] || 'COR'}${printCode}`);
           if (!skus.length) return <div style={{ padding: '12px 14px', background: 'var(--surface-2)', borderRadius: 8, fontSize: 12, color: 'var(--ink-3)' }}>Selecione tamanhos e cores para gerar os SKUs.</div>;
           return (
             <div style={{ background: 'var(--surface-2)', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--line)' }}>
@@ -297,7 +368,6 @@ const ProductDetail = ({ p, setRoute }) => {
   const spec = ORION_DATA.specs.find(s => s.id === p.spec);
   const print = ORION_DATA.prints.find(pr => pr.id === p.print);
   const totalCost = (spec?.cmt || 0) + (print?.cost || 0);
-  const COLOR_NAMES = { '#1f1f1f': 'Preto', '#7a4b2a': 'Marrom', '#c9b9a3': 'Areia', '#efe6d3': 'Off-white', '#cfb98e': 'Bege', '#7a8a76': 'Verde-musgo', '#3a4a3d': 'Verde', '#6b4a2e': 'Caramelo', '#f4f1ea': 'Branco', '#b03a2e': 'Vermelho' };
   return (
     <div>
       <div style={{ height: 120, borderRadius: 10, marginBottom: 16, background: stripeBg(p.thumb), display: 'flex', alignItems: 'flex-end', padding: 14 }}>
@@ -328,12 +398,23 @@ const ProductDetail = ({ p, setRoute }) => {
             <FormCell icon="palette" label="Estampa" link onClick={() => setRoute('prints')}>{p.print}</FormCell>
             <FormCell icon="boxes" label="Estoque total">{p.stock}</FormCell>
           </FormGrid>
-          <FormField label="Cores disponíveis">
+          <FormField label="Cores · material e estampas">
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {p.colors.map((c, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px 6px 6px', background: 'var(--surface-2)', borderRadius: 999 }}>
-                  <span style={{ width: 16, height: 16, borderRadius: 999, background: c, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)' }}/>
-                  <span style={{ fontSize: 12, color: 'var(--ink)' }}>{COLOR_NAMES[c] || c}</span>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px 6px 8px', background: 'var(--surface-2)', borderRadius: 10 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ width: 16, height: 16, borderRadius: 999, background: c.material, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)' }}/>
+                    <span style={{ fontSize: 12.5, color: 'var(--ink)' }}>{colorName(c.material)}</span>
+                  </span>
+                  <Icon name="arrow-right" size={11} style={{ color: 'var(--ink-3)' }}/>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    {(c.prints || []).map((pr, j) => (
+                      <span key={j} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ width: 13, height: 13, borderRadius: 999, background: pr, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)' }}/>
+                        <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>{colorName(pr)}</span>
+                      </span>
+                    ))}
+                  </span>
                 </div>
               ))}
             </div>
@@ -350,7 +431,7 @@ const ProductDetail = ({ p, setRoute }) => {
         <div>
           <div style={{ overflow: 'auto', border: '1px solid var(--line-soft)', borderRadius: 8 }}>
             <table className="tbl" style={{ marginBottom: 0 }}>
-              <thead><tr><th>Cor</th>{p.sizes.map(s => <th key={s} className="num">{s}</th>)}<th className="num">Total</th></tr></thead>
+              <thead><tr><th>Cor</th><th>Estampa</th>{p.sizes.map(s => <th key={s} className="num">{s}</th>)}<th className="num">Total</th></tr></thead>
               <tbody>
                 {p.colors.map((c, i) => {
                   const rowStocks = p.sizes.map((s, j) => Math.max(0, ((p.stock / (p.colors.length * p.sizes.length)) * (1 + (i + j) % 3 - 1)) | 0));
@@ -359,8 +440,18 @@ const ProductDetail = ({ p, setRoute }) => {
                     <tr key={i}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ width: 16, height: 16, borderRadius: 999, background: c, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)' }}/>
-                          <span>{COLOR_NAMES[c] || c}</span>
+                          <span style={{ width: 16, height: 16, borderRadius: 999, background: c.material, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)' }}/>
+                          <span>{colorName(c.material)}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          {(c.prints || []).map((pr, j) => (
+                            <span key={j} style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink-2)' }}>
+                              <span style={{ width: 13, height: 13, borderRadius: 999, background: pr, border: '1.5px solid var(--surface)', boxShadow: '0 0 0 1px var(--line)' }}/>
+                              <span style={{ fontSize: 12 }}>{colorName(pr)}</span>
+                            </span>
+                          ))}
                         </div>
                       </td>
                       {rowStocks.map((n, j) => (
@@ -465,28 +556,65 @@ const FormCell = ({ icon, label, children, link, onClick }) => (
   </div>
 );
 
-// Inline garment glyphs — minimal line-art that distinguishes each type
-const GARMENT_GLYPHS = {
+// Inline garment glyphs — minimal line-art that distinguishes each type.
+// This is the ICON LIBRARY the user picks from in Ajustes › Catálogo.
+// Values are raw <svg> so call-sites can React.cloneElement({width,height,strokeWidth}).
+const lucideGlyph = (name) => {
+  const lib = (typeof window !== 'undefined') ? window.lucide : null;
+  let children = [];
+  if (lib && lib.icons) {
+    const pascal = name.split('-').map(s => s[0].toUpperCase() + s.slice(1)).join('');
+    const node = lib.icons[pascal];
+    if (Array.isArray(node)) children = (node.length === 3 && Array.isArray(node[2])) ? node[2] : node;
+    else if (node && Array.isArray(node.children)) children = node.children;
+  }
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      {children.map((c, i) => React.createElement(c[0], { key: i, ...c[1] }))}
+    </svg>
+  );
+};
+
+const GARMENT_ICON_LIBRARY = {
   camiseta: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3 L5 5 L3 8 L5 10 L7 9 L7 21 L17 21 L17 9 L19 10 L21 8 L19 5 L16 3 C16 5 14.5 6 12 6 C9.5 6 8 5 8 3 Z"/></svg>,
   moletom:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 7 Q12 2 15 7"/><path d="M9 7 L6 8 L3 11 L5.5 13 L7 12 L7 20 Q7 21 8 21 L16 21 Q17 21 17 20 L17 12 L18.5 13 L21 11 L18 8 L15 7"/><path d="M11.2 7 L11.2 11 M12.8 7 L12.8 11"/><path d="M7 18 L17 18"/></svg>,
   regata:   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3 L6 10 L6 21 L18 21 L18 10 L16 3 L14 3 C14 5 13 6 12 6 C11 6 10 5 10 3 Z"/></svg>,
   blusa:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3 L4 7 L7 10 L7 21 L17 21 L17 10 L20 7 L16 3 L14 5 L12 4 L10 5 Z"/></svg>,
   calca:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 3 L19 3 L19 10 L18 21 L14 21 L13 12 L11 12 L10 21 L6 21 L5 10 Z"/><path d="M5 7 L19 7"/></svg>,
   bermuda:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4 L19 4 L19 9 L17 16 L13 16 L12 11 L10 11 L9 16 L7 16 L5 9 Z"/><path d="M5 7 L19 7"/></svg>,
+  shirt:        lucideGlyph('shirt'),
+  bag:          lucideGlyph('shopping-bag'),
+  cap:          lucideGlyph('crown'),
+  shoe:         lucideGlyph('footprints'),
+  glasses:      lucideGlyph('glasses'),
+  hat:          lucideGlyph('hard-hat'),
+  baby:         lucideGlyph('baby'),
+  gem:          lucideGlyph('gem'),
+  package:      lucideGlyph('package'),
+  tag:          lucideGlyph('tag'),
 };
 
-const GARMENT_TYPES = [
-  { id: 'camiseta', label: 'Camiseta', skuPrefix: 'CAM' },
-  { id: 'moletom',  label: 'Moletom',  skuPrefix: 'MOL' },
-  { id: 'regata',   label: 'Regata',   skuPrefix: 'REG' },
-  { id: 'blusa',    label: 'Blusa',    skuPrefix: 'BLU' },
-  { id: 'calca',    label: 'Calça',    skuPrefix: 'CAL' },
-  { id: 'bermuda',  label: 'Bermuda',  skuPrefix: 'BER' },
-];
+// GARMENT_TYPES / GARMENT_GLYPHS are derived from the live catalog config so
+// every call-site (sales, produção, estoque…) reflects Ajustes › Catálogo.
+const buildGarmentGlyphs = (types) => {
+  const m = { ...GARMENT_ICON_LIBRARY };
+  (types || []).forEach(t => { if (t && t.id) m[t.id] = GARMENT_ICON_LIBRARY[t.icon] || GARMENT_ICON_LIBRARY.camiseta; });
+  return m;
+};
 
-const FABRIC_TYPES = ['Algodão 30.1', 'Algodão 24.1 penteado', 'Malha PV (67/33)', 'Malha 100% poliéster', 'Moletom flanelado', 'Sarja crua', 'Linho misto', 'Piquet algodão'];
+let GARMENT_TYPES  = window.CatalogConfig.get().garmentTypes;
+let GARMENT_GLYPHS = buildGarmentGlyphs(GARMENT_TYPES);
+let FABRIC_TYPES   = window.CatalogConfig.get().fabricTypes;
+let AVIAMENTO_TYPES = window.CatalogConfig.get().aviamentos;
 const RIBANA_TYPES = ['Ribana 1×1', 'Ribana 2×1', 'Ribana 2×2', 'Ribana canelada'];
-const AVIAMENTO_TYPES = ['Etiqueta interna tecida', 'Etiqueta de composição', 'Etiqueta externa estampada', 'Tag de papel', 'Lacre/sigilo', 'Cordão capuz', 'Zíper', 'Botão', 'Cadarço', 'Elástico'];
+
+window.CatalogConfig.subscribe((c) => {
+  GARMENT_TYPES   = c.garmentTypes;
+  GARMENT_GLYPHS  = buildGarmentGlyphs(c.garmentTypes);
+  FABRIC_TYPES    = c.fabricTypes;
+  AVIAMENTO_TYPES = c.aviamentos;
+  Object.assign(window, { GARMENT_TYPES, GARMENT_GLYPHS });
+});
 
 const SectionTitle = ({ children }) => (
   <div style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 600, marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid var(--line-soft)' }}>{children}</div>
@@ -514,9 +642,12 @@ const TypePicker = ({ value, onChange }) => (
 );
 
 const NewSpecSheet = ({ open, onClose }) => {
-  const [tipo, setTipo] = React.useState('camiseta');
+  const cfg = useCatalogConfig();
+  const FABRIC_OPTS = cfg.fabricTypes;
+  const AVIAMENTO_OPTS = cfg.aviamentos;
+  const [tipo, setTipo] = React.useState(cfg.garmentTypes[0]?.id || 'camiseta');
   const [nome, setNome] = React.useState('');
-  const [tecido, setTecido] = React.useState(FABRIC_TYPES[0]);
+  const [tecido, setTecido] = React.useState(FABRIC_OPTS[0]);
   const [gsm, setGsm] = React.useState(165);
   const [consumo, setConsumo] = React.useState(0.18);
   const [usaRibana, setUsaRibana] = React.useState(true);
@@ -529,10 +660,10 @@ const NewSpecSheet = ({ open, onClose }) => {
   const [mao, setMao] = React.useState(7.50);
   const [preco, setPreco] = React.useState(0);
 
-  const garment = GARMENT_TYPES.find(g => g.id === tipo);
-  const sku = `${garment.skuPrefix}-XXX`;
+  const garment = cfg.garmentTypes.find(g => g.id === tipo) || cfg.garmentTypes[0];
+  const sku = `${garment?.skuPrefix || 'PRD'}-XXX`;
 
-  const addAv = () => setAviamentos(a => [...a, { id: Date.now(), tipo: AVIAMENTO_TYPES[0], cost: 0 }]);
+  const addAv = () => setAviamentos(a => [...a, { id: Date.now(), tipo: AVIAMENTO_OPTS[0], cost: 0 }]);
   const removeAv = (id) => setAviamentos(a => a.filter(x => x.id !== id));
   const updateAv = (id, patch) => setAviamentos(a => a.map(x => x.id === id ? { ...x, ...patch } : x));
 
@@ -566,7 +697,7 @@ const NewSpecSheet = ({ open, onClose }) => {
         <SectionTitle>Tecido principal</SectionTitle>
         <div className="field">
           <label>Tipo de tecido</label>
-          <Select value={tecido} onChange={setTecido} options={FABRIC_TYPES}/>
+          <Select value={tecido} onChange={setTecido} options={FABRIC_OPTS}/>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div className="field">
@@ -633,7 +764,7 @@ const NewSpecSheet = ({ open, onClose }) => {
         <div style={{ display: 'grid', gap: 8 }}>
           {aviamentos.map(av => (
             <div key={av.id} style={{ display: 'grid', gridTemplateColumns: '1fr 110px 28px', gap: 8, alignItems: 'center' }}>
-              <Select value={av.tipo} onChange={(v) => updateAv(av.id, { tipo: v })} options={AVIAMENTO_TYPES}/>
+              <Select value={av.tipo} onChange={(v) => updateAv(av.id, { tipo: v })} options={AVIAMENTO_OPTS}/>
               <NumField value={av.cost} onChange={(v) => updateAv(av.id, { cost: v })} step={0.05} min={0} decimals={2} prefix="R$"/>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => removeAv(av.id)} title="Remover" style={{ padding: 6 }}>
                 <Icon name="x" size={14}/>
@@ -688,7 +819,7 @@ const Specs = () => {
   return (
     <div className="page">
       <PageHead sub="specs" title="Fichas técnicas"
-                desc="Receitas de produção: tecido, gramatura, ribana e custo CMT."
+                desc="Tecido, gramatura, ribana e custo CMT."
                 actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="file-text" size={14}/> Nova ficha</button>}/>
       <HelpCard id="specs" icon="file-text" tone="var(--brand-catalog)" title="Fichas técnicas — a receita de produção de cada peça">
         <HelpBody>
@@ -838,6 +969,48 @@ const SpecDetail = ({ s }) => {
   );
 };
 
+// A single ink chip that doubles as a tiny PNG-status indicator.
+// Filled solid = PNG enviado · dashed ring + dot = PNG pendente.
+const InkChip = ({ ink, png, size = 18, title }) => {
+  const pending = png !== 'ok';
+  return (
+    <span title={title} style={{ position: 'relative', display: 'inline-block', width: size, height: size, flexShrink: 0 }}>
+      <span style={{ display: 'block', width: size, height: size, borderRadius: 999, background: ink,
+        border: pending ? '1.5px dashed var(--warn)' : '1.5px solid var(--surface)',
+        boxShadow: pending ? 'none' : '0 0 0 1px var(--line)', opacity: pending ? 0.55 : 1 }}/>
+      {pending && <span style={{ position: 'absolute', right: -2, bottom: -2, width: size * 0.42, height: size * 0.42, borderRadius: 999, background: 'var(--warn)', border: '1.5px solid var(--surface)' }}/>}
+    </span>
+  );
+};
+
+// Helpers for the front/back PNG model.
+// Sides are a PROPERTY OF THE PRINT (p.sides) — every color carries exactly those
+// sides. A side object is {file,png}; png:"ok" = uploaded, else pending.
+const SIDE_LABEL = { front: 'Frente', back: 'Costas' };
+const printSides = (p) => (p && p.sides && p.sides.length) ? p.sides : ['front'];
+const varPendingSides = (p, v) => printSides(p).filter(s => !v[s] || v[s].png !== 'ok').length;
+const varIsReady = (p, v) => varPendingSides(p, v) === 0;
+const printPendingPngs = (p) => (p.variations || []).reduce((n, v) => n + varPendingSides(p, v), 0);
+
+// Row of ink chips for a print's color variations + a pending-PNG badge.
+const VariationPips = ({ print }) => {
+  const variations = print.variations || [];
+  const pending = printPendingPngs(print);
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ display: 'inline-flex', gap: 5 }}>
+        {variations.slice(0, 4).map(v => <InkChip key={v.id} ink={v.ink} png={varIsReady(print, v) ? 'ok' : 'pendente'} size={16} title={`${v.name} · ${varIsReady(print, v) ? 'PNGs ok' : varPendingSides(print, v) + ' PNG pendente(s)'}`}/>)}
+        {variations.length > 4 && <span style={{ fontSize: 11, color: 'var(--ink-3)', alignSelf: 'center' }}>+{variations.length - 4}</span>}
+      </span>
+      {pending > 0 && (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '1px 7px', borderRadius: 999, background: 'color-mix(in oklab, var(--warn) 14%, var(--surface))', color: 'var(--warn)', fontSize: 10.5, fontWeight: 600 }}>
+          <Icon name="alert-circle" size={10}/> {pending} PNG
+        </span>
+      )}
+    </span>
+  );
+};
+
 const Prints = () => {
   const [open, setOpen] = React.useState(null);
   const [newOpen, setNewOpen] = React.useState(false);
@@ -854,7 +1027,7 @@ const Prints = () => {
   return (
     <div className="page">
       <PageHead sub="prints" title="Estampas" titleEm="& artes"
-                desc="Catálogo de artes aplicadas — DTF, silk, sublimação."
+                desc="Artes aplicadas — DTF, silk e sublimação."
                 actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="palette" size={14}/> Nova estampa</button>}/>
       <HelpCard id="prints" icon="palette" tone="var(--brand-catalog)" title="Estampas — o catálogo de artes que vão na peça">
         <HelpBody>
@@ -877,6 +1050,7 @@ const Prints = () => {
             <SortHeader id="id" sort={sort} setSort={setSort}>Código</SortHeader>
             <SortHeader id="name" sort={sort} setSort={setSort}>Nome</SortHeader>
             <SortHeader id="technique" sort={sort} setSort={setSort}>Técnica</SortHeader>
+            <th>Variações de cor</th>
             <SortHeader id="cost" sort={sort} setSort={setSort} align="num">Custo/un</SortHeader>
             <SortHeader id="tag" sort={sort} setSort={setSort}>Tag</SortHeader>
             <th style={{width:36}}/>
@@ -889,6 +1063,7 @@ const Prints = () => {
                 <td className="mono">{p.id}</td>
                 <td style={{color:'var(--ink)',fontWeight:500}}>{p.name}</td>
                 <td>{p.technique}</td>
+                <td><VariationPips print={p}/></td>
                 <td className="num">{fmtBRL(p.cost)}</td>
                 <td><span style={{ display:'inline-flex', alignItems:'center', gap: 4, padding: '2px 8px', background: 'var(--surface-2)', borderRadius: 999, fontSize: 11, color: 'var(--ink-2)' }}><Icon name="tag" size={10}/>{p.tag}</span></td>
                 <td><Icon name="chevron-right" size={14} style={{ color: 'var(--ink-3)' }}/></td>
@@ -910,52 +1085,142 @@ const Prints = () => {
         {open && <PrintDetail p={open}/>}
       </Sheet>
 
-      <Sheet open={newOpen} onClose={() => setNewOpen(false)} title="Subir nova arte"
-             footer={<>
-               <button className="btn" onClick={() => setNewOpen(false)}>Cancelar</button>
-               <button className="btn btn-primary" onClick={() => setNewOpen(false)}><Icon name="upload" size={13}/> Salvar estampa</button>
-             </>}>
-        <div style={{ aspectRatio: '4/3', border: '2px dashed var(--line)', borderRadius: 12, display: 'grid', placeItems: 'center', background: 'var(--surface-2)', cursor: 'default', marginBottom: 14 }}>
-          <div style={{ textAlign: 'center', color: 'var(--ink-3)' }}>
-            <Icon name="upload-cloud" size={36} style={{ marginBottom: 8, color: 'var(--ink-3)' }}/>
-            <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 500 }}>Arraste a arte aqui</div>
-            <div style={{ fontSize: 11.5, marginTop: 4 }}>PNG, SVG ou PDF · até 20MB</div>
-          </div>
-        </div>
-        <div className="field"><label>Nome da estampa</label><input placeholder="Ex: Aurora — Sol nascente"/></div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div className="field"><label>Técnica</label>
-            <Select value="DTF" onChange={() => {}} options={['DTF','Silkscreen','Sublimação']}/>
-          </div>
-          <div className="field"><label>Custo por unidade</label><NumField value={4.20} onChange={() => {}} step={0.05} min={0} decimals={2} prefix="R$"/></div>
-        </div>
-        <div className="field"><label>Tag / coleção</label><input placeholder="verão, atemporal, edição limitada…"/></div>
-      </Sheet>
+      <NewPrintSheet open={newOpen} onClose={() => setNewOpen(false)}/>
     </div>
   );
 };
 
+// Art preview tile for one print variation — the recolored art on a tinted ground.
+const VariationArt = ({ tone, ink, png, size = 'lg' }) => {
+  const [a, b] = TONE_BG[tone] || TONE_BG.warm;
+  const pending = png !== 'ok';
+  const big = size === 'lg';
+  return (
+    <div style={{ aspectRatio: big ? '4 / 3' : '1 / 1', borderRadius: big ? 12 : 9, position: 'relative', overflow: 'hidden',
+      background: pending ? 'var(--surface-2)' : `radial-gradient(circle at 30% 30%, ${a} 0%, ${b} 100%)`,
+      border: pending ? '2px dashed var(--line)' : 'none',
+      display: 'grid', placeItems: 'center' }}>
+      {pending ? (
+        <div style={{ textAlign: 'center', color: 'var(--ink-3)', padding: 8 }}>
+          <Icon name="image-off" size={big ? 30 : 18} style={{ marginBottom: big ? 6 : 2 }}/>
+          {big && <div style={{ fontSize: 11.5 }}>PNG não enviado</div>}
+        </div>
+      ) : (
+        <Icon name="palette" size={big ? 56 : 22} style={{ color: ink === '#f4f1ea' || ink === '#efe6d3' ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.6)' }}/>
+      )}
+    </div>
+  );
+};
+
+// One side (frente/costas) of a variation: art preview + status + upload/replace.
+// onUpload/onClear manage the FILE; onRemoveSide drops the side from the whole print.
+const SidePngTile = ({ tone, ink, side, label, onUpload, onClear, onRemoveSide, removable }) => {
+  const pending = side.png !== 'ok';
+  return (
+    <div style={{ flex: 1, minWidth: 0, border: '1px solid var(--line-soft)', borderRadius: 9, overflow: 'hidden', background: 'var(--surface)' }}>
+      <div style={{ position: 'relative' }}>
+        <VariationArt tone={tone} ink={ink} png={side.png} size="sm"/>
+        <span style={{ position: 'absolute', top: 5, left: 5, padding: '1px 6px', borderRadius: 999, background: 'rgba(0,0,0,.45)', color: '#fff', fontSize: 9.5, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase' }}>{label}</span>
+        {onRemoveSide && (
+          <button type="button" title={`Remover ${label.toLowerCase()} de todas as cores`} onClick={onRemoveSide} disabled={!removable}
+            style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 999, border: 'none', background: 'rgba(0,0,0,.45)', color: '#fff', display: 'grid', placeItems: 'center', cursor: removable ? 'pointer' : 'not-allowed', opacity: removable ? 1 : 0.4 }}>
+            <Icon name="x" size={12}/>
+          </button>
+        )}
+      </div>
+      <div style={{ padding: '7px 8px' }}>
+        {pending ? (
+          <button type="button" onClick={onUpload} className="btn btn-sm" style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--warn)', color: 'var(--warn)', padding: '5px 6px', fontSize: 11.5 }}>
+            <Icon name="upload" size={12}/> Subir PNG
+          </button>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Icon name="check-circle-2" size={12} style={{ color: 'var(--ok)', flexShrink: 0 }}/>
+            <span className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{side.file}</span>
+            <button type="button" onClick={onClear} className="btn btn-ghost btn-sm" title="Substituir arquivo" style={{ padding: 3, color: 'var(--ink-3)' }}><Icon name="refresh-cw" size={11}/></button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Side helpers shared by detail + new sheet.
+const orderSides = (arr) => ['front', 'back'].filter(s => arr.includes(s));
+const slug = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+const sideFileName = (printName, varName, side) => `${slug(printName) || 'estampa'}_${slug(varName) || 'cor'}_${side === 'front' ? 'frente' : 'costas'}.png`;
+const mkPendingSide = () => ({ file: null, png: 'pendente' });
+const normalizeVar = (v) => ({ ...v, front: v.front || mkPendingSide(), back: v.back || mkPendingSide() });
+
 const PrintDetail = ({ p }) => {
-  const [a, b] = TONE_BG[p.tone] || TONE_BG.warm;
   const usedBy = ORION_DATA.products.filter(pr => pr.print === p.id);
+  const [sides, setSides] = React.useState(() => printSides(p));
+  const [vars, setVars] = React.useState(() => (p.variations || []).map(normalizeVar));
+
+  const view = { ...p, sides, variations: vars };
+  const pendingPngs = printPendingPngs(view);
+  const primary = vars.find(v => varIsReady(view, v)) || vars[0];
+  const primarySide = primary ? (primary[sides[0]] || mkPendingSide()) : mkPendingSide();
+
+  const addSide = (s) => setSides(prev => orderSides([...prev, s]));
+  const removeSide = (s) => setSides(prev => prev.length > 1 ? prev.filter(x => x !== s) : prev);
+  const uploadSide = (id, side) => setVars(vs => vs.map(v => v.id === id ? { ...v, [side]: { file: sideFileName(p.name, v.name, side), png: 'ok' } } : v));
+  const clearSide = (id, side) => setVars(vs => vs.map(v => v.id === id ? { ...v, [side]: mkPendingSide() } : v));
+
   return (
     <div>
-      <div style={{ aspectRatio: '4 / 3', background: `radial-gradient(circle at 30% 30%, ${a} 0%, ${b} 100%)`, borderRadius: 12, marginBottom: 16, display: 'grid', placeItems: 'center', position: 'relative', overflow: 'hidden' }}>
-        <Icon name="palette" size={64} style={{ color: 'rgba(255,255,255,.55)' }}/>
-        <div style={{ position: 'absolute', bottom: 12, right: 12, display: 'flex', gap: 6 }}>
-          <span className="pill" style={{ background: 'rgba(255,255,255,.85)' }}>{p.technique}</span>
-          <span className="pill" style={{ background: 'rgba(255,255,255,.85)' }}>{p.tag}</span>
-        </div>
+      <div style={{ marginBottom: 16 }}>
+        <VariationArt tone={p.tone} ink={primary?.ink} png={primarySide.png} size="lg"/>
       </div>
 
       <FormGrid>
         <FormCell icon="brush" label="Técnica">{p.technique}</FormCell>
         <FormCell icon="dollar-sign" label="Custo por unidade">{fmtBRL(p.cost)}</FormCell>
         <FormCell icon="tag" label="Categoria">{p.tag}</FormCell>
-        <FormCell icon="droplet" label="Cores aplicadas">{p.technique === 'DTF' ? 'CMYK + branco' : p.technique === 'Sublimação' ? 'CMYK' : '2 cores'}</FormCell>
+        <FormCell icon="layers" label="Variações de cor">{vars.length}{pendingPngs > 0 && <span style={{ color: 'var(--warn)', fontSize: 12 }}> · {pendingPngs} PNG pendente{pendingPngs !== 1 ? 's' : ''}</span>}</FormCell>
       </FormGrid>
 
       <div style={{ borderTop: '1px solid var(--line-soft)', paddingTop: 14, marginTop: 18, marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <span style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600 }}>Variações de cor & arquivos PNG</span>
+          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent)', padding: '4px 8px' }}><Icon name="plus" size={13}/> Variação</button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>Lados:</span>
+          {orderSides(sides).map(s => (
+            <span key={s} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 4px 2px 9px', borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--line)', fontSize: 11.5, color: 'var(--ink-2)', fontWeight: 500 }}>
+              {SIDE_LABEL[s]}
+              <button type="button" onClick={() => removeSide(s)} disabled={sides.length <= 1} title="Remover deste estampa (todas as cores)"
+                style={{ width: 16, height: 16, borderRadius: 999, border: 'none', background: 'transparent', color: 'var(--ink-3)', display: 'grid', placeItems: 'center', cursor: sides.length <= 1 ? 'not-allowed' : 'pointer', opacity: sides.length <= 1 ? 0.4 : 1 }}><Icon name="x" size={11}/></button>
+            </span>
+          ))}
+          {['front', 'back'].filter(s => !sides.includes(s)).map(s => (
+            <button key={s} type="button" onClick={() => addSide(s)} className="btn btn-ghost btn-sm" style={{ color: 'var(--accent)', padding: '2px 8px', fontSize: 11.5 }}><Icon name="plus" size={11}/> {SIDE_LABEL[s]}</button>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gap: 10 }}>
+          {vars.map(v => (
+            <div key={v.id} style={{ border: '1px solid var(--line-soft)', borderRadius: 11, padding: 11, background: 'var(--surface)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <InkChip ink={v.ink} png={varIsReady(view, v) ? 'ok' : 'pendente'} size={17}/>
+                <span style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 600, flex: 1 }}>{v.name}</span>
+                <span style={{ fontSize: 10.5, color: varIsReady(view, v) ? 'var(--ok)' : 'var(--warn)', fontWeight: 600 }}>
+                  {varIsReady(view, v) ? 'Completo' : `${varPendingSides(view, v)} pendente${varPendingSides(view, v) !== 1 ? 's' : ''}`}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {orderSides(sides).map(s => (
+                  <SidePngTile key={s} tone={p.tone} ink={v.ink} side={v[s] || mkPendingSide()} label={SIDE_LABEL[s]}
+                    onUpload={() => uploadSide(v.id, s)} onClear={() => clearSide(v.id, s)}
+                    onRemoveSide={() => removeSide(s)} removable={sides.length > 1}/>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ borderTop: '1px solid var(--line-soft)', paddingTop: 14, marginBottom: 18 }}>
         <div style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 10 }}>Especificações de aplicação</div>
         <div style={{ display: 'grid', gap: 8 }}>
           {[
@@ -987,4 +1252,144 @@ const PrintDetail = ({ p }) => {
   );
 };
 
-Object.assign(window, { Products, Specs, Prints, GARMENT_GLYPHS, GARMENT_TYPES });
+const NewPrintSheet = ({ open, onClose }) => {
+  const cfg = useCatalogConfig();
+  const PRINT_COLORS = cfg.printColors;
+  const [nome, setNome] = React.useState('');
+  const [tech, setTech] = React.useState(cfg.techniques[0] || 'DTF');
+  const [cost, setCost] = React.useState(4.20);
+  const [tag, setTag] = React.useState('');
+  const [sides, setSides] = React.useState(['front']);
+  const [vars, setVars] = React.useState([
+    { id: 1, ink: PRINT_COLORS[0]?.hex || '#1f1f1f', name: PRINT_COLORS[0]?.name || 'Preto', front: mkPendingSide(), back: mkPendingSide() },
+  ]);
+  const [adding, setAdding] = React.useState(false);
+
+  const addSide = (s) => setSides(prev => orderSides([...prev, s]));
+  const removeSide = (s) => setSides(prev => prev.length > 1 ? prev.filter(x => x !== s) : prev);
+  // New colors inherit the SAME sides — they're a print-level property, so no
+  // per-color setup; just empty slots for whatever sides the print already uses.
+  const addVar = (pc) => { setVars(vs => vs.some(v => v.ink === pc.hex) ? vs : [...vs, { id: Date.now(), ink: pc.hex, name: pc.name, front: mkPendingSide(), back: mkPendingSide() }]); setAdding(false); };
+  const removeVar = (id) => setVars(vs => vs.filter(v => v.id !== id));
+  const uploadSide = (id, side) => setVars(vs => vs.map(v => v.id === id ? { ...v, [side]: { file: sideFileName(nome, v.name, side), png: 'ok' } } : v));
+  const clearSide = (id, side) => setVars(vs => vs.map(v => v.id === id ? { ...v, [side]: mkPendingSide() } : v));
+
+  const view = { sides, variations: vars };
+  const ready = vars.filter(v => varIsReady(view, v)).length;
+  const allReady = vars.every(v => varIsReady(view, v));
+  const available = PRINT_COLORS.filter(pc => !vars.some(v => v.ink === pc.hex));
+
+  return (
+    <Sheet open={open} onClose={onClose} title="Nova estampa"
+      sub={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--ink-3)' }}>EST-XXX</span>}
+      footer={<>
+        <button className="btn" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" onClick={onClose} disabled={!allReady}><Icon name="check" size={13}/> Salvar estampa</button>
+      </>}>
+
+      <div style={{ marginBottom: 22 }}>
+        <SectionTitle>Identificação</SectionTitle>
+        <div className="field"><label>Nome da estampa</label><input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Aurora — Sol nascente"/></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="field"><label>Técnica</label>
+            <Select value={tech} onChange={setTech} options={cfg.techniques}/>
+          </div>
+          <div className="field"><label>Custo por unidade</label><NumField value={cost} onChange={setCost} step={0.05} min={0} decimals={2} prefix="R$"/></div>
+        </div>
+        <div className="field" style={{ marginBottom: 0 }}><label>Tag / coleção</label><input value={tag} onChange={e => setTag(e.target.value)} placeholder="verão, atemporal, edição limitada…"/></div>
+      </div>
+
+      <div style={{ marginBottom: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid var(--line-soft)' }}>
+          <span style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 600 }}>Variações de cor & PNG</span>
+          <span style={{ fontSize: 11, color: allReady ? 'var(--ok)' : 'var(--warn)', fontWeight: 600 }}>{ready}/{vars.length} cor(es) completas</span>
+        </div>
+        <p style={{ fontSize: 11.5, color: 'var(--ink-3)', margin: '0 0 12px', lineHeight: 1.5 }}>
+          Os lados valem para <strong style={{ color: 'var(--ink-2)' }}>todas as cores</strong> — defina aqui se a arte vai na frente, nas costas, ou ambos. Depois suba um PNG por lado em cada cor.
+        </p>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, padding: '9px 11px', background: 'var(--surface-2)', borderRadius: 9 }}>
+          <span style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>Lados</span>
+          {orderSides(sides).map(s => (
+            <span key={s} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 5px 3px 10px', borderRadius: 999, background: 'var(--surface)', border: '1px solid var(--line)', fontSize: 12, color: 'var(--ink)', fontWeight: 500 }}>
+              {SIDE_LABEL[s]}
+              <button type="button" onClick={() => removeSide(s)} disabled={sides.length <= 1} title="Remover este lado de todas as cores"
+                style={{ width: 17, height: 17, borderRadius: 999, border: 'none', background: 'transparent', color: 'var(--ink-3)', display: 'grid', placeItems: 'center', cursor: sides.length <= 1 ? 'not-allowed' : 'pointer', opacity: sides.length <= 1 ? 0.4 : 1 }}><Icon name="x" size={12}/></button>
+            </span>
+          ))}
+          {['front', 'back'].filter(s => !sides.includes(s)).map(s => (
+            <button key={s} type="button" onClick={() => addSide(s)} className="btn btn-ghost btn-sm" style={{ color: 'var(--accent)', padding: '3px 9px', fontSize: 12 }}><Icon name="plus" size={12}/> {SIDE_LABEL[s]}</button>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gap: 8 }}>
+          {vars.map(v => {
+            const sideTile = (s) => {
+              const side = v[s] || mkPendingSide();
+              const pend = side.png !== 'ok';
+              return (
+                <div key={s} style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 10, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600, marginBottom: 4 }}>{SIDE_LABEL[s]}</div>
+                  {pend ? (
+                    <button type="button" onClick={() => uploadSide(v.id, s)}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', border: '1.5px dashed var(--line)', borderRadius: 8, background: 'var(--surface-2)', cursor: 'pointer', color: 'var(--ink-2)', fontFamily: 'inherit', fontSize: 12, fontWeight: 500 }}>
+                      <Icon name="upload-cloud" size={14}/> Subir PNG
+                    </button>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 9px', background: 'color-mix(in oklab, var(--ok) 9%, var(--surface))', borderRadius: 8 }}>
+                      <Icon name="check-circle-2" size={13} style={{ color: 'var(--ok)', flexShrink: 0 }}/>
+                      <span className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{side.file}</span>
+                      <button type="button" onClick={() => clearSide(v.id, s)} title="Remover arquivo" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: 0, display: 'inline-flex' }}><Icon name="x" size={12}/></button>
+                    </div>
+                  )}
+                </div>
+              );
+            };
+            return (
+              <div key={v.id} style={{ border: '1px solid var(--line-soft)', borderRadius: 10, padding: 11, background: 'var(--surface)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <InkChip ink={v.ink} png={varIsReady(view, v) ? 'ok' : 'pendente'} size={20}/>
+                  <span style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 500, flex: 1 }}>{v.name}</span>
+                  <span style={{ fontSize: 10.5, color: varIsReady(view, v) ? 'var(--ok)' : 'var(--warn)', fontWeight: 600 }}>
+                    {varIsReady(view, v) ? 'Completo' : `${varPendingSides(view, v)} pendente${varPendingSides(view, v) !== 1 ? 's' : ''}`}
+                  </span>
+                  <button type="button" className="btn btn-ghost btn-sm" title="Remover variação" onClick={() => removeVar(v.id)} disabled={vars.length <= 1} style={{ padding: 5, flexShrink: 0, color: 'var(--ink-3)', opacity: vars.length <= 1 ? 0.4 : 1 }}><Icon name="trash-2" size={14}/></button>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {orderSides(sides).map(s => sideTile(s))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ marginTop: 8 }}>
+          {!adding ? (
+            <button type="button" onClick={() => setAdding(true)} disabled={!available.length}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 2px', background: 'transparent', border: 'none', cursor: available.length ? 'pointer' : 'default', color: 'var(--accent)', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 500, opacity: available.length ? 1 : 0.4 }}>
+              <Icon name="plus" size={14}/> Adicionar variação de cor
+            </button>
+          ) : (
+            <div style={{ border: '1px solid var(--line)', borderRadius: 10, padding: 11, marginTop: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600 }}>Cor da tinta</span>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAdding(false)} style={{ padding: 4, color: 'var(--ink-3)' }}><Icon name="x" size={14}/></button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(116px, 1fr))', gap: 8 }}>
+                {available.map(pc => (
+                  <button key={pc.hex} type="button" onClick={() => addVar(pc)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 9px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', cursor: 'pointer', textAlign: 'left' }}>
+                    <InkChip ink={pc.hex} png="ok" size={18}/>
+                    <span style={{ fontSize: 11.5, color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pc.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </Sheet>
+  );
+};
+
+Object.assign(window, { Products, Specs, Prints, GARMENT_GLYPHS, GARMENT_TYPES, GARMENT_ICON_LIBRARY });

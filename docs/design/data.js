@@ -126,20 +126,24 @@ const ORION_DATA = {
     { id: "c-305", name: "Aline Souza",    city: "Salvador, BA",    firstChannel: "instagram", orders: 2,  lifetime:   220.00, tags: [] },
   ],
 
+  // Um anúncio pode vincular UM OU MAIS produtos do catálogo (combo, kit ou
+  // listagem multivariação). products = nomes dos produtos vinculados.
   ads: [
-    { id: "a-12", channel: "shopee",   title: "Cropped Oversized Verão 2026", product: "Cropped Oversized", status: "ativo",   orders30d: 38 },
-    { id: "a-13", channel: "ml",       title: "Camisa Linho Premium",          product: "Camisa Linho",      status: "ativo",   orders30d: 21 },
-    { id: "a-14", channel: "shopify",  title: "T-Shirt Box Essentials",        product: "T-Shirt Box",       status: "pausado", orders30d:  4 },
-    { id: "a-15", channel: "instagram",title: "Drop Outono — Moletom",         product: "Moletom Vintage",   status: "ativo",   orders30d: 17 },
-    { id: "a-16", channel: "whatsapp", title: "Catálogo VIP",                  product: "Múltiplos",         status: "ativo",   orders30d: 12 },
+    { id: "a-12", channel: "shopee",   title: "Cropped Oversized Verão 2026",     products: ["Cropped Oversized"],                                                  status: "ativo",   orders30d: 38 },
+    { id: "a-13", channel: "ml",       title: "Camisa Linho Premium",             products: ["Camisa Linho"],                                                       status: "ativo",   orders30d: 21 },
+    { id: "a-14", channel: "shopify",  title: "Kit Essentials — Camiseta + Tote", products: ["T-Shirt Box", "Tote Bag Algodão"],                                    status: "pausado", orders30d:  4 },
+    { id: "a-15", channel: "instagram",title: "Drop Outono — Moletom",            products: ["Moletom Vintage"],                                                    status: "ativo",   orders30d: 17 },
+    { id: "a-16", channel: "whatsapp", title: "Catálogo VIP",                     products: ["Cropped Oversized", "Camisa Linho", "T-Shirt Box", "Tote Bag Algodão"], status: "ativo",   orders30d: 12 },
   ],
 
   products: [
-    { id: "p-101", code: "CRP-OVS",  name: "Cropped Oversized",  spec: "FT-014", print: "EST-031", colors: ["#1f1f1f","#7a4b2a","#c9b9a3"], sizes: ["P","M","G","GG"], stock: 84,  thumb: "warm" },
-    { id: "p-102", code: "CAM-LIN",  name: "Camisa Linho",       spec: "FT-021", print: "EST-002", colors: ["#efe6d3","#cfb98e","#7a8a76"], sizes: ["P","M","G","GG"], stock: 46,  thumb: "sand" },
-    { id: "p-103", code: "MOL-VTG",  name: "Moletom Vintage",    spec: "FT-008", print: "EST-019", colors: ["#3a4a3d","#6b4a2e","#1f1f1f"], sizes: ["M","G","GG"],     stock: 28,  thumb: "moss" },
-    { id: "p-104", code: "TSH-BOX",  name: "T-Shirt Box",        spec: "FT-003", print: "EST-005", colors: ["#f4f1ea","#1f1f1f","#b03a2e"], sizes: ["P","M","G","GG"], stock: 132, thumb: "bone" },
-    { id: "p-105", code: "BAG-TOTE", name: "Tote Bag Algodão",   spec: "FT-030", print: "EST-040", colors: ["#efe6d3","#3a4a3d"],           sizes: ["U"],              stock: 67,  thumb: "stone" },
+    // colors: cada cor de material carrega UMA OU MAIS cores de estampa que combinam
+    // com ela (tinta clara em peça escura, tinta escura em peça clara — p/ a arte aparecer).
+    { id: "p-101", code: "CRP-OVS",  name: "Cropped Oversized",  spec: "FT-014", print: "EST-031", colors: [{material:"#1f1f1f",prints:["#f4f1ea","#b03a2e"]},{material:"#7a4b2a",prints:["#efe6d3"]},{material:"#c9b9a3",prints:["#1f1f1f","#3a4a3d"]}], sizes: ["P","M","G","GG"], stock: 84,  thumb: "warm" },
+    { id: "p-102", code: "CAM-LIN",  name: "Camisa Linho",       spec: "FT-021", print: "EST-002", colors: [{material:"#efe6d3",prints:["#1f1f1f","#7a8a76"]},{material:"#cfb98e",prints:["#3a4a3d"]},{material:"#7a8a76",prints:["#f4f1ea"]}], sizes: ["P","M","G","GG"], stock: 46,  thumb: "sand" },
+    { id: "p-103", code: "MOL-VTG",  name: "Moletom Vintage",    spec: "FT-008", print: "EST-019", colors: [{material:"#3a4a3d",prints:["#f4f1ea"]},{material:"#6b4a2e",prints:["#efe6d3"]},{material:"#1f1f1f",prints:["#f4f1ea","#cfb98e"]}], sizes: ["M","G","GG"],     stock: 28,  thumb: "moss" },
+    { id: "p-104", code: "TSH-BOX",  name: "T-Shirt Box",        spec: "FT-003", print: "EST-005", colors: [{material:"#f4f1ea",prints:["#1f1f1f"]},{material:"#1f1f1f",prints:["#f4f1ea","#b03a2e"]},{material:"#b03a2e",prints:["#f4f1ea"]}], sizes: ["P","M","G","GG"], stock: 132, thumb: "bone" },
+    { id: "p-105", code: "BAG-TOTE", name: "Tote Bag Algodão",   spec: "FT-030", print: "EST-040", colors: [{material:"#efe6d3",prints:["#3a4a3d"]},{material:"#3a4a3d",prints:["#f4f1ea"]}],           sizes: ["U"],              stock: 67,  thumb: "stone" },
   ],
 
   specs: [
@@ -150,28 +154,93 @@ const ORION_DATA = {
     { id: "FT-030", name: "Tote Bag Algodão",   tipo: "blusa",    fabric: "Sarja crua",            gsm: 240, consumo: 0.30, ribanaUsa: false, ribanaTipo: "—",          ribanaPct:  0, aviamentos: [{tipo:"Etiqueta externa estampada",cost:0.55},{tipo:"Tag de papel",cost:0.35}], mao: 4.20, preco: 59.00, updated: "05/04/2026" },
   ],
 
+  // Estampas — cada arte existe em UMA OU MAIS variações de cor. Os LADOS são
+  // uma propriedade da estampa (sides): frente, costas, ou ambos — e valem para
+  // TODAS as cores (todas têm exatamente os mesmos lados). Cada lado de cada cor
+  // tem seu PNG. png: "ok" = subido | "pendente" = falta o arquivo.
   prints: [
-    { id: "EST-031", name: "Aurora — Sol nascente", technique: "DTF",         cost: 4.20, tag: "verão",   tone: "warm" },
-    { id: "EST-002", name: "Botânica linha-única",  technique: "Silkscreen",  cost: 2.10, tag: "atemporal", tone: "sand" },
-    { id: "EST-019", name: "Tipográfica '94",       technique: "Sublimação",  cost: 5.80, tag: "outono",  tone: "moss" },
-    { id: "EST-005", name: "Liso etiquetado",       technique: "Silkscreen",  cost: 1.10, tag: "essencial", tone: "bone" },
-    { id: "EST-040", name: "Mapa de bairro",        technique: "DTF",         cost: 3.40, tag: "edição limitada", tone: "stone" },
+    { id: "EST-031", name: "Aurora — Sol nascente", technique: "DTF",         cost: 4.20, tag: "verão",   tone: "warm", sides: ["front", "back"],
+      variations: [
+        { id: "v1", name: "Original", ink: "#b03a2e", front: { file: "aurora_original_frente.png", png: "ok" }, back: { file: "aurora_original_costas.png", png: "ok" } },
+        { id: "v2", name: "Clara",    ink: "#f4f1ea", front: { file: "aurora_clara_frente.png", png: "ok" },     back: { file: null, png: "pendente" } },
+        { id: "v3", name: "Escura",   ink: "#1f1f1f", front: { file: null, png: "pendente" },                    back: { file: null, png: "pendente" } },
+      ] },
+    { id: "EST-002", name: "Botânica linha-única",  technique: "Silkscreen",  cost: 2.10, tag: "atemporal", tone: "sand", sides: ["front"],
+      variations: [
+        { id: "v1", name: "Preto",     ink: "#1f1f1f", front: { file: "botanica_preto_frente.png", png: "ok" } },
+        { id: "v2", name: "Off-white", ink: "#efe6d3", front: { file: "botanica_off_frente.png", png: "ok" } },
+      ] },
+    { id: "EST-019", name: "Tipográfica '94",       technique: "Sublimação",  cost: 5.80, tag: "outono",  tone: "moss", sides: ["front", "back"],
+      variations: [
+        { id: "v1", name: "Full color", ink: "#3a4a3d", front: { file: "tipo94_frente.png", png: "ok" }, back: { file: "tipo94_costas.png", png: "ok" } },
+      ] },
+    { id: "EST-005", name: "Liso etiquetado",       technique: "Silkscreen",  cost: 1.10, tag: "essencial", tone: "bone", sides: ["front"],
+      variations: [
+        { id: "v1", name: "Preto",  ink: "#1f1f1f", front: { file: "liso_preto_frente.png", png: "ok" } },
+        { id: "v2", name: "Branco", ink: "#f4f1ea", front: { file: null, png: "pendente" } },
+      ] },
+    { id: "EST-040", name: "Mapa de bairro",        technique: "DTF",         cost: 3.40, tag: "edição limitada", tone: "stone", sides: ["front", "back"],
+      variations: [
+        { id: "v1", name: "Verde escuro", ink: "#3a4a3d", front: { file: "mapa_verde_frente.png", png: "ok" },  back: { file: "mapa_verde_costas.png", png: "ok" } },
+        { id: "v2", name: "Branco",       ink: "#f4f1ea", front: { file: "mapa_branco_frente.png", png: "ok" }, back: { file: null, png: "pendente" } },
+        { id: "v3", name: "Bege",         ink: "#cfb98e", front: { file: null, png: "pendente" },                back: { file: null, png: "pendente" } },
+      ] },
   ],
 
+  // Cada ordem carrega uma GRADE por tamanho (planned × actual) — a granularidade
+  // que o card e o kanban usam. Uma ordem parcial aparece em DUAS colunas:
+  // as linhas ainda abertas em "Cortando" e as já concluídas em "Concluído".
   cutting: [
-    { id: "CO-214", code: "CO-214", product: "Cropped Oversized",  status: "pendente", roll: "BB-031", planned: 60, actual: 0,  operator: "Joana Pires",  date: "08/05" },
-    { id: "CO-213", code: "CO-213", product: "Camisa Linho",       status: "cortando", roll: "BB-029", planned: 40, actual: 18, operator: "Joana Pires",  date: "07/05" },
-    { id: "CO-212", code: "CO-212", product: "Moletom Vintage",    status: "cortando", roll: "BB-028", planned: 30, actual: 12, operator: "Marcos Lima",  date: "07/05" },
-    { id: "CO-211", code: "CO-211", product: "T-Shirt Box",        status: "concluido",roll: "BB-026", planned: 80, actual: 78, operator: "Joana Pires",  date: "06/05" },
-    { id: "CO-210", code: "CO-210", product: "Tote Bag Algodão",   status: "concluido",roll: "BB-024", planned: 50, actual: 50, operator: "Marcos Lima",  date: "05/05" },
+    { id: "CO-214", code: "CO-214", product: "Cropped Oversized",  color: "Off-white", status: "pendente", roll: "BB-031", planned: 60, actual: 0,  operator: "Joana Pires",  date: "08/05",
+      grade: [{ size: "P", planned: 12, actual: 0 }, { size: "M", planned: 20, actual: 0 }, { size: "G", planned: 18, actual: 0 }, { size: "GG", planned: 10, actual: 0 }] },
+    { id: "CO-213", code: "CO-213", product: "Camisa Linho",       color: "Areia", status: "cortando", roll: "BB-029", planned: 40, actual: 18, operator: "Joana Pires",  date: "07/05",
+      grade: [{ size: "P", planned: 8, actual: 8 }, { size: "M", planned: 14, actual: 10 }, { size: "G", planned: 12, actual: 0 }, { size: "GG", planned: 6, actual: 0 }] },
+    { id: "CO-212", code: "CO-212", product: "Moletom Vintage",    color: "Verde", status: "cortando", roll: "BB-028", planned: 30, actual: 12, operator: "Marcos Lima",  date: "07/05",
+      grade: [{ size: "M", planned: 12, actual: 12 }, { size: "G", planned: 12, actual: 0 }, { size: "GG", planned: 6, actual: 0 }] },
+    { id: "CO-211", code: "CO-211", product: "T-Shirt Box",        color: "Branco", status: "concluido",roll: "BB-026", planned: 80, actual: 78, operator: "Joana Pires",  date: "06/05",
+      grade: [{ size: "P", planned: 20, actual: 20 }, { size: "M", planned: 28, actual: 28 }, { size: "G", planned: 22, actual: 22 }, { size: "GG", planned: 10, actual: 8 }] },
+    { id: "CO-210", code: "CO-210", product: "Tote Bag Algodão",   color: "Cru", status: "concluido",roll: "BB-024", planned: 50, actual: 50, operator: "Marcos Lima",  date: "05/05",
+      grade: [{ size: "U", planned: 50, actual: 50 }] },
   ],
 
+  // ───────── Impressão: espelho do Corte, mas no caminho do PAPEL ─────────
+  // Uma ordem planeja contra uma ESTAMPA (catálogo) + uma BOBINA DE PAPEL/FILME.
+  // A grade é por LADO (frente/costas) × VARIAÇÃO (cor da estampa). Imprimir
+  // abate a bobina (metros) e gera os IMPRESSOS prontos para a Montagem.
+  // status: pendente | imprimindo | concluido · consumed = metros já lançados
+  printing: [
+    { id: "IM-216", code: "IM-216", estampa: "EST-031", status: "pendente",   roll: "BP-301", planned: 60, printed: 0,  operator: "Joana Pires", date: "08/06", consumed: 0 },
+    { id: "IM-215", code: "IM-215", estampa: "EST-040", status: "imprimindo",  roll: "BP-304", planned: 42, printed: 16, operator: "Marcos Lima", date: "07/06", consumed: 6 },
+    { id: "IM-214", code: "IM-214", estampa: "EST-019", status: "imprimindo",  roll: "BP-303", planned: 30, printed: 12, operator: "Joana Pires", date: "07/06", consumed: 7 },
+    { id: "IM-213", code: "IM-213", estampa: "EST-031", status: "concluido",   roll: "BP-302", planned: 48, printed: 48, operator: "Joana Pires", date: "06/06", consumed: 17 },
+    { id: "IM-212", code: "IM-212", estampa: "EST-040", status: "concluido",   roll: "BP-301", planned: 34, printed: 34, operator: "Marcos Lima", date: "05/06", consumed: 12 },
+  ],
+
+  // ───────── Costura: espelho do Corte, mas no caminho das BANCAS ─────────
+  // Uma REMESSA envia peças cortadas a uma banca terceirizada; ela costura e
+  // devolve PEÇAS LISAS (semiacabado). A grade é por tipo de peça lisa, com
+  // enviado (planned) × recebido (received). Receber credita o estoque de lisas —
+  // pode ser PARCIAL (recebido < enviado), exatamente como o Corte. credited =
+  // quanto de cada linha já entrou no estoque.
+  // status: costurando | recebido · late = passou da data prevista. Sem "enviado":
+  // antes de virar remessa, as peças cortadas ficam na coluna "Disponível".
   sewing: [
-    { id: "SW-122", banca: "Banca Esperança", status: "enviado", pieces: 60, defects: 0, sent: "07/05", expected: "12/05" },
-    { id: "SW-121", banca: "Banca Dona Lúcia", status: "parcial", pieces: 50, defects: 3, sent: "04/05", expected: "08/05" },
-    { id: "SW-120", banca: "Banca Costura+",   status: "recebido", pieces: 80, defects: 1, sent: "30/04", expected: "05/05" },
-    { id: "SW-119", banca: "Banca Esperança",  status: "recebido", pieces: 40, defects: 0, sent: "28/04", expected: "03/05" },
-    { id: "SW-118", banca: "Banca Dona Lúcia", status: "atrasado", pieces: 30, defects: 0, sent: "25/04", expected: "30/04" },
+    { id: "SW-126", code: "SW-126", banca: "Banca Bom Retiro", status: "costurando",    sent: "07/06", expected: "13/06", date: "07/06", defects: 0,
+      lines: [{ id: "bl-01", planned: 60, received: 0, credited: 0 }, { id: "bl-02", planned: 40, received: 0, credited: 0 }, { id: "bl-09", planned: 30, received: 0, credited: 0 }, { id: "bl-08", planned: 25, received: 0, credited: 0 }] },
+    { id: "SW-125", code: "SW-125", banca: "Banca Costura+",    status: "costurando",    sent: "06/06", expected: "12/06", date: "06/06", defects: 0,
+      lines: [{ id: "bl-03", planned: 48, received: 0, credited: 0 }, { id: "bl-04", planned: 32, received: 0, credited: 0 }, { id: "bl-06", planned: 20, received: 0, credited: 0 }, { id: "bl-07", planned: 16, received: 0, credited: 0 }] },
+    { id: "SW-124", code: "SW-124", banca: "Banca Esperança",   status: "costurando", sent: "03/06", expected: "09/06", date: "03/06", defects: 1,
+      lines: [{ id: "bl-03", planned: 36, received: 36, credited: 36 }, { id: "bl-04", planned: 24, received: 12, credited: 12 }, { id: "bl-09", planned: 30, received: 30, credited: 30 }, { id: "bl-08", planned: 20, received: 0, credited: 0 }] },
+    { id: "SW-123", code: "SW-123", banca: "Banca Dona Lúcia",  status: "costurando", sent: "02/06", expected: "07/06", date: "02/06", defects: 0, late: true,
+      lines: [{ id: "bl-01", planned: 30, received: 0, credited: 0 }, { id: "bl-02", planned: 20, received: 0, credited: 0 }] },
+    { id: "SW-122", code: "SW-122", banca: "Banca Esperança",   status: "costurando", sent: "01/06", expected: "08/06", date: "01/06", defects: 0,
+      lines: [{ id: "bl-06", planned: 22, received: 22, credited: 22 }, { id: "bl-07", planned: 18, received: 6, credited: 6 }] },
+    { id: "SW-121", code: "SW-121", banca: "Banca Costura+",    status: "recebido",   sent: "28/05", expected: "03/06", date: "28/05", defects: 2,
+      lines: [{ id: "bl-01", planned: 50, received: 50, credited: 50 }, { id: "bl-02", planned: 30, received: 30, credited: 30 }, { id: "bl-09", planned: 40, received: 40, credited: 40 }] },
+    { id: "SW-120", code: "SW-120", banca: "Banca Esperança",   status: "recebido",   sent: "25/05", expected: "01/06", date: "25/05", defects: 0,
+      lines: [{ id: "bl-06", planned: 22, received: 22, credited: 22 }, { id: "bl-07", planned: 18, received: 18, credited: 18 }] },
+    { id: "SW-119", code: "SW-119", banca: "Banca Dona Lúcia",  status: "recebido",   sent: "22/05", expected: "28/05", date: "22/05", defects: 1,
+      lines: [{ id: "bl-08", planned: 30, received: 30, credited: 30 }] },
   ],
 
   bancas: [
@@ -189,6 +258,15 @@ const ORION_DATA = {
     { id: "BB-022", kind: "corpo", type: "Moletom 320g",        color: "Preto",     gsm: 320, initial: 28.0, current:  4.8, supplier: "Malharia Estrela",   received: "20/04" },
     { id: "BB-018", kind: "ribana",type: "Ribana PV",           color: "Preto",     gsm: 220, initial:  6.0, current:  3.1, supplier: "Têxtil Nordeste",    received: "15/04" },
   ],
+  fabricMovements: [
+    { date: "07/06 14:20", id: "BB-022", reason: "Saída · Corte CT-118",   qty: -6.2 },
+    { date: "06/06 10:05", id: "BB-026", reason: "Saída · Corte CT-116",   qty: -9.4 },
+    { date: "06/05 08:30", id: "BB-031", reason: "Entrada · Recebimento",  qty: +22.5 },
+    { date: "04/06 16:40", id: "BB-029", reason: "Saída · Corte CT-110",   qty: -5.6 },
+    { date: "03/05 09:15", id: "BB-029", reason: "Entrada · Recebimento",  qty: +18.0 },
+    { date: "01/06 11:50", id: "BB-028", reason: "Saída · Corte CT-104",   qty: -5.8 },
+    { date: "20/04 13:25", id: "BB-022", reason: "Entrada · Recebimento",  qty: +28.0 },
+  ],
 
   stock: [
     { sku: "CRP-OVS-PRT-M",        product: "Cropped Oversized",  color: "Preto",  size: "M",  print: null,        count: 24 },
@@ -199,6 +277,12 @@ const ORION_DATA = {
     { sku: "TSH-BOX-BCO-P-AURO",   product: "T-Shirt Box",        color: "Branco", size: "P",  print: "Aurora",    count: 12 },
     { sku: "TSH-BOX-PRT-M-AURO",   product: "T-Shirt Box",        color: "Preto",  size: "M",  print: "Aurora",    count:  6 },
     { sku: "BAG-TOTE-CRU-U",       product: "Tote Bag Algodão",   color: "Cru",    size: "U",  print: null,        count: 67 },
+    // Produtos de demanda (POD) já montados e em estoque — caem direto na Separação
+    { sku: "CAM-2170-OFF-P",       product: "Camiseta One Piece Luffy",  color: "Off-white", size: "P",     print: "2170", count:  4 },
+    { sku: "CRP-2055-PRT-M",       product: "Cropped Naruto Akatsuki",   color: "Preto",     size: "M",     print: "2055", count:  3 },
+    { sku: "CAM-2301-PRT-GG",      product: "Camiseta Berserk Guts",     color: "Preto",     size: "GG",    print: "2301", count:  2 },
+    { sku: "ECO-2055-CRU-Único",   product: "Ecobag Naruto Akatsuki",    color: "Cru",       size: "Único", print: "2055", count:  4 },
+    { sku: "ECO-2170-CRU-Único",   product: "Ecobag One Piece Luffy",    color: "Cru",       size: "Único", print: "2170", count:  3 },
   ],
 
   movements: [
@@ -207,6 +291,66 @@ const ORION_DATA = {
     { date: "06/05 18:02", sku: "MOL-VTG-VRD-GG-FLR", reason: "Saída · Pedido #10485", qty: -3 },
     { date: "05/05 11:11", sku: "BAG-TOTE-CRU-U", reason: "Ajuste · Inventário",   qty: +4 },
     { date: "04/05 09:48", sku: "CAM-LIN-ARE-G", reason: "Saída · Pedido #10470",  qty: -1 },
+  ],
+
+  // ───────── Estoque intermediário: PEÇAS LISAS (semiacabado / WIP) ─────────
+  // Peças costuradas que voltaram da banca mas ainda NÃO foram estampadas.
+  // É o maior estoque da operação. Chave = base + cor + tamanho (sem estampa).
+  // Entra na Remessa recebida; sai na Montagem (vira Produto acabado).
+  blankPieces: [
+    { id: "bl-01", garment: "camiseta", base: "Camiseta",        color: "Branco",    size: "M",     count: 142, min: 40 },
+    { id: "bl-02", garment: "camiseta", base: "Camiseta",        color: "Branco",    size: "G",     count: 118, min: 40 },
+    { id: "bl-03", garment: "camiseta", base: "Camiseta",        color: "Preto",     size: "M",     count:  96, min: 40 },
+    { id: "bl-04", garment: "camiseta", base: "Camiseta",        color: "Preto",     size: "G",     count:  74, min: 40 },
+    { id: "bl-05", garment: "camiseta", base: "Camiseta",        color: "Off-white", size: "P",     count:  31, min: 35 },
+    { id: "bl-06", garment: "moletom",  base: "Moletom Canguru", color: "Preto",     size: "G",     count:  38, min: 20 },
+    { id: "bl-07", garment: "moletom",  base: "Moletom Canguru", color: "Preto",     size: "GG",    count:  22, min: 20 },
+    { id: "bl-08", garment: "camiseta", base: "Cropped",         color: "Preto",     size: "M",     count:  44, min: 25 },
+    { id: "bl-09", garment: "bolsa",    base: "Ecobag",          color: "Cru",       size: "Único", count:  73, min: 30 },
+    { id: "bl-10", garment: "camiseta", base: "Camiseta",        color: "Preto",     size: "GG",    count:   9, min: 30 },
+  ],
+  blankMovements: [
+    { date: "07/06 11:20", id: "bl-03", reason: "Entrada · Remessa SW-122",   qty: +60 },
+    { date: "07/06 09:05", id: "bl-08", reason: "Saída · Montagem Lote 1",     qty: -18 },
+    { date: "06/06 16:40", id: "bl-01", reason: "Entrada · Remessa SW-120",    qty: +80 },
+    { date: "06/06 14:02", id: "bl-09", reason: "Saída · Montagem #UPTHK2541", qty: -2 },
+    { date: "05/06 10:11", id: "bl-10", reason: "Saída · Montagem Lote 2",     qty: -24 },
+  ],
+
+  // ───────── Insumo de impressão: BOBINAS DE PAPEL / FILME (matéria-prima) ─────────
+  // Espelho das bobinas de tecido, mas para a estamparia. Medido em metros.
+  // Consumido na Impressão de um lote (gera os Estampados).
+  paperRolls: [
+    { id: "BP-301", type: "Filme DTF",         width: 60, initial: 100, current: 64,  supplier: "DTF Brasil",       received: "04/06" },
+    { id: "BP-302", type: "Filme DTF",         width: 30, initial:  50, current: 11,  supplier: "DTF Brasil",       received: "30/05" },
+    { id: "BP-303", type: "Papel sublimático", width: 160,initial: 200, current: 150, supplier: "SubliPrint",       received: "28/05" },
+    { id: "BP-304", type: "Filme DTF",         width: 60, initial: 100, current: 88,  supplier: "Inktec Suprimentos",received: "02/06" },
+    { id: "BP-305", type: "Papel transfer",    width: 30, initial:  40, current:  5,  supplier: "SubliPrint",       received: "22/05" },
+  ],
+  paperMovements: [
+    { date: "07/06 10:50", id: "BP-301", reason: "Saída · Impressão Lote 2", qty: -22 },
+    { date: "06/06 15:30", id: "BP-302", reason: "Saída · Impressão Lote 1", qty: -14 },
+    { date: "04/06 09:12", id: "BP-301", reason: "Entrada · Compra NF-8841", qty: +100 },
+    { date: "30/05 11:00", id: "BP-305", reason: "Saída · Impressão Lote 3", qty: -18 },
+  ],
+
+  // ───────── Estoque intermediário: ESTAMPADOS (componente, transfers prontos) ─────────
+  // DTF/transfers já impressos, esperando a prensa. Chave = estampa + lado.
+  // Entra na Impressão (consome Bobina de papel); sai na Montagem.
+  printed: [
+    { id: "pr-01", code: "2055", name: "Naruto — Akatsuki",      technique: "DTF",        side: "frente", tone: "warm",  count: 41, min: 15 },
+    { id: "pr-02", code: "2039", name: "Jujutsu Kaisen — Gojo",  technique: "DTF",        side: "frente", tone: "moss",  count: 24, min: 12 },
+    { id: "pr-03", code: "2039", name: "Jujutsu Kaisen — Gojo",  technique: "DTF",        side: "costas", tone: "moss",  count:  6, min: 12 },
+    { id: "pr-04", code: "2047", name: "Demon Slayer — Tanjiro", technique: "DTF",        side: "frente", tone: "stone", count: 18, min: 12 },
+    { id: "pr-05", code: "2170", name: "One Piece — Luffy",      technique: "Sublimação", side: "frente", tone: "sand",  count: 12, min: 12 },
+    { id: "pr-06", code: "2301", name: "Berserk — Guts",         technique: "DTF",        side: "frente", tone: "moss",  count:  9, min: 10 },
+    { id: "pr-07", code: "2303", name: "Chainsaw Man — Denji",   technique: "DTF",        side: "frente", tone: "bone",  count:  0, min: 10 },
+  ],
+  printedMovements: [
+    { date: "07/06 10:48", id: "pr-01", reason: "Entrada · Impressão Lote 2", qty: +30 },
+    { date: "07/06 09:05", id: "pr-04", reason: "Saída · Montagem Lote 1",    qty: -9  },
+    { date: "06/06 15:28", id: "pr-02", reason: "Entrada · Impressão Lote 1", qty: +14 },
+    { date: "05/06 13:10", id: "pr-05", reason: "Saída · Montagem #UPTHK2536",qty: -1  },
   ],
 
   members: [
@@ -337,3 +481,83 @@ const ORION_DATA = {
 };
 
 window.ORION_DATA = ORION_DATA;
+
+// ───────── Catalog configuration (configurable from Ajustes) ─────────
+// Available colors for PRODUCTS (material) and for PRINTS (ink), plus the
+// available size grid. Persisted per-browser; both palettes are independent.
+const CATALOG_CONFIG_DEFAULTS = {
+  productColors: [
+    { hex: '#1f1f1f', name: 'Preto' },
+    { hex: '#f4f1ea', name: 'Off-white' },
+    { hex: '#7a4b2a', name: 'Marrom' },
+    { hex: '#c9b9a3', name: 'Areia' },
+    { hex: '#cfb98e', name: 'Bege' },
+    { hex: '#7a8a76', name: 'Verde-musgo' },
+    { hex: '#3a4a3d', name: 'Verde escuro' },
+    { hex: '#6b4a2e', name: 'Caramelo' },
+    { hex: '#b03a2e', name: 'Vermelho' },
+    { hex: '#2a3b5a', name: 'Azul-marinho' },
+  ],
+  printColors: [
+    { hex: '#f4f1ea', name: 'Branco' },
+    { hex: '#1f1f1f', name: 'Preto' },
+    { hex: '#efe6d3', name: 'Off-white' },
+    { hex: '#b03a2e', name: 'Vermelho' },
+    { hex: '#3a4a3d', name: 'Verde escuro' },
+    { hex: '#cfb98e', name: 'Bege' },
+    { hex: '#2a3b5a', name: 'Azul-marinho' },
+  ],
+  sizes: ['P', 'M', 'G', 'GG', 'U'],
+  // Tipos de tecido — usados em Estoque › Tecidos (receber bobina) e na ficha técnica.
+  fabricTypes: [
+    'Algodão 30.1', 'Algodão 24.1 penteado', 'Malha PV (67/33)', 'Malha 100% poliéster',
+    'Moletom flanelado', 'Sarja crua', 'Linho misto', 'Piquet algodão',
+  ],
+  // Tipos de peça — usados na Ficha técnica. icon aponta para a biblioteca de glifos.
+  garmentTypes: [
+    { id: 'camiseta', label: 'Camiseta', skuPrefix: 'CAM', icon: 'camiseta' },
+    { id: 'moletom',  label: 'Moletom',  skuPrefix: 'MOL', icon: 'moletom'  },
+    { id: 'regata',   label: 'Regata',   skuPrefix: 'REG', icon: 'regata'   },
+    { id: 'blusa',    label: 'Blusa',    skuPrefix: 'BLU', icon: 'blusa'    },
+    { id: 'calca',    label: 'Calça',    skuPrefix: 'CAL', icon: 'calca'    },
+    { id: 'bermuda',  label: 'Bermuda',  skuPrefix: 'BER', icon: 'bermuda'  },
+  ],
+  // Aviamentos — usados na Ficha técnica.
+  aviamentos: [
+    'Etiqueta interna tecida', 'Etiqueta de composição', 'Etiqueta externa estampada',
+    'Tag de papel', 'Lacre/sigilo', 'Cordão capuz', 'Zíper', 'Botão', 'Cadarço', 'Elástico',
+  ],
+  // Técnicas de estampa — usadas no Catálogo › Estampas.
+  techniques: ['DTF', 'Silkscreen', 'Sublimação'],
+  // Avisos de estoque baixo — limite de reposição por tipo de estoque.
+  // unit: 'pct' (sobre o saldo inicial), 'qty'/'kg'/'m' (absoluto). enabled:false = sem aviso.
+  stockThresholds: {
+    fabric:  { enabled: true,  unit: 'pct', value: 25 },
+    paper:   { enabled: true,  unit: 'pct', value: 25 },
+    blank:   { enabled: true,  unit: 'qty', value: 20 },
+    printed: { enabled: true,  unit: 'qty', value: 10 },
+    product: { enabled: true,  unit: 'qty', value: 10 },
+  },
+};
+
+window.CatalogConfig = (function () {
+  const KEY = 'orion.catalogConfig.v1';
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  let state;
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY));
+    // Merge over defaults so configs added in newer versions appear for existing users.
+    state = saved && saved.productColors && saved.printColors && saved.sizes
+      ? Object.assign(clone(CATALOG_CONFIG_DEFAULTS), saved)
+      : clone(CATALOG_CONFIG_DEFAULTS);
+  } catch (e) { state = clone(CATALOG_CONFIG_DEFAULTS); }
+  const subs = new Set();
+  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+  return {
+    defaults: CATALOG_CONFIG_DEFAULTS,
+    get: () => state,
+    set: (next) => { state = next; persist(); subs.forEach(f => f(state)); },
+    subscribe: (fn) => { subs.add(fn); return () => subs.delete(fn); },
+    reset: () => { state = clone(CATALOG_CONFIG_DEFAULTS); persist(); subs.forEach(f => f(state)); },
+  };
+})();

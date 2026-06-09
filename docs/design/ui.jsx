@@ -14,11 +14,17 @@ const SUBS = {
   products:  { name: "Produtos",     short: "C", icon: "shirt",          color: "var(--brand-catalog)", group: "catalogo" },
   specs:     { name: "Fichas",       short: "C", icon: "file-text",      color: "var(--brand-catalog)", group: "catalogo" },
   prints:    { name: "Estampas",     short: "C", icon: "palette",        color: "var(--brand-catalog)", group: "catalogo" },
+  planejamento:{name: "Planejamento", short: "P", icon: "radar",         color: "var(--brand-prod)",    group: "producao" },
   cutting:   { name: "Corte",        short: "P", icon: "scissors",       color: "var(--brand-prod)",    group: "producao" },
   sewing:    { name: "Costura",      short: "P", icon: "send",           color: "var(--brand-prod)",    group: "producao" },
+  printing:  { name: "Impressão",    short: "P", icon: "printer",        color: "var(--brand-prod)",    group: "producao" },
+  montagem:  { name: "Montagem",     short: "P", icon: "combine",        color: "var(--brand-prod)",    group: "producao" },
   contractors:{name: "Bancas",       short: "P", icon: "factory",        color: "var(--brand-prod)",    group: "producao" },
   fabric:    { name: "Tecidos",      short: "E", icon: "layers",         color: "var(--brand-inv)",     group: "estoque" },
-  stock:     { name: "Estoque",      short: "E", icon: "boxes",          color: "var(--brand-inv)",     group: "estoque" },
+  blanks:    { name: "Peças lisas",  short: "E", icon: "shirt",          color: "var(--brand-inv)",     group: "estoque" },
+  paper:     { name: "Papel",       short: "E", icon: "scroll",         color: "var(--brand-inv)",     group: "estoque" },
+  printed:   { name: "Impressos",    short: "E", icon: "stamp",          color: "var(--brand-inv)",     group: "estoque" },
+  stock:     { name: "Produtos",     short: "E", icon: "boxes",          color: "var(--brand-inv)",     group: "estoque" },
   reports:   { name: "Relatórios",   short: "R", icon: "bar-chart-3",    color: "var(--brand-reports)" },
   settings:  { name: "Ajustes",      short: "A", icon: "settings",       color: "var(--brand-settings)" },
 };
@@ -53,6 +59,9 @@ const STATUS_MAP = {
   enviado:   { kind: 'info', label: 'Enviado',   icon: 'truck' },
   entregue:  { kind: 'ok',   label: 'Entregue',  icon: 'package-check' },
   cortando:  { kind: 'info', label: 'Cortando',  icon: 'scissors' },
+  costurando:{ kind: 'info', label: 'Costurando', icon: 'scissors' },
+  disponivel:{ kind: 'muted',label: 'Disponível', icon: 'package' },
+  imprimindo:{ kind: 'info', label: 'Imprimindo', icon: 'printer' },
   concluido: { kind: 'ok',   label: 'Concluído', icon: 'check-circle-2' },
   recebido:  { kind: 'ok',   label: 'Recebido',  icon: 'package-check' },
   parcial:   { kind: 'warn', label: 'Parcial',   icon: 'circle-dashed' },
@@ -581,4 +590,73 @@ const DateTimeField = ({ value, onChange, withTime = true, min, max, style }) =>
   );
 };
 
-Object.assign(window, { SubBadge, ChannelChip, StatusPill, Card, Av, Spark, Modal, Sheet, PageHead, Empty, TableToolbar, SearchInput, Seg, FabricThumb, Select, HelpCard, Flow, FlowNode, FlowArrow, HelpBody, NumField, DateTimeField, SortHeader, makeCmp });
+// Thumbnail uploader — click or drag-and-drop an image. Stores a data URL in
+// `value` and reports changes through onChange(dataUrl | null). Matches the
+// drawer form vocabulary (framed surface, warm neutrals, dashed empty state).
+const ThumbUpload = ({ value, onChange, label = 'Imagem', hint = 'PNG, JPG ou WEBP · até 5 MB', aspect = '4 / 5', maxMB = 5 }) => {
+  const inputRef = React.useRef(null);
+  const [over, setOver] = React.useState(false);
+  const [err, setErr] = React.useState('');
+
+  const ingest = (file) => {
+    setErr('');
+    if (!file) return;
+    if (!/^image\//.test(file.type)) { setErr('Selecione um arquivo de imagem.'); return; }
+    if (file.size > maxMB * 1024 * 1024) { setErr(`Imagem acima de ${maxMB} MB.`); return; }
+    const reader = new FileReader();
+    reader.onload = () => onChange(reader.result, file.name);
+    reader.readAsDataURL(file);
+  };
+
+  const pick = () => inputRef.current && inputRef.current.click();
+
+  return (
+    <div className="field">
+      {label && <label>{label}</label>}
+      <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }}
+        onChange={e => { ingest(e.target.files && e.target.files[0]); e.target.value = ''; }}/>
+
+      {value ? (
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <div style={{ width: 96, aspectRatio: aspect, borderRadius: 10, overflow: 'hidden', flexShrink: 0,
+            border: '1px solid var(--line)', background: 'var(--surface-2)',
+            backgroundImage: `url(${value})`, backgroundSize: 'cover', backgroundPosition: 'center' }}/>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 2, minWidth: 0 }}>
+            <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>Imagem carregada.</span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button type="button" className="btn btn-sm" onClick={pick}><Icon name="repeat" size={13}/> Trocar</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { onChange(null); setErr(''); }}
+                style={{ color: 'var(--ink-3)' }}><Icon name="trash-2" size={13}/> Remover</button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <button type="button" onClick={pick}
+          onDragOver={e => { e.preventDefault(); setOver(true); }}
+          onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setOver(false); }}
+          onDrop={e => { e.preventDefault(); setOver(false); ingest(e.dataTransfer.files && e.dataTransfer.files[0]); }}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+            padding: '14px 16px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
+            border: `1.5px dashed ${over ? 'var(--accent)' : 'var(--line)'}`,
+            background: over ? 'var(--accent-soft)' : 'var(--surface-2)',
+            transition: 'border-color .12s, background .12s',
+          }}>
+          <span style={{ width: 40, height: 40, borderRadius: 9, flexShrink: 0, display: 'grid', placeItems: 'center',
+            background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}>
+            <Icon name="image-plus" size={18}/>
+          </span>
+          <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+              {over ? 'Solte para enviar' : 'Enviar miniatura'}
+            </span>
+            <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>Clique ou arraste · {hint}</span>
+          </span>
+        </button>
+      )}
+      {err && <div style={{ fontSize: 11.5, color: 'var(--danger, #b03a2e)', marginTop: 6 }}>{err}</div>}
+    </div>
+  );
+};
+
+Object.assign(window, { SubBadge, ChannelChip, StatusPill, Card, Av, Spark, Modal, Sheet, PageHead, Empty, TableToolbar, SearchInput, Seg, FabricThumb, Select, HelpCard, Flow, FlowNode, FlowArrow, HelpBody, NumField, DateTimeField, SortHeader, makeCmp, ThumbUpload });

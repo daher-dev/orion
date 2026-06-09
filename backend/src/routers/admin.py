@@ -14,6 +14,7 @@ from schemas.admin import (
     OrgRow,
     OverviewStats,
 )
+from schemas.billing import PlanList, PlanRead
 from schemas.member import MemberPage, MemberRead
 from services.admin import (
     create_organization,
@@ -23,6 +24,7 @@ from services.admin import (
     overview_stats,
     start_impersonation,
 )
+from services.billing import list_plans
 from services.member import list_members
 
 # Platform-admin (Console) API. Every route requires an operator (is_operator).
@@ -91,3 +93,11 @@ async def impersonate_endpoint(
 async def list_operators_endpoint(db: DbSession) -> OperatorList:
     rows = await list_operators(db)
     return OperatorList(items=rows, total=len(rows))
+
+
+@router.get("/plans", response_model=PlanList)
+async def list_plans_endpoint(db: DbSession) -> PlanList:
+    """The global plan catalog (cross-tenant). Operator-only via the router gate."""
+    plans = await list_plans(db)
+    items = [PlanRead.from_plan(p) for p in plans]
+    return PlanList(items=items, total=len(items))

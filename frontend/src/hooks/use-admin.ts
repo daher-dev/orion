@@ -10,6 +10,7 @@ import { useApi } from "@/hooks/use-api";
 import { qk } from "@/lib/query-keys";
 import type { ApiError } from "@/lib/api-client";
 import type { MemberPage } from "@/lib/schemas/member";
+import type { PlanList } from "@/lib/schemas/billing";
 
 // ── Types (mirror backend schemas/admin.py) ──────────────────────────────
 
@@ -106,6 +107,15 @@ export function useAdminOperators(): UseQueryResult<OperatorList, ApiError> {
   return useQuery<OperatorList, ApiError>({
     queryKey: qk.admin.operators(),
     queryFn: () => api.get<OperatorList>("/v1/admin/users"),
+  });
+}
+
+/** The global plan catalog (operator-only, cross-tenant). */
+export function useAdminPlans(): UseQueryResult<PlanList, ApiError> {
+  const api = useApi();
+  return useQuery<PlanList, ApiError>({
+    queryKey: qk.admin.plans(),
+    queryFn: () => api.get<PlanList>("/v1/admin/plans"),
   });
 }
 

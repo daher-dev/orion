@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { PermCell, type PermCellKind } from "@/components/settings/roles/PermCell";
@@ -31,6 +32,10 @@ import type { RoleList, RoleRead } from "@/lib/schemas/role";
 
 export type PermissionMatrixProps = {
   roles: RoleList;
+  /** When true, custom-role columns expose an Edit affordance in their header. */
+  canWrite?: boolean;
+  /** Invoked with the custom role to edit (column header click). */
+  onEditRole?: (role: RoleRead) => void;
 };
 
 /** All possible cell kinds a capability can resolve to for a given role. */
@@ -148,9 +153,10 @@ const MATRIX: ReadonlyArray<CapabilityGroup> = [
   },
 ];
 
-export function PermissionMatrix({ roles }: PermissionMatrixProps) {
+export function PermissionMatrix({ roles, canWrite = false, onEditRole }: PermissionMatrixProps) {
   const t = useTranslations("roles.matrix");
   const tCell = useTranslations("roles.matrix.cell");
+  const tEditor = useTranslations("roles.editor");
 
   // Pre-build the row data so render stays declarative; also keeps each
   // derive call running once per role-row pair.
@@ -185,19 +191,36 @@ export function PermissionMatrix({ roles }: PermissionMatrixProps) {
           >
             {t("columns.capability")}
           </th>
-          {roles.map((role) => (
-            <th
-              key={role.id}
-              scope="col"
-              data-role-code={role.code}
-              // `.num` from design = right-aligned tabular-nums.  Each role
-              // column is ~16.66% wide (3 roles in the remaining 50%).
-              style={{ width: `${50 / Math.max(roles.length, 1)}%` }}
-              className="border-b border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-[14px] py-[10px] text-right text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)] [font-variant-numeric:tabular-nums]"
-            >
-              {role.name}
-            </th>
-          ))}
+          {roles.map((role) => {
+            const editable = canWrite && role.is_custom && !!onEditRole;
+            return (
+              <th
+                key={role.id}
+                scope="col"
+                data-role-code={role.code}
+                data-custom={role.is_custom ? "true" : "false"}
+                // `.num` from design = right-aligned tabular-nums.  Each role
+                // column is ~16.66% wide (3 roles in the remaining 50%).
+                style={{ width: `${50 / Math.max(roles.length, 1)}%` }}
+                className="border-b border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-[14px] py-[10px] text-right text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)] [font-variant-numeric:tabular-nums]"
+              >
+                {editable ? (
+                  <button
+                    type="button"
+                    data-testid={`matrix-edit-${role.code}`}
+                    onClick={() => onEditRole(role)}
+                    className="ml-auto inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 uppercase tracking-[0.08em] text-[color:var(--orion-ink-2)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
+                    aria-label={`${tEditor("actions.edit")} ${role.name}`}
+                  >
+                    <Pencil size={11} strokeWidth={2} />
+                    {role.name}
+                  </button>
+                ) : (
+                  role.name
+                )}
+              </th>
+            );
+          })}
         </tr>
       </thead>
       <tbody>

@@ -1,41 +1,50 @@
 "use client";
 
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { PermissionLegend } from "@/components/settings/roles/PermissionLegend";
 import { PermissionMatrix } from "@/components/settings/roles/PermissionMatrix";
+import { RoleEditorSheet } from "@/components/settings/roles/RoleEditorSheet";
 import { RoleTilesGrid } from "@/components/settings/roles/RoleTilesGrid";
 import { useMembers } from "@/hooks/use-members";
 import { useCanAccess } from "@/hooks/use-permissions";
 import { useRoles } from "@/hooks/use-roles";
+import type { RoleRead } from "@/lib/schemas/role";
 
 /**
  * Settings → Funções pane.
  *
- * Direct port of `RolesPane` in /docs/design/source/pages/settings.jsx
- * (~lines 344-410).  Three vertically stacked rows in an 18px-gap grid:
+ * Port of `RolesPane` in /docs/design/source/pages/settings.jsx (~lines
+ * 344-410): role tiles grid + "Matriz de permissões" card + legend.
  *
- *   1. Role tiles — 3-up grid with 3px coloured top stripe, Shield icon,
- *      Fraunces role name, and member-count pill.
- *   2. Permissions matrix card — Capacidade column + one column per role,
- *      capability rows grouped by domain (Sales / Catalog / Production /
- *      Stock / System).
- *   3. Legend strip — three labelled `PermCell`s explaining the chips.
- *
- * The "Criar função personalizada" card action is rendered but disabled —
- * the backend doesn't expose a custom-roles surface yet, so we keep the
- * button visible (per design) to set the user's expectation that this is
- * read-only for now.
+ * Custom (company-owned) roles are editable: "Criar função personalizada"
+ * opens the {@link RoleEditorSheet} to create one, and custom-role columns in
+ * the matrix toggle permissions inline. The 3 global seeded roles stay
+ * read-only. Edit affordances are gated behind `roles.write`.
  */
 export default function SettingsRolesPage() {
   const t = useTranslations("roles");
   const tMatrix = useTranslations("roles.matrix");
   const tForbidden = useTranslations("settings.forbidden");
   const canRead = useCanAccess("roles.read");
+  const canWrite = useCanAccess("roles.write");
   const roles = useRoles();
   const members = useMembers();
+
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<RoleRead | undefined>(undefined);
+
+  const openCreate = () => {
+    setEditing(undefined);
+    setEditorOpen(true);
+  };
+  const openEdit = (role: RoleRead) => {
+    setEditing(role);
+    setEditorOpen(true);
+  };
 
   if (!canRead) {
     return (
@@ -48,7 +57,6 @@ export default function SettingsRolesPage() {
   const isLoading = roles.isPending || members.isPending;
 
   return (
-    // The design source wraps the pane in a 18px-gap grid (line 345).
     <div className="grid gap-[18px]" data-testid="roles-pane">
       {/* Row 1: role tiles (3-up grid). */}
       {isLoading ? (
@@ -61,53 +69,45 @@ export default function SettingsRolesPage() {
         <RoleTilesGrid
           roles={roles.data ?? []}
           members={members.data?.items ?? []}
+          canWrite={canWrite}
+          onEdit={openEdit}
         />
       )}
 
       {/* Row 2: permissions matrix card. */}
       <section
-        // .card — surface, 1px line border, 14px radius, overflow-hidden so
-        // the table head doesn't bleed past the rounded corners.
         className="overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)]"
         data-testid="permission-matrix-card"
       >
-        {/* .card-head — 14 18 padding, border-bottom 1px line-soft,
-            flex-between with the action on the right. */}
         <header className="flex items-center justify-between gap-3 border-b border-[color:var(--orion-line-soft)] px-[18px] py-[14px]">
           <div>
-            <div
-              // .card-title — Fraunces 16px /500/-0.01em.
-              className="font-serif text-[16px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]"
-            >
+            <div className="font-serif text-[16px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
               {tMatrix("title")}
             </div>
-            <div
-              // .card-sub — 12px ink-3.
-              className="mt-0.5 text-[12px] text-[color:var(--orion-ink-3)]"
-            >
+            <div className="mt-0.5 text-[12px] text-[color:var(--orion-ink-3)]">
               {tMatrix("sub")}
             </div>
           </div>
-          {/* `.btn` (secondary) with a leading plus icon — disabled because
-              the backend doesn't yet expose custom-role creation.  Render the
-              button anyway (per design) so the affordance is visible and the
-              ink-3 colour communicates "coming soon". */}
+          {/* `.btn` (secondary) with a leading plus icon. Enabled only when the
+              user holds `roles.write`; otherwise rendered disabled (per design,
+              the affordance stays visible). */}
           <button
             type="button"
-            disabled
-            // `.btn` — 7 13 padding, 6px radius, 1px line border, surface bg,
-            // 13px /500, 7px gap with the icon.
-            className="inline-flex h-auto cursor-not-allowed items-center gap-[7px] whitespace-nowrap rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink-3)] opacity-60"
+            disabled={!canWrite}
+            onClick={openCreate}
+            className={`inline-flex h-auto items-center gap-[7px] whitespace-nowrap rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[13px] py-[7px] text-[13px] font-medium ${
+              canWrite
+                ? "cursor-pointer text-[color:var(--orion-ink)] hover:bg-[color:var(--orion-surface-2)]"
+                : "cursor-not-allowed text-[color:var(--orion-ink-3)] opacity-60"
+            }`}
             data-testid="create-custom-role"
-            aria-disabled="true"
+            aria-disabled={!canWrite}
           >
             <Plus className="size-[13px]" strokeWidth={2} />
             {tMatrix("createCustom")}
           </button>
         </header>
 
-        {/* Card body — `pad={false}` in design: the table provides its own
-            padding via th/td. */}
         {isLoading ? (
           <div className="space-y-2 p-6">
             <Skeleton className="h-9" />
@@ -115,17 +115,20 @@ export default function SettingsRolesPage() {
             <Skeleton className="h-9" />
           </div>
         ) : (
-          <PermissionMatrix roles={roles.data ?? []} />
+          <PermissionMatrix
+            roles={roles.data ?? []}
+            canWrite={canWrite}
+            onEditRole={openEdit}
+          />
         )}
       </section>
 
       {/* Row 3: legend strip. */}
       <PermissionLegend />
 
-      {/* Screen-reader-only landmark — the matrix card-head already
-          communicates the intent visually, but assistive tech benefits from
-          a single page-level heading anchor. */}
       <h2 className="sr-only">{t("list.title")}</h2>
+
+      <RoleEditorSheet open={editorOpen} onOpenChange={setEditorOpen} initial={editing} />
     </div>
   );
 }

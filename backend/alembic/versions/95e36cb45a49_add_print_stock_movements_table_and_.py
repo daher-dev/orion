@@ -26,9 +26,7 @@ depends_on: str | Sequence[str] | None = None
 # definition below (create_table emits CREATE TYPE for an inline ENUM). We
 # build a non-creating handle here so downgrade can DROP TYPE explicitly —
 # autogenerate never emits that.
-print_stock_direction = postgresql.ENUM(
-    "entry", "exit", "adjustment", name="print_stock_direction", create_type=False
-)
+print_stock_direction = postgresql.ENUM("entry", "exit", "adjustment", name="print_stock_direction", create_type=False)
 
 # New permission codes seeded by this migration and the roles that receive them.
 _NEW_PERMISSIONS: tuple[tuple[str, str], ...] = (
@@ -67,9 +65,7 @@ def _seed_permissions() -> None:
     bind = op.get_bind()
     grant_rows = []
     for role_code, perm_codes in _GRANTS:
-        role_id = bind.execute(
-            sa.text("SELECT id FROM roles WHERE code = :code"), {"code": role_code}
-        ).scalar()
+        role_id = bind.execute(sa.text("SELECT id FROM roles WHERE code = :code"), {"code": role_code}).scalar()
         if role_id is None:
             # Role not seeded in this database — skip its grants.
             continue
@@ -116,18 +112,14 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_print_stock_movements")),
     )
-    op.create_index(
-        op.f("ix_print_stock_movements_batch_id"), "print_stock_movements", ["batch_id"], unique=False
-    )
+    op.create_index(op.f("ix_print_stock_movements_batch_id"), "print_stock_movements", ["batch_id"], unique=False)
     op.create_index(
         "ix_print_stock_movements_company_design_color",
         "print_stock_movements",
         ["company_id", "print_design_id", "product_color"],
         unique=False,
     )
-    op.create_index(
-        op.f("ix_print_stock_movements_company_id"), "print_stock_movements", ["company_id"], unique=False
-    )
+    op.create_index(op.f("ix_print_stock_movements_company_id"), "print_stock_movements", ["company_id"], unique=False)
     op.create_index(
         op.f("ix_print_stock_movements_print_design_id"),
         "print_stock_movements",

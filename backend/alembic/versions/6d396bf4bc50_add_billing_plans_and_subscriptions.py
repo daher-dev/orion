@@ -101,9 +101,7 @@ def upgrade() -> None:
             "max_integrations IS NULL OR max_integrations >= 0",
             name=op.f("ck_plans_max_integrations_non_negative"),
         ),
-        sa.CheckConstraint(
-            "max_members IS NULL OR max_members >= 0", name=op.f("ck_plans_max_members_non_negative")
-        ),
+        sa.CheckConstraint("max_members IS NULL OR max_members >= 0", name=op.f("ck_plans_max_members_non_negative")),
         sa.CheckConstraint(
             "max_orders_per_month IS NULL OR max_orders_per_month >= 0",
             name=op.f("ck_plans_max_orders_per_month_non_negative"),
@@ -128,9 +126,7 @@ def upgrade() -> None:
         sa.Column("period_start", sa.DateTime(timezone=True), nullable=True),
         sa.Column("period_end", sa.DateTime(timezone=True), nullable=True),
         sa.Column("cancel_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["company_id"], ["companies.id"], name=op.f("fk_subscriptions_company_id_companies")
-        ),
+        sa.ForeignKeyConstraint(["company_id"], ["companies.id"], name=op.f("fk_subscriptions_company_id_companies")),
         sa.ForeignKeyConstraint(
             ["plan_id"], ["plans.id"], name=op.f("fk_subscriptions_plan_id_plans"), ondelete="RESTRICT"
         ),
@@ -155,9 +151,7 @@ def upgrade() -> None:
 
     existing_codes = {
         row[0]
-        for row in bind.execute(
-            sa.text("SELECT code FROM permissions WHERE code IN ('billing.read', 'billing.write')")
-        )
+        for row in bind.execute(sa.text("SELECT code FROM permissions WHERE code IN ('billing.read', 'billing.write')"))
     }
     permission_ids: dict[str, uuid.UUID] = {}
     new_rows = []

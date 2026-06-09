@@ -30,9 +30,7 @@ depends_on: str | Sequence[str] | None = None
 # definition below (create_table emits CREATE TYPE for an inline ENUM). We build
 # a non-creating handle here so downgrade can DROP TYPE explicitly — autogenerate
 # never emits that.
-supply_movement_kind = postgresql.ENUM(
-    "entry", "exit", "adjustment", name="supply_movement_kind", create_type=False
-)
+supply_movement_kind = postgresql.ENUM("entry", "exit", "adjustment", name="supply_movement_kind", create_type=False)
 
 # New permission codes seeded by this migration and the roles that receive them.
 # The seed-roles migration (3187f02cbc35) already ran, so these codes are NOT in

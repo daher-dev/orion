@@ -33,9 +33,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 # New enum type created by this migration.
-CHANNEL_STATUS = postgresql.ENUM(
-    "available", "connected", "error", name="channel_status", create_type=False
-)
+CHANNEL_STATUS = postgresql.ENUM("available", "connected", "error", name="channel_status", create_type=False)
 # Existing enum — referenced WITHOUT creating the type (already in the DB).
 ECOMMERCE = postgresql.ENUM(
     "shopee",
@@ -112,9 +110,7 @@ def upgrade() -> None:
     existing_codes = {
         row[0]
         for row in bind.execute(
-            sa.text(
-                "SELECT code FROM permissions WHERE code IN ('integrations.read', 'integrations.write')"
-            )
+            sa.text("SELECT code FROM permissions WHERE code IN ('integrations.read', 'integrations.write')")
         )
     }
     permission_ids: dict[str, uuid.UUID] = {}
@@ -143,9 +139,7 @@ def upgrade() -> None:
             continue
         for code in codes:
             already = bind.execute(
-                sa.text(
-                    "SELECT 1 FROM role_permissions WHERE role_id = :rid AND permission_id = :pid"
-                ),
+                sa.text("SELECT 1 FROM role_permissions WHERE role_id = :rid AND permission_id = :pid"),
                 {"rid": role_id, "pid": permission_ids[code]},
             ).first()
             if already is None:

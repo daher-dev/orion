@@ -55,9 +55,7 @@ def upgrade() -> None:
     # migration is safe to re-run on a partially-seeded DB).
     existing_codes = {
         row[0]
-        for row in bind.execute(
-            sa.text("SELECT code FROM permissions WHERE code IN ('reports.read', 'reports.write')")
-        )
+        for row in bind.execute(sa.text("SELECT code FROM permissions WHERE code IN ('reports.read', 'reports.write')"))
     }
     permission_ids: dict[str, uuid.UUID] = {}
     new_rows = []
@@ -86,9 +84,7 @@ def upgrade() -> None:
             continue
         for code in ("reports.read", "reports.write"):
             already = bind.execute(
-                sa.text(
-                    "SELECT 1 FROM role_permissions WHERE role_id = :rid AND permission_id = :pid"
-                ),
+                sa.text("SELECT 1 FROM role_permissions WHERE role_id = :rid AND permission_id = :pid"),
                 {"rid": role_id, "pid": permission_ids[code]},
             ).first()
             if already is None:

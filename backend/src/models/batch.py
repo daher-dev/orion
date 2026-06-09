@@ -45,9 +45,13 @@ class BatchPrintAdjustment(CompanyModel, table=True):
     """Per-stamp/colour print adjustment for a batch.
 
     One row per ``(batch, print_design, product_color)``: how many pieces the
-    batch's orders require (``qty_needed``), a stock snapshot, and the operator's
-    final decision of how many to print (``qty_to_print``). ``prints_sent`` flips
-    to True once the design has been dispatched to the Montador DTF.
+    batch's orders require (``qty_needed``), the live printed-stamp on-hand at
+    the last recompute (``qty_stock``, netted from the print-stock ledger), and
+    the operator's final decision of how many to print (``qty_to_print``, which
+    auto-defaults to ``max(0, qty_needed - qty_stock)`` for new rows but is
+    preserved once an operator has adjusted it). ``prints_sent`` flips to True
+    once the design has been dispatched to the Montador DTF; ``stock_committed_at``
+    flips once its print-stock EXIT has been written (idempotency guard).
     """
 
     __tablename__ = "batch_print_adjustments"
@@ -85,3 +89,9 @@ class BatchPrintAdjustment(CompanyModel, table=True):
     qty_stock: int = Field(default=0, ge=0)
     qty_to_print: int = Field(default=0, ge=0)
     prints_sent: bool = Field(default=False)
+
+    # Idempotency guard: set when the row's ``qty_to_print`` has been debited
+    # from the print-stock ledger (a ``PrintStockMovement`` EXIT was written).
+    # Ensures a re-transition to PRINTED — or a Montador re-send — never
+    # double-decrements the printed-stamp on-hand.
+    stock_committed_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))

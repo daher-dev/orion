@@ -17,6 +17,7 @@ import type {
   BatchPage,
   BatchStatus,
   MontadorSendResult,
+  PrintQueue,
 } from "@/lib/schemas/batch";
 
 const ROOT = "/v1/batches";
@@ -46,6 +47,15 @@ export function useBatch(id: string | null): UseQueryResult<Batch, ApiError> {
     queryKey: qk.batches.detail(id ?? ""),
     enabled: !!id,
     queryFn: () => api.get<Batch>(`${ROOT}/${id}`),
+  });
+}
+
+/** Cross-batch demand-driven print queue: what still needs printing now. */
+export function useBatchPrintQueue(): UseQueryResult<PrintQueue, ApiError> {
+  const api = useApi();
+  return useQuery<PrintQueue, ApiError>({
+    queryKey: qk.batches.printQueue(),
+    queryFn: () => api.get<PrintQueue>(`${ROOT}/print-queue`),
   });
 }
 
@@ -100,6 +110,8 @@ export function useSendBatchToMontador() {
       api.post<MontadorSendResult>(`${ROOT}/${id}/send-to-montador`, {}),
     onSuccess: (_data, id) => {
       qc.invalidateQueries({ queryKey: qk.batches.detail(id) });
+      // Sent designs drop out of the cross-batch print queue.
+      qc.invalidateQueries({ queryKey: qk.batches.printQueue() });
     },
   });
 }

@@ -29,6 +29,7 @@ type DesignGroup = {
   name: string | null;
   rows: BatchAdjustment[];
   needed: number;
+  onHand: number;
   toPrint: number;
   sent: boolean;
 };
@@ -44,6 +45,7 @@ function groupByDesign(adjustments: BatchAdjustment[]): DesignGroup[] {
         name: a.print_design_name ?? null,
         rows: [],
         needed: 0,
+        onHand: 0,
         toPrint: 0,
         sent: true,
       };
@@ -51,6 +53,9 @@ function groupByDesign(adjustments: BatchAdjustment[]): DesignGroup[] {
     }
     g.rows.push(a);
     g.needed += a.qty_needed;
+    // qty_stock is the per-(design,colour) on-hand at recompute; sum across
+    // colour rows for the design-level "em estoque" figure.
+    g.onHand += a.qty_stock;
     g.toPrint += a.qty_to_print;
     g.sent = g.sent && a.prints_sent;
   }
@@ -285,6 +290,15 @@ export default function BatchDetailPage({
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   >
                     {g.needed}
+                  </span>
+                </div>
+                <div className="text-right text-[12px] text-[color:var(--orion-ink-3)]">
+                  <span className="block">{t("adjustments.onHand")}</span>
+                  <span
+                    className="text-[14px] font-medium text-[color:var(--orion-ink)]"
+                    style={{ fontVariantNumeric: "tabular-nums" }}
+                  >
+                    {g.onHand}
                   </span>
                 </div>
                 <div className="w-[88px] text-right">

@@ -104,3 +104,34 @@ async def test_create_batch_forbidden_for_operator(authed_client: AsyncClient, d
     order, _ = await _seed_order(db_session, company_id=company.id, external_order_id="A1")
     resp = await authed_client.post("/v1/batches", json={"order_ids": [str(order.id)]})
     assert resp.status_code == 403
+
+
+async def test_print_queue_requires_auth(async_client: AsyncClient):
+    response = await async_client.get("/v1/batches/print-queue")
+    assert response.status_code == 401
+
+
+async def test_print_queue_aggregates_open_batches(authed_client: AsyncClient, db_session):
+    company, _ = await _provision_manager(db_session)
+    order, design = await _seed_order(db_session, company_id=company.id, quantity=6, external_order_id="A1")
+    resp = await authed_client.post("/v1/batches", json={"order_ids": [str(order.id)]})
+    assert resp.status_code == 201, resp.text
+
+    resp = await authed_client.get("/v1/batches/print-queue")
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["total_to_print"] == 6
+    assert len(body["items"]) == 1
+    item = body["items"][0]
+    assert item["print_design_id"] == str(design.id)
+    assert item["qty_to_print"] == 6
+    assert item["batch_count"] == 1
+
+
+async def test_print_queue_empty_when_no_demand(authed_client: AsyncClient, db_session):
+    await _provision_manager(db_session)
+    resp = await authed_client.get("/v1/batches/print-queue")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["items"] == []
+    assert body["total_to_print"] == 0

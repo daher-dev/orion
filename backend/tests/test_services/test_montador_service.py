@@ -6,7 +6,7 @@ import respx
 from sqlmodel import select
 
 from config import config
-from models import BatchPrintAdjustment
+from models import BatchPrintAdjustment, PrintStockDirection, PrintStockMovement
 from services.batch import create_batch
 from services.montador import send_batch_to_montador
 from shared.exceptions import ValidationError
@@ -131,3 +131,30 @@ async def test_send_http_error_marks_failure_and_skips_sent_flag(db_session):
     assert result["succeeded"] == 0
     await db_session.refresh(batch)
     assert batch.prints_sent_at is None
+
+
+@respx.mock
+async def test_send_does_not_decrement_print_stock(db_session):
+    """The print-stock debit happens on the PRINTED transition, NOT on send.
+
+    Keeping the decrement in exactly one place avoids double-counting when both
+    a Montador send and a PRINTED transition occur for the same batch.
+    """
+    respx.post(_URL).mock(return_value=httpx.Response(200, json={"id": "m-1"}))
+    company, user, batch, _ = await _batch_with_design(db_session, image_url_front="https://cdn/f.png")
+
+    await send_batch_to_montador(db_session, company_id=company.id, user_id=user.id, batch_id=batch.id)
+
+    exits = (
+        await db_session.exec(
+            select(PrintStockMovement).where(
+                PrintStockMovement.batch_id == batch.id,
+                PrintStockMovement.direction == PrintStockDirection.EXIT,
+            )
+        )
+    ).all()
+    assert exits == []
+    # And the adjustment is marked sent but not yet stock-committed.
+    adj = (await db_session.exec(select(BatchPrintAdjustment).where(BatchPrintAdjustment.batch_id == batch.id))).first()
+    assert adj.prints_sent is True
+    assert adj.stock_committed_at is None

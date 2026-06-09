@@ -20,6 +20,7 @@ from tests.factories import (
     create_client,
     create_company,
     create_print_design,
+    create_print_stock_movement,
     create_product,
     create_product_spec,
     create_product_variation,
@@ -143,6 +144,27 @@ async def test_create_batch_aggregates_adjustments_by_design_and_colour(db_sessi
     assert adj.qty_needed == 5
     assert adj.qty_to_print == 5  # defaults to needed
     assert code == design.code
+
+
+async def test_create_batch_reflects_print_stock_on_hand_in_qty_stock(db_session):
+    """qty_stock must net against the real printed-stamp ledger, not be 0."""
+    company, user, _, variation, client, ad, design = await _scaffold(db_session)
+    # 6 printed stamps on hand for this (design, colour).
+    await create_print_stock_movement(
+        db_session,
+        company_id=company.id,
+        print_design_id=design.id,
+        product_color=variation.color,
+        quantity=6,
+    )
+    o1 = await _order(db_session, company, ad, variation, client, quantity=4, external_order_id="A1")
+
+    _batch, adjustments = await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[o1.id])
+    assert len(adjustments) == 1
+    adj = adjustments[0][0]
+    assert adj.product_color == variation.color
+    assert adj.qty_needed == 4
+    assert adj.qty_stock == 6  # netted from the print-stock ledger
 
 
 async def test_create_batch_skips_products_without_print_design(db_session):

@@ -82,6 +82,37 @@ export const montadorSendResultSchema = z.object({
 
 export type MontadorSendResult = z.infer<typeof montadorSendResultSchema>;
 
+/**
+ * Cross-batch demand-driven print queue — what still needs printing right now,
+ * aggregated across OPEN/ADJUSTED batches by (design, colour).
+ * Mirrors `PrintQueueItem` / `PrintQueueRead` in `backend/src/schemas/batch.py`.
+ */
+export const printQueueDesignMiniSchema = z.object({
+  id: z.string(),
+  code: z.string().nullable().optional(),
+  name: z.string().nullable().optional(),
+  image_url: z.string().nullable().optional(),
+});
+
+export const printQueueItemSchema = z.object({
+  print_design_id: z.string().nullable().optional(),
+  product_color: z.string(),
+  design: printQueueDesignMiniSchema.nullable().optional(),
+  qty_to_print: z.number().int(),
+  qty_needed: z.number().int(),
+  qty_stock: z.number().int(),
+  batch_count: z.number().int(),
+});
+
+export type PrintQueueItem = z.infer<typeof printQueueItemSchema>;
+
+export const printQueueReadSchema = z.object({
+  items: z.array(printQueueItemSchema).default([]),
+  total_to_print: z.number().int(),
+});
+
+export type PrintQueue = z.infer<typeof printQueueReadSchema>;
+
 export type BatchCreatePayload = {
   order_ids: string[];
   name?: string | null;

@@ -33,6 +33,8 @@ from models import (
     BatchStatus,
     Order,
     PrintDesign,
+    PrintStockDirection,
+    PrintStockMovement,
     Product,
     ProductVariation,
 )
@@ -40,6 +42,7 @@ from schemas._common import PageParams
 from schemas.batch import BatchAdjustmentRow
 from services._audit import write_audit
 from services._base import scoped
+from services.print_stock import compute_on_hand_map
 from shared.exceptions import ConflictError, NotFoundError, ValidationError
 
 _RESOURCE = "batches"
@@ -132,10 +135,13 @@ async def _get_batch(db: AsyncSession, *, company_id: uuid.UUID, batch_id: uuid.
 async def _recompute_adjustments(db: AsyncSession, *, company_id: uuid.UUID, batch: Batch) -> None:
     """Rebuild the batch's ``BatchPrintAdjustment`` rows from its orders.
 
-    Aggregates required pieces by ``(print_design, product_color)``. Preserves a
-    previously-set ``qty_to_print`` for rows that still exist; new rows default
-    ``qty_to_print`` to the required quantity. Orders whose product has no print
-    design are skipped (nothing to print).
+    Aggregates required pieces by ``(print_design, product_color)`` and NETS them
+    against the live printed-stamp on-hand (``print_stock`` ledger): a new row's
+    ``qty_to_print`` defaults to ``max(0, qty_needed - on_hand)`` so the operator
+    only prints the shortfall. The operator's manual ``qty_to_print`` decision on
+    an EXISTING row is preserved across recomputes — only ``qty_needed`` and
+    ``qty_stock`` refresh. Orders whose product has no print design are skipped
+    (nothing to print).
     """
 
     rows = await _load_orders_for_batch(db, company_id=company_id, batch_id=batch.id)
@@ -145,6 +151,10 @@ async def _recompute_adjustments(db: AsyncSession, *, company_id: uuid.UUID, bat
         if design is None:
             continue
         needed[(design.id, variation.color)] += order.quantity
+
+    # Pull real printed-stamp on-hand once (single bulk aggregation) so each
+    # adjustment's qty_stock reflects the print-stock ledger instead of 0.
+    on_hand_map = await compute_on_hand_map(db, company_id=company_id)
 
     existing = {
         (a.print_design_id, a.product_color): a
@@ -160,8 +170,12 @@ async def _recompute_adjustments(db: AsyncSession, *, company_id: uuid.UUID, bat
     seen: set[tuple[uuid.UUID, str]] = set()
     for key, qty in needed.items():
         seen.add(key)
+        # Real printed-stamp stock on hand for this (design, colour); clamp
+        # negatives (over-consumed ledgers) to 0 — qty_stock has a >= 0 check.
+        qty_stock = max(0, on_hand_map.get(key, 0))
         row = existing.get(key)
         if row is None:
+            # Auto-net: only print the shortfall after consuming on-hand stamps.
             db.add(
                 BatchPrintAdjustment(
                     company_id=company_id,
@@ -169,12 +183,15 @@ async def _recompute_adjustments(db: AsyncSession, *, company_id: uuid.UUID, bat
                     print_design_id=key[0],
                     product_color=key[1],
                     qty_needed=qty,
-                    qty_stock=0,
-                    qty_to_print=qty,
+                    qty_stock=qty_stock,
+                    qty_to_print=max(0, qty - qty_stock),
                 )
             )
         else:
+            # Preserve the operator's qty_to_print decision; refresh the
+            # demand + on-hand snapshot only.
             row.qty_needed = qty
+            row.qty_stock = qty_stock
             db.add(row)
 
     # Drop adjustment rows whose stamp/colour no longer appears in the batch.
@@ -357,6 +374,57 @@ async def save_adjustments(
 # ------------------------------------------------------------------ status
 
 
+async def _commit_print_stock_exits(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    batch: Batch,
+) -> int:
+    """Debit the print-stock ledger for a batch's to-print quantities.
+
+    Writes one ``PrintStockMovement`` EXIT per adjustment row that has
+    ``qty_to_print > 0`` and has not yet been committed (``stock_committed_at``
+    is NULL), then stamps that flag so a re-transition never double-decrements.
+
+    The exit deliberately does NOT enforce the no-negative-stock guard used by
+    the manual ``print_stock.create_exit`` path: a batch consumes exactly the
+    quantity it decided to print regardless of current on-hand (the netting only
+    nets what stock existed at recompute time). Returns the number of EXITs
+    written. Caller is responsible for the surrounding commit.
+    """
+
+    rows = (
+        await db.exec(
+            scoped(select(BatchPrintAdjustment), BatchPrintAdjustment, company_id).where(
+                BatchPrintAdjustment.batch_id == batch.id,
+                BatchPrintAdjustment.qty_to_print > 0,
+                BatchPrintAdjustment.stock_committed_at.is_(None),  # type: ignore[union-attr]
+            )
+        )
+    ).all()
+
+    now = datetime.now(UTC)
+    written = 0
+    for row in rows:
+        db.add(
+            PrintStockMovement(
+                company_id=company_id,
+                print_design_id=row.print_design_id,
+                product_color=row.product_color,
+                direction=PrintStockDirection.EXIT,
+                quantity=row.qty_to_print,
+                notes=f"Consumed by batch {batch.code}",
+                batch_id=batch.id,
+            )
+        )
+        row.stock_committed_at = now
+        db.add(row)
+        written += 1
+    if written:
+        await db.flush()
+    return written
+
+
 async def transition_status(
     db: AsyncSession,
     *,
@@ -373,13 +441,22 @@ async def transition_status(
         if target == BatchStatus.DONE:
             batch.completed_at = datetime.now(UTC)
         db.add(batch)
+
+        committed = 0
+        if target == BatchStatus.PRINTED:
+            # The press run physically produced these stamps and immediately
+            # consumed them into the batch's pieces: debit the print-stock
+            # ledger exactly once (idempotency via stock_committed_at).
+            committed = await _commit_print_stock_exits(db, company_id=company_id, batch=batch)
+
+        suffix = f"; debited {committed} print-stock exit(s)" if committed else ""
         await write_audit(
             db,
             company_id=company_id,
             user_id=user_id,
             resource_type=_RESOURCE,
             resource_id=batch.id,
-            message=f"Marked batch {batch.code} as {target.value.upper()} (was {previous.value.upper()})",
+            message=(f"Marked batch {batch.code} as {target.value.upper()} (was {previous.value.upper()}){suffix}"),
         )
         await db.commit()
     return await get_batch(db, company_id=company_id, batch_id=batch_id)
@@ -416,12 +493,90 @@ async def delete_batch(
     await db.commit()
 
 
+# ------------------------------------------------------------ print queue
+
+
+# Batch statuses whose adjustments still represent demand waiting to be printed.
+_QUEUE_STATUSES = (BatchStatus.OPEN, BatchStatus.ADJUSTED)
+
+
+async def list_print_queue(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+) -> list[dict]:
+    """Cross-batch printing demand, grouped by ``(print_design, product_color)``.
+
+    Aggregates every ``BatchPrintAdjustment`` in a batch whose status is OPEN or
+    ADJUSTED, where ``qty_to_print > 0`` and the design has not yet been sent to
+    the Montador DTF. This is the operator's "what still needs printing right
+    now" worklist across all in-flight batches — the demand-driven print queue.
+
+    Returned rows carry the summed to-print/needed/on-hand plus how many batches
+    contribute, sorted by design code then colour.
+    """
+
+    stmt = (
+        select(
+            BatchPrintAdjustment.print_design_id,
+            BatchPrintAdjustment.product_color,
+            PrintDesign.code,
+            PrintDesign.name,
+            PrintDesign.image_url,
+            func.sum(BatchPrintAdjustment.qty_to_print).label("qty_to_print"),
+            func.sum(BatchPrintAdjustment.qty_needed).label("qty_needed"),
+            func.coalesce(func.max(BatchPrintAdjustment.qty_stock), 0).label("qty_stock"),
+            func.count(func.distinct(BatchPrintAdjustment.batch_id)).label("batch_count"),
+        )
+        .join(Batch, Batch.id == BatchPrintAdjustment.batch_id)
+        .join(PrintDesign, PrintDesign.id == BatchPrintAdjustment.print_design_id, isouter=True)
+        .where(
+            BatchPrintAdjustment.company_id == company_id,
+            BatchPrintAdjustment.qty_to_print > 0,
+            BatchPrintAdjustment.prints_sent.is_(False),  # type: ignore[union-attr]
+            Batch.status.in_(_QUEUE_STATUSES),  # type: ignore[attr-defined]
+        )
+        .group_by(
+            BatchPrintAdjustment.print_design_id,
+            BatchPrintAdjustment.product_color,
+            PrintDesign.code,
+            PrintDesign.name,
+            PrintDesign.image_url,
+        )
+        .order_by(PrintDesign.code.asc(), BatchPrintAdjustment.product_color.asc())  # type: ignore[union-attr]
+    )
+
+    result = await db.exec(stmt)
+    rows: list[dict] = []
+    for row in result.all():
+        rows.append(
+            {
+                "print_design_id": row[0],
+                "product_color": row[1],
+                "design": None
+                if row[0] is None
+                else {
+                    "id": row[0],
+                    "code": row[2],
+                    "name": row[3],
+                    "image_url": row[4],
+                },
+                "qty_to_print": int(row[5] or 0),
+                "qty_needed": int(row[6] or 0),
+                "qty_stock": int(row[7] or 0),
+                "batch_count": int(row[8] or 0),
+            }
+        )
+    return rows
+
+
 __all__ = [
     "BatchWithAdjustments",
     "create_batch",
     "delete_batch",
     "get_batch",
     "list_batches",
+    "list_print_queue",
     "save_adjustments",
     "transition_status",
 ]

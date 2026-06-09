@@ -11,7 +11,9 @@ Aggregation conventions
   ``select(AuditLog, User)`` (same pattern as the audit-log viewer).
 - Sparkline data: 7-day buckets going back from "today". Empty buckets
   return 0 — the frontend draws those as a flat baseline.
-- Threshold for "stock_low": variations with on-hand ≤ ``LOW_STOCK_THRESHOLD``
+- Threshold for "stock_low": variations with on-hand ≤ the configured
+  threshold (per-variation override, else the company-wide
+  ``Company.low_stock_threshold``, else ``DEFAULT_LOW_STOCK_THRESHOLD``)
   AND at least one historical movement (we don't want to surface "empty
   ledger" SKUs as low).
 """
@@ -29,11 +31,13 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from models import (
     Ad,
     AuditLog,
+    Company,
     CuttingOrder,
     CuttingStatus,
     FabricRoll,
     Order,
     OrderStatus,
+    ProductVariation,
     SewingShipment,
     ShipmentStatus,
     StockEntry,
@@ -51,8 +55,10 @@ from schemas.dashboard import (
 )
 from services._base import scoped
 
-#: Stock threshold used to decide whether a SKU is "low".
-LOW_STOCK_THRESHOLD = 10
+#: Default stock threshold used to decide whether a SKU is "low" when a company
+#: has not configured its own (and as the fallback for NULL per-variation
+#: overrides). Mirrors ``Company.low_stock_threshold``'s server_default.
+DEFAULT_LOW_STOCK_THRESHOLD = 10
 
 #: Days for the revenue window + the comparison delta.
 REVENUE_WINDOW_DAYS = 30
@@ -157,8 +163,43 @@ async def _on_hand_per_variation(db: AsyncSession, *, company_id: uuid.UUID) -> 
     return levels
 
 
-def _count_low_stock(levels: dict[uuid.UUID, int]) -> int:
-    return sum(1 for value in levels.values() if value <= LOW_STOCK_THRESHOLD)
+async def _company_threshold(db: AsyncSession, *, company_id: uuid.UUID) -> int:
+    """Return the company-wide low-stock threshold (default if unset)."""
+
+    stmt = select(Company.low_stock_threshold).where(Company.id == company_id)
+    value = (await db.exec(stmt)).first()
+    return int(value) if value is not None else DEFAULT_LOW_STOCK_THRESHOLD
+
+
+async def _variation_threshold_overrides(db: AsyncSession, *, company_id: uuid.UUID) -> dict[uuid.UUID, int]:
+    """Return ``{variation_id: low_stock_threshold}`` for variations that set an
+    explicit override. Variations inheriting the company default are omitted.
+
+    A single tenant-scoped query keeps this consistent with the file's no-N+1
+    convention.
+    """
+
+    stmt = scoped(
+        select(ProductVariation.id, ProductVariation.low_stock_threshold),
+        ProductVariation,
+        company_id,
+    ).where(ProductVariation.low_stock_threshold.is_not(None))  # type: ignore[union-attr]
+    return {variation_id: int(threshold) for variation_id, threshold in (await db.exec(stmt)).all()}
+
+
+def _count_low_stock(
+    levels: dict[uuid.UUID, int],
+    *,
+    company_threshold: int,
+    overrides: dict[uuid.UUID, int],
+) -> int:
+    """Count SKUs whose on-hand is at or below their effective threshold.
+
+    The effective threshold is the per-variation override when present, else the
+    company-wide default.
+    """
+
+    return sum(1 for variation_id, value in levels.items() if value <= overrides.get(variation_id, company_threshold))
 
 
 def _count_in_stock(levels: dict[uuid.UUID, int]) -> int:
@@ -267,7 +308,13 @@ async def _count_created_in_range(
 # --------------------------------------------------------------------------- needs action
 
 
-async def _needs_action(db: AsyncSession, *, company_id: uuid.UUID) -> list[NeedsActionItem]:
+async def _needs_action(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    company_threshold: int,
+    threshold_overrides: dict[uuid.UUID, int],
+) -> list[NeedsActionItem]:
     items: list[NeedsActionItem] = []
 
     pending_orders = await _count_orders_with_status(db, company_id=company_id, status=OrderStatus.PENDING)
@@ -282,7 +329,7 @@ async def _needs_action(db: AsyncSession, *, company_id: uuid.UUID) -> list[Need
         )
 
     levels = await _on_hand_per_variation(db, company_id=company_id)
-    low = _count_low_stock(levels)
+    low = _count_low_stock(levels, company_threshold=company_threshold, overrides=threshold_overrides)
     if low > 0:
         items.append(
             NeedsActionItem(
@@ -429,8 +476,13 @@ async def get_summary(
     cutting_pending = await _count_cutting_in_progress(db, company_id=company_id)
     banca_active = await _count_sewing_active(db, company_id=company_id)
 
+    # Resolve the configured low-stock threshold once per request, plus any
+    # per-variation overrides, and thread them into the low-stock counters.
+    company_threshold = await _company_threshold(db, company_id=company_id)
+    threshold_overrides = await _variation_threshold_overrides(db, company_id=company_id)
+
     levels = await _on_hand_per_variation(db, company_id=company_id)
-    stock_low = _count_low_stock(levels)
+    stock_low = _count_low_stock(levels, company_threshold=company_threshold, overrides=threshold_overrides)
     in_stock = _count_in_stock(levels)
 
     revenue_sparkline = await _orders_revenue_sparkline(db, company_id=company_id)
@@ -498,7 +550,12 @@ async def get_summary(
     )
 
     # ----- Lists -----
-    needs = await _needs_action(db, company_id=company_id)
+    needs = await _needs_action(
+        db,
+        company_id=company_id,
+        company_threshold=company_threshold,
+        threshold_overrides=threshold_overrides,
+    )
     activity = await _activity(db, company_id=company_id)
     revenue_by_channel = await _revenue_by_channel(db, company_id=company_id)
 

@@ -18,7 +18,14 @@ class CompanyFactory(ModelFactory[Company]):
     subdomain = Use(lambda: f"co-{uuid.uuid4().hex[:8]}")
 
 
-async def create_company(db: AsyncSession, **overrides) -> Company:
+async def create_company(
+    db: AsyncSession,
+    *,
+    low_stock_threshold: int | None = None,
+    **overrides,
+) -> Company:
+    if low_stock_threshold is not None:
+        overrides["low_stock_threshold"] = low_stock_threshold
     company = CompanyFactory.build(**overrides)
     db.add(company)
     await db.commit()

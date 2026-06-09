@@ -14,6 +14,7 @@ import type {
   CuttingFilters,
   CuttingOrder,
   CuttingPage,
+  CuttingRunCost,
   CuttingStatus,
 } from "@/lib/schemas/cutting";
 
@@ -49,6 +50,25 @@ export function useCuttingOrder(id: string | null): UseQueryResult<CuttingOrder,
   });
 }
 
+/**
+ * Frozen per-run production cost for one cutting order. Only fetched when
+ * the order is `done` (the cost row is computed on the DONE transition); a
+ * 404 means "not yet computed" — we don't retry it, and the consuming
+ * component renders nothing in that case.
+ */
+export function useCuttingCost(
+  id: string | null,
+  status: CuttingStatus | undefined,
+): UseQueryResult<CuttingRunCost, ApiError> {
+  const api = useApi();
+  return useQuery<CuttingRunCost, ApiError>({
+    queryKey: qk.cutting.cost(id ?? ""),
+    enabled: !!id && status === "done",
+    retry: false,
+    queryFn: () => api.get<CuttingRunCost>(`${ROOT}/${id}/cost`),
+  });
+}
+
 export function useCreateCuttingOrder() {
   const api = useApi();
   const qc = useQueryClient();
@@ -72,6 +92,7 @@ export function useUpdateCuttingOrder() {
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: qk.cutting.all() });
       qc.invalidateQueries({ queryKey: qk.cutting.detail(vars.id) });
+      qc.invalidateQueries({ queryKey: qk.cutting.cost(vars.id) });
     },
   });
 }

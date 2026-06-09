@@ -32,6 +32,7 @@ Convention notes
 from __future__ import annotations
 
 import uuid
+from decimal import Decimal
 
 from sqlalchemy import String, cast, func, or_
 from sqlalchemy.exc import IntegrityError
@@ -41,12 +42,14 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from models import (
     CuttingOrder,
     CuttingOrderOutput,
+    CuttingRunCost,
     CuttingStatus,
     FabricRoll,
     Product,
     ProductSpec,
     SewingShipment,
     Size,
+    SpecTrim,
 )
 from schemas._common import PageParams
 from schemas.cutting import (
@@ -58,11 +61,19 @@ from schemas.cutting import (
     ProductRef,
     RollRef,
 )
+from schemas.cutting_cost import CuttingCostRead
 from services._audit import write_audit
 from services._base import scoped
 from shared.exceptions import ConflictError, NotFoundError, ValidationError
 
 _RESOURCE = "cutting_orders"
+
+# Quantisation helpers — keep all arithmetic in Decimal and round to the
+# column scales so the persisted snapshot matches what we serialise.
+_KG = Decimal("0.001")
+_MONEY = Decimal("0.01")
+_MONEY4 = Decimal("0.0001")
+_YIELD = Decimal("0.001")
 
 
 # ---------------------------------------------------------------------- helpers
@@ -157,6 +168,150 @@ async def _load_with_relations(
         rib = (await db.exec(select(FabricRoll).where(FabricRoll.id == order.rib_roll_id))).first()
     outputs = await _outputs_for(db, order.id)
     return order, product, spec, body, rib, outputs
+
+
+def _cost_to_read(row: CuttingRunCost) -> CuttingCostRead:
+    """Narrow the persisted Decimal snapshot to the float wire shape."""
+
+    return CuttingCostRead(
+        cutting_order_id=row.cutting_order_id,
+        total_pieces=row.total_pieces,
+        body_fabric_kg=float(row.body_fabric_kg),
+        ribana_kg=float(row.ribana_kg),
+        body_price_per_kg=float(row.body_price_per_kg),
+        rib_price_per_kg=float(row.rib_price_per_kg) if row.rib_price_per_kg is not None else None,
+        fabric_cost=float(row.fabric_cost),
+        ribana_cost=float(row.ribana_cost),
+        trims_cost=float(row.trims_cost),
+        labor_cost=float(row.labor_cost),
+        total_cost=float(row.total_cost),
+        cost_per_piece=float(row.cost_per_piece),
+        yield_pieces_per_kg=float(row.yield_pieces_per_kg),
+    )
+
+
+async def _trims_total_for_spec(db: AsyncSession, *, spec_id: uuid.UUID) -> Decimal:
+    """Sum ``unit_price x quantity`` across a spec's trims (per piece)."""
+
+    stmt = select(SpecTrim).where(SpecTrim.spec_id == spec_id)
+    trims = (await db.exec(stmt)).all()
+    total = Decimal("0")
+    for trim in trims:
+        total += Decimal(str(trim.unit_price)) * Decimal(trim.quantity)
+    return total
+
+
+async def _compute_and_store_cost(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    order: CuttingOrder,
+    spec: ProductSpec | None,
+    body_roll: FabricRoll,
+    rib_roll: FabricRoll | None,
+    outputs: list[CuttingOrderOutput],
+) -> None:
+    """Compute the frozen per-run cost and upsert the ``CuttingRunCost`` row.
+
+    Consumed fabric weight is *derived* from the spec's per-piece weight
+    (and ribana percentage) — the cutting flow never mutates a roll's
+    ``current_weight_kg``, so cost must not depend on roll-weight deltas.
+    All prices/weights/piece-count are persisted so the record is an
+    immutable snapshot even if the spec or roll prices change later.
+
+    The row is replaced (delete-then-insert) so a second DONE transition
+    after a revert to CUTTING does not violate the UNIQUE constraint.
+    """
+
+    total_pieces = sum(o.quantity for o in outputs)
+
+    # Per-piece body weight (grams → kg). Spec is FK-guaranteed in practice,
+    # but guard defensively: a missing spec yields a zero-cost record rather
+    # than a crash on a DONE transition.
+    weight_per_piece_g = Decimal(str(spec.fabric_weight_per_piece_g)) if spec is not None else Decimal("0")
+    body_fabric_kg = (Decimal(total_pieces) * weight_per_piece_g / Decimal("1000")).quantize(_KG)
+
+    has_ribana = bool(spec.has_ribana) if spec is not None else False
+    ribana_pct = (
+        Decimal(str(spec.ribana_weight_pct))
+        if spec is not None and spec.has_ribana and spec.ribana_weight_pct is not None
+        else Decimal("0")
+    )
+    ribana_kg = (body_fabric_kg * ribana_pct / Decimal("100")).quantize(_KG) if has_ribana else Decimal("0.000")
+
+    body_price = Decimal(str(body_roll.price_per_kg))
+    # Ribana is cut from the rib roll when present, else from the body roll.
+    rib_price = Decimal(str(rib_roll.price_per_kg)) if rib_roll is not None else body_price
+
+    fabric_cost = (body_fabric_kg * body_price).quantize(_MONEY)
+    ribana_cost = (ribana_kg * rib_price).quantize(_MONEY) if has_ribana else Decimal("0.00")
+
+    trims_per_piece = await _trims_total_for_spec(db, spec_id=spec.id) if spec is not None else Decimal("0")
+    trims_cost = (trims_per_piece * Decimal(total_pieces)).quantize(_MONEY)
+
+    labor_per_piece = Decimal(str(spec.labor_cost)) if spec is not None else Decimal("0")
+    labor_cost = (labor_per_piece * Decimal(total_pieces)).quantize(_MONEY)
+
+    total_cost = (fabric_cost + ribana_cost + trims_cost + labor_cost).quantize(_MONEY)
+
+    cost_per_piece = (total_cost / Decimal(total_pieces)).quantize(_MONEY4) if total_pieces > 0 else Decimal("0.0000")
+
+    total_consumed_kg = (body_fabric_kg + ribana_kg).quantize(_KG)
+    yield_pieces_per_kg = (
+        (Decimal(total_pieces) / total_consumed_kg).quantize(_YIELD) if total_consumed_kg > 0 else Decimal("0.000")
+    )
+
+    # Upsert: drop any prior snapshot, then insert the freshly computed one.
+    await db.exec(
+        delete(CuttingRunCost).where(CuttingRunCost.cutting_order_id == order.id)  # type: ignore[arg-type]
+    )
+    await db.flush()
+    db.add(
+        CuttingRunCost(
+            company_id=company_id,
+            cutting_order_id=order.id,
+            total_pieces=total_pieces,
+            body_fabric_kg=body_fabric_kg,
+            ribana_kg=ribana_kg,
+            body_price_per_kg=body_price,
+            rib_price_per_kg=rib_price if rib_roll is not None else None,
+            fabric_cost=fabric_cost,
+            ribana_cost=ribana_cost,
+            trims_cost=trims_cost,
+            labor_cost=labor_cost,
+            total_cost=total_cost,
+            cost_per_piece=cost_per_piece,
+            yield_pieces_per_kg=yield_pieces_per_kg,
+        )
+    )
+    await db.flush()
+
+
+async def get_cutting_cost(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    order_id: uuid.UUID,
+) -> CuttingCostRead:
+    """Return the frozen cost breakdown for a cutting order.
+
+    Raises :class:`NotFoundError` when the order does not exist for the
+    tenant *or* when its cost has not been computed yet (the order has
+    never reached ``DONE``). Both surface as a 404 at the router.
+    """
+
+    order_stmt = scoped(select(CuttingOrder), CuttingOrder, company_id).where(CuttingOrder.id == order_id)
+    order = (await db.exec(order_stmt)).first()
+    if order is None:
+        raise NotFoundError(detail="Cutting order not found")
+
+    cost_stmt = scoped(select(CuttingRunCost), CuttingRunCost, company_id).where(
+        CuttingRunCost.cutting_order_id == order_id
+    )
+    row = (await db.exec(cost_stmt)).first()
+    if row is None:
+        raise NotFoundError(detail="Cutting order cost not computed yet")
+    return _cost_to_read(row)
 
 
 def _apply_filters(stmt, filters: CuttingFilters):
@@ -365,6 +520,7 @@ async def update_cutting_order(
 
     data = payload.model_dump(exclude_unset=True)
     audit_messages: list[str] = []
+    transitioned_to_done = False
 
     if "status" in data and data["status"] is not None:
         target = CuttingStatus(data["status"])
@@ -373,6 +529,7 @@ async def update_cutting_order(
             audit_messages.append(
                 f"Marked cutting CO-{_short_id(order.id)} as {target.value.upper()}",
             )
+            transitioned_to_done = target == CuttingStatus.DONE
             order.status = target
 
     if "cut_at" in data:
@@ -398,6 +555,29 @@ async def update_cutting_order(
 
     db.add(order)
     await db.flush()
+
+    # Freeze the production cost the moment the order reaches DONE. We reload
+    # the full entity graph (spec, rolls, outputs) so the snapshot reflects
+    # any actual_outputs applied in this same request, then upsert the row.
+    if transitioned_to_done:
+        (
+            done_order,
+            _product,
+            spec,
+            body_roll,
+            rib_roll,
+            outputs,
+        ) = await _load_with_relations(db, company_id=company_id, order_id=order.id)
+        await _compute_and_store_cost(
+            db,
+            company_id=company_id,
+            order=done_order,
+            spec=spec,
+            body_roll=body_roll,
+            rib_roll=rib_roll,
+            outputs=outputs,
+        )
+        audit_messages.append(f"Computed production cost for CO-{_short_id(order.id)}")
 
     if not audit_messages:
         audit_messages.append(f"Edited cutting order CO-{_short_id(order.id)}")
@@ -455,6 +635,7 @@ async def delete_cutting_order(
 __all__ = [
     "create_cutting_order",
     "delete_cutting_order",
+    "get_cutting_cost",
     "get_cutting_order",
     "list_cutting_orders",
     "update_cutting_order",

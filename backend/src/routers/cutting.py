@@ -21,6 +21,7 @@ from schemas.cutting import (
     CuttingRead,
     CuttingUpdate,
 )
+from schemas.cutting_cost import CuttingCostRead
 from services import cutting as cutting_service
 
 router = APIRouter(
@@ -57,6 +58,19 @@ async def get_endpoint(
     user: Annotated[User, Depends(RequirePermission("cutting.read"))],
 ) -> CuttingRead:
     return await cutting_service.get_cutting_order(
+        db,
+        company_id=user.company_id,
+        order_id=order_id,
+    )
+
+
+@router.get("/{order_id}/cost", response_model=CuttingCostRead)
+async def get_cost_endpoint(
+    order_id: uuid.UUID,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("cutting.read"))],
+) -> CuttingCostRead:
+    return await cutting_service.get_cutting_cost(
         db,
         company_id=user.company_id,
         order_id=order_id,

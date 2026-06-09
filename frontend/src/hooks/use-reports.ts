@@ -11,6 +11,7 @@ import type {
   ProductionReport,
   ReportDateRange,
   SalesReport,
+  TurnoverReport,
 } from "@/lib/schemas/reports";
 
 /**
@@ -88,6 +89,20 @@ export function useCostsReport(
   return useQuery<CostsReport, ApiError>({
     queryKey: qk.reports.one("costs", rangeKey(user?.uid, range)),
     queryFn: () => api.get<CostsReport>("/v1/reports/costs", { query: rangeQuery(range) }),
+    enabled: !loading && !!user,
+    staleTime: STALE_TIME,
+  });
+}
+
+export function useTurnoverReport(
+  range?: ReportDateRange,
+): UseQueryResult<TurnoverReport, ApiError> {
+  const api = useApi();
+  const { user, loading } = useAuth();
+  return useQuery<TurnoverReport, ApiError>({
+    queryKey: qk.reports.one("turnover", rangeKey(user?.uid, range)),
+    queryFn: () =>
+      api.get<TurnoverReport>("/v1/reports/turnover", { query: rangeQuery(range) }),
     enabled: !loading && !!user,
     staleTime: STALE_TIME,
   });

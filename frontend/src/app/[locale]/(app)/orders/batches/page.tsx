@@ -8,7 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHead } from "@/components/page/PageHead";
 import { BatchesTable } from "@/components/batches/BatchesTable";
 import { CreateBatchDialog } from "@/components/batches/CreateBatchDialog";
-import { useBatches } from "@/hooks/use-batches";
+import { PrintQueueTable } from "@/components/batches/PrintQueueTable";
+import { useBatches, useBatchPrintQueue } from "@/hooks/use-batches";
 import { useCanAccess } from "@/hooks/use-permissions";
 
 const PRIMARY_BUTTON_CLASS =
@@ -22,6 +23,10 @@ export default function BatchesPage() {
 
   const { data, isPending, isError } = useBatches({ page_size: 50 });
   const rows = data?.items ?? [];
+
+  const { data: queue, isPending: queuePending } = useBatchPrintQueue();
+  const queueRows = queue?.items ?? [];
+  const totalToPrint = queue?.total_to_print ?? 0;
 
   if (!canRead) {
     return (
@@ -56,6 +61,28 @@ export default function BatchesPage() {
           ) : null
         }
       />
+
+      {/* Demand-driven print queue: what still needs printing across batches. */}
+      <div className="mb-5 overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)]">
+        <div className="flex items-center justify-between border-b border-[color:var(--orion-line-soft)] px-4 py-2.5">
+          <h2 className="text-[13px] font-semibold text-[color:var(--orion-ink)]">
+            {t("printQueue.title")}
+          </h2>
+          {totalToPrint > 0 ? (
+            <span className="text-[12px] text-[color:var(--orion-ink-3)]">
+              {t("printQueue.totalToPrint", { count: totalToPrint })}
+            </span>
+          ) : null}
+        </div>
+        {queuePending ? (
+          <div className="space-y-2 p-6">
+            <Skeleton className="h-9" />
+            <Skeleton className="h-9" />
+          </div>
+        ) : (
+          <PrintQueueTable rows={queueRows} />
+        )}
+      </div>
 
       <div className="overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)]">
         {isPending ? (

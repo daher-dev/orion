@@ -31,7 +31,7 @@ export function SidebarFooter() {
   const { user, signOut } = useAuth();
   const { data } = useMe();
 
-  const displayName = data?.user?.display_name ?? user?.displayName ?? user?.email ?? "";
+  const displayName = data?.user?.name ?? user?.displayName ?? user?.email ?? "";
   const email = data?.user?.email ?? user?.email ?? "";
   const roleName = data?.role?.name ?? "";
   const initials = (displayName || email || "?")

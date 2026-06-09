@@ -57,6 +57,29 @@ export const cuttingPageSchema = z.object({
 
 export type CuttingPage = z.infer<typeof cuttingPageSchema>;
 
+/**
+ * Per-run production cost record. Mirrors `backend/src/schemas/cutting_cost.py`
+ * (`CuttingCostRead`). Frozen at the moment the order is marked done; all
+ * money/weight values arrive as plain numbers.
+ */
+export const cuttingRunCostSchema = z.object({
+  cutting_order_id: z.string(),
+  total_pieces: z.number().int(),
+  body_fabric_kg: z.number(),
+  ribana_kg: z.number(),
+  body_price_per_kg: z.number(),
+  rib_price_per_kg: z.number().nullable().optional(),
+  fabric_cost: z.number(),
+  ribana_cost: z.number(),
+  trims_cost: z.number(),
+  labor_cost: z.number(),
+  total_cost: z.number(),
+  cost_per_piece: z.number(),
+  yield_pieces_per_kg: z.number(),
+});
+
+export type CuttingRunCost = z.infer<typeof cuttingRunCostSchema>;
+
 export type CuttingFilters = {
   q?: string;
   status?: CuttingStatus;

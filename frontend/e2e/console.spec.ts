@@ -67,7 +67,7 @@ test.describe("Platform Console — operator", () => {
   test("plans and integrations render the Em breve catalog", async ({ page }) => {
     await page.goto("/pt-BR/console/plans");
     await expect(page.getByRole("heading", { name: "Planos" })).toBeVisible();
-    await expect(page.getByText(/dados ilustrativos/)).toBeVisible();
+    await expect(page.getByText(/somente leitura/)).toBeVisible();
     await expect(page.getByText("Ateliê", { exact: true })).toBeVisible();
 
     await page.goto("/pt-BR/console/integrations");

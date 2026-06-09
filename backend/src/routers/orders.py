@@ -31,6 +31,11 @@ from schemas.order import (
     OrderVariationRead,
 )
 from schemas.order_item import OrderItemRead
+from schemas.separation import (
+    GenerateLabelsResponse,
+    ScanCheckRequest,
+    ScanCheckResponse,
+)
 from services import order as order_service
 from services import order_item as order_item_service
 
@@ -116,6 +121,26 @@ async def list_orders_endpoint(
     return OrderPage.build(items=items, total=total, params=params)
 
 
+@router.post("/separation/scan", response_model=ScanCheckResponse)
+async def scan_check_endpoint(
+    payload: ScanCheckRequest,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+) -> ScanCheckResponse:
+    """Scan-to-check a separation piece by its label's tracking code.
+
+    Declared before ``/{order_id}`` so the literal ``separation`` segment is
+    not captured as an order id by the dynamic route.
+    """
+    return await order_item_service.scan_check(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        user_email=user.email,
+        tracking_code=payload.tracking_code,
+    )
+
+
 @router.get("/{order_id}", response_model=OrderRead)
 async def get_order_endpoint(
     order_id: uuid.UUID,
@@ -138,6 +163,25 @@ async def list_order_items_endpoint(
 ) -> list[OrderItemRead]:
     items = await order_item_service.list_order_items(db, company_id=user.company_id, order_id=order_id)
     return [OrderItemRead.model_validate(item) for item in items]
+
+
+@router.post("/{order_id}/labels", response_model=GenerateLabelsResponse)
+async def generate_labels_endpoint(
+    order_id: uuid.UUID,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+) -> GenerateLabelsResponse:
+    """Generate/print this order's separation labels (pending → label_printed).
+
+    Lazily materializes one piece per unit of the order's quantity on first
+    call; idempotent on re-print.
+    """
+    return await order_item_service.generate_labels(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        order_id=order_id,
+    )
 
 
 @router.post("", response_model=OrderRead, status_code=status.HTTP_201_CREATED)

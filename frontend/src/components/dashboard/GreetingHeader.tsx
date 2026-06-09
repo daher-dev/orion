@@ -21,7 +21,7 @@ export function GreetingHeader({ actions }: Props) {
   const t = useTranslations("dashboard");
   const locale = useLocale();
   const { data } = useMe();
-  const firstName = (data?.user?.display_name ?? data?.user?.email ?? "")
+  const firstName = (data?.user?.name ?? data?.user?.email ?? "")
     .split(/\s+/)[0];
   const hour = new Date().getHours();
   const period = periodKey(hour);

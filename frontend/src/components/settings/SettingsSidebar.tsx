@@ -2,6 +2,7 @@
 
 import {
   Bell,
+  Boxes,
   Building2,
   CreditCard,
   History,
@@ -46,6 +47,7 @@ export const settingsGroups: readonly Group[] = [
       { id: "company", labelKey: "settings.nav.company", href: "/settings/company", icon: Building2 },
       { id: "members", labelKey: "settings.nav.members", href: "/settings/members", icon: Users },
       { id: "roles", labelKey: "settings.nav.roles", href: "/settings/roles", icon: Shield },
+      { id: "stock-alerts", labelKey: "settings.nav.stockAlerts", href: "/settings/stock-alerts", icon: Boxes },
       { id: "billing", labelKey: "settings.nav.billing", href: "/settings/billing", icon: CreditCard },
       { id: "integrations", labelKey: "settings.nav.integrations", href: "/settings/integrations", icon: Plug },
       { id: "audit", labelKey: "settings.nav.audit", href: "/settings/audit", icon: History },

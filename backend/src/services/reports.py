@@ -31,6 +31,7 @@ from models import (
     CuttingOrderOutput,
     FabricRoll,
     Order,
+    Product,
     ProductSpec,
     ProductVariation,
     SewingShipment,
@@ -39,6 +40,7 @@ from models import (
     SpecTrim,
     StockEntry,
     StockExit,
+    StockExitReason,
 )
 from schemas.reports import (
     CostsReport,
@@ -54,6 +56,8 @@ from schemas.reports import (
     SewingThroughputPoint,
     SlowMover,
     SpecCostRow,
+    TurnoverReport,
+    TurnoverRow,
 )
 from services._base import scoped
 
@@ -477,10 +481,183 @@ async def costs_report(
     return CostsReport(spec_costs=spec_costs, fabric_cost_per_kg=fabric_rows)
 
 
+# --------------------------------------------------------------------------- turnover
+
+
+async def turnover_report(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+) -> TurnoverReport:
+    """Inventory turnover ("giro") per product variation over a date window.
+
+    Mirrors the legacy ``RelatorioGiro`` behaviour:
+
+    - ``units_sold``: sum of :class:`StockExit.quantity` with
+      ``reason == StockExitReason.SALE`` whose ``created_at`` falls inside the
+      window. Loss / adjustment exits are intentionally excluded so they do not
+      inflate the giro.
+    - ``on_hand_end``: lifetime stock entries minus exits with
+      ``created_at <= date_to``.
+    - ``on_hand_start``: lifetime stock entries minus exits with
+      ``created_at <= date_from``.
+    - ``average_on_hand``: ``(on_hand_start + on_hand_end) / 2``; falls back to
+      ``on_hand_end`` when the start value is 0/unknown.
+    - ``turnover_ratio``: ``units_sold / average_on_hand`` (0 when avg <= 0).
+    - ``days_inventory_outstanding`` (DIO): ``period_days / turnover_ratio``
+      (``None`` when the ratio is 0 — there is no meaningful DIO without
+      movement).
+
+    Note: the StockEntry/StockExit ledger has no historical snapshot, so
+    "average on-hand" is a two-point approximation (start + end / 2) of the
+    true period average, not an exact time-weighted integral.
+    """
+
+    lower, upper = _resolve_range(date_from, date_to)
+    period_days = max(1, (upper - lower).days)
+
+    # Units sold in-window: SALE exits only, bucketed per variation.
+    sold_agg = (
+        scoped(
+            select(
+                StockExit.variation_id.label("variation_id"),
+                func.coalesce(func.sum(StockExit.quantity), 0).label("units_sold"),
+            ),
+            StockExit,
+            company_id,
+        )
+        .where(
+            StockExit.reason == StockExitReason.SALE,
+            StockExit.created_at >= lower,
+            StockExit.created_at <= upper,
+        )
+        .group_by(StockExit.variation_id)
+        .subquery()
+    )
+
+    # Lifetime entries up to date_to (for on_hand_end).
+    entries_to_end = (
+        scoped(
+            select(
+                StockEntry.variation_id.label("variation_id"),
+                func.coalesce(func.sum(StockEntry.quantity), 0).label("total"),
+            ),
+            StockEntry,
+            company_id,
+        )
+        .where(StockEntry.created_at <= upper)
+        .group_by(StockEntry.variation_id)
+        .subquery()
+    )
+    exits_to_end = (
+        scoped(
+            select(
+                StockExit.variation_id.label("variation_id"),
+                func.coalesce(func.sum(StockExit.quantity), 0).label("total"),
+            ),
+            StockExit,
+            company_id,
+        )
+        .where(StockExit.created_at <= upper)
+        .group_by(StockExit.variation_id)
+        .subquery()
+    )
+
+    # Lifetime entries/exits strictly before date_from (for on_hand_start).
+    entries_to_start = (
+        scoped(
+            select(
+                StockEntry.variation_id.label("variation_id"),
+                func.coalesce(func.sum(StockEntry.quantity), 0).label("total"),
+            ),
+            StockEntry,
+            company_id,
+        )
+        .where(StockEntry.created_at < lower)
+        .group_by(StockEntry.variation_id)
+        .subquery()
+    )
+    exits_to_start = (
+        scoped(
+            select(
+                StockExit.variation_id.label("variation_id"),
+                func.coalesce(func.sum(StockExit.quantity), 0).label("total"),
+            ),
+            StockExit,
+            company_id,
+        )
+        .where(StockExit.created_at < lower)
+        .group_by(StockExit.variation_id)
+        .subquery()
+    )
+
+    on_hand_end_expr = func.coalesce(entries_to_end.c.total, 0) - func.coalesce(exits_to_end.c.total, 0)
+    on_hand_start_expr = func.coalesce(entries_to_start.c.total, 0) - func.coalesce(exits_to_start.c.total, 0)
+    units_sold_expr = func.coalesce(sold_agg.c.units_sold, 0)
+
+    stmt = (
+        select(
+            ProductVariation.id,
+            ProductVariation.sku,
+            ProductSpec.code.label("spec_code"),
+            units_sold_expr.label("units_sold"),
+            on_hand_start_expr.label("on_hand_start"),
+            on_hand_end_expr.label("on_hand_end"),
+        )
+        .join(Product, Product.id == ProductVariation.product_id)
+        .join(ProductSpec, ProductSpec.id == Product.spec_id)
+        .outerjoin(sold_agg, sold_agg.c.variation_id == ProductVariation.id)
+        .outerjoin(entries_to_end, entries_to_end.c.variation_id == ProductVariation.id)
+        .outerjoin(exits_to_end, exits_to_end.c.variation_id == ProductVariation.id)
+        .outerjoin(entries_to_start, entries_to_start.c.variation_id == ProductVariation.id)
+        .outerjoin(exits_to_start, exits_to_start.c.variation_id == ProductVariation.id)
+        .where(ProductVariation.company_id == company_id)
+    )
+
+    rows: list[TurnoverRow] = []
+    for variation_id, sku, spec_code, units_sold, on_hand_start, on_hand_end in (await db.exec(stmt)).all():
+        units = int(units_sold or 0)
+        start = int(on_hand_start or 0)
+        end = int(on_hand_end or 0)
+        # Fall back to end-of-period level when the start is 0/unknown.
+        average_on_hand = (start + end) / 2.0 if start > 0 else float(end)
+        turnover_ratio = round(units / average_on_hand, 4) if average_on_hand > 0 else 0.0
+        dio = round(period_days / turnover_ratio, 2) if turnover_ratio > 0 else None
+        # Skip variations with neither sales nor stock in/around the window —
+        # they add noise to the giro list.
+        if units == 0 and end == 0 and start == 0:
+            continue
+        rows.append(
+            TurnoverRow(
+                variation_id=variation_id,
+                sku=sku,
+                spec_code=spec_code,
+                units_sold=units,
+                average_on_hand=round(average_on_hand, 2),
+                turnover_ratio=turnover_ratio,
+                days_inventory_outstanding=dio,
+            )
+        )
+
+    rows.sort(key=lambda r: r.turnover_ratio, reverse=True)
+    total_units_sold = sum(r.units_sold for r in rows)
+    average_turnover_ratio = round(sum(r.turnover_ratio for r in rows) / len(rows), 4) if rows else 0.0
+
+    return TurnoverReport(
+        rows=rows,
+        period_days=period_days,
+        total_units_sold=total_units_sold,
+        average_turnover_ratio=average_turnover_ratio,
+    )
+
+
 # Re-exports for tests + symmetric router import surface.
 __all__ = [
     "costs_report",
     "inventory_report",
     "production_report",
     "sales_report",
+    "turnover_report",
 ]

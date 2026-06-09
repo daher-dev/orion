@@ -14,7 +14,9 @@ import { StockEmptyState } from "@/components/stock/StockEmptyState";
 import { MovementsDrawer } from "@/components/stock/MovementsDrawer";
 import { StockAdjustDialog } from "@/components/stock/StockAdjustDialog";
 import { useStockLevels } from "@/hooks/use-stock";
+import { useStockSettings } from "@/hooks/use-stock-settings";
 import { useCanAccess } from "@/hooks/use-permissions";
+import { DEFAULT_LOW_STOCK_THRESHOLD } from "@/lib/schemas/stock-settings";
 import type { VariationStockRead } from "@/lib/schemas/stock";
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
@@ -26,8 +28,6 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
-const THRESHOLD = 5;
-
 export default function StockPage() {
   const t = useTranslations("stock");
   const [search, setSearch] = useState("");
@@ -38,10 +38,16 @@ export default function StockPage() {
   const canWrite = useCanAccess("stock.write");
   const debouncedSearch = useDebouncedValue(search, 200);
 
+  // The "low" highlight + the low-stock filter agree with the dashboard by
+  // sourcing the company-configured threshold (falls back to the default while
+  // the setting loads / for companies that never changed it).
+  const { data: stockSettings } = useStockSettings();
+  const threshold = stockSettings?.low_stock_threshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
+
   const { data, isPending, isError } = useStockLevels({
     q: debouncedSearch || undefined,
     low_stock_only: lowOnly || undefined,
-    threshold: THRESHOLD,
+    threshold,
   });
 
   const rows = data?.items ?? [];
@@ -119,7 +125,7 @@ export default function StockPage() {
         ) : (
           <StockLevelsTable
             data={rows}
-            threshold={THRESHOLD}
+            threshold={threshold}
             onRowClick={(row) => setDrawerVariation(row)}
           />
         )}

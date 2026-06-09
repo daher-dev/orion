@@ -10,14 +10,35 @@ export const roleReadSchema = z.object({
   code: z.string(),
   name: z.string(),
   description: z.string().nullable().optional(),
+  /** NULL for the 3 global seeded roles; the owning company id for custom roles. */
+  company_id: z.string().nullable().optional(),
+  /** True for tenant-owned roles (editable/deletable); false for seeded roles. */
+  is_custom: z.boolean().optional(),
   permissions: z.array(permissionReadSchema).default([]),
 });
 
 export const roleListSchema = z.array(roleReadSchema);
 
+/** Create payload — backend validates code format + permission codes. */
+export const roleCreateSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  permission_codes: z.array(z.string()).default([]),
+});
+
+/** Update payload — every field optional (PATCH semantics). */
+export const roleUpdateSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().nullable().optional(),
+  permission_codes: z.array(z.string()).optional(),
+});
+
 export type PermissionRead = z.infer<typeof permissionReadSchema>;
 export type RoleRead = z.infer<typeof roleReadSchema>;
 export type RoleList = z.infer<typeof roleListSchema>;
+export type RoleCreate = z.infer<typeof roleCreateSchema>;
+export type RoleUpdate = z.infer<typeof roleUpdateSchema>;
 
 /**
  * Permission domain → human-translated label. The `roles.matrix.domains.*` i18n keys

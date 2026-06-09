@@ -118,6 +118,30 @@ export type SpecCostRow = z.infer<typeof specCostRowSchema>;
 export type FabricCostRow = z.infer<typeof fabricCostRowSchema>;
 export type CostsReport = z.infer<typeof costsReportSchema>;
 
+// ----------- Turnover / "giro" report -----------
+
+export const turnoverRowSchema = z.object({
+  variation_id: z.string(),
+  sku: z.string(),
+  spec_code: z.string(),
+  units_sold: z.number(),
+  average_on_hand: z.number(),
+  turnover_ratio: z.number(),
+  // DIO is null when turnover_ratio is 0 (no division possible) — must match
+  // the backend `float | None` response model.
+  days_inventory_outstanding: z.number().nullable(),
+});
+
+export const turnoverReportSchema = z.object({
+  rows: z.array(turnoverRowSchema),
+  period_days: z.number(),
+  total_units_sold: z.number(),
+  average_turnover_ratio: z.number(),
+});
+
+export type TurnoverRow = z.infer<typeof turnoverRowSchema>;
+export type TurnoverReport = z.infer<typeof turnoverReportSchema>;
+
 // ----------- Date range helpers -----------
 
 /**

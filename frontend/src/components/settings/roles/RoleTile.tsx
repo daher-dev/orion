@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { Shield } from "lucide-react";
+import { Pencil, Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 /**
@@ -30,18 +30,32 @@ export type RoleTileProps = {
   memberCount: number;
   /** Hex / CSS color for the 3px top stripe + icon tint. */
   tone: string;
+  /** Custom-role name (raw backend label) — used when `code` isn't seeded. */
+  customName?: string;
+  /** Custom-role description — used when `code` isn't seeded. */
+  customDescription?: string | null;
+  /** When provided (custom + write), renders an Edit affordance. */
+  onEdit?: () => void;
 };
 
-export function RoleTile({ code, memberCount, tone }: RoleTileProps) {
+export function RoleTile({
+  code,
+  memberCount,
+  tone,
+  customName,
+  customDescription,
+  onEdit,
+}: RoleTileProps) {
   const t = useTranslations("roles.tiles");
   const tByCode = useTranslations("roles.tiles.byCode");
+  const tEditor = useTranslations("roles.editor");
 
   const knownCode = code === "admin" || code === "manager" || code === "operator";
-  // Custom roles (future feature) gracefully fall back to the raw code.
-  const name = knownCode ? tByCode(`${code}.name` as `${typeof code}.name`) : code;
+  // Seeded roles use friendly i18n labels; custom roles use the backend label.
+  const name = knownCode ? tByCode(`${code}.name` as `${typeof code}.name`) : (customName ?? code);
   const desc = knownCode
     ? tByCode(`${code}.desc` as `${typeof code}.desc`)
-    : "";
+    : (customDescription ?? "");
 
   return (
     <div
@@ -85,6 +99,17 @@ export function RoleTile({ code, memberCount, tone }: RoleTileProps) {
         >
           {t("memberCount", { count: memberCount })}
         </span>
+        {onEdit ? (
+          <button
+            type="button"
+            data-testid="role-tile-edit"
+            onClick={onEdit}
+            aria-label={tEditor("actions.edit")}
+            className="grid h-6 w-6 place-items-center rounded-[6px] text-[color:var(--orion-ink-3)] hover:bg-[color:var(--orion-surface-2)] hover:text-[color:var(--orion-ink)]"
+          >
+            <Pencil size={13} strokeWidth={1.8} />
+          </button>
+        ) : null}
       </div>
 
       {/* Description — 12.5px ink-3, lh 1.55, text-wrap pretty (design line 363). */}

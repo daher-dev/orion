@@ -70,6 +70,9 @@ class ProductVariation(CompanyModel, table=True):
     color: str = Field(max_length=40)
     color_code: str = Field(max_length=3)
     sku: str = Field(max_length=64)
+    # Optional per-variation low-stock threshold override. NULL means "inherit
+    # the company default" (see Company.low_stock_threshold).
+    low_stock_threshold: int | None = Field(default=None, ge=0)
 
     @staticmethod
     def make_sku(

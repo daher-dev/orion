@@ -50,6 +50,21 @@ class Ecommerce(StrEnum):
     OTHER = "other"
 
 
+class ChannelStatus(StrEnum):
+    """Lifecycle of a per-company marketplace/channel connection.
+
+    AVAILABLE: a supported channel the tenant has not connected yet (the
+        synthetic state surfaced for catalog channels without a persisted row).
+    CONNECTED: tokens are stored and the channel is live.
+    ERROR: a previously-connected channel whose last sync/auth failed; tokens
+        may be stale and need re-authentication.
+    """
+
+    AVAILABLE = "available"
+    CONNECTED = "connected"
+    ERROR = "error"
+
+
 class CuttingStatus(StrEnum):
     PENDING = "pending"
     CUTTING = "cutting"
@@ -73,6 +88,36 @@ class StockExitReason(StrEnum):
     SALE = "sale"
     ADJUSTMENT = "adjustment"
     LOSS = "loss"
+
+
+class PrintStockDirection(StrEnum):
+    """Direction of a printed-stamp (estampa impressa) stock movement.
+
+    ENTRY: printed stamps flowing into stock (a print run / Montador batch).
+    EXIT: printed stamps consumed (applied to a piece, lost).
+    ADJUSTMENT: a signed correction recorded as a positive quantity in the
+        chosen direction — kept as its own kind so manual reconciliations are
+        distinguishable from operational entries/exits in the ledger.
+    """
+
+    ENTRY = "entry"
+    EXIT = "exit"
+    ADJUSTMENT = "adjustment"
+
+
+class SupplyMovementKind(StrEnum):
+    """Direction of a consumable-supply (insumo) stock movement.
+
+    ENTRY: supplies flowing into stock (a purchase / receipt).
+    EXIT: supplies consumed (used in production, lost, discarded).
+    ADJUSTMENT: a signed-positive correction credited to stock — kept as its
+        own kind so manual reconciliations are distinguishable from operational
+        entries/exits in the ledger. Like ENTRY, it credits on-hand.
+    """
+
+    ENTRY = "entry"
+    EXIT = "exit"
+    ADJUSTMENT = "adjustment"
 
 
 class OrderStatus(StrEnum):
@@ -115,6 +160,29 @@ class SeparationStatus(StrEnum):
     PENDING = "pending"  # no label printed yet
     LABEL_PRINTED = "label_printed"  # 100x50mm label printed, piece ready to pick
     CHECKED = "checked"  # scanned/verified at checkout
+
+
+class SubscriptionStatus(StrEnum):
+    """Lifecycle of a company's billing subscription.
+
+    Payments are out of scope today, so most companies sit on FREE (the seeded
+    default plan) and never transition. The remaining states exist so the model
+    is forward-compatible with a real billing provider:
+
+    ACTIVE: a paid subscription in good standing.
+    TRIALING: inside a time-boxed trial of a paid plan.
+    PAST_DUE: a paid subscription whose last charge failed (grace period).
+    PAUSED: temporarily suspended by the owner; no charges, limited access.
+    CANCELLED: ended; retained for history.
+    FREE: on the no-cost default plan (the lazy default for new companies).
+    """
+
+    ACTIVE = "active"
+    TRIALING = "trialing"
+    PAST_DUE = "past_due"
+    PAUSED = "paused"
+    CANCELLED = "cancelled"
+    FREE = "free"
 
 
 class LoginOutcome(StrEnum):

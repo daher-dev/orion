@@ -9,12 +9,14 @@ from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 
 from models.enums import (
     BatchStatus,
+    ChannelStatus,
     CuttingStatus,
     Ecommerce,
     FabricRollKind,
     FabricType,
     LoginOutcome,
     OrderStatus,
+    PrintStockDirection,
     PrintTechnique,
     ProductType,
     SeparationStatus,
@@ -22,6 +24,8 @@ from models.enums import (
     Size,
     StockExitReason,
     StockSource,
+    SubscriptionStatus,
+    SupplyMovementKind,
     TrimType,
 )
 
@@ -48,5 +52,9 @@ STOCK_EXIT_REASON = _enum(StockExitReason, "stock_exit_reason")
 ORDER_STATUS = _enum(OrderStatus, "order_status")
 LOGIN_OUTCOME = _enum(LoginOutcome, "login_outcome")
 BATCH_STATUS = _enum(BatchStatus, "batch_status")
+CHANNEL_STATUS = _enum(ChannelStatus, "channel_status")
 SEPARATION_STATUS = _enum(SeparationStatus, "separation_status")
 PRINT_TECHNIQUE = _enum(PrintTechnique, "print_technique")
+PRINT_STOCK_DIRECTION = _enum(PrintStockDirection, "print_stock_direction")
+SUPPLY_MOVEMENT_KIND = _enum(SupplyMovementKind, "supply_movement_kind")
+SUBSCRIPTION_STATUS = _enum(SubscriptionStatus, "subscription_status")

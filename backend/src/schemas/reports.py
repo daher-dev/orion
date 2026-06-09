@@ -108,6 +108,34 @@ class CostsReport(BaseModel):
     fabric_cost_per_kg: list[FabricCostRow]
 
 
+# ----------- Turnover / "giro" report -----------
+
+
+class TurnoverRow(BaseModel):
+    """Per-variation inventory turnover (giro) over the reporting window.
+
+    ``turnover_ratio`` is ``units_sold / average_on_hand`` (0 when the average
+    on-hand is <= 0). ``days_inventory_outstanding`` (DIO) is
+    ``period_days / turnover_ratio`` and is ``None`` when turnover_ratio is 0
+    (cannot divide by zero — there is no meaningful DIO without sales/stock).
+    """
+
+    variation_id: uuid.UUID
+    sku: str
+    spec_code: str
+    units_sold: int
+    average_on_hand: float
+    turnover_ratio: float
+    days_inventory_outstanding: float | None
+
+
+class TurnoverReport(BaseModel):
+    rows: list[TurnoverRow]
+    period_days: int
+    total_units_sold: int
+    average_turnover_ratio: float
+
+
 __all__ = [
     "CostsReport",
     "CuttingThroughputPoint",
@@ -122,4 +150,6 @@ __all__ = [
     "SewingThroughputPoint",
     "SlowMover",
     "SpecCostRow",
+    "TurnoverReport",
+    "TurnoverRow",
 ]

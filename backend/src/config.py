@@ -44,6 +44,25 @@ class Settings(BaseSettings):
         description="Shared secret sent as the x-orion-secret header to the Montador DTF service",
     )
 
+    # Marketplace channel integrations (FEATURE — channel integration).
+    # Real OAuth + order-feed calls to external marketplaces are GUARDED behind
+    # these flags. They default to disabled/blank so the running app — and every
+    # test — operates in "stub" mode: connect produces a deterministic auth URL,
+    # the callback stores placeholder tokens, and no network I/O is performed.
+    # Set CHANNEL_ML_ENABLED=true plus the client credentials to wire the real
+    # Mercado Livre flow (httpx is imported lazily inside the provider so the
+    # dependency is never pulled at import time when disabled).
+    CHANNEL_ML_ENABLED: bool = Field(
+        default=False,
+        description="Enable real Mercado Livre OAuth/order-feed calls (else stub mode)",
+    )
+    CHANNEL_ML_CLIENT_ID: str = Field(default="", description="Mercado Livre app client id")
+    CHANNEL_ML_CLIENT_SECRET: str = Field(default="", description="Mercado Livre app client secret")
+    CHANNEL_ML_REDIRECT_URI: str = Field(
+        default="http://localhost:8000/v1/integrations/channels/mercado_livre/callback",
+        description="OAuth redirect URI registered with the Mercado Livre app",
+    )
+
     # base44 → Orion data migration. Only the importer scripts under
     # `backend/scripts/base44/` read these; the running app ignores them.
     # Leave blank everywhere except where the migration is actually run.

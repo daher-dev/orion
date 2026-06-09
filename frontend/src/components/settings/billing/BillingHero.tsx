@@ -1,7 +1,8 @@
 "use client";
 
 import { FlaskConical, Sparkles } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { useFormatters } from "@/components/console-shell/primitives";
 
 /**
  * Billing pane hero — direct port of the "Hero plan" block in
@@ -25,10 +26,16 @@ import { useTranslations } from "next-intl";
 type Props = {
   /** Display name of the active plan (e.g. "Pro"). */
   planName: string;
+  /** Monthly price in BRL (major unit). Omit/undefined to hide the price line. */
+  price?: number;
 };
 
-export function BillingHero({ planName }: Props) {
+export function BillingHero({ planName, price }: Props) {
   const t = useTranslations("settings.billing.hero");
+  const locale = useLocale();
+  const { fmtBRL } = useFormatters(locale);
+  const showPrice = price !== undefined;
+  const priceLabel = showPrice ? (price === 0 ? t("free") : fmtBRL(price)) : null;
 
   return (
     <div
@@ -85,6 +92,19 @@ export function BillingHero({ planName }: Props) {
             <FlaskConical size={11} strokeWidth={2} />
             {t("betaPill")}
           </span>
+          {showPrice && (
+            <span
+              className="ml-auto inline-flex items-baseline gap-1 text-[color:var(--orion-ink-2)]"
+              data-testid="billing-hero-price"
+            >
+              <span className="font-serif text-[22px] font-normal tracking-[-0.02em] text-[color:var(--orion-ink)]">
+                {priceLabel}
+              </span>
+              {price !== 0 && (
+                <span className="text-[12.5px] text-[color:var(--orion-ink-3)]">{t("perMonth")}</span>
+              )}
+            </span>
+          )}
         </div>
         {/* Body copy — 13px ink-3, max-w 60ch, mt 8px. */}
         <p className="relative mt-2 max-w-[60ch] text-[13px] leading-[1.5] text-[color:var(--orion-ink-3)]">

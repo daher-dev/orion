@@ -40,6 +40,7 @@ import {
 } from "@/lib/schemas/cutting";
 import { SIZES } from "@/lib/schemas/product";
 import { ApiError } from "@/lib/api-client";
+import { CuttingCostSection } from "./CuttingCostSection";
 import { CuttingStatusPill } from "./CuttingStatusPill";
 
 type Props = {
@@ -356,6 +357,10 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
                   })}
                 </div>
               </div>
+
+              {/* Frozen per-run production cost — only renders when the order
+                  is done and the cost row has been computed. */}
+              <CuttingCostSection order={order} />
             </>
           ) : null}
         </div>

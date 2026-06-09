@@ -36,12 +36,14 @@ from schemas.stock import (
     StockShipmentMini,
     VariationStockRead,
 )
+from schemas.stock_settings import StockSettingsRead, StockSettingsUpdate
 from services.stock import (
     create_entry,
     create_exit,
     list_movements,
     list_stock_levels,
 )
+from services.stock_settings import get_threshold, set_threshold
 
 router = APIRouter(
     prefix="/stock",
@@ -86,6 +88,36 @@ def _exit_to_read(exit_row: StockExit, *, sku: str) -> StockExitRead:
         created_at=exit_row.created_at,
         order=StockOrderMini(id=exit_row.order_id) if exit_row.order_id else None,
     )
+
+
+# ---------- GET /stock/settings ----------
+
+
+@router.get("/settings", response_model=StockSettingsRead)
+async def get_stock_settings_endpoint(
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("stock.read"))],
+) -> StockSettingsRead:
+    threshold = await get_threshold(db, company_id=user.company_id)
+    return StockSettingsRead(low_stock_threshold=threshold)
+
+
+# ---------- PUT /stock/settings ----------
+
+
+@router.put("/settings", response_model=StockSettingsRead)
+async def update_stock_settings_endpoint(
+    payload: StockSettingsUpdate,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("stock.write"))],
+) -> StockSettingsRead:
+    threshold = await set_threshold(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        threshold=payload.low_stock_threshold,
+    )
+    return StockSettingsRead(low_stock_threshold=threshold)
 
 
 # ---------- GET /stock/levels ----------

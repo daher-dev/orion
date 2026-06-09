@@ -9,7 +9,7 @@ import { useAuth } from "@/providers/auth-provider";
 export type MeUser = {
   id: string;
   firebase_uid: string;
-  display_name: string | null;
+  name: string | null;
   email: string | null;
   is_operator: boolean;
 };

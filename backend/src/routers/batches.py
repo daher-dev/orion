@@ -24,6 +24,8 @@ from schemas.batch import (
     BatchRead,
     BatchStatusTransition,
     MontadorSendResult,
+    PrintQueueItem,
+    PrintQueueRead,
 )
 from services import batch as batch_service
 from services import montador as montador_service
@@ -100,6 +102,21 @@ async def create_batch_endpoint(
         name=payload.name,
     )
     return _to_read(result)
+
+
+@router.get("/print-queue", response_model=PrintQueueRead)
+async def print_queue_endpoint(
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.read"))],
+) -> PrintQueueRead:
+    """Cross-batch demand-driven print queue: what still needs printing now."""
+
+    rows = await batch_service.list_print_queue(db, company_id=user.company_id)
+    items = [PrintQueueItem(**row) for row in rows]
+    return PrintQueueRead(
+        items=items,
+        total_to_print=sum(item.qty_to_print for item in items),
+    )
 
 
 @router.get("/{batch_id}", response_model=BatchRead)

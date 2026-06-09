@@ -1,7 +1,7 @@
 "use client";
 
 import { RoleTile } from "@/components/settings/roles/RoleTile";
-import type { RoleList } from "@/lib/schemas/role";
+import type { RoleList, RoleRead } from "@/lib/schemas/role";
 import type { MemberRead } from "@/lib/schemas/member";
 
 /**
@@ -25,13 +25,21 @@ const TONE_BY_CODE: Record<string, string> = {
 
 const FALLBACK_TONE = "var(--brand-settings)";
 
+// Hand-picked tones for custom roles, cycled by index so multiple custom roles
+// stay visually distinct from the seeded triple and from each other.
+const CUSTOM_TONES = ["#f59e0b", "#ef4444", "#ec4899", "#8b5cf6", "#14b8a6"];
+
 export type RoleTilesGridProps = {
   roles: RoleList;
   /** Members list — used to compute the member count per role. */
   members: MemberRead[];
+  /** When true, custom roles render an Edit affordance. */
+  canWrite?: boolean;
+  /** Invoked with the role to edit (custom roles only). */
+  onEdit?: (role: RoleRead) => void;
 };
 
-export function RoleTilesGrid({ roles, members }: RoleTilesGridProps) {
+export function RoleTilesGrid({ roles, members, canWrite = false, onEdit }: RoleTilesGridProps) {
   // Pre-compute role.code → member count once; cheaper than re-filtering for
   // each tile and keeps the tiles oblivious to the member shape.
   const counts = new Map<string, number>();
@@ -48,14 +56,22 @@ export function RoleTilesGrid({ roles, members }: RoleTilesGridProps) {
       // values from the design source.
       className="grid gap-[14px] [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]"
     >
-      {roles.map((role) => (
-        <RoleTile
-          key={role.id}
-          code={role.code}
-          memberCount={counts.get(role.code) ?? 0}
-          tone={TONE_BY_CODE[role.code] ?? FALLBACK_TONE}
-        />
-      ))}
+      {roles.map((role, i) => {
+        const tone =
+          TONE_BY_CODE[role.code] ??
+          (role.is_custom ? CUSTOM_TONES[i % CUSTOM_TONES.length] : FALLBACK_TONE);
+        return (
+          <RoleTile
+            key={role.id}
+            code={role.code}
+            memberCount={counts.get(role.code) ?? 0}
+            tone={tone}
+            customName={role.name}
+            customDescription={role.description}
+            onEdit={canWrite && role.is_custom && onEdit ? () => onEdit(role) : undefined}
+          />
+        );
+      })}
     </div>
   );
 }

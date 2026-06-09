@@ -98,6 +98,39 @@ class MontadorSendResult(BaseModel):
     results: list[dict]
 
 
+# ---------- Cross-batch print queue ----------
+
+
+class PrintQueueDesignMini(BaseModel):
+    id: uuid.UUID
+    code: str | None = None
+    name: str | None = None
+    image_url: str | None = None
+
+
+class PrintQueueItem(BaseModel):
+    """One aggregated demand row in the cross-batch print queue.
+
+    Sums every still-unsent ``qty_to_print`` for a ``(print_design, colour)``
+    across OPEN/ADJUSTED batches, alongside the netted demand context.
+    """
+
+    print_design_id: uuid.UUID | None = None
+    product_color: str
+    design: PrintQueueDesignMini | None = None
+    qty_to_print: int
+    qty_needed: int
+    qty_stock: int
+    batch_count: int
+
+
+class PrintQueueRead(BaseModel):
+    """Response of ``GET /v1/batches/print-queue`` — the full worklist + totals."""
+
+    items: list[PrintQueueItem] = Field(default_factory=list)
+    total_to_print: int = 0
+
+
 BatchPage = Page[BatchListItem]
 
 
@@ -111,4 +144,7 @@ __all__ = [
     "BatchRead",
     "BatchStatusTransition",
     "MontadorSendResult",
+    "PrintQueueDesignMini",
+    "PrintQueueItem",
+    "PrintQueueRead",
 ]

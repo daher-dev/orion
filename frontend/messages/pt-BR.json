@@ -61,9 +61,13 @@
     "contractors": "Bancas",
     "fabric": "Tecidos",
     "stock": "Estoque",
+    "printStock": "Estoque de estampas",
+    "supplies": "Insumos",
     "reports": "Relatórios",
     "settings": "Ajustes",
-    "batches": "Lotes"
+    "batches": "Lotes",
+    "separation": "Separação",
+    "mapping": "De/Para"
   },
   "auth": {
     "signIn": "Entrar",
@@ -1148,6 +1152,20 @@
       "actualOutputs": "Peças cortadas por tamanho",
       "close": "Fechar",
       "save": "Salvar"
+    },
+    "cost": {
+      "title": "Custo de produção",
+      "fabric": "Tecido",
+      "fabricSub": "{kg} kg @ {price}/kg",
+      "ribana": "Ribana",
+      "ribanaSub": "{kg} kg @ {price}/kg",
+      "trims": "Aviamentos",
+      "trimsSub": "{pieces} peças",
+      "labor": "Mão-de-obra",
+      "laborSub": "{pieces} peças",
+      "total": "Custo total",
+      "perPiece": "{value} por peça",
+      "yield": "{value} peças/kg"
     }
   },
   "sewing": {
@@ -1618,6 +1636,216 @@
       "forbidden": "Você não tem acesso ao estoque."
     }
   },
+  "printStock": {
+    "page": {
+      "eyebrow": "Estoque"
+    },
+    "list": {
+      "title": "Estoque de estampas",
+      "titleEm": "/ impresso",
+      "sub": "Estoque de estampas impressas por estampa e cor.",
+      "empty": {
+        "title": "Nenhuma estampa impressa cadastrada",
+        "body": "As entradas aparecem quando você registra uma impressão ou um ajuste manual.",
+        "cta": "Registrar movimento"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar estampa, código, cor…"
+    },
+    "table": {
+      "columns": {
+        "design": "Estampa",
+        "color": "Cor",
+        "onHand": "Em estoque",
+        "status": "Status",
+        "lastMovement": "Últ. mov.",
+        "actions": "Ações"
+      }
+    },
+    "statuses": {
+      "low": "Baixo",
+      "ok": "OK"
+    },
+    "actions": {
+      "viewFullLedger": "Histórico completo",
+      "confirmAdjust": "Registrar movimento"
+    },
+    "adjust": {
+      "title": "Registrar movimento",
+      "sub": "Adicione ou retire estampas impressas de uma estampa e cor.",
+      "fields": {
+        "direction": "Direção",
+        "design": "Estampa",
+        "designPlaceholder": "Selecione uma estampa…",
+        "color": "Cor",
+        "colorPlaceholder": "ex. Preto",
+        "quantity": "Quantidade",
+        "notes": "Observações",
+        "notesPlaceholder": "Observações opcionais…"
+      },
+      "directions": {
+        "entry": "Entrada",
+        "exit": "Saída"
+      },
+      "actions": {
+        "cancel": "Cancelar",
+        "confirm": "Salvar"
+      },
+      "toasts": {
+        "success": "Movimento registrado",
+        "error": "Falha na operação",
+        "insufficient": "Estoque de impresso insuficiente para esta saída."
+      }
+    },
+    "validation": {
+      "designRequired": "Selecione uma estampa",
+      "colorRequired": "Informe uma cor",
+      "quantityPositive": "A quantidade deve ser maior que zero"
+    },
+    "movements": {
+      "title": "Movimentos",
+      "titleEm": "histórico completo",
+      "sub": "Todas as entradas e saídas de impresso, da mais recente.",
+      "columns": {
+        "when": "Quando",
+        "design": "Estampa",
+        "color": "Cor",
+        "direction": "Direção",
+        "quantity": "Qtd",
+        "notes": "Observações"
+      },
+      "directions": {
+        "entry": "Entrada",
+        "exit": "Saída",
+        "adjustment": "Ajuste",
+        "all": "Todos"
+      },
+      "empty": "Nenhum movimento registrado ainda."
+    },
+    "drawer": {
+      "title": "Histórico de movimentos",
+      "close": "Fechar",
+      "empty": "Esta estampa / cor ainda não teve movimentos."
+    }
+  },
+  "supplies": {
+    "page": {
+      "eyebrow": "Estoque"
+    },
+    "list": {
+      "title": "Insumos",
+      "titleEm": "consumíveis",
+      "sub": "Insumos consumíveis e seu saldo em estoque.",
+      "empty": {
+        "title": "Nenhum insumo cadastrado",
+        "body": "Adicione um insumo ao catálogo e registre compras e consumos para acompanhar o saldo em estoque.",
+        "cta": "Novo insumo"
+      }
+    },
+    "tabs": {
+      "levels": "Posição atual",
+      "movements": "Movimentações"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar insumo, unidade…",
+      "lowStockOnly": "Somente estoque baixo"
+    },
+    "kinds": {
+      "entry": "Entrada",
+      "exit": "Saída",
+      "adjustment": "Ajuste"
+    },
+    "table": {
+      "columns": {
+        "name": "Insumo",
+        "onHand": "Em estoque",
+        "unitCost": "Custo unit.",
+        "lastMovement": "Últ. mov.",
+        "actions": "Ações"
+      }
+    },
+    "movements": {
+      "empty": "Nenhuma movimentação registrada.",
+      "columns": {
+        "when": "Quando",
+        "supply": "Insumo",
+        "kind": "Tipo",
+        "quantity": "Qtd",
+        "notes": "Observações"
+      }
+    },
+    "actions": {
+      "recordMovement": "Registrar movimento",
+      "delete": "Excluir",
+      "confirmDelete": "Este insumo será removido permanentemente. Insumos com movimentações de estoque não podem ser excluídos."
+    },
+    "form": {
+      "title": {
+        "new": "Novo insumo"
+      },
+      "labels": {
+        "name": "Nome",
+        "unit": "Unidade",
+        "unitCost": "Custo unitário",
+        "minStock": "Estoque mínimo",
+        "notes": "Observações"
+      },
+      "placeholders": {
+        "name": "ex.: Linha branca",
+        "unit": "m, kg, un…",
+        "unitCost": "0,00",
+        "minStock": "0",
+        "notes": "Observações opcionais…"
+      },
+      "hints": {
+        "minStock": "Saldo igual ou abaixo deste valor sinaliza estoque baixo. Deixe vazio para desativar."
+      },
+      "validation": {
+        "nameRequired": "Nome é obrigatório",
+        "unitRequired": "Unidade é obrigatória",
+        "required": "Obrigatório",
+        "numeric": "Informe um número válido"
+      },
+      "save": "Salvar",
+      "submitNew": "Criar insumo",
+      "cancel": "Cancelar"
+    },
+    "adjust": {
+      "title": "Registrar movimento",
+      "subtitle": "Escolha um insumo e o tipo de movimento.",
+      "labels": {
+        "moveType": "Tipo de movimento",
+        "supply": "Insumo",
+        "quantity": "Quantidade",
+        "notes": "Observações"
+      },
+      "placeholders": {
+        "search": "Buscar insumo…",
+        "notes": "Observações opcionais…"
+      },
+      "preview": {
+        "current": "Atual",
+        "entry": "Entrada",
+        "exit": "Saída",
+        "final": "Final",
+        "negativeWarning": "O saldo ficaria negativo."
+      },
+      "noSupplies": "Nenhum insumo encontrado.",
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "toasts": {
+        "created": "Movimento registrado",
+        "error": "Falha na operação"
+      }
+    },
+    "toast": {
+      "created": "Insumo criado",
+      "updated": "Insumo atualizado",
+      "deleted": "Insumo excluído",
+      "error": "Falha na operação"
+    }
+  },
   "reports": {
     "page": {
       "eyebrow": "Relatórios"
@@ -1631,7 +1859,8 @@
       "sales": "Vendas",
       "production": "Produção",
       "inventory": "Estoque",
-      "costs": "Custos"
+      "costs": "Custos",
+      "turnover": "Giro"
     },
     "actions": {
       "exportCsv": "Exportar CSV",
@@ -1676,6 +1905,16 @@
       "trimCost": "Aviamentos",
       "total": "Total",
       "fabricCost": "Custo médio de tecido por kg"
+    },
+    "turnover": {
+      "title": "Giro de estoque",
+      "velocity": "Giro por SKU",
+      "perSku": "Giro por SKU",
+      "sku": "SKU",
+      "unitsSold": "Unidades vendidas",
+      "avgOnHand": "Estoque médio",
+      "turnoverRatio": "Giro",
+      "dio": "Dias de estoque"
     }
   },
   "settings": {
@@ -1698,7 +1937,8 @@
       "audit": "Auditoria",
       "integrations": "Integrações",
       "profile": "Perfil",
-      "notifications": "Notificações"
+      "notifications": "Notificações",
+      "stockAlerts": "Alertas de estoque"
     },
     "company": {
       "title": "Identidade da empresa",
@@ -1784,6 +2024,8 @@
       "hero": {
         "eyebrow": "Plano atual",
         "betaPill": "Beta privada",
+        "perMonth": "/mês",
+        "free": "Grátis",
         "body": "Você faz parte do grupo inicial — cobrança ainda não está habilitada. Quando habilitarmos, avisaremos com bastante antecedência."
       },
       "usage": {
@@ -1792,6 +2034,21 @@
         "of": "de {max} pessoas",
         "remaining": "{count, plural, one {Resta <b>#</b> assento disponível} other {Restam <b>#</b> assentos disponíveis}} nesta conta.",
         "limitReached": "Limite atingido — fale com a gente para liberar mais assentos."
+      },
+      "grid": {
+        "title": "Uso",
+        "sub": "Uso em tempo real comparado aos limites do seu plano",
+        "metric": {
+          "members": "Membros",
+          "orders_month": "Pedidos no mês",
+          "integrations": "Integrações",
+          "storage": "Armazenamento"
+        },
+        "of": "de {max}",
+        "ofUnlimited": "de ilimitado",
+        "unlimited": "Ilimitado",
+        "notTracked": "Ainda não monitorado",
+        "limitReached": "Limite atingido no seu plano atual."
       },
       "features": {
         "title": "O que está incluído",
@@ -1808,7 +2065,53 @@
     "forbidden": {
       "company": "Você não tem acesso aos ajustes da empresa.",
       "members": "Você não tem acesso aos membros.",
-      "roles": "Você não tem acesso às funções."
+      "roles": "Você não tem acesso às funções.",
+      "stockAlerts": "Você não tem acesso aos alertas de estoque.",
+      "integrations": "Você não tem acesso às integrações."
+    },
+    "integrations": {
+      "summary": "<b>{connected}</b> de <b>{total}</b> integrações ativas",
+      "summarySub": "Conecte o Orion aos seus marketplaces, logística e canais de comunicação.",
+      "syncAll": "Sincronizar agora",
+      "nothingToSync": "Conecte um canal primeiro para sincronizar.",
+      "groupActive": "{active} de {total} ativas",
+      "notConnected": "Não conectado",
+      "syncedAgo": "sincronizado {ago}",
+      "never": "nunca",
+      "syncJustNow": "agora mesmo",
+      "syncMinutesAgo": "{count, plural, one {há # min} other {há # min}}",
+      "syncHoursAgo": "{count, plural, one {há # hora} other {há # horas}}",
+      "syncDaysAgo": "{count, plural, one {há # dia} other {há # dias}}",
+      "account": "Conta {id}",
+      "readOnly": "Somente leitura",
+      "loadError": "Não foi possível carregar as integrações.",
+      "connectStarted": "Autorização iniciada",
+      "connectError": "Não foi possível iniciar a conexão.",
+      "disconnected": "Canal desconectado",
+      "disconnectError": "Não foi possível desconectar o canal.",
+      "syncDone": "Sincronização concluída — {count} importados",
+      "syncError": "Não foi possível sincronizar o canal.",
+      "actions": {
+        "connect": "Conectar",
+        "disconnect": "Desconectar",
+        "sync": "Sincronizar"
+      }
+    },
+    "stockAlerts": {
+      "title": "Alertas de estoque",
+      "sub": "Defina a quantidade em mãos a partir da qual um SKU é sinalizado como estoque baixo.",
+      "labels": {
+        "threshold": "Limite de estoque baixo"
+      },
+      "helpers": {
+        "threshold": "Uma variação é considerada baixa quando a quantidade em mãos é igual ou inferior a este número. Ajustes por variação têm prioridade."
+      },
+      "save": "Salvar",
+      "savedToast": "Ajustes de alerta de estoque salvos.",
+      "errorToast": "Não foi possível salvar os ajustes de alerta de estoque.",
+      "validation": {
+        "invalid": "Informe um número inteiro de 0 ou mais."
+      }
     }
   },
   "members": {
@@ -1970,6 +2273,39 @@
       "all": "Pode editar",
       "view": "Apenas visualiza",
       "none": "Sem acesso"
+    },
+    "editor": {
+      "title": {
+        "new": "Nova função personalizada",
+        "edit": "Editar função"
+      },
+      "subtitle": "Dê um nome à função e escolha o que ela pode ver ou editar.",
+      "fields": {
+        "name": "Nome",
+        "code": "Código",
+        "codePlaceholder": "ex.: vendas",
+        "codeHint": "Letras minúsculas, números e sublinhados. Não pode ser alterado depois.",
+        "description": "Descrição",
+        "permissions": "Permissões"
+      },
+      "columns": {
+        "domain": "Área",
+        "read": "Ver",
+        "write": "Editar"
+      },
+      "actions": {
+        "save": "Salvar",
+        "cancel": "Cancelar",
+        "edit": "Editar",
+        "delete": "Excluir função",
+        "confirmDelete": "Esta função será removida permanentemente. Os membros precisam ser reatribuídos antes."
+      },
+      "toasts": {
+        "created": "Função criada",
+        "updated": "Função atualizada",
+        "deleted": "Função excluída",
+        "error": "Não foi possível salvar a função"
+      }
     }
   },
   "audit": {
@@ -2046,6 +2382,92 @@
     "title": "Bem-vindo ao Orion",
     "subtitle": "Escolha uma seção no menu lateral para começar."
   },
+  "mapping": {
+    "page": {
+      "eyebrow": "Vendas",
+      "title": "De/Para de",
+      "titleEm": "itens",
+      "sub": "Vincule cada item de pedido importado à variação interna (SKU) do produto certo. A estampa é consequência do produto."
+    },
+    "help": {
+      "title": "De/Para — item do pedido → variação (SKU) interna",
+      "body": "Cada item de pedido chega do marketplace com a variação do anúncio (cor/tamanho do título). Aqui você o vincula à variação interna (SKU) do produto certo — daí saem estoque, estampa e produção. O que o sistema ainda não reconhece entra como pendente e só vai para a Separação depois de vinculado.",
+      "steps": {
+        "item": "Item do pedido",
+        "itemSub": "variação do anúncio",
+        "sku": "Produto · SKU",
+        "skuSub": "variação interna",
+        "stock": "Estoque",
+        "stockSub": "pronto p/ separar"
+      }
+    },
+    "progress": {
+      "awaiting": "{count, plural, one {item aguardando vínculo} other {itens aguardando vínculo}}",
+      "withSuggestion": "{count, plural, one {# com sugestão pronta} other {# com sugestão pronta}}",
+      "linkedOf": "de {total} itens vinculados",
+      "allLinked": "Todos os itens estão vinculados — os pedidos podem seguir para a Separação."
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar anúncio, SKU do anúncio ou SKU interno…",
+      "filter": "Filtro",
+      "pending": "Pendentes ({count})",
+      "linked": "Vinculados ({count})",
+      "all": "Todos ({count})"
+    },
+    "actions": {
+      "accept": "Aceitar",
+      "swap": "Trocar",
+      "acceptAll": "{count, plural, one {Aceitar # sugestão} other {Aceitar # sugestões}}"
+    },
+    "columns": {
+      "orderItem": "Item do pedido",
+      "orderItemSub": "(do anúncio)",
+      "adVariation": "Variação no anúncio",
+      "internalSku": "Produto → Variação (SKU interno)",
+      "status": "Status"
+    },
+    "suggestion": {
+      "label": "Sugestão do sistema"
+    },
+    "manual": {
+      "chooseProduct": "Escolher produto…",
+      "chooseVariation": "Variação (SKU)…",
+      "pickProductFirst": "Escolha o produto",
+      "backToSuggestion": "Voltar para a sugestão"
+    },
+    "row": {
+      "noAdSku": "sem SKU no anúncio"
+    },
+    "status": {
+      "pending": "Pendente",
+      "linked": "Vinculado"
+    },
+    "estampa": {
+      "none": "sem estampa"
+    },
+    "empty": {
+      "pending": {
+        "title": "Nenhum item pendente",
+        "desc": "Todos os itens de pedido já estão vinculados a um SKU interno."
+      },
+      "other": {
+        "title": "Nada por aqui",
+        "desc": "Nenhum item corresponde aos filtros."
+      }
+    },
+    "list": {
+      "loadError": "Não foi possível carregar os itens do De/Para."
+    },
+    "toast": {
+      "accepted": "Sugestão aceita · {sku}",
+      "linked": "Item vinculado ao SKU {sku}",
+      "acceptedAll": "{count, plural, one {# sugestão aceita} other {# sugestões aceitas}}",
+      "error": "Algo deu errado. Tente novamente."
+    },
+    "fallback": {
+      "forbidden": "Você não tem permissão para ver o De/Para de pedidos."
+    }
+  },
   "batches": {
     "page": {
       "eyebrow": "Vendas"
@@ -2097,10 +2519,23 @@
       "stamp": "Estampa",
       "color": "Cor",
       "needed": "Necessário",
+      "onHand": "Em estoque",
       "toPrint": "A imprimir",
       "sent": "Enviado",
       "empty": "Nenhuma estampa neste lote.",
       "save": "Salvar ajustes"
+    },
+    "printQueue": {
+      "title": "Fila de impressão",
+      "totalToPrint": "{count} a imprimir",
+      "design": "Estampa",
+      "color": "Cor",
+      "needed": "Necessário",
+      "onHand": "Em estoque",
+      "toPrint": "A imprimir",
+      "batches": "Lotes",
+      "emptyTitle": "Nada a imprimir",
+      "emptyDesc": "O estoque de estampas cobre todos os lotes abertos."
     },
     "detail": {
       "printLabels": "Imprimir etiquetas",
@@ -2122,6 +2557,96 @@
     },
     "fallback": {
       "forbidden": "Você não tem acesso aos lotes."
+    }
+  },
+  "separation": {
+    "page": {
+      "eyebrow": "Vendas"
+    },
+    "list": {
+      "title": "Separação",
+      "titleEm": "& checkout",
+      "sub": "Transforme cada pedido vinculado em peça etiquetada, imprima etiquetas 100×50mm e bipe para conferir no checkout.",
+      "loadError": "Não foi possível carregar os pedidos.",
+      "empty": "Nenhum pedido para separar. Ajuste os filtros acima."
+    },
+    "fallback": {
+      "forbidden": "Você não tem acesso à separação."
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar pedido, título, SKU…",
+      "status": "Status",
+      "statusAll": "Todos os status",
+      "channel": "Plataforma",
+      "channelAll": "Todas as plataformas"
+    },
+    "orderStatuses": {
+      "pending": "Pendente",
+      "paid": "Pago",
+      "shipped": "Enviado",
+      "delivered": "Entregue",
+      "cancelled": "Cancelado",
+      "returned": "Devolvido"
+    },
+    "channels": {
+      "shopee": "Shopee",
+      "mercado_livre": "Mercado Livre",
+      "shopify": "Shopify",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "other": "Outro"
+    },
+    "status": {
+      "pending": "A imprimir",
+      "label_printed": "Impresso",
+      "checked": "Conferido",
+      "mixed": "Parcial"
+    },
+    "bar": {
+      "selectAll": "Selecionar todos",
+      "clear": "Limpar",
+      "selectedCount": "{orders, plural, one {# pedido} other {# pedidos}} · {pieces, plural, one {# peça} other {# peças}}",
+      "totalCount": "{orders, plural, one {# pedido} other {# pedidos}}",
+      "printLabels": "Imprimir etiquetas"
+    },
+    "row": {
+      "select": "Selecionar pedido {code}",
+      "expand": "Expandir peças",
+      "collapse": "Recolher peças",
+      "pieces": "{count, plural, one {# peça} other {# peças}}",
+      "etiquetas": "Etiquetas",
+      "loading": "Carregando peças…",
+      "noPieces": "Sem peças ainda — imprima etiquetas para materializá-las.",
+      "checkedProgress": "{checked} de {total} conferidas"
+    },
+    "scan": {
+      "placeholder": "Bipe o QR / código da etiqueta…",
+      "toast": {
+        "checked": "Peça {index}/{total} conferida",
+        "alreadyChecked": "A peça {code} já estava conferida",
+        "unknown": "Nenhuma peça corresponde a {code}",
+        "notPrinted": "Imprima a etiqueta de {code} antes de bipar",
+        "error": "Não foi possível conferir essa peça."
+      }
+    },
+    "etiqueta": {
+      "title": "Etiquetas de Separação — 100×50mm",
+      "subtitle": "{count, plural, one {# etiqueta} other {# etiquetas}} (1 por peça)",
+      "previewLabel": "Preview da primeira etiqueta",
+      "empty": "Nenhuma peça selecionada.",
+      "cancel": "Cancelar",
+      "print": "Imprimir {count, plural, one {# etiqueta} other {# etiquetas}}",
+      "howto": {
+        "title": "Como usar:",
+        "step1": "Imprima e cole 1 etiqueta em cada peça durante separação/prensa.",
+        "step2": "No checkout, bipe o QR de cada etiqueta. Quando todos os itens do pedido forem bipados, libere a etiqueta de envio.",
+        "chrome": "No Chrome: papel 100×50mm, margens Nenhuma, escala 100%."
+      }
+    },
+    "toast": {
+      "printed": "{count, plural, one {# etiqueta} other {# etiquetas}} enviada(s) para impressão",
+      "noPieces": "Este pedido não tem peças para etiquetar.",
+      "generateError": "Não foi possível gerar as etiquetas."
     }
   },
   "console": {
@@ -2282,10 +2807,20 @@
     },
     "plans": {
       "title": "Planos",
-      "desc": "O catálogo de planos Orion, seus limites e quanto cada um gera.",
-      "ribbon": "Em breve · dados ilustrativos. Planos e cobrança ainda não estão conectados.",
+      "desc": "O catálogo de planos Orion e seus limites.",
+      "ribbon": "Catálogo somente leitura. Edição de planos e cobrança ainda não estão conectadas.",
       "free": "Grátis",
-      "perMonth": "/mês"
+      "perMonth": "/mês",
+      "unlimited": "Ilimitado",
+      "empty": "Nenhum plano no catálogo ainda.",
+      "limit": {
+        "members": "Membros",
+        "orders": "Pedidos",
+        "integrations": "Integrações",
+        "storage": "Armazenamento"
+      },
+      "ordersPerMonth": "{count}/mês",
+      "storageGb": "{count} GB"
     },
     "integrations": {
       "title": "Integrações",

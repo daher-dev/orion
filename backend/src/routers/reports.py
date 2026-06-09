@@ -1,16 +1,21 @@
 """HTTP layer for the Reports endpoints (FEATURE-015).
 
-Exposes four read-only routes:
+Exposes five read-only routes:
 
     GET /v1/reports/sales
     GET /v1/reports/production
     GET /v1/reports/inventory
     GET /v1/reports/costs
+    GET /v1/reports/turnover
 
 Permissions
 -----------
-Same provisional approach as :mod:`routers.dashboard`: gated on
-``orders.read`` for v1 (no ``reports.read`` permission is seeded yet).
+Each route gates itself with a per-route ``RequirePermission``. The
+sales/production/inventory/costs reports stay on ``orders.read`` (their v1
+behaviour). The turnover ("giro") report is gated on ``stock.read`` since it
+reads the stock ledger — that lets a stock-only role (operator) see giro
+without granting them order visibility. A dedicated ``reports.*`` permission
+domain is seeded for forward use but not yet enforced here.
 """
 
 from __future__ import annotations
@@ -27,13 +32,13 @@ from schemas.reports import (
     InventoryReport,
     ProductionReport,
     SalesReport,
+    TurnoverReport,
 )
 from services import reports as reports_service
 
 router = APIRouter(
     prefix="/reports",
     tags=["Reports"],
-    dependencies=[Depends(RequirePermission("orders.read"))],
 )
 
 
@@ -94,6 +99,21 @@ async def get_costs_report_endpoint(
     date_to: DateToQ = None,
 ) -> CostsReport:
     return await reports_service.costs_report(
+        db,
+        company_id=user.company_id,
+        date_from=date_from,
+        date_to=date_to,
+    )
+
+
+@router.get("/turnover", response_model=TurnoverReport)
+async def get_turnover_report_endpoint(
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("stock.read"))],
+    date_from: DateFromQ = None,
+    date_to: DateToQ = None,
+) -> TurnoverReport:
+    return await reports_service.turnover_report(
         db,
         company_id=user.company_id,
         date_from=date_from,

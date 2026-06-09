@@ -6,8 +6,9 @@ import { SalesTab } from "@/components/reports/SalesTab";
 import { ProductionTab } from "@/components/reports/ProductionTab";
 import { InventoryTab } from "@/components/reports/InventoryTab";
 import { CostsTab } from "@/components/reports/CostsTab";
+import { TurnoverTab } from "@/components/reports/TurnoverTab";
 
-type TabId = "sales" | "production" | "inventory" | "costs";
+type TabId = "sales" | "production" | "inventory" | "costs" | "turnover";
 
 type Props = {
   /** Current selected tab id. */
@@ -35,6 +36,7 @@ export function ReportTabs({ value, onValueChange, range }: Props) {
     { value: "production", label: t("production") },
     { value: "inventory", label: t("inventory") },
     { value: "costs", label: t("costs") },
+    { value: "turnover", label: t("turnover") },
   ];
 
   return (
@@ -73,6 +75,7 @@ export function ReportTabs({ value, onValueChange, range }: Props) {
         {value === "production" && <ProductionTab range={range} />}
         {value === "inventory" && <InventoryTab range={range} />}
         {value === "costs" && <CostsTab range={range} />}
+        {value === "turnover" && <TurnoverTab range={range} />}
       </div>
     </div>
   );

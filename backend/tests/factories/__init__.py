@@ -1,6 +1,7 @@
 """Polyfactory-based factories + small async create helpers used in tests."""
 
 from tests.factories.ad import AdFactory, create_ad
+from tests.factories.assembly import AssemblyRunFactory, create_assembly_run
 from tests.factories.audit import AuditLogFactory, create_audit_log
 from tests.factories.blank_stock import (
     BlankPieceFactory,
@@ -41,7 +42,18 @@ from tests.factories.plan import (
     create_plan,
     create_subscription,
 )
-from tests.factories.print_design import PrintDesignFactory, create_print_design
+from tests.factories.print_design import (
+    PrintDesignFactory,
+    PrintDesignVariationFactory,
+    create_print_design,
+    create_print_design_variation,
+)
+from tests.factories.print_order import (
+    PrintOrderFactory,
+    PrintOrderOutputFactory,
+    create_print_order,
+    create_print_order_output,
+)
 from tests.factories.printed_transfer import (
     PrintedTransferFactory,
     PrintedTransferMovementFactory,
@@ -90,6 +102,7 @@ from tests.factories.user import UserFactory, create_user
 
 __all__ = [
     "AdFactory",
+    "AssemblyRunFactory",
     "AuditLogFactory",
     "BlankPieceFactory",
     "BlankPieceMovementFactory",
@@ -108,6 +121,9 @@ __all__ = [
     "PermissionFactory",
     "PlanFactory",
     "PrintDesignFactory",
+    "PrintDesignVariationFactory",
+    "PrintOrderFactory",
+    "PrintOrderOutputFactory",
     "PrintedTransferFactory",
     "PrintedTransferMovementFactory",
     "ProductFactory",
@@ -125,6 +141,7 @@ __all__ = [
     "SupplyMovementFactory",
     "UserFactory",
     "create_ad",
+    "create_assembly_run",
     "create_audit_log",
     "create_blank_piece",
     "create_blank_piece_movement",
@@ -142,6 +159,9 @@ __all__ = [
     "create_paper_roll_movement",
     "create_plan",
     "create_print_design",
+    "create_print_design_variation",
+    "create_print_order",
+    "create_print_order_output",
     "create_printed_transfer",
     "create_printed_transfer_movement",
     "create_product",

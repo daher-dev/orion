@@ -15,6 +15,7 @@ import {
   Layers,
   Boxes,
   Stamp,
+  Combine,
   Scroll,
   FlaskConical,
   BarChart3,
@@ -153,6 +154,20 @@ export const navSections: NavSection[] = [
         icon: Send,
         labelKey: "nav.sewing",
         permission: "sewing.read",
+        subColor: "var(--brand-prod)",
+      },
+      {
+        href: "/printing",
+        icon: Stamp,
+        labelKey: "nav.printing",
+        permission: "print_orders.read",
+        subColor: "var(--brand-prod)",
+      },
+      {
+        href: "/assembly",
+        icon: Combine,
+        labelKey: "nav.assembly",
+        permission: "assembly.read",
         subColor: "var(--brand-prod)",
       },
       {

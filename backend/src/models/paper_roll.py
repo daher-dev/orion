@@ -59,7 +59,17 @@ class PaperRollMovement(CompanyModel, table=True):
     )
     kind: PaperMovementKind = Field(sa_type=PAPER_MOVEMENT_KIND)
     # Metered quantity in meters — Decimal, not int like counted tiers.
-    # (``print_order_id`` provenance is deferred to Phase 4 — the
-    # ``print_orders`` table does not exist yet.)
     quantity: Decimal = Field(max_digits=12, decimal_places=3)
+    # Provenance: a paper debit may originate from completing a print order
+    # (T4). Set only by the print-order-complete transition (Phase 4), null on
+    # manual movements.
+    print_order_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(
+            Uuid,
+            ForeignKey("print_orders.id", ondelete="SET NULL"),
+            nullable=True,
+            index=True,
+        ),
+    )
     notes: str | None = Field(default=None, max_length=500)

@@ -507,6 +507,7 @@ async def create_movement(
         kind=payload.kind,
         quantity=payload.quantity,
         sewing_shipment_id=None,
+        assembly_run_id=None,
         notes=payload.notes.strip() if payload.notes else None,
     )
     db.add(movement)
@@ -585,11 +586,11 @@ async def record_movement(
     """Append a blank-piece ledger row with provenance, WITHOUT committing.
 
     The transition-internal sibling of :func:`create_movement`: it reuses the
-    same on-hand guard for EXIT (409 if insufficient) but does NOT commit (the
-    caller — e.g. the T3 sewing-receipt transition — owns the transaction) and
-    does NOT write audit (the caller writes one transition-level entry). The
-    ``assembly_run_id`` provenance is accepted now but unused until Phase 4
-    (the column lands then).
+    same on-hand guard for EXIT (409 if insufficient — never clamp counted tiers)
+    but does NOT commit (the caller — e.g. the T3 sewing-receipt or the T5
+    assemble transition — owns the transaction) and does NOT write audit (the
+    caller writes one transition-level entry). The sewing shipment (T3 credit) or
+    assembly run (T5 debit) is recorded as provenance.
     """
 
     if kind == BlankMovementKind.EXIT:
@@ -603,11 +604,9 @@ async def record_movement(
         kind=kind,
         quantity=quantity,
         sewing_shipment_id=sewing_shipment_id,
+        assembly_run_id=assembly_run_id,
         notes=notes.strip() if notes else None,
     )
-    # ``assembly_run_id`` is part of the signature for forward-compat; the model
-    # column lands in Phase 4. Silence the unused-arg lint without persisting it.
-    _ = assembly_run_id
     db.add(movement)
     await db.flush()
     return movement

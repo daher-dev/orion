@@ -47,9 +47,10 @@ class PrintedTransferMovement(CompanyModel, table=True):
     A single table carries a ``kind`` enum; ENTRY and ADJUSTMENT credit stock,
     EXIT debits it (every row holds a strictly-positive ``quantity``). On-hand
     is the signed sum of these rows per printed transfer — no materialised
-    balance column. (The old ``batch_id`` provenance is dropped with the
-    ``print_stock`` table; ``print_order_id`` / ``assembly_run_id`` provenance
-    is deferred to Phase 4 — neither table exists yet.)
+    balance column. (The old ``batch_id`` provenance was dropped with the
+    ``print_stock`` table.) A row is credited by completing a print order (T4,
+    ``print_order_id``) or debited by an assembly run (T5, ``assembly_run_id``);
+    both are null on manual movements.
     """
 
     __tablename__ = "printed_transfer_movements"
@@ -65,4 +66,23 @@ class PrintedTransferMovement(CompanyModel, table=True):
     )
     kind: PrintedMovementKind = Field(sa_type=PRINTED_MOVEMENT_KIND)
     quantity: int = Field(gt=0)
+    # Provenance: T4 credit (print order complete) / T5 debit (assembly run).
+    print_order_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(
+            Uuid,
+            ForeignKey("print_orders.id", ondelete="SET NULL"),
+            nullable=True,
+            index=True,
+        ),
+    )
+    assembly_run_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(
+            Uuid,
+            ForeignKey("assembly_runs.id", ondelete="SET NULL"),
+            nullable=True,
+            index=True,
+        ),
+    )
     notes: str | None = Field(default=None, max_length=500)

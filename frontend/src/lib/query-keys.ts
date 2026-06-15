@@ -85,6 +85,16 @@ export const qk = {
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("sewing", "list", filters),
     detail: (id: string) => tuple("sewing", "detail", id),
   },
+  printOrders: {
+    all: () => tuple("print-orders"),
+    lists: () => tuple("print-orders", "list"),
+    list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("print-orders", "list", filters),
+    detail: (id: string) => tuple("print-orders", "detail", id),
+  },
+  assembly: {
+    all: () => tuple("assembly"),
+    buildable: (filters: Readonly<Record<string, unknown>> = {}) => tuple("assembly", "buildable", filters),
+  },
   contractors: {
     all: () => tuple("contractors"),
     lists: () => tuple("contractors", "list"),

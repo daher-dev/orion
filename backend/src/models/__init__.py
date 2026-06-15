@@ -6,6 +6,7 @@ picks it up via `SQLModel.metadata`.
 
 from models.ad import Ad
 from models.ad_products import AdProduct
+from models.assembly import AssemblyRun
 from models.audit_log import AuditLog
 from models.base import BaseModel, CompanyModel
 from models.batch import Batch
@@ -53,6 +54,7 @@ from models.order_item import OrderItem
 from models.paper_roll import PaperRoll, PaperRollMovement
 from models.plan import Plan
 from models.print_design import PrintDesign, PrintDesignVariation
+from models.print_order import PrintOrder, PrintOrderOutput
 from models.printed_transfer import PrintedTransfer, PrintedTransferMovement
 from models.product import Product, ProductVariation
 from models.product_spec import ProductSpec, SpecTrim
@@ -68,6 +70,7 @@ __all__ = [
     "Ad",
     "AdProduct",
     "ArtworkStatus",
+    "AssemblyRun",
     "AuditLog",
     "BaseModel",
     "Batch",
@@ -106,6 +109,8 @@ __all__ = [
     "Plan",
     "PrintDesign",
     "PrintDesignVariation",
+    "PrintOrder",
+    "PrintOrderOutput",
     "PrintOrderStatus",
     "PrintSide",
     "PrintTechnique",

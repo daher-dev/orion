@@ -111,6 +111,16 @@ export type PaperRollFilters = {
   page_size?: number;
 };
 
+/**
+ * Stable display code for a paper roll — mirrors the backend's `PaperRollRef`
+ * derivation (`BP-` + the first 6 hex digits of the id). The standalone roll
+ * list has no `code` column, so callers that show a roll outside a print order
+ * (selectors, consumption preview) derive it the same way.
+ */
+export function paperRollCode(id: string): string {
+  return `BP-${id.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
+}
+
 export type PaperMovementFilters = {
   paper_roll_id?: string;
   kind?: PaperMovementKind;

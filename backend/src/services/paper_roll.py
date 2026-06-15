@@ -323,6 +323,7 @@ async def consume(
         paper_roll_id=roll.id,
         kind=PaperMovementKind.EXIT,
         quantity=actual if actual > 0 else payload.quantity,
+        print_order_id=None,
         notes=payload.notes.strip() if payload.notes else None,
     )
     db.add(movement)
@@ -339,6 +340,46 @@ async def consume(
     await db.commit()
     await db.refresh(roll)
     return roll
+
+
+# ---------- consume_for_print_order (transition-internal, no commit) ----------
+
+
+async def consume_for_print_order(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    roll: PaperRoll,
+    quantity: Decimal,
+    print_order_id: uuid.UUID | None = None,
+    notes: str | None = None,
+) -> PaperRollMovement:
+    """Debit meters off the roll, clamping at 0, recording an EXIT movement (T4).
+
+    Transition-internal sibling of :func:`consume`: the metered-roll rule
+    (``max(0, current - quantity)``) matches ``fabric.consume`` and the
+    prototype's ``Math.max(0, …)``. The recorded ``quantity`` is the *actual*
+    amount consumed after the clamp (never more than the roll held), and the
+    print order is recorded as provenance. Does NOT commit (the caller — the
+    print-order-complete transition — owns the transaction) and does NOT write
+    audit (the caller writes a transition-level entry).
+    """
+
+    actual = min(quantity, roll.current_meters)
+    roll.current_meters = max(Decimal("0"), roll.current_meters - quantity)
+    db.add(roll)
+
+    movement = PaperRollMovement(
+        company_id=company_id,
+        paper_roll_id=roll.id,
+        kind=PaperMovementKind.EXIT,
+        quantity=actual if actual > 0 else quantity,
+        print_order_id=print_order_id,
+        notes=notes.strip() if notes else None,
+    )
+    db.add(movement)
+    await db.flush()
+    return movement
 
 
 # ---------- create_movement ----------
@@ -369,6 +410,7 @@ async def create_movement(
         paper_roll_id=roll.id,
         kind=payload.kind,
         quantity=payload.quantity,
+        print_order_id=None,
         notes=payload.notes.strip() if payload.notes else None,
     )
     db.add(movement)
@@ -471,6 +513,7 @@ __all__ = [
     "_is_low_stock",
     "_to_read_kwargs",
     "consume",
+    "consume_for_print_order",
     "create_movement",
     "create_paper_roll",
     "delete_paper_roll",

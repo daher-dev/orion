@@ -33,7 +33,7 @@ from sqlalchemy import String, case, cast, func, or_
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from models import PrintDesign, PrintedMovementKind, PrintedTransfer, PrintedTransferMovement
+from models import PrintDesign, PrintedMovementKind, PrintedTransfer, PrintedTransferMovement, PrintSide
 from schemas._common import PageParams
 from schemas.printed_transfer import (
     PrintedMovementCreate,
@@ -383,6 +383,8 @@ async def create_movement(
         printed_transfer_id=transfer.id,
         kind=payload.kind,
         quantity=payload.quantity,
+        print_order_id=None,
+        assembly_run_id=None,
         notes=payload.notes.strip() if payload.notes else None,
     )
     db.add(movement)
@@ -405,11 +407,89 @@ async def create_movement(
     return movement
 
 
+# ---------- transition-internal helpers (no commit, provenance) ----------
+
+
+async def get_or_create_printed_transfer(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    print_design_id: uuid.UUID,
+    side: PrintSide,
+) -> PrintedTransfer:
+    """Resolve the printed transfer for ``(design, side)``, creating it if absent.
+
+    Used by the T4 print-order-complete transition to land credited transfers on
+    the right catalog row. Same shape as ``blank_stock.get_or_create_blank_piece``:
+    does NOT commit — the caller owns the transaction — but flushes the new row so
+    its id is immediately usable for the movement provenance.
+    """
+
+    stmt = scoped(select(PrintedTransfer), PrintedTransfer, company_id).where(
+        PrintedTransfer.print_design_id == print_design_id,
+        PrintedTransfer.side == side,
+    )
+    transfer = (await db.exec(stmt)).first()
+    if transfer is not None:
+        return transfer
+
+    transfer = PrintedTransfer(
+        company_id=company_id,
+        print_design_id=print_design_id,
+        side=side,
+        min_stock=None,
+    )
+    db.add(transfer)
+    await db.flush()
+    return transfer
+
+
+async def record_movement(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    printed_transfer_id: uuid.UUID,
+    kind: PrintedMovementKind,
+    quantity: int,
+    print_order_id: uuid.UUID | None = None,
+    assembly_run_id: uuid.UUID | None = None,
+    notes: str | None = None,
+) -> PrintedTransferMovement:
+    """Append a printed-transfer ledger row with provenance, WITHOUT committing.
+
+    The transition-internal sibling of :func:`create_movement`: it reuses the
+    same on-hand guard for EXIT (409 if insufficient — never clamp counted tiers)
+    but does NOT commit (the caller — a T4/T5 transition — owns the transaction)
+    and does NOT write audit (the caller writes one transition-level entry). The
+    print order (T4 credit) or assembly run (T5 debit) is recorded as provenance.
+    """
+
+    if kind == PrintedMovementKind.EXIT:
+        on_hand = await _compute_on_hand(db, company_id=company_id, printed_transfer_id=printed_transfer_id)
+        if on_hand < quantity:
+            raise ConflictError(detail=f"Insufficient printed transfers on-hand — available: {on_hand}")
+
+    movement = PrintedTransferMovement(
+        company_id=company_id,
+        printed_transfer_id=printed_transfer_id,
+        kind=kind,
+        quantity=quantity,
+        print_order_id=print_order_id,
+        assembly_run_id=assembly_run_id,
+        notes=notes.strip() if notes else None,
+    )
+    db.add(movement)
+    await db.flush()
+    return movement
+
+
 __all__ = [
     "_compute_on_hand",
     "compute_on_hand_map",
     "create_movement",
     "create_printed_transfer",
+    "get_or_create_printed_transfer",
     "list_levels",
     "list_movements",
+    "record_movement",
 ]

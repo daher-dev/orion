@@ -58,6 +58,8 @@
     "prints": "Estampas",
     "cutting": "Corte",
     "sewing": "Costura",
+    "printing": "Impressão",
+    "assembly": "Montagem",
     "contractors": "Bancas",
     "fabric": "Tecidos",
     "blankPieces": "Peças lisas",
@@ -3298,5 +3300,136 @@
       "movementCreated": "Movimentação registrada",
       "error": "Falha na operação"
     }
+  },
+  "printOrders": {
+    "page": { "eyebrow": "Produção" },
+    "list": {
+      "title": "Impressão",
+      "titleEm": "de estampas",
+      "sub": "Lotes de impressão DTF e sublimação.",
+      "loadError": "Não foi possível carregar as ordens de impressão.",
+      "noResults": "Nenhuma ordem de impressão encontrada.",
+      "empty": {
+        "title": "Nenhuma ordem de impressão ainda",
+        "body": "Planeje um lote contra uma bobina de papel para começar a imprimir."
+      }
+    },
+    "filters": { "searchPlaceholder": "Buscar ordens de impressão…" },
+    "view": { "kanban": "Kanban", "table": "Tabela" },
+    "status": { "pending": "Pendente", "printing": "Imprimindo", "done": "Concluído" },
+    "techniques": { "dtf": "DTF", "silkscreen": "Silkscreen", "sublimation": "Sublimação" },
+    "paperTypes": {
+      "dtf_film": "Filme DTF",
+      "sublimation_paper": "Papel sublimático",
+      "transfer_paper": "Papel transfer"
+    },
+    "consumptionRate": "{rate} m/peça",
+    "inStock": "No estoque",
+    "actions": {
+      "create": "Nova ordem",
+      "save": "Salvar",
+      "launch": "Lançar impressos"
+    },
+    "card": { "printed": "impressos", "noPlan": "Sem planejamento" },
+    "table": {
+      "code": "Código",
+      "estampa": "Estampa",
+      "technique": "Técnica",
+      "roll": "Bobina",
+      "status": "Status",
+      "planned": "Plano",
+      "printed": "Impresso"
+    },
+    "detail": {
+      "estampa": "Estampa a imprimir",
+      "estampaPlaceholder": "Selecione uma estampa…",
+      "paperRoll": "Bobina de papel / filme",
+      "rollPlaceholder": "Selecione uma bobina (opcional)…",
+      "sidesGrid": "Impressos por lado e variação",
+      "front": "Frente",
+      "back": "Costas",
+      "variation": "Variação",
+      "planned": "Planejado",
+      "plannedShort": "planejados",
+      "printed": "Impresso",
+      "subtotal": "Subtotal",
+      "total": "total",
+      "markPrinted": "Marcar como impresso (igualar ao planejado)",
+      "pngOk": "PNG",
+      "pngMissing": "sem PNG",
+      "pngMissingHint": "Falta o PNG desta variação/lado",
+      "paperConsumed": "Papel consumido",
+      "consumptionLegend": "previsto · consumido · Δ",
+      "consumido": "Consumido",
+      "pickRollForConsumption": "Selecione uma bobina para registrar o consumo",
+      "pickEstampa": "Selecione uma estampa",
+      "pickEstampaGrid": "Selecione uma estampa para montar a grade de lados e variações",
+      "gradeHint": "Estampa, lados e variações definem a grade",
+      "noRoll": "Sem bobina vinculada",
+      "rollLinked": "Bobina {code}",
+      "plannedCount": "{n} impressos planejados"
+    },
+    "form": {
+      "cancel": "Cancelar",
+      "title": {
+        "new": "Nova ordem de impressão",
+        "newSub": "Planeje um lote contra uma bobina de papel",
+        "edit": "Ordem {code}"
+      },
+      "toasts": {
+        "created": "Ordem de impressão criada",
+        "updated": "Ordem de impressão atualizada",
+        "launched": "Impressos lançados no estoque",
+        "error": "Falha na operação"
+      }
+    },
+    "fallback": { "forbidden": "Você não tem acesso às ordens de impressão." }
+  },
+  "assembly": {
+    "page": { "eyebrow": "Produção" },
+    "list": {
+      "title": "Montagem",
+      "titleEm": "& acabamento",
+      "sub": "Peça lisa + impresso, prensados em produto acabado."
+    },
+    "filters": { "searchPlaceholder": "Buscar por estampa ou ficha…" },
+    "columns": { "waiting": "Aguardando", "todo": "A montar", "done": "Montado" },
+    "actions": {
+      "manual": "Montagem avulsa",
+      "build": "Montar {n}",
+      "buildAll": "Montar prontos ({n})"
+    },
+    "comp": {
+      "blank": "Peça lisa · {onHand} em estoque",
+      "printed": "Impresso · {onHand} em estoque",
+      "blankShort": "peça lisa",
+      "printedShort": "impresso",
+      "missing": "faltando"
+    },
+    "manualSheet": {
+      "title": "Montagem avulsa",
+      "sub": "Escolha uma peça lisa e um impresso para prensar um produto.",
+      "blank": "Peça lisa",
+      "blankPlaceholder": "Selecione uma peça lisa…",
+      "printed": "Impresso",
+      "printedPlaceholder": "Selecione um impresso…",
+      "quantity": "Quantidade",
+      "maxHint": "Até {max} disponíveis",
+      "onHand": "{n} em estoque",
+      "productPreview": "Produto resultante",
+      "newSku": "Novo SKU",
+      "cancel": "Cancelar"
+    },
+    "toasts": {
+      "assembled": "+{n} · {sku}",
+      "error": "Falha na operação",
+      "insufficient": "Estoque insuficiente — disponível: {available}"
+    },
+    "empty": {
+      "buildable": "Nada para montar ainda",
+      "buildableBody": "Quando uma peça lisa e um impresso correspondente estiverem em estoque, o par aparece aqui.",
+      "noStock": "Sem estoque disponível."
+    },
+    "fallback": { "forbidden": "Você não tem acesso à montagem." }
   }
 }

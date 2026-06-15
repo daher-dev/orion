@@ -58,6 +58,8 @@
     "prints": "Prints",
     "cutting": "Cutting",
     "sewing": "Sewing",
+    "printing": "Printing",
+    "assembly": "Assembly",
     "contractors": "Workshops",
     "fabric": "Fabrics",
     "blankPieces": "Blank pieces",
@@ -3298,5 +3300,136 @@
       "movementCreated": "Movement recorded",
       "error": "Operation failed"
     }
+  },
+  "printOrders": {
+    "page": { "eyebrow": "Production" },
+    "list": {
+      "title": "Printing",
+      "titleEm": "of estampas",
+      "sub": "DTF and sublimation print batches.",
+      "loadError": "Could not load print orders.",
+      "noResults": "No print orders matched your search.",
+      "empty": {
+        "title": "No print orders yet",
+        "body": "Plan a batch against a paper roll to start printing transfers."
+      }
+    },
+    "filters": { "searchPlaceholder": "Search print orders…" },
+    "view": { "kanban": "Kanban", "table": "Table" },
+    "status": { "pending": "Pending", "printing": "Printing", "done": "Done" },
+    "techniques": { "dtf": "DTF", "silkscreen": "Silkscreen", "sublimation": "Sublimation" },
+    "paperTypes": {
+      "dtf_film": "DTF film",
+      "sublimation_paper": "Sublimation paper",
+      "transfer_paper": "Transfer paper"
+    },
+    "consumptionRate": "{rate} m/piece",
+    "inStock": "In stock",
+    "actions": {
+      "create": "New order",
+      "save": "Save",
+      "launch": "Post printed"
+    },
+    "card": { "printed": "printed", "noPlan": "No planned outputs" },
+    "table": {
+      "code": "Code",
+      "estampa": "Estampa",
+      "technique": "Technique",
+      "roll": "Roll",
+      "status": "Status",
+      "planned": "Planned",
+      "printed": "Printed"
+    },
+    "detail": {
+      "estampa": "Estampa to print",
+      "estampaPlaceholder": "Pick an estampa…",
+      "paperRoll": "Paper / film roll",
+      "rollPlaceholder": "Pick a roll (optional)…",
+      "sidesGrid": "Printed by side and variation",
+      "front": "Front",
+      "back": "Back",
+      "variation": "Variation",
+      "planned": "Planned",
+      "plannedShort": "planned",
+      "printed": "Printed",
+      "subtotal": "Subtotal",
+      "total": "total",
+      "markPrinted": "Mark printed (match planned)",
+      "pngOk": "PNG",
+      "pngMissing": "no PNG",
+      "pngMissingHint": "This variation/side is missing its PNG",
+      "paperConsumed": "Paper consumed",
+      "consumptionLegend": "expected · consumed · Δ",
+      "consumido": "Consumed",
+      "pickRollForConsumption": "Pick a roll to record consumption",
+      "pickEstampa": "Pick an estampa",
+      "pickEstampaGrid": "Pick an estampa to build the side and variation grid",
+      "gradeHint": "Estampa, sides and variations define the grid",
+      "noRoll": "No roll linked",
+      "rollLinked": "Roll {code}",
+      "plannedCount": "{n} planned"
+    },
+    "form": {
+      "cancel": "Cancel",
+      "title": {
+        "new": "New print order",
+        "newSub": "Plan a batch against a paper roll",
+        "edit": "Order {code}"
+      },
+      "toasts": {
+        "created": "Print order created",
+        "updated": "Print order updated",
+        "launched": "Printed transfers posted to stock",
+        "error": "Operation failed"
+      }
+    },
+    "fallback": { "forbidden": "You don't have access to print orders." }
+  },
+  "assembly": {
+    "page": { "eyebrow": "Production" },
+    "list": {
+      "title": "Assembly",
+      "titleEm": "& finishing",
+      "sub": "Blank piece + printed transfer, pressed into a finished product."
+    },
+    "filters": { "searchPlaceholder": "Search by estampa or spec…" },
+    "columns": { "waiting": "Waiting", "todo": "To assemble", "done": "Assembled" },
+    "actions": {
+      "manual": "Manual assembly",
+      "build": "Assemble {n}",
+      "buildAll": "Assemble ready ({n})"
+    },
+    "comp": {
+      "blank": "Blank piece · {onHand} on hand",
+      "printed": "Printed · {onHand} on hand",
+      "blankShort": "blank",
+      "printedShort": "printed",
+      "missing": "missing"
+    },
+    "manualSheet": {
+      "title": "Manual assembly",
+      "sub": "Pick a blank piece and a printed transfer to press a product.",
+      "blank": "Blank piece",
+      "blankPlaceholder": "Pick a blank piece…",
+      "printed": "Printed transfer",
+      "printedPlaceholder": "Pick a printed transfer…",
+      "quantity": "Quantity",
+      "maxHint": "Up to {max} available",
+      "onHand": "{n} on hand",
+      "productPreview": "Resulting product",
+      "newSku": "New SKU",
+      "cancel": "Cancel"
+    },
+    "toasts": {
+      "assembled": "+{n} · {sku}",
+      "error": "Operation failed",
+      "insufficient": "Insufficient on-hand — available: {available}"
+    },
+    "empty": {
+      "buildable": "Nothing to assemble yet",
+      "buildableBody": "When a blank piece and a matching printed transfer are both in stock, the pair shows up here.",
+      "noStock": "No stock available."
+    },
+    "fallback": { "forbidden": "You don't have access to assembly." }
   }
 }

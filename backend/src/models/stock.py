@@ -13,8 +13,7 @@ class StockEntry(CompanyModel, table=True):
 
     Sewing no longer credits finished stock (it credits blank pieces in T3);
     finished pieces are now credited by an Assembly (Montagem) run
-    (``StockSource.ASSEMBLY``) — the ``assembly_run_id`` provenance FK is
-    added in Phase 4.
+    (``StockSource.ASSEMBLY``), traced via the ``assembly_run_id`` provenance FK.
     """
 
     __tablename__ = "stock_entries"
@@ -30,6 +29,18 @@ class StockEntry(CompanyModel, table=True):
     )
     quantity: int = Field(gt=0)
     source: StockSource = Field(sa_type=STOCK_SOURCE)
+    # Provenance: a finished-stock credit may originate from an assembly run
+    # (T5). Set only by the assemble transition (Phase 4), null on manual /
+    # import entries.
+    assembly_run_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(
+            Uuid,
+            ForeignKey("assembly_runs.id", ondelete="SET NULL"),
+            nullable=True,
+            index=True,
+        ),
+    )
     notes: str | None = Field(default=None)
 
 

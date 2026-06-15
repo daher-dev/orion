@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from routers.admin import router as admin_router
 from routers.ads import router as ads_router
+from routers.assembly import router as assembly_router
 from routers.audit_log import router as audit_log_router
 from routers.auth import router as auth_router
 from routers.batches import router as batches_router
@@ -22,6 +23,7 @@ from routers.members import router as members_router
 from routers.orders import router as orders_router
 from routers.orders_import import router as orders_import_router
 from routers.paper_roll import router as paper_roll_router
+from routers.print_order import router as print_order_router
 from routers.printed_transfer import router as printed_transfer_router
 from routers.prints import router as prints_router
 from routers.products import router as products_router
@@ -37,6 +39,7 @@ from routers.user import router as user_router
 api_router = APIRouter()
 api_router.include_router(admin_router)
 api_router.include_router(ads_router)
+api_router.include_router(assembly_router)
 api_router.include_router(audit_log_router)
 api_router.include_router(auth_router)
 api_router.include_router(batches_router)
@@ -56,6 +59,7 @@ api_router.include_router(members_router)
 api_router.include_router(orders_router)
 api_router.include_router(orders_import_router)
 api_router.include_router(paper_roll_router)
+api_router.include_router(print_order_router)
 api_router.include_router(printed_transfer_router)
 api_router.include_router(prints_router)
 api_router.include_router(products_router)
@@ -71,6 +75,7 @@ __all__ = [
     "admin_router",
     "ads_router",
     "api_router",
+    "assembly_router",
     "audit_log_router",
     "auth_router",
     "batches_router",
@@ -91,6 +96,7 @@ __all__ = [
     "orders_import_router",
     "orders_router",
     "paper_roll_router",
+    "print_order_router",
     "printed_transfer_router",
     "prints_router",
     "products_router",

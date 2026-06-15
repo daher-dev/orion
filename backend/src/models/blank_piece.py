@@ -69,13 +69,23 @@ class BlankPieceMovement(CompanyModel, table=True):
     quantity: int = Field(gt=0)
     # Provenance: a movement crediting blank stock may originate from a received
     # sewing remessa (T3). Set only by the sewing-receipt transition (Phase 3),
-    # null on manual movements. (``assembly_run_id`` provenance is deferred to
-    # Phase 4 — the ``assembly_runs`` table does not exist yet.)
+    # null on manual movements.
     sewing_shipment_id: uuid.UUID | None = Field(
         default=None,
         sa_column=Column(
             Uuid,
             ForeignKey("sewing_shipments.id", ondelete="SET NULL"),
+            nullable=True,
+            index=True,
+        ),
+    )
+    # Provenance: a blank debit may originate from an assembly run (T5). Set only
+    # by the assemble transition (Phase 4), null on manual movements.
+    assembly_run_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(
+            Uuid,
+            ForeignKey("assembly_runs.id", ondelete="SET NULL"),
             nullable=True,
             index=True,
         ),

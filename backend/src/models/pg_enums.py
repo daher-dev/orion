@@ -23,7 +23,6 @@ from models.enums import (
     PrintedMovementKind,
     PrintOrderStatus,
     PrintSide,
-    PrintStockDirection,
     PrintTechnique,
     ProductType,
     SeparationStatus,
@@ -62,7 +61,6 @@ BATCH_STATUS = _enum(BatchStatus, "batch_status")
 CHANNEL_STATUS = _enum(ChannelStatus, "channel_status")
 SEPARATION_STATUS = _enum(SeparationStatus, "separation_status")
 PRINT_TECHNIQUE = _enum(PrintTechnique, "print_technique")
-PRINT_STOCK_DIRECTION = _enum(PrintStockDirection, "print_stock_direction")
 SUPPLY_MOVEMENT_KIND = _enum(SupplyMovementKind, "supply_movement_kind")
 SUBSCRIPTION_STATUS = _enum(SubscriptionStatus, "subscription_status")
 PAPER_TYPE = _enum(PaperType, "paper_type")

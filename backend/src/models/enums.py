@@ -101,21 +101,6 @@ class StockExitReason(StrEnum):
     LOSS = "loss"
 
 
-class PrintStockDirection(StrEnum):
-    """Direction of a printed-stamp (estampa impressa) stock movement.
-
-    ENTRY: printed stamps flowing into stock (a print run).
-    EXIT: printed stamps consumed (applied to a piece, lost).
-    ADJUSTMENT: a signed correction recorded as a positive quantity in the
-        chosen direction — kept as its own kind so manual reconciliations are
-        distinguishable from operational entries/exits in the ledger.
-    """
-
-    ENTRY = "entry"
-    EXIT = "exit"
-    ADJUSTMENT = "adjustment"
-
-
 class SupplyMovementKind(StrEnum):
     """Direction of a consumable-supply (insumo) stock movement.
 

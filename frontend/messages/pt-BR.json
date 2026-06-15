@@ -60,8 +60,10 @@
     "sewing": "Costura",
     "contractors": "Bancas",
     "fabric": "Tecidos",
+    "blankPieces": "Peças lisas",
+    "paper": "Papel",
+    "printedTransfers": "Impressos",
     "stock": "Estoque",
-    "printStock": "Estoque de estampas",
     "supplies": "Insumos",
     "reports": "Relatórios",
     "settings": "Ajustes",
@@ -1676,99 +1678,6 @@
       "forbidden": "Você não tem acesso ao estoque."
     }
   },
-  "printStock": {
-    "page": {
-      "eyebrow": "Estoque"
-    },
-    "list": {
-      "title": "Estoque de estampas",
-      "titleEm": "/ impresso",
-      "sub": "Estoque de estampas impressas por estampa e cor.",
-      "empty": {
-        "title": "Nenhuma estampa impressa cadastrada",
-        "body": "As entradas aparecem quando você registra uma impressão ou um ajuste manual.",
-        "cta": "Registrar movimento"
-      }
-    },
-    "filters": {
-      "searchPlaceholder": "Buscar estampa, código, cor…"
-    },
-    "table": {
-      "columns": {
-        "design": "Estampa",
-        "color": "Cor",
-        "onHand": "Em estoque",
-        "status": "Status",
-        "lastMovement": "Últ. mov.",
-        "actions": "Ações"
-      }
-    },
-    "statuses": {
-      "low": "Baixo",
-      "ok": "OK"
-    },
-    "actions": {
-      "viewFullLedger": "Histórico completo",
-      "confirmAdjust": "Registrar movimento"
-    },
-    "adjust": {
-      "title": "Registrar movimento",
-      "sub": "Adicione ou retire estampas impressas de uma estampa e cor.",
-      "fields": {
-        "direction": "Direção",
-        "design": "Estampa",
-        "designPlaceholder": "Selecione uma estampa…",
-        "color": "Cor",
-        "colorPlaceholder": "ex. Preto",
-        "quantity": "Quantidade",
-        "notes": "Observações",
-        "notesPlaceholder": "Observações opcionais…"
-      },
-      "directions": {
-        "entry": "Entrada",
-        "exit": "Saída"
-      },
-      "actions": {
-        "cancel": "Cancelar",
-        "confirm": "Salvar"
-      },
-      "toasts": {
-        "success": "Movimento registrado",
-        "error": "Falha na operação",
-        "insufficient": "Estoque de impresso insuficiente para esta saída."
-      }
-    },
-    "validation": {
-      "designRequired": "Selecione uma estampa",
-      "colorRequired": "Informe uma cor",
-      "quantityPositive": "A quantidade deve ser maior que zero"
-    },
-    "movements": {
-      "title": "Movimentos",
-      "titleEm": "histórico completo",
-      "sub": "Todas as entradas e saídas de impresso, da mais recente.",
-      "columns": {
-        "when": "Quando",
-        "design": "Estampa",
-        "color": "Cor",
-        "direction": "Direção",
-        "quantity": "Qtd",
-        "notes": "Observações"
-      },
-      "directions": {
-        "entry": "Entrada",
-        "exit": "Saída",
-        "adjustment": "Ajuste",
-        "all": "Todos"
-      },
-      "empty": "Nenhum movimento registrado ainda."
-    },
-    "drawer": {
-      "title": "Histórico de movimentos",
-      "close": "Fechar",
-      "empty": "Esta estampa / cor ainda não teve movimentos."
-    }
-  },
   "supplies": {
     "page": {
       "eyebrow": "Estoque"
@@ -2972,6 +2881,329 @@
       "bullet3": "Encerre a sessão assim que concluir o atendimento.",
       "banner": "Sessão de suporte · você está em {name}",
       "end": "Encerrar"
+    }
+  },
+  "blankPieces": {
+    "page": {
+      "eyebrow": "Estoque"
+    },
+    "list": {
+      "title": "Peças",
+      "titleEm": "lisas",
+      "sub": "Peças costuradas, aguardando estampa.",
+      "empty": {
+        "title": "Nenhuma peça lisa ainda",
+        "body": "As peças entram aqui quando uma remessa volta da costura na banca."
+      }
+    },
+    "kpis": {
+      "total": "Total em peças lisas",
+      "totalUnit": "peças",
+      "belowMin": "Abaixo do mínimo",
+      "belowMinHint": "SKUs base a repor"
+    },
+    "tabs": {
+      "current": "Posição atual",
+      "movements": "Movimentações"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar peça lisa…",
+      "lowStockOnly": "Apenas baixos"
+    },
+    "table": {
+      "columns": {
+        "base": "Peça base",
+        "color": "Cor",
+        "size": "Tam.",
+        "min": "Mínimo",
+        "onHand": "Em estoque"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Ver extrato"
+    },
+    "moveSheet": {
+      "title": "Lançar movimentação",
+      "sub": "Ajuste a quantidade de peças lisas desta peça base.",
+      "onHandLabel": "em estoque",
+      "labels": {
+        "moveType": "Tipo de movimentação",
+        "quantity": "Quantidade",
+        "preview": "Pré-visualização",
+        "recent": "Últimas movimentações"
+      },
+      "moveTypes": {
+        "entryAdjustment": {
+          "label": "Ajuste (+)",
+          "desc": "Correção de inventário"
+        },
+        "exitAdjustment": {
+          "label": "Ajuste (−)",
+          "desc": "Correção de inventário"
+        },
+        "damage": {
+          "label": "Avaria",
+          "desc": "Peça danificada"
+        }
+      },
+      "preview": {
+        "current": "Atual",
+        "entry": "Entrada",
+        "exit": "Saída",
+        "final": "Final",
+        "negativeWarning": "Estoque ficaria negativo.",
+        "lowWarning": "O estoque resultante fica abaixo do mínimo."
+      },
+      "ledgerKinds": {
+        "entry": "Entrada",
+        "exit": "Saída",
+        "adjustment": "Ajuste"
+      },
+      "validation": {
+        "quantityPositive": "A quantidade deve ser maior que zero",
+        "insufficient": "Apenas {available} em estoque para esta saída."
+      },
+      "cancel": "Cancelar",
+      "save": "Salvar"
+    },
+    "ledger": {
+      "title": "Movimentações",
+      "titleEm": "extrato completo",
+      "sub": "Todas as entradas e saídas de peças lisas, mais recentes primeiro.",
+      "columns": {
+        "when": "Data",
+        "item": "Item",
+        "reason": "Motivo",
+        "quantity": "Qtd"
+      },
+      "kinds": {
+        "entry": "Entrada",
+        "exit": "Saída",
+        "adjustment": "Ajuste"
+      },
+      "kindFilter": {
+        "all": "Todas"
+      },
+      "empty": "Nenhuma movimentação registrada ainda."
+    },
+    "toasts": {
+      "movementCreated": "Movimentação registrada",
+      "error": "Falha na operação"
+    }
+  },
+  "paperRolls": {
+    "page": {
+      "eyebrow": "Estoque"
+    },
+    "list": {
+      "title": "Bobinas",
+      "titleEm": "de papel",
+      "sub": "Filme DTF e papel de sublimação, por saldo.",
+      "empty": {
+        "title": "Nenhuma bobina ainda",
+        "body": "Receba uma bobina para começar a controlar o insumo da estamparia."
+      }
+    },
+    "kpis": {
+      "total": "Saldo total",
+      "totalUnit": "m",
+      "toReorder": "Bobinas a repor",
+      "toReorderHint": "abaixo do limite de estoque baixo"
+    },
+    "tabs": {
+      "current": "Posição atual",
+      "movements": "Movimentações"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar por tipo, fornecedor…"
+    },
+    "types": {
+      "dtf_film": "Filme DTF",
+      "sublimation_paper": "Papel sublimático",
+      "transfer_paper": "Papel transfer"
+    },
+    "table": {
+      "columns": {
+        "type": "Tipo",
+        "width": "Largura",
+        "supplier": "Fornecedor",
+        "received": "Recebida",
+        "saldo": "Saldo",
+        "remaining": "Restante"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Ver extrato",
+      "receiveRoll": "Receber bobina"
+    },
+    "receive": {
+      "title": "Receber bobina",
+      "sub": "Cadastre uma nova bobina de papel/filme com a metragem inicial.",
+      "fields": {
+        "material": "Material",
+        "width": "Largura (cm)",
+        "meters": "Metragem (m)",
+        "supplier": "Fornecedor",
+        "supplierPlaceholder": "Ex: DTF Brasil"
+      },
+      "cancel": "Cancelar",
+      "submit": "Registrar entrada",
+      "validation": {
+        "invalid": "Informe largura e metragem válidas.",
+        "supplierRequired": "Informe o fornecedor."
+      }
+    },
+    "detail": {
+      "widthLabel": "{width} cm de largura",
+      "remaining": "Restante",
+      "lowWarning": "Estoque baixo — considere repor.",
+      "supplier": "Fornecedor",
+      "received": "Recebida em",
+      "consumed": "Consumido",
+      "width": "Largura",
+      "consumeTitle": "Lançar consumo",
+      "afterConsume": "Saldo após consumo:",
+      "consumeSubmit": "Lançar consumo",
+      "close": "Fechar",
+      "delete": "Excluir bobina"
+    },
+    "ledger": {
+      "title": "Movimentações",
+      "titleEm": "extrato completo",
+      "sub": "Todas as entradas e consumos de bobina, mais recentes primeiro.",
+      "columns": {
+        "when": "Data",
+        "item": "Item",
+        "reason": "Motivo",
+        "quantity": "Qtd"
+      },
+      "kinds": {
+        "entry": "Entrada",
+        "exit": "Consumo",
+        "adjustment": "Ajuste"
+      },
+      "kindFilter": {
+        "all": "Todas"
+      },
+      "empty": "Nenhuma movimentação registrada ainda."
+    },
+    "toasts": {
+      "rollReceived": "Bobina recebida",
+      "consumed": "Consumo registrado",
+      "deleted": "Bobina excluída",
+      "deleteBlocked": "Esta bobina tem histórico de movimentação e não pode ser excluída.",
+      "error": "Falha na operação"
+    }
+  },
+  "printedTransfers": {
+    "page": {
+      "eyebrow": "Estoque"
+    },
+    "list": {
+      "title": "Impressos",
+      "titleEm": "prontos",
+      "sub": "Transfers impressos, por estampa e lado, aguardando a prensa.",
+      "empty": {
+        "title": "Nenhum impresso ainda",
+        "body": "Os impressos entram aqui quando uma impressão é concluída ou ajustada manualmente."
+      }
+    },
+    "kpis": {
+      "total": "Impressos prontos",
+      "totalUnit": "un",
+      "alerting": "Itens em alerta",
+      "alertingHint": "esgotados ou abaixo do mínimo"
+    },
+    "tabs": {
+      "current": "Posição atual",
+      "movements": "Movimentações"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar estampa…",
+      "lowStockOnly": "Apenas baixos"
+    },
+    "sides": {
+      "front": "Frente",
+      "back": "Costas"
+    },
+    "table": {
+      "columns": {
+        "design": "Estampa",
+        "side": "Lado",
+        "min": "Mínimo",
+        "onHand": "Prontos"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Ver extrato"
+    },
+    "moveSheet": {
+      "title": "Lançar movimentação",
+      "sub": "Ajuste a quantidade de impressos desta estampa e lado.",
+      "onHandLabel": "prontos",
+      "labels": {
+        "moveType": "Tipo de movimentação",
+        "quantity": "Quantidade",
+        "preview": "Pré-visualização",
+        "recent": "Últimas movimentações"
+      },
+      "moveTypes": {
+        "entryAdjustment": {
+          "label": "Ajuste (+)",
+          "desc": "Correção de inventário"
+        },
+        "exitAdjustment": {
+          "label": "Ajuste (−)",
+          "desc": "Correção de inventário"
+        },
+        "scrap": {
+          "label": "Refugo",
+          "desc": "Falha de impressão"
+        }
+      },
+      "preview": {
+        "current": "Atual",
+        "entry": "Entrada",
+        "exit": "Saída",
+        "final": "Final",
+        "negativeWarning": "Estoque ficaria negativo.",
+        "lowWarning": "O estoque resultante fica abaixo do mínimo."
+      },
+      "ledgerKinds": {
+        "entry": "Entrada",
+        "exit": "Saída",
+        "adjustment": "Ajuste"
+      },
+      "validation": {
+        "quantityPositive": "A quantidade deve ser maior que zero",
+        "insufficient": "Apenas {available} prontos para esta saída."
+      },
+      "cancel": "Cancelar",
+      "save": "Salvar"
+    },
+    "ledger": {
+      "title": "Movimentações",
+      "titleEm": "extrato completo",
+      "sub": "Todas as entradas e saídas de impressos, mais recentes primeiro.",
+      "columns": {
+        "when": "Data",
+        "item": "Item",
+        "reason": "Motivo",
+        "quantity": "Qtd"
+      },
+      "kinds": {
+        "entry": "Entrada",
+        "exit": "Saída",
+        "adjustment": "Ajuste"
+      },
+      "kindFilter": {
+        "all": "Todas"
+      },
+      "empty": "Nenhuma movimentação registrada ainda."
+    },
+    "toasts": {
+      "movementCreated": "Movimentação registrada",
+      "error": "Falha na operação"
     }
   }
 }

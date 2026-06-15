@@ -2,6 +2,12 @@
 
 from tests.factories.ad import AdFactory, create_ad
 from tests.factories.audit import AuditLogFactory, create_audit_log
+from tests.factories.blank_stock import (
+    BlankPieceFactory,
+    BlankPieceMovementFactory,
+    create_blank_piece,
+    create_blank_piece_movement,
+)
 from tests.factories.channel_integration import (
     ChannelConnectionFactory,
     create_channel_connection,
@@ -18,6 +24,12 @@ from tests.factories.fabric import FabricRollFactory, create_fabric_roll
 from tests.factories.invite import InviteFactory, create_invite
 from tests.factories.order import OrderFactory, create_order
 from tests.factories.order_item import OrderItemFactory, create_order_item
+from tests.factories.paper_roll import (
+    PaperRollFactory,
+    PaperRollMovementFactory,
+    create_paper_roll,
+    create_paper_roll_movement,
+)
 from tests.factories.plan import (
     PlanFactory,
     SubscriptionFactory,
@@ -25,7 +37,12 @@ from tests.factories.plan import (
     create_subscription,
 )
 from tests.factories.print_design import PrintDesignFactory, create_print_design
-from tests.factories.print_stock import PrintStockMovementFactory, create_print_stock_movement
+from tests.factories.printed_transfer import (
+    PrintedTransferFactory,
+    PrintedTransferMovementFactory,
+    create_printed_transfer,
+    create_printed_transfer_movement,
+)
 from tests.factories.product import (
     ProductFactory,
     ProductVariationFactory,
@@ -69,6 +86,8 @@ from tests.factories.user import UserFactory, create_user
 __all__ = [
     "AdFactory",
     "AuditLogFactory",
+    "BlankPieceFactory",
+    "BlankPieceMovementFactory",
     "ChannelConnectionFactory",
     "ClientFactory",
     "CompanyFactory",
@@ -78,10 +97,13 @@ __all__ = [
     "InviteFactory",
     "OrderFactory",
     "OrderItemFactory",
+    "PaperRollFactory",
+    "PaperRollMovementFactory",
     "PermissionFactory",
     "PlanFactory",
     "PrintDesignFactory",
-    "PrintStockMovementFactory",
+    "PrintedTransferFactory",
+    "PrintedTransferMovementFactory",
     "ProductFactory",
     "ProductSpecFactory",
     "ProductVariationFactory",
@@ -98,6 +120,8 @@ __all__ = [
     "UserFactory",
     "create_ad",
     "create_audit_log",
+    "create_blank_piece",
+    "create_blank_piece_movement",
     "create_channel_connection",
     "create_client",
     "create_company",
@@ -107,9 +131,12 @@ __all__ = [
     "create_invite",
     "create_order",
     "create_order_item",
+    "create_paper_roll",
+    "create_paper_roll_movement",
     "create_plan",
     "create_print_design",
-    "create_print_stock_movement",
+    "create_printed_transfer",
+    "create_printed_transfer_movement",
     "create_product",
     "create_product_spec",
     "create_product_variation",

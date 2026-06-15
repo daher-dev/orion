@@ -60,8 +60,10 @@
     "sewing": "Sewing",
     "contractors": "Workshops",
     "fabric": "Fabrics",
+    "blankPieces": "Blank pieces",
+    "paper": "Paper",
+    "printedTransfers": "Printed transfers",
     "stock": "Stock",
-    "printStock": "Print stock",
     "supplies": "Supplies",
     "reports": "Reports",
     "settings": "Settings",
@@ -1676,99 +1678,6 @@
       "forbidden": "You don't have access to stock."
     }
   },
-  "printStock": {
-    "page": {
-      "eyebrow": "Inventory"
-    },
-    "list": {
-      "title": "Print stock",
-      "titleEm": "of printed stamps",
-      "sub": "Printed-stamp inventory by design and color.",
-      "empty": {
-        "title": "No printed stamps registered yet",
-        "body": "Entries appear when you record a print run or a manual adjustment.",
-        "cta": "Record a movement"
-      }
-    },
-    "filters": {
-      "searchPlaceholder": "Search design, code, color…"
-    },
-    "table": {
-      "columns": {
-        "design": "Design",
-        "color": "Color",
-        "onHand": "On hand",
-        "status": "Status",
-        "lastMovement": "Last move",
-        "actions": "Actions"
-      }
-    },
-    "statuses": {
-      "low": "Low",
-      "ok": "OK"
-    },
-    "actions": {
-      "viewFullLedger": "Full ledger",
-      "confirmAdjust": "Record movement"
-    },
-    "adjust": {
-      "title": "Record movement",
-      "sub": "Add or remove printed stamps for a design and color.",
-      "fields": {
-        "direction": "Direction",
-        "design": "Design",
-        "designPlaceholder": "Select a design…",
-        "color": "Color",
-        "colorPlaceholder": "e.g. Preto",
-        "quantity": "Quantity",
-        "notes": "Notes",
-        "notesPlaceholder": "Optional notes…"
-      },
-      "directions": {
-        "entry": "Entry",
-        "exit": "Exit"
-      },
-      "actions": {
-        "cancel": "Cancel",
-        "confirm": "Save"
-      },
-      "toasts": {
-        "success": "Movement recorded",
-        "error": "Operation failed",
-        "insufficient": "Insufficient print stock for this exit."
-      }
-    },
-    "validation": {
-      "designRequired": "Select a design",
-      "colorRequired": "Enter a color",
-      "quantityPositive": "Quantity must be greater than zero"
-    },
-    "movements": {
-      "title": "Movements",
-      "titleEm": "full ledger",
-      "sub": "Every print-stock entry and exit, newest first.",
-      "columns": {
-        "when": "When",
-        "design": "Design",
-        "color": "Color",
-        "direction": "Direction",
-        "quantity": "Qty",
-        "notes": "Notes"
-      },
-      "directions": {
-        "entry": "Entry",
-        "exit": "Exit",
-        "adjustment": "Adjustment",
-        "all": "All"
-      },
-      "empty": "No movements recorded yet."
-    },
-    "drawer": {
-      "title": "Movement history",
-      "close": "Close",
-      "empty": "This design / color hasn't moved yet."
-    }
-  },
   "supplies": {
     "page": {
       "eyebrow": "Inventory"
@@ -2972,6 +2881,329 @@
       "bullet3": "End the session as soon as you're done.",
       "banner": "Support session · you're acting inside {name}",
       "end": "End session"
+    }
+  },
+  "blankPieces": {
+    "page": {
+      "eyebrow": "Inventory"
+    },
+    "list": {
+      "title": "Blank",
+      "titleEm": "pieces",
+      "sub": "Sewn pieces, waiting for printing.",
+      "empty": {
+        "title": "No blank pieces yet",
+        "body": "Pieces land here when a sewing shipment is received from a contractor."
+      }
+    },
+    "kpis": {
+      "total": "Total blank pieces",
+      "totalUnit": "pieces",
+      "belowMin": "Below minimum",
+      "belowMinHint": "base SKUs to replenish"
+    },
+    "tabs": {
+      "current": "Current position",
+      "movements": "Movements"
+    },
+    "filters": {
+      "searchPlaceholder": "Search blank piece…",
+      "lowStockOnly": "Low only"
+    },
+    "table": {
+      "columns": {
+        "base": "Base piece",
+        "color": "Color",
+        "size": "Size",
+        "min": "Minimum",
+        "onHand": "On hand"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Full ledger"
+    },
+    "moveSheet": {
+      "title": "Record movement",
+      "sub": "Adjust the blank-piece count for this base piece.",
+      "onHandLabel": "in stock",
+      "labels": {
+        "moveType": "Movement type",
+        "quantity": "Quantity",
+        "preview": "Preview",
+        "recent": "Recent movements"
+      },
+      "moveTypes": {
+        "entryAdjustment": {
+          "label": "Adjust (+)",
+          "desc": "Inventory correction"
+        },
+        "exitAdjustment": {
+          "label": "Adjust (−)",
+          "desc": "Inventory correction"
+        },
+        "damage": {
+          "label": "Damage",
+          "desc": "Damaged piece"
+        }
+      },
+      "preview": {
+        "current": "Current",
+        "entry": "Entry",
+        "exit": "Exit",
+        "final": "Final",
+        "negativeWarning": "Stock would go negative.",
+        "lowWarning": "Resulting stock is below the minimum."
+      },
+      "ledgerKinds": {
+        "entry": "Entry",
+        "exit": "Exit",
+        "adjustment": "Adjustment"
+      },
+      "validation": {
+        "quantityPositive": "Quantity must be greater than zero",
+        "insufficient": "Only {available} in stock for this exit."
+      },
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "ledger": {
+      "columns": {
+        "when": "When",
+        "item": "Item",
+        "reason": "Reason",
+        "quantity": "Qty"
+      },
+      "kinds": {
+        "entry": "Entry",
+        "exit": "Exit",
+        "adjustment": "Adjustment"
+      },
+      "kindFilter": {
+        "all": "All"
+      },
+      "empty": "No movements recorded yet.",
+      "title": "Movements",
+      "titleEm": "full ledger",
+      "sub": "Every blank-piece entry and exit, newest first."
+    },
+    "toasts": {
+      "movementCreated": "Movement recorded",
+      "error": "Operation failed"
+    }
+  },
+  "paperRolls": {
+    "page": {
+      "eyebrow": "Inventory"
+    },
+    "list": {
+      "title": "Paper",
+      "titleEm": "rolls",
+      "sub": "DTF film and sublimation paper, tracked by balance.",
+      "empty": {
+        "title": "No paper rolls yet",
+        "body": "Receive a roll to start tracking print-transfer stock."
+      }
+    },
+    "kpis": {
+      "total": "Total balance",
+      "totalUnit": "m",
+      "toReorder": "Rolls to reorder",
+      "toReorderHint": "below the low-stock threshold"
+    },
+    "tabs": {
+      "current": "Current position",
+      "movements": "Movements"
+    },
+    "filters": {
+      "searchPlaceholder": "Search by type, supplier…"
+    },
+    "types": {
+      "dtf_film": "DTF film",
+      "sublimation_paper": "Sublimation paper",
+      "transfer_paper": "Transfer paper"
+    },
+    "table": {
+      "columns": {
+        "type": "Type",
+        "width": "Width",
+        "supplier": "Supplier",
+        "received": "Received",
+        "saldo": "Balance",
+        "remaining": "Remaining"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Full ledger",
+      "receiveRoll": "Receive roll"
+    },
+    "receive": {
+      "title": "Receive roll",
+      "sub": "Register a new paper/film roll with its initial length.",
+      "fields": {
+        "material": "Material",
+        "width": "Width (cm)",
+        "meters": "Length (m)",
+        "supplier": "Supplier",
+        "supplierPlaceholder": "e.g. DTF Brasil"
+      },
+      "cancel": "Cancel",
+      "submit": "Register entry",
+      "validation": {
+        "invalid": "Enter a valid width and length.",
+        "supplierRequired": "Enter a supplier."
+      }
+    },
+    "detail": {
+      "widthLabel": "{width} cm wide",
+      "remaining": "Remaining",
+      "lowWarning": "Low stock — consider reordering.",
+      "supplier": "Supplier",
+      "received": "Received",
+      "consumed": "Consumed",
+      "width": "Width",
+      "consumeTitle": "Record consumption",
+      "afterConsume": "Balance after consumption:",
+      "consumeSubmit": "Record consumption",
+      "close": "Close",
+      "delete": "Delete roll"
+    },
+    "ledger": {
+      "title": "Movements",
+      "titleEm": "full ledger",
+      "sub": "Every paper-roll entry and consumption, newest first.",
+      "columns": {
+        "when": "When",
+        "item": "Item",
+        "reason": "Reason",
+        "quantity": "Qty"
+      },
+      "kinds": {
+        "entry": "Entry",
+        "exit": "Consumption",
+        "adjustment": "Adjustment"
+      },
+      "kindFilter": {
+        "all": "All"
+      },
+      "empty": "No movements recorded yet."
+    },
+    "toasts": {
+      "rollReceived": "Roll received",
+      "consumed": "Consumption recorded",
+      "deleted": "Roll deleted",
+      "deleteBlocked": "This roll has movement history and can't be deleted.",
+      "error": "Operation failed"
+    }
+  },
+  "printedTransfers": {
+    "page": {
+      "eyebrow": "Inventory"
+    },
+    "list": {
+      "title": "Printed",
+      "titleEm": "transfers",
+      "sub": "Printed transfers by design and side, waiting for the press.",
+      "empty": {
+        "title": "No printed transfers yet",
+        "body": "Transfers land here when a print run is completed or adjusted manually."
+      }
+    },
+    "kpis": {
+      "total": "Printed transfers ready",
+      "totalUnit": "un",
+      "alerting": "Items in alert",
+      "alertingHint": "out of stock or below minimum"
+    },
+    "tabs": {
+      "current": "Current position",
+      "movements": "Movements"
+    },
+    "filters": {
+      "searchPlaceholder": "Search design…",
+      "lowStockOnly": "Low only"
+    },
+    "sides": {
+      "front": "Front",
+      "back": "Back"
+    },
+    "table": {
+      "columns": {
+        "design": "Design",
+        "side": "Side",
+        "min": "Minimum",
+        "onHand": "Ready"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Full ledger"
+    },
+    "moveSheet": {
+      "title": "Record movement",
+      "sub": "Adjust the printed-transfer count for this design and side.",
+      "onHandLabel": "ready",
+      "labels": {
+        "moveType": "Movement type",
+        "quantity": "Quantity",
+        "preview": "Preview",
+        "recent": "Recent movements"
+      },
+      "moveTypes": {
+        "entryAdjustment": {
+          "label": "Adjust (+)",
+          "desc": "Inventory correction"
+        },
+        "exitAdjustment": {
+          "label": "Adjust (−)",
+          "desc": "Inventory correction"
+        },
+        "scrap": {
+          "label": "Scrap",
+          "desc": "Failed print"
+        }
+      },
+      "preview": {
+        "current": "Current",
+        "entry": "Entry",
+        "exit": "Exit",
+        "final": "Final",
+        "negativeWarning": "Stock would go negative.",
+        "lowWarning": "Resulting stock is below the minimum."
+      },
+      "ledgerKinds": {
+        "entry": "Entry",
+        "exit": "Exit",
+        "adjustment": "Adjustment"
+      },
+      "validation": {
+        "quantityPositive": "Quantity must be greater than zero",
+        "insufficient": "Only {available} ready for this exit."
+      },
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "ledger": {
+      "title": "Movements",
+      "titleEm": "full ledger",
+      "sub": "Every printed-transfer entry and exit, newest first.",
+      "columns": {
+        "when": "When",
+        "item": "Item",
+        "reason": "Reason",
+        "quantity": "Qty"
+      },
+      "kinds": {
+        "entry": "Entry",
+        "exit": "Exit",
+        "adjustment": "Adjustment"
+      },
+      "kindFilter": {
+        "all": "All"
+      },
+      "empty": "No movements recorded yet."
+    },
+    "toasts": {
+      "movementCreated": "Movement recorded",
+      "error": "Operation failed"
     }
   }
 }

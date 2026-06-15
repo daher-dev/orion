@@ -9,6 +9,7 @@ from models.ad_products import AdProduct
 from models.audit_log import AuditLog
 from models.base import BaseModel, CompanyModel
 from models.batch import Batch
+from models.blank_piece import BlankPiece, BlankPieceMovement
 from models.channel_integration import ChannelConnection
 from models.client import Client
 from models.company import Company
@@ -31,7 +32,6 @@ from models.enums import (
     PrintedMovementKind,
     PrintOrderStatus,
     PrintSide,
-    PrintStockDirection,
     PrintTechnique,
     ProductType,
     SeparationStatus,
@@ -49,9 +49,10 @@ from models.invite import Invite
 from models.login_attempt import LoginAttempt
 from models.order import Order
 from models.order_item import OrderItem
+from models.paper_roll import PaperRoll, PaperRollMovement
 from models.plan import Plan
 from models.print_design import PrintDesign, PrintDesignVariation
-from models.print_stock import PrintStockMovement
+from models.printed_transfer import PrintedTransfer, PrintedTransferMovement
 from models.product import Product, ProductVariation
 from models.product_spec import ProductSpec, SpecTrim
 from models.role import Permission, Role, RolePermission
@@ -71,6 +72,8 @@ __all__ = [
     "Batch",
     "BatchStatus",
     "BlankMovementKind",
+    "BlankPiece",
+    "BlankPieceMovement",
     "ChannelConnection",
     "ChannelStatus",
     "Client",
@@ -93,6 +96,8 @@ __all__ = [
     "OrderItem",
     "OrderStatus",
     "PaperMovementKind",
+    "PaperRoll",
+    "PaperRollMovement",
     "PaperType",
     "Permission",
     "Plan",
@@ -100,10 +105,10 @@ __all__ = [
     "PrintDesignVariation",
     "PrintOrderStatus",
     "PrintSide",
-    "PrintStockDirection",
-    "PrintStockMovement",
     "PrintTechnique",
     "PrintedMovementKind",
+    "PrintedTransfer",
+    "PrintedTransferMovement",
     "Product",
     "ProductSpec",
     "ProductType",

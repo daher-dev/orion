@@ -6,6 +6,7 @@ from routers.audit_log import router as audit_log_router
 from routers.auth import router as auth_router
 from routers.batches import router as batches_router
 from routers.billing import router as billing_router
+from routers.blank_stock import router as blank_stock_router
 from routers.channel_integration import router as channel_integration_router
 from routers.clients import router as clients_router
 from routers.company import router as company_router
@@ -20,7 +21,8 @@ from routers.mapping import router as mapping_router
 from routers.members import router as members_router
 from routers.orders import router as orders_router
 from routers.orders_import import router as orders_import_router
-from routers.print_stock import router as print_stock_router
+from routers.paper_roll import router as paper_roll_router
+from routers.printed_transfer import router as printed_transfer_router
 from routers.prints import router as prints_router
 from routers.products import router as products_router
 from routers.reports import router as reports_router
@@ -39,6 +41,7 @@ api_router.include_router(audit_log_router)
 api_router.include_router(auth_router)
 api_router.include_router(batches_router)
 api_router.include_router(billing_router)
+api_router.include_router(blank_stock_router)
 api_router.include_router(channel_integration_router)
 api_router.include_router(clients_router)
 api_router.include_router(company_router)
@@ -52,7 +55,8 @@ api_router.include_router(mapping_router)
 api_router.include_router(members_router)
 api_router.include_router(orders_router)
 api_router.include_router(orders_import_router)
-api_router.include_router(print_stock_router)
+api_router.include_router(paper_roll_router)
+api_router.include_router(printed_transfer_router)
 api_router.include_router(prints_router)
 api_router.include_router(products_router)
 api_router.include_router(reports_router)
@@ -71,6 +75,7 @@ __all__ = [
     "auth_router",
     "batches_router",
     "billing_router",
+    "blank_stock_router",
     "channel_integration_router",
     "clients_router",
     "company_router",
@@ -85,7 +90,8 @@ __all__ = [
     "members_router",
     "orders_import_router",
     "orders_router",
-    "print_stock_router",
+    "paper_roll_router",
+    "printed_transfer_router",
     "prints_router",
     "products_router",
     "reports_router",

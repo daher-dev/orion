@@ -120,7 +120,7 @@ def _to_read(
     order: CuttingOrder,
     *,
     spec: ProductSpec,
-    body_roll: FabricRoll,
+    body_roll: FabricRoll | None,
     rib_roll: FabricRoll | None,
     outputs: list[CuttingOrderOutput],
 ) -> CuttingRead:
@@ -140,7 +140,8 @@ def _to_read(
         spec=SpecRef(id=spec.id, code=spec.code, name=spec.name),
         color=order.color,
         color_code=order.color_code,
-        body_roll=RollRef(id=body_roll.id, code=_roll_code(body_roll) or ""),
+        # A planning-created draft may carry no roll yet.
+        body_roll=RollRef(id=body_roll.id, code=_roll_code(body_roll) or "") if body_roll else None,
         rib_roll=RollRef(id=rib_roll.id, code=_roll_code(rib_roll) or "") if rib_roll else None,
         status=order.status,
         planned_outputs=planned,
@@ -168,7 +169,7 @@ async def _load_with_relations(
     *,
     company_id: uuid.UUID,
     order_id: uuid.UUID,
-) -> tuple[CuttingOrder, ProductSpec, FabricRoll, FabricRoll | None, list[CuttingOrderOutput]]:
+) -> tuple[CuttingOrder, ProductSpec, FabricRoll | None, FabricRoll | None, list[CuttingOrderOutput]]:
     stmt = scoped(select(CuttingOrder), CuttingOrder, company_id).where(CuttingOrder.id == order_id)
     order = (await db.exec(stmt)).first()
     if order is None:
@@ -177,9 +178,13 @@ async def _load_with_relations(
     spec = (await db.exec(select(ProductSpec).where(ProductSpec.id == order.spec_id))).first()
     if spec is None:  # pragma: no cover — FK-guarded at the DB layer
         raise NotFoundError(detail="Cutting order references a missing product spec")
-    body = (await db.exec(select(FabricRoll).where(FabricRoll.id == order.body_roll_id))).first()
-    if body is None:  # pragma: no cover — FK-guarded at the DB layer
-        raise NotFoundError(detail="Cutting order references a missing body roll")
+    # ``body_roll_id`` is nullable (planning draft): a missing FK is a real
+    # error, but a NULL id just means no roll has been assigned yet.
+    body: FabricRoll | None = None
+    if order.body_roll_id is not None:
+        body = (await db.exec(select(FabricRoll).where(FabricRoll.id == order.body_roll_id))).first()
+        if body is None:  # pragma: no cover — FK-guarded at the DB layer
+            raise NotFoundError(detail="Cutting order references a missing body roll")
     rib: FabricRoll | None = None
     if order.rib_roll_id is not None:
         rib = (await db.exec(select(FabricRoll).where(FabricRoll.id == order.rib_roll_id))).first()
@@ -444,7 +449,9 @@ async def list_cutting_orders(
         return [], total
 
     spec_ids = {o.spec_id for o in orders}
-    roll_ids = {o.body_roll_id for o in orders} | {o.rib_roll_id for o in orders if o.rib_roll_id is not None}
+    roll_ids = {o.body_roll_id for o in orders if o.body_roll_id is not None} | {
+        o.rib_roll_id for o in orders if o.rib_roll_id is not None
+    }
     order_ids = [o.id for o in orders]
 
     specs_by_id = {
@@ -469,7 +476,7 @@ async def list_cutting_orders(
             _to_read(
                 order,
                 spec=specs_by_id[order.spec_id],
-                body_roll=rolls_by_id[order.body_roll_id],
+                body_roll=rolls_by_id.get(order.body_roll_id) if order.body_roll_id else None,
                 rib_roll=rolls_by_id.get(order.rib_roll_id) if order.rib_roll_id else None,
                 outputs=outputs_by_order.get(order.id, []),
             )
@@ -655,6 +662,10 @@ async def create_cutting_order(
     user_id: uuid.UUID,
     payload: CuttingCreate,
 ) -> CuttingRead:
+    if payload.rib_roll_id is not None and payload.body_roll_id is None:
+        # Mirror the schema-layer guard so a service-level call also rejects a
+        # rib-only draft with a clean error.
+        raise ConflictError(detail="rib_roll_id requires body_roll_id")
     if payload.rib_roll_id is not None and payload.rib_roll_id == payload.body_roll_id:
         # Surfaced as 409 so the frontend can render the same inline error
         # ("Bobina corpo e ribana devem ser diferentes") regardless of
@@ -662,7 +673,9 @@ async def create_cutting_order(
         raise ConflictError(detail="body_roll_id and rib_roll_id must be different")
 
     await _assert_spec_in_company(db, company_id=company_id, spec_id=payload.spec_id)
-    await _assert_roll_in_company(db, company_id=company_id, roll_id=payload.body_roll_id)
+    # A planning-created draft carries no roll — only validate when present.
+    if payload.body_roll_id is not None:
+        await _assert_roll_in_company(db, company_id=company_id, roll_id=payload.body_roll_id)
     if payload.rib_roll_id is not None:
         await _assert_roll_in_company(db, company_id=company_id, roll_id=payload.rib_roll_id)
 
@@ -756,6 +769,27 @@ async def update_cutting_order(
     if "cut_at" in data:
         order.cut_at = data["cut_at"]
 
+    # Roll assignment on a planning draft. ``exclude_unset`` membership lets the
+    # operator set OR clear a roll; we validate the merged order state (body
+    # required when a rib is present, body != rib) so a PATCH that touches only
+    # one roll is checked against the other already on the order.
+    if "body_roll_id" in data:
+        new_body = data["body_roll_id"]
+        if new_body is not None:
+            await _assert_roll_in_company(db, company_id=company_id, roll_id=new_body)
+        order.body_roll_id = new_body
+    if "rib_roll_id" in data:
+        new_rib = data["rib_roll_id"]
+        if new_rib is not None:
+            await _assert_roll_in_company(db, company_id=company_id, roll_id=new_rib)
+        order.rib_roll_id = new_rib
+    if "body_roll_id" in data or "rib_roll_id" in data:
+        if order.rib_roll_id is not None and order.body_roll_id is None:
+            raise ConflictError(detail="rib_roll_id requires body_roll_id")
+        if order.rib_roll_id is not None and order.rib_roll_id == order.body_roll_id:
+            raise ConflictError(detail="body_roll_id and rib_roll_id must be different")
+        audit_messages.append(f"Assigned rolls for CO-{_short_id(order.id)}")
+
     if "actual_outputs" in data and data["actual_outputs"] is not None:
         await db.exec(
             delete(CuttingOrderOutput).where(CuttingOrderOutput.cutting_order_id == order.id)  # type: ignore[arg-type]
@@ -782,6 +816,12 @@ async def update_cutting_order(
     # applied in this same request, then debit fabric (once per order) and
     # upsert the cost row — all in this one transaction.
     if transitioned_to_done:
+        # A planning-created draft must have a roll assigned before it can post
+        # T1: the fabric debit + cost snapshot both read the body roll. Reject
+        # rather than silently completing a roll-less order.
+        if order.body_roll_id is None:
+            raise ConflictError(detail="Cannot complete cutting order — assign a fabric roll first")
+
         (
             done_order,
             spec,
@@ -789,6 +829,8 @@ async def update_cutting_order(
             rib_roll,
             outputs,
         ) = await _load_with_relations(db, company_id=company_id, order_id=order.id)
+        # Guaranteed non-None by the guard above; narrow for the cost/debit calls.
+        assert body_roll is not None
 
         # Idempotency: only debit fabric if it has never been debited for this
         # order. A revert to CUTTING does NOT credit fabric back, so a re-DONE

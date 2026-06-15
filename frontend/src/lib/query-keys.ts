@@ -95,6 +95,10 @@ export const qk = {
     all: () => tuple("assembly"),
     buildable: (filters: Readonly<Record<string, unknown>> = {}) => tuple("assembly", "buildable", filters),
   },
+  planning: {
+    all: () => tuple("planning"),
+    suggestions: () => tuple("planning", "suggestions"),
+  },
   contractors: {
     all: () => tuple("contractors"),
     lists: () => tuple("contractors", "list"),

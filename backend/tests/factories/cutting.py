@@ -32,7 +32,7 @@ async def create_cutting_order(
     *,
     company_id: uuid.UUID,
     spec_id: uuid.UUID,
-    body_roll_id: uuid.UUID,
+    body_roll_id: uuid.UUID | None = None,
     **overrides,
 ) -> CuttingOrder:
     order = CuttingOrderFactory.build(

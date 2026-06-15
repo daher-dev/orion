@@ -41,16 +41,20 @@ class CuttingCreate(BaseModel):
     spec_id: uuid.UUID
     color: str = Field(min_length=1, max_length=40)
     color_code: str = Field(pattern=r"^[A-Z]{3}$")
-    body_roll_id: uuid.UUID
+    # Nullable: a planning-created draft carries no roll yet. The operator
+    # assigns one (via PATCH) before the order can reach DONE.
+    body_roll_id: uuid.UUID | None = None
     rib_roll_id: uuid.UUID | None = None
     planned_outputs: list[OutputItem] = Field(default_factory=list)
     cut_at: datetime | None = None
 
     @model_validator(mode="after")
     def _rolls_differ(self) -> CuttingCreate:
-        # The DB has a CHECK constraint guarding this same invariant, but we
+        # The DB has CHECK constraints guarding these invariants, but we
         # short-circuit at the edge so the client gets a clear 422 instead of
         # an opaque IntegrityError converted by the service into a 409.
+        if self.rib_roll_id is not None and self.body_roll_id is None:
+            raise ValueError("rib_roll_id requires body_roll_id")
         if self.rib_roll_id is not None and self.rib_roll_id == self.body_roll_id:
             raise ValueError("body_roll_id and rib_roll_id must be different")
         return self
@@ -69,6 +73,11 @@ class CuttingUpdate(BaseModel):
     status: CuttingStatus | None = None
     actual_outputs: list[OutputItem] | None = None
     cut_at: datetime | None = None
+    # Roll assignment on a planning draft. A plain ``| None`` can't distinguish
+    # "omit" from "set null" — the service uses ``model_dump(exclude_unset=True)``
+    # membership, so clearing a roll to null IS allowed.
+    body_roll_id: uuid.UUID | None = None
+    rib_roll_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
     def _actual_sizes_unique(self) -> CuttingUpdate:
@@ -79,6 +88,15 @@ class CuttingUpdate(BaseModel):
             if item.size in seen:
                 raise ValueError(f"duplicate size in actual_outputs: {item.size.value}")
             seen.add(item.size)
+        return self
+
+    @model_validator(mode="after")
+    def _rolls_differ(self) -> CuttingUpdate:
+        # Only compare when both are present on the payload; the rib-requires-body
+        # rule is enforced in the service against the merged order state (a PATCH
+        # may set only the rib while the body already exists on the order).
+        if self.rib_roll_id is not None and self.body_roll_id is not None and self.rib_roll_id == self.body_roll_id:
+            raise ValueError("body_roll_id and rib_roll_id must be different")
         return self
 
 
@@ -110,7 +128,8 @@ class CuttingRead(BaseModel):
     spec: SpecRef
     color: str
     color_code: str
-    body_roll: RollRef
+    # Nullable: a planning-created draft has no roll until the operator assigns one.
+    body_roll: RollRef | None = None
     rib_roll: RollRef | None = None
     status: CuttingStatus
     planned_outputs: list[CuttingOutputRead] = Field(default_factory=list)

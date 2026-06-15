@@ -20,7 +20,12 @@ class CuttingOrder(CompanyModel, table=True):
 
     __tablename__ = "cutting_orders"
     __table_args__ = (
+        # NULL-safe: passes when either roll is NULL (a planning-created draft
+        # carries no roll yet).
         CheckConstraint("body_roll_id <> rib_roll_id", name="body_and_rib_rolls_differ"),
+        # A rib roll without a body roll is meaningless — guard it so a draft can
+        # never end up rib-only.
+        CheckConstraint("rib_roll_id IS NULL OR body_roll_id IS NOT NULL", name="rib_requires_body"),
         CheckConstraint(r"color_code ~ '^[A-Z]{3}$'", name="cutting_orders_color_code_format"),
     )
 
@@ -34,11 +39,16 @@ class CuttingOrder(CompanyModel, table=True):
     )
     color: str = Field(max_length=40)
     color_code: str = Field(max_length=3)
-    body_roll_id: uuid.UUID = Field(
+    # Nullable: a planning-created PENDING corte has no roll assigned yet — the
+    # operator picks one in the Corte edit flow before the order reaches DONE
+    # (the DONE transition rejects a null body roll, since T1 fabric debit + the
+    # cost snapshot both need a roll).
+    body_roll_id: uuid.UUID | None = Field(
+        default=None,
         sa_column=Column(
             Uuid,
             ForeignKey("fabric_rolls.id", ondelete="RESTRICT"),
-            nullable=False,
+            nullable=True,
             index=True,
         ),
     )

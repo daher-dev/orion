@@ -56,6 +56,7 @@
     "products": "Products",
     "specs": "Tech specs",
     "prints": "Prints",
+    "planning": "Planning",
     "cutting": "Cutting",
     "sewing": "Sewing",
     "printing": "Printing",
@@ -3431,5 +3432,63 @@
       "noStock": "No stock available."
     },
     "fallback": { "forbidden": "You don't have access to assembly." }
+  },
+  "planning": {
+    "page": { "eyebrow": "Planning" },
+    "list": {
+      "title": "Production",
+      "titleEm": "planning",
+      "sub": "Cutting and printing orders suggested by Orion."
+    },
+    "filters": {
+      "all": "All",
+      "demand": "Demand",
+      "stock": "Low stock"
+    },
+    "columns": {
+      "cortes": "Cuts",
+      "impressoes": "Prints"
+    },
+    "units": {
+      "pieces": "pieces",
+      "prints": "prints"
+    },
+    "summary": {
+      "toCut": "pieces to cut",
+      "toPrint": "prints to print"
+    },
+    "row": {
+      "toCut": "to cut",
+      "toPrint": "to print",
+      "orders": "{count, plural, one {# order} other {# orders}}"
+    },
+    "sources": {
+      "demanda": "Demand",
+      "estoque": "Low stock"
+    },
+    "png": {
+      "ok": "PNG ok",
+      "pending": "PNG pending"
+    },
+    "actions": {
+      "recalc": "Recalculate",
+      "create": "{n, plural, one {Create # order} other {Create # orders}}",
+      "viewCutting": "View in Cutting"
+    },
+    "actionbar": {
+      "selected": "{cortes, plural, =0 {0 cuts} one {# cut} other {# cuts}} · {impressoes, plural, =0 {0 prints} one {# print} other {# prints}} selected"
+    },
+    "toasts": {
+      "created": "{n} orders created",
+      "error": "Operation failed",
+      "partial": "{n} created · {skipped} skipped"
+    },
+    "empty": {
+      "title": "Nothing to produce now",
+      "bodyAll": "Order demand is covered and no tier is below its minimum.",
+      "bodyFiltered": "No suggestions for this filter."
+    },
+    "created": { "banner": "Orders opened as pending in Cutting and Printing." },
+    "fallback": { "forbidden": "You don't have access to planning." }
   }
 }

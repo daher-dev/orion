@@ -512,6 +512,37 @@ async def test_done_transition_debits_body_fabric(db_session):
     assert movements[0].fabric_roll_id == body.id
 
 
+async def test_done_transition_rejects_when_body_roll_unassigned(db_session):
+    """A planning-created draft (no body roll) cannot reach DONE: T1 needs a roll."""
+
+    company, user, spec, _body, _rib = await _setup_world(db_session)
+
+    # Planning drafts are created PENDING with body_roll_id=None.
+    order = await create_cutting_order(
+        db_session,
+        company_id=company.id,
+        spec_id=spec.id,
+        body_roll_id=None,
+        status=CuttingStatus.PENDING,
+    )
+    await create_cutting_order_output(db_session, cutting_order_id=order.id, size=Size.M, quantity=10)
+
+    with pytest.raises(ConflictError):
+        await cutting_service.update_cutting_order(
+            db_session,
+            company_id=company.id,
+            user_id=user.id,
+            order_id=order.id,
+            payload=CuttingUpdate(status=CuttingStatus.DONE),
+        )
+
+    # The guard fires before any debit/cost work, so no fabric movement is written.
+    movements = (
+        await db_session.exec(select(FabricRollMovement).where(FabricRollMovement.cutting_order_id == order.id))
+    ).all()
+    assert list(movements) == []
+
+
 async def test_done_transition_debits_body_and_rib(db_session):
     """With ribana + a rib roll, both rolls are debited."""
 

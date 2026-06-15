@@ -9,6 +9,7 @@ import {
   Shirt,
   FileText,
   Palette,
+  Radar,
   Scissors,
   Send,
   Factory,
@@ -142,6 +143,13 @@ export const navSections: NavSection[] = [
   {
     titleKey: "nav.sections.production",
     items: [
+      {
+        href: "/planning",
+        icon: Radar,
+        labelKey: "nav.planning",
+        permission: "planning.read",
+        subColor: "var(--brand-prod)",
+      },
       {
         href: "/cutting",
         icon: Scissors,

@@ -56,6 +56,7 @@
     "products": "Produtos",
     "specs": "Fichas técnicas",
     "prints": "Estampas",
+    "planning": "Planejamento",
     "cutting": "Corte",
     "sewing": "Costura",
     "printing": "Impressão",
@@ -3431,5 +3432,63 @@
       "noStock": "Sem estoque disponível."
     },
     "fallback": { "forbidden": "Você não tem acesso à montagem." }
+  },
+  "planning": {
+    "page": { "eyebrow": "planejamento" },
+    "list": {
+      "title": "Planejamento",
+      "titleEm": "de produção",
+      "sub": "Ordens de corte e impressão sugeridas pelo Orion."
+    },
+    "filters": {
+      "all": "Tudo",
+      "demand": "Demanda",
+      "stock": "Estoque baixo"
+    },
+    "columns": {
+      "cortes": "Cortes",
+      "impressoes": "Impressões"
+    },
+    "units": {
+      "pieces": "peças",
+      "prints": "impressos"
+    },
+    "summary": {
+      "toCut": "peças a cortar",
+      "toPrint": "impressos a imprimir"
+    },
+    "row": {
+      "toCut": "a cortar",
+      "toPrint": "a imprimir",
+      "orders": "{count, plural, one {# pedido} other {# pedidos}}"
+    },
+    "sources": {
+      "demanda": "Demanda",
+      "estoque": "Estoque baixo"
+    },
+    "png": {
+      "ok": "PNG ok",
+      "pending": "PNG pendente"
+    },
+    "actions": {
+      "recalc": "Recalcular",
+      "create": "{n, plural, one {Criar # ordem} other {Criar # ordens}}",
+      "viewCutting": "Ver no Corte"
+    },
+    "actionbar": {
+      "selected": "{cortes, plural, =0 {0 cortes} one {# corte} other {# cortes}} · {impressoes, plural, =0 {0 impressões} one {# impressão} other {# impressões}} selecionadas"
+    },
+    "toasts": {
+      "created": "{n} ordens criadas",
+      "error": "Falha na operação",
+      "partial": "{n} criadas · {skipped} ignoradas"
+    },
+    "empty": {
+      "title": "Nada a produzir agora",
+      "bodyAll": "A demanda dos pedidos está coberta e nenhum tier está abaixo do mínimo.",
+      "bodyFiltered": "Nenhuma sugestão para este filtro."
+    },
+    "created": { "banner": "Ordens abertas como pendentes no Corte e na Impressão." },
+    "fallback": { "forbidden": "Você não tem acesso ao planejamento." }
   }
 }

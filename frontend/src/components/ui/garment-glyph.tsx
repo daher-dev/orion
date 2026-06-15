@@ -41,6 +41,34 @@ const PATHS: Record<ProductType, React.ReactNode> = {
   ),
 };
 
+/**
+ * Resolve any garment identifier — the frontend `ProductType` (`tshirt`…) OR the
+ * backend `ProductType` enum value (`camiseta`, `moletom`, `regata`, `calca`,
+ * `bermuda`, `ecobag`, `cropped`…) — to a glyph-safe key. The glyph is purely
+ * decorative, so unknown garments fall back to the t-shirt silhouette rather
+ * than crashing on a missing path.
+ */
+const GLYPH_ALIASES: Record<string, ProductType> = {
+  tshirt: "tshirt",
+  sweatshirt: "sweatshirt",
+  shorts: "shorts",
+  tanktop: "tanktop",
+  // Backend garment-type enum values.
+  camiseta: "tshirt",
+  cropped: "tshirt",
+  blusa: "tshirt",
+  ecobag: "tshirt",
+  moletom: "sweatshirt",
+  regata: "tanktop",
+  bermuda: "shorts",
+  calca: "shorts",
+};
+
+export function garmentGlyphType(value: string | null | undefined): ProductType {
+  if (!value) return "tshirt";
+  return GLYPH_ALIASES[value.toLowerCase()] ?? "tshirt";
+}
+
 export function GarmentGlyph({ productType, size = 14, ...rest }: Props) {
   return (
     <svg

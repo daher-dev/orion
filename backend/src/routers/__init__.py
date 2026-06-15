@@ -23,6 +23,7 @@ from routers.members import router as members_router
 from routers.orders import router as orders_router
 from routers.orders_import import router as orders_import_router
 from routers.paper_roll import router as paper_roll_router
+from routers.planning import router as planning_router
 from routers.print_order import router as print_order_router
 from routers.printed_transfer import router as printed_transfer_router
 from routers.prints import router as prints_router
@@ -59,6 +60,7 @@ api_router.include_router(members_router)
 api_router.include_router(orders_router)
 api_router.include_router(orders_import_router)
 api_router.include_router(paper_roll_router)
+api_router.include_router(planning_router)
 api_router.include_router(print_order_router)
 api_router.include_router(printed_transfer_router)
 api_router.include_router(prints_router)
@@ -96,6 +98,7 @@ __all__ = [
     "orders_import_router",
     "orders_router",
     "paper_roll_router",
+    "planning_router",
     "print_order_router",
     "printed_transfer_router",
     "prints_router",

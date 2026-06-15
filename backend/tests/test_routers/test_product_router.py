@@ -28,7 +28,7 @@ def _create_payload(
 ) -> dict:
     body: dict = {
         "name": "Cropped Oversized",
-        "product_type": "tshirt",
+        "product_type": "camiseta",
         "spec_id": spec_id,
         "print_id": print_id,
         "variations": [_variation_payload()],
@@ -106,15 +106,15 @@ async def test_list_products_filters_by_type(authed_client: AsyncClient, db_sess
     company, _ = await _provision_manager(db_session)
     spec_a = await create_product_spec(db_session, company_id=company.id, code="FT-A")
     spec_b = await create_product_spec(db_session, company_id=company.id, code="FT-B")
-    await create_product(db_session, company_id=company.id, spec_id=spec_a.id, product_type="tshirt", name="T")
+    await create_product(db_session, company_id=company.id, spec_id=spec_a.id, product_type="camiseta", name="T")
     await create_product(
         db_session,
         company_id=company.id,
         spec_id=spec_b.id,
-        product_type="sweatshirt",
+        product_type="moletom",
         name="S",
     )
-    response = await authed_client.get("/v1/products", params={"product_type": "sweatshirt"})
+    response = await authed_client.get("/v1/products", params={"product_type": "moletom"})
     body = response.json()
     assert body["total"] == 1
 
@@ -236,7 +236,7 @@ async def test_create_product_422_when_spec_id_missing(authed_client: AsyncClien
         "/v1/products",
         json={
             "name": "x",
-            "product_type": "tshirt",
+            "product_type": "camiseta",
             "variations": [_variation_payload()],
         },
     )

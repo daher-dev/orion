@@ -11,13 +11,10 @@ import { qk } from "@/lib/query-keys";
 import type { ApiError } from "@/lib/api-client";
 import type {
   Batch,
-  BatchAdjustmentUpdatePayload,
   BatchCreatePayload,
   BatchFilters,
   BatchPage,
   BatchStatus,
-  MontadorSendResult,
-  PrintQueue,
 } from "@/lib/schemas/batch";
 
 const ROOT = "/v1/batches";
@@ -50,15 +47,6 @@ export function useBatch(id: string | null): UseQueryResult<Batch, ApiError> {
   });
 }
 
-/** Cross-batch demand-driven print queue: what still needs printing now. */
-export function useBatchPrintQueue(): UseQueryResult<PrintQueue, ApiError> {
-  const api = useApi();
-  return useQuery<PrintQueue, ApiError>({
-    queryKey: qk.batches.printQueue(),
-    queryFn: () => api.get<PrintQueue>(`${ROOT}/print-queue`),
-  });
-}
-
 export function useCreateBatch() {
   const api = useApi();
   const qc = useQueryClient();
@@ -72,23 +60,6 @@ export function useCreateBatch() {
   });
 }
 
-export function useSaveBatchAdjustments() {
-  const api = useApi();
-  const qc = useQueryClient();
-  return useMutation<
-    Batch,
-    ApiError,
-    { id: string; payload: BatchAdjustmentUpdatePayload }
-  >({
-    mutationFn: ({ id, payload }) =>
-      api.patch<Batch>(`${ROOT}/${id}/adjustments`, payload),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: qk.batches.all() });
-      qc.invalidateQueries({ queryKey: qk.batches.detail(vars.id) });
-    },
-  });
-}
-
 export function useTransitionBatch() {
   const api = useApi();
   const qc = useQueryClient();
@@ -98,20 +69,6 @@ export function useTransitionBatch() {
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: qk.batches.all() });
       qc.invalidateQueries({ queryKey: qk.batches.detail(vars.id) });
-    },
-  });
-}
-
-export function useSendBatchToMontador() {
-  const api = useApi();
-  const qc = useQueryClient();
-  return useMutation<MontadorSendResult, ApiError, string>({
-    mutationFn: (id) =>
-      api.post<MontadorSendResult>(`${ROOT}/${id}/send-to-montador`, {}),
-    onSuccess: (_data, id) => {
-      qc.invalidateQueries({ queryKey: qk.batches.detail(id) });
-      // Sent designs drop out of the cross-batch print queue.
-      qc.invalidateQueries({ queryKey: qk.batches.printQueue() });
     },
   });
 }

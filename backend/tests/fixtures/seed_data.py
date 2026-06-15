@@ -152,7 +152,7 @@ PRODUCTS = [
     {
         "key": "p-cropped-flora",
         "name": "Cropped Oversized Flora",
-        "product_type": ProductType.TSHIRT,
+        "product_type": ProductType.CAMISETA,
         "spec_key": "ft-cropped",
         "print_key": "pd-flora",
         "variations": [
@@ -164,7 +164,7 @@ PRODUCTS = [
     {
         "key": "p-cropped-plain",
         "name": "Cropped Oversized",
-        "product_type": ProductType.TSHIRT,
+        "product_type": ProductType.CAMISETA,
         "spec_key": "ft-cropped",
         "print_key": None,
         "variations": [
@@ -174,7 +174,7 @@ PRODUCTS = [
     {
         "key": "p-tshirt-box",
         "name": "T-Shirt Box",
-        "product_type": ProductType.TSHIRT,
+        "product_type": ProductType.CAMISETA,
         "spec_key": "ft-tshirt",
         "print_key": None,
         "variations": [
@@ -186,7 +186,7 @@ PRODUCTS = [
     {
         "key": "p-moletom-graf",
         "name": "Moletom Vintage Grafite",
-        "product_type": ProductType.SWEATSHIRT,
+        "product_type": ProductType.MOLETOM,
         "spec_key": "ft-moletom",
         "print_key": "pd-graf",
         "variations": [
@@ -196,7 +196,7 @@ PRODUCTS = [
     {
         "key": "p-moletom-plain",
         "name": "Moletom Vintage",
-        "product_type": ProductType.SWEATSHIRT,
+        "product_type": ProductType.MOLETOM,
         "spec_key": "ft-moletom",
         "print_key": None,
         "variations": [

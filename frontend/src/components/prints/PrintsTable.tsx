@@ -10,6 +10,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import {
+  AlertCircle,
   ChevronDown,
   ChevronRight,
   ChevronsUpDown,
@@ -18,7 +19,52 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useFormatter, useTranslations } from "next-intl";
-import type { Print } from "@/lib/schemas/print";
+import { InkChip } from "@/components/prints/variations/InkChip";
+import type { Print, PrintVariation } from "@/lib/schemas/print";
+
+/** Pending PNGs across a variation's active sides. */
+function variationPending(print: Print, v: PrintVariation): number {
+  let pending = 0;
+  if (print.has_front || (!print.has_front && !print.has_back)) {
+    if (v.front_status !== "ok") pending += 1;
+  }
+  if (print.has_back && v.back_status !== "ok") pending += 1;
+  return pending;
+}
+
+/** Row of ink chips + a pending-PNG badge. Port of `VariationPips`. */
+function VariationPips({ print }: { print: Print }) {
+  const variations = print.variations ?? [];
+  const totalPending = variations.reduce((n, v) => n + variationPending(print, v), 0);
+  if (variations.length === 0) {
+    return <span className="text-[color:var(--orion-ink-3)]">—</span>;
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5" data-testid="variation-pips">
+      <span className="inline-flex gap-[5px]">
+        {variations.slice(0, 4).map((v) => (
+          <InkChip
+            key={v.id}
+            ink={v.ink_hex}
+            ready={variationPending(print, v) === 0}
+            size={16}
+            title={v.name}
+          />
+        ))}
+        {variations.length > 4 ? (
+          <span className="self-center text-[11px] text-[color:var(--orion-ink-3)]">
+            +{variations.length - 4}
+          </span>
+        ) : null}
+      </span>
+      {totalPending > 0 ? (
+        <span className="inline-flex items-center gap-[3px] rounded-full bg-[color:color-mix(in_oklab,var(--status-warn)_14%,var(--orion-surface))] px-[7px] py-px text-[10.5px] font-semibold text-[color:var(--status-warn)]">
+          <AlertCircle className="size-2.5" /> {totalPending} PNG
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 const cellInk = "text-[color:var(--orion-ink-2)]";
 const cellInkStrong = "font-medium text-[color:var(--orion-ink)]";
@@ -106,6 +152,12 @@ export function PrintsTable({ rows, onOpen }: PrintsTableProps) {
         cell: ({ row }) => (
           <span className={cellInk}>{t(`techniques.${row.original.technique}`)}</span>
         ),
+      },
+      {
+        id: "variations",
+        header: () => t("variations.countLabel"),
+        enableSorting: false,
+        cell: ({ row }) => <VariationPips print={row.original} />,
       },
       {
         accessorKey: "cost_per_unit",

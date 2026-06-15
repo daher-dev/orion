@@ -23,6 +23,8 @@ def init_firebase() -> None:
     options: dict[str, Any] = {}
     if config.FIREBASE_PROJECT_ID:
         options["projectId"] = config.FIREBASE_PROJECT_ID
+    if config.FIREBASE_STORAGE_BUCKET:
+        options["storageBucket"] = config.FIREBASE_STORAGE_BUCKET
 
     try:
         creds = credentials.ApplicationDefault()

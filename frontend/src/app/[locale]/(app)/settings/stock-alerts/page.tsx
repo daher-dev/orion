@@ -1,5 +1,5 @@
-import { StockAlertsForm } from "@/components/settings/StockAlertsForm";
+import { StockThresholdsPane } from "@/components/settings/StockThresholdsPane";
 
 export default function SettingsStockAlertsPage() {
-  return <StockAlertsForm />;
+  return <StockThresholdsPane />;
 }

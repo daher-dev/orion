@@ -110,7 +110,7 @@ async def test_full_domain_smoke(db_session: AsyncSession, admin_role: Role) -> 
     product = Product(
         company_id=company.id,
         name="Camiseta Floral 03",
-        product_type=ProductType.TSHIRT,
+        product_type=ProductType.CAMISETA,
         spec_id=spec.id,
         print_id=print_design.id,
     )
@@ -297,7 +297,7 @@ async def test_product_can_have_no_print(db_session: AsyncSession) -> None:
     product = Product(
         company_id=company.id,
         name="Bermuda lisa preta",
-        product_type=ProductType.SHORTS,
+        product_type=ProductType.BERMUDA,
         spec_id=spec.id,
         print_id=None,
     )

@@ -503,7 +503,7 @@ async def _assign_variation(
 
     item.variation_id = variation.id
     # Estampa follows from the product: cache the print code on the item so the
-    # Separação / Montador screens read it without re-resolving the product.
+    # Separação screens read it without re-resolving the product.
     product = (
         await db.exec(scoped(select(Product), Product, company_id).where(Product.id == variation.product_id))
     ).first()

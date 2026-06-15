@@ -8,7 +8,9 @@ emitting duplicate CREATE TYPE statements.
 from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 
 from models.enums import (
+    ArtworkStatus,
     BatchStatus,
+    BlankMovementKind,
     ChannelStatus,
     CuttingStatus,
     Ecommerce,
@@ -16,6 +18,11 @@ from models.enums import (
     FabricType,
     LoginOutcome,
     OrderStatus,
+    PaperMovementKind,
+    PaperType,
+    PrintedMovementKind,
+    PrintOrderStatus,
+    PrintSide,
     PrintStockDirection,
     PrintTechnique,
     ProductType,
@@ -58,3 +65,10 @@ PRINT_TECHNIQUE = _enum(PrintTechnique, "print_technique")
 PRINT_STOCK_DIRECTION = _enum(PrintStockDirection, "print_stock_direction")
 SUPPLY_MOVEMENT_KIND = _enum(SupplyMovementKind, "supply_movement_kind")
 SUBSCRIPTION_STATUS = _enum(SubscriptionStatus, "subscription_status")
+PAPER_TYPE = _enum(PaperType, "paper_type")
+PRINT_SIDE = _enum(PrintSide, "print_side")
+PRINT_ORDER_STATUS = _enum(PrintOrderStatus, "print_order_status")
+ARTWORK_STATUS = _enum(ArtworkStatus, "artwork_status")
+BLANK_MOVEMENT_KIND = _enum(BlankMovementKind, "blank_movement_kind")
+PAPER_MOVEMENT_KIND = _enum(PaperMovementKind, "paper_movement_kind")
+PRINTED_MOVEMENT_KIND = _enum(PrintedMovementKind, "printed_movement_kind")

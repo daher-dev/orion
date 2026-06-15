@@ -39,7 +39,7 @@ def _variation(size: Size = Size.M, color: str = "Preto", color_code: str = "PRT
 def _payload(*, spec_id: uuid.UUID, print_id: uuid.UUID | None = None, **overrides) -> ProductCreate:
     base = {
         "name": "Cropped Oversized",
-        "product_type": ProductType.TSHIRT,
+        "product_type": ProductType.CAMISETA,
         "spec_id": spec_id,
         "print_id": print_id,
         "variations": [
@@ -109,23 +109,23 @@ async def test_list_products_filters_by_type(db_session):
     spec_a = await create_product_spec(db_session, company_id=company.id, code="FT-T")
     spec_b = await create_product_spec(db_session, company_id=company.id, code="FT-S")
     await create_product(
-        db_session, company_id=company.id, spec_id=spec_a.id, product_type=ProductType.TSHIRT, name="T"
+        db_session, company_id=company.id, spec_id=spec_a.id, product_type=ProductType.CAMISETA, name="T"
     )
     await create_product(
         db_session,
         company_id=company.id,
         spec_id=spec_b.id,
-        product_type=ProductType.SWEATSHIRT,
+        product_type=ProductType.MOLETOM,
         name="S",
     )
 
     rows, total = await product_service.list_products(
         db_session,
         company_id=company.id,
-        filters=ProductFilters(product_type=ProductType.SWEATSHIRT),
+        filters=ProductFilters(product_type=ProductType.MOLETOM),
     )
     assert total == 1
-    assert rows[0][0].product_type == ProductType.SWEATSHIRT
+    assert rows[0][0].product_type == ProductType.MOLETOM
 
 
 async def test_list_products_filters_by_spec(db_session):

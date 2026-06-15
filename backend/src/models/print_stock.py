@@ -14,9 +14,8 @@ class PrintStockMovement(CompanyModel, table=True):
     On-hand is computed live per ``(company, print_design, product_color)`` —
     there is no materialised balance column, mirroring the finished-piece Stock
     feature. ``product_color`` is a FREE-TEXT string matching
-    ``ProductVariation.color`` (and ``BatchPrintAdjustment.product_color``,
-    max_length=80) — it is intentionally NOT an FK, so the batch print-queue
-    netting can join the ledger to its required quantities by colour string.
+    ``ProductVariation.color`` (max_length=80) — it is intentionally NOT an FK,
+    so the ledger can be joined to required quantities by colour string.
 
     ``direction`` carries the sign: ENTRY and ADJUSTMENT credit stock, EXIT
     debits it. ``quantity`` is always strictly positive.
@@ -47,7 +46,7 @@ class PrintStockMovement(CompanyModel, table=True):
     notes: str | None = Field(default=None, max_length=500)
 
     # Optional provenance link: a movement may originate from a production
-    # batch (e.g. a print run dispatched to the Montador DTF).
+    # batch (e.g. a print run dispatched for a lote).
     batch_id: uuid.UUID | None = Field(
         default=None,
         sa_column=Column(

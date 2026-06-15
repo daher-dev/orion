@@ -10,9 +10,8 @@ Convention notes
   its two tables into one, matching the legacy `AjusteEstampa` impresso ledger.
 - The levels endpoint surfaces ONLY `(print_design, product_color)` pairs
   that have moved at least once.
-- `product_color` is FREE-TEXT (matching `ProductVariation.color` /
-  `BatchPrintAdjustment.product_color`) so the batch print-queue netting can
-  join the ledger by colour string. Do NOT normalise/lowercase it.
+- `product_color` is FREE-TEXT (matching `ProductVariation.color`) so callers
+  can join the ledger by colour string. Do NOT normalise/lowercase it.
 - `create_exit` enforces the no-negative-stock invariant by re-aggregating on
   the fly before writing. Racey under heavy concurrency — accepted for v1
   because exits happen at human-input pace.

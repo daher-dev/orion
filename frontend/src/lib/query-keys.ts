@@ -26,7 +26,6 @@ export const qk = {
     lists: () => tuple("batches", "list"),
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("batches", "list", filters),
     detail: (id: string) => tuple("batches", "detail", id),
-    printQueue: () => tuple("batches", "print-queue"),
   },
   mapping: {
     all: () => tuple("mapping"),
@@ -144,6 +143,7 @@ export const qk = {
     company: () => tuple("settings", "company"),
     profile: () => tuple("settings", "profile"),
     stockAlerts: () => tuple("settings", "stock-alerts"),
+    catalog: () => tuple("settings", "catalog"),
   },
   billing: {
     all: () => tuple("billing"),

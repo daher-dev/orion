@@ -3,15 +3,13 @@ import uuid
 import pytest
 from sqlmodel import select
 
-from models import AuditLog, Batch, BatchPrintAdjustment, BatchStatus, Order
+from models import AuditLog, Batch, BatchStatus
 from schemas._common import PageParams
-from schemas.batch import BatchAdjustmentRow
 from services.batch import (
     create_batch,
     delete_batch,
     get_batch,
     list_batches,
-    save_adjustments,
     transition_status,
 )
 from shared.exceptions import ConflictError, NotFoundError, ValidationError
@@ -20,7 +18,6 @@ from tests.factories import (
     create_client,
     create_company,
     create_print_design,
-    create_print_stock_movement,
     create_product,
     create_product_spec,
     create_product_variation,
@@ -31,16 +28,12 @@ from tests.factories import (
 )
 
 
-async def _scaffold(db_session, *, with_print=True):
+async def _scaffold(db_session):
     company = await create_company(db_session)
     user = await create_user(db_session, company_id=company.id)
     spec = await create_product_spec(db_session, company_id=company.id)
-    design = None
-    print_id = None
-    if with_print:
-        design = await create_print_design(db_session, company_id=company.id)
-        print_id = design.id
-    product = await create_product(db_session, company_id=company.id, spec_id=spec.id, print_id=print_id)
+    design = await create_print_design(db_session, company_id=company.id)
+    product = await create_product(db_session, company_id=company.id, spec_id=spec.id, print_id=design.id)
     variation = await create_product_variation(db_session, company_id=company.id, product_id=product.id)
     client = await create_client(db_session, company_id=company.id)
     ad = await create_ad(db_session, company_id=company.id, product_id=product.id)
@@ -66,7 +59,7 @@ async def test_create_batch_links_orders_and_computes_totals(db_session):
     o1 = await _order(db_session, company, ad, variation, client, quantity=2, external_order_id="A1")
     o2 = await _order(db_session, company, ad, variation, client, quantity=3, external_order_id="A2")
 
-    batch, _adj = await create_batch(
+    batch = await create_batch(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -93,12 +86,11 @@ async def test_create_batch_auto_includes_siblings_sharing_external_order_id(db_
     sibling_variation = await create_product_variation(
         db_session, company_id=company.id, product_id=product.id, color="Branco", color_code="WHT"
     )
-    # Two lines of the same platform order (shared external_order_id).
     line1 = await _order(db_session, company, ad, variation, client, external_order_id="PED-1")
     line2 = await _order(db_session, company, ad, sibling_variation, client, external_order_id="PED-1")
 
     # Operator only selected line1.
-    batch, _adj = await create_batch(
+    batch = await create_batch(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -126,71 +118,10 @@ async def test_create_batch_rejects_unknown_order(db_session):
         await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[uuid.uuid4()])
 
 
-async def test_create_batch_aggregates_adjustments_by_design_and_colour(db_session):
-    company, user, _, variation, client, ad, design = await _scaffold(db_session)
-    await _order(db_session, company, ad, variation, client, quantity=2, external_order_id="A1")
-    await _order(db_session, company, ad, variation, client, quantity=3, external_order_id="A2")
-
-    _batch, adjustments = await create_batch(
-        db_session,
-        company_id=company.id,
-        user_id=user.id,
-        order_ids=[o.id for o in (await db_session.exec(select(Order).where(Order.company_id == company.id))).all()],
-    )
-    assert len(adjustments) == 1
-    adj, code, _name = adjustments[0]
-    assert adj.print_design_id == design.id
-    assert adj.product_color == variation.color
-    assert adj.qty_needed == 5
-    assert adj.qty_to_print == 5  # defaults to needed
-    assert code == design.code
-
-
-async def test_create_batch_reflects_print_stock_on_hand_in_qty_stock(db_session):
-    """qty_stock must net against the real printed-stamp ledger, not be 0."""
-    company, user, _, variation, client, ad, design = await _scaffold(db_session)
-    # 6 printed stamps on hand for this (design, colour).
-    await create_print_stock_movement(
-        db_session,
-        company_id=company.id,
-        print_design_id=design.id,
-        product_color=variation.color,
-        quantity=6,
-    )
-    o1 = await _order(db_session, company, ad, variation, client, quantity=4, external_order_id="A1")
-
-    _batch, adjustments = await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[o1.id])
-    assert len(adjustments) == 1
-    adj = adjustments[0][0]
-    assert adj.product_color == variation.color
-    assert adj.qty_needed == 4
-    assert adj.qty_stock == 6  # netted from the print-stock ledger
-
-
-async def test_create_batch_skips_products_without_print_design(db_session):
-    company, user, _, variation, client, ad, _ = await _scaffold(db_session, with_print=False)
-    o1 = await _order(db_session, company, ad, variation, client, external_order_id="A1")
-    _batch, adjustments = await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[o1.id])
-    assert adjustments == []
-
-
-# -------------------------------------------------------------- adjustments
-
-
-async def test_save_adjustments_updates_qty_and_advances_status(db_session):
-    company, user, _, variation, client, ad, design = await _scaffold(db_session)
-    o1 = await _order(db_session, company, ad, variation, client, quantity=4, external_order_id="A1")
-    batch, _adj = await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[o1.id])
-
-    batch2, adjustments = await save_adjustments(
-        db_session,
-        company_id=company.id,
-        user_id=user.id,
-        batch_id=batch.id,
-        adjustments=[BatchAdjustmentRow(print_design_id=design.id, qty_to_print=10)],
-    )
-    assert batch2.status == BatchStatus.ADJUSTED
-    assert adjustments[0][0].qty_to_print == 10
+async def test_create_batch_rejects_empty_order_list(db_session):
+    company, user, _, _, _, _, _ = await _scaffold(db_session)
+    with pytest.raises(ValidationError):
+        await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[])
 
 
 # ------------------------------------------------------------------ status
@@ -199,19 +130,52 @@ async def test_save_adjustments_updates_qty_and_advances_status(db_session):
 async def test_transition_status_enforces_state_machine(db_session):
     company, user, _, variation, client, ad, _ = await _scaffold(db_session)
     o1 = await _order(db_session, company, ad, variation, client, external_order_id="A1")
-    batch, _adj = await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[o1.id])
+    batch = await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[o1.id])
 
-    # OPEN -> PRINTED is illegal (must go through ADJUSTED).
+    # OPEN -> DISPATCHED is illegal (must go through IN_PRODUCTION).
     with pytest.raises(ConflictError):
         await transition_status(
-            db_session, company_id=company.id, user_id=user.id, batch_id=batch.id, target=BatchStatus.PRINTED
+            db_session, company_id=company.id, user_id=user.id, batch_id=batch.id, target=BatchStatus.DISPATCHED
         )
 
-    # OPEN -> CANCELLED is allowed.
-    cancelled, _ = await transition_status(
+    # OPEN -> IN_PRODUCTION -> DISPATCHED -> DONE is the happy path.
+    in_prod = await transition_status(
+        db_session, company_id=company.id, user_id=user.id, batch_id=batch.id, target=BatchStatus.IN_PRODUCTION
+    )
+    assert in_prod.status == BatchStatus.IN_PRODUCTION
+
+    dispatched = await transition_status(
+        db_session, company_id=company.id, user_id=user.id, batch_id=batch.id, target=BatchStatus.DISPATCHED
+    )
+    assert dispatched.status == BatchStatus.DISPATCHED
+
+    done = await transition_status(
+        db_session, company_id=company.id, user_id=user.id, batch_id=batch.id, target=BatchStatus.DONE
+    )
+    assert done.status == BatchStatus.DONE
+    assert done.completed_at is not None
+
+
+async def test_transition_status_open_to_cancelled_allowed(db_session):
+    company, user, _, variation, client, ad, _ = await _scaffold(db_session)
+    o1 = await _order(db_session, company, ad, variation, client, external_order_id="A1")
+    batch = await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[o1.id])
+
+    cancelled = await transition_status(
         db_session, company_id=company.id, user_id=user.id, batch_id=batch.id, target=BatchStatus.CANCELLED
     )
     assert cancelled.status == BatchStatus.CANCELLED
+
+
+async def test_transition_status_same_status_is_noop(db_session):
+    company, user, _, variation, client, ad, _ = await _scaffold(db_session)
+    o1 = await _order(db_session, company, ad, variation, client, external_order_id="A1")
+    batch = await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[o1.id])
+
+    same = await transition_status(
+        db_session, company_id=company.id, user_id=user.id, batch_id=batch.id, target=BatchStatus.OPEN
+    )
+    assert same.status == BatchStatus.OPEN
 
 
 # ------------------------------------------------------------------- list
@@ -238,27 +202,23 @@ async def test_list_batches_scoped_and_filtered(db_session):
 # ------------------------------------------------------------------ delete
 
 
-async def test_delete_batch_unlinks_orders_and_cascades_adjustments(db_session):
+async def test_delete_batch_unlinks_orders(db_session):
     company, user, _, variation, client, ad, _ = await _scaffold(db_session)
     o1 = await _order(db_session, company, ad, variation, client, external_order_id="A1")
-    batch, _adj = await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[o1.id])
+    batch = await create_batch(db_session, company_id=company.id, user_id=user.id, order_ids=[o1.id])
 
     await delete_batch(db_session, company_id=company.id, user_id=user.id, batch_id=batch.id)
 
     assert (await db_session.exec(select(Batch).where(Batch.id == batch.id))).first() is None
     await db_session.refresh(o1)
     assert o1.batch_id is None
-    leftover = (
-        await db_session.exec(select(BatchPrintAdjustment).where(BatchPrintAdjustment.batch_id == batch.id))
-    ).all()
-    assert leftover == []
 
 
 async def test_get_batch_not_found_and_tenant_isolation(db_session):
     company_a, _, _, _, _, _, _ = await _scaffold(db_session)
     company_b, user_b, _, var_b, client_b, ad_b, _ = await _scaffold(db_session)
     ob = await _order(db_session, company_b, ad_b, var_b, client_b, external_order_id="B1")
-    batch_b, _ = await create_batch(db_session, company_id=company_b.id, user_id=user_b.id, order_ids=[ob.id])
+    batch_b = await create_batch(db_session, company_id=company_b.id, user_id=user_b.id, order_ids=[ob.id])
 
     with pytest.raises(NotFoundError):
         await get_batch(db_session, company_id=company_a.id, batch_id=batch_b.id)

@@ -985,7 +985,8 @@
         "codeRequired": "Code is required",
         "nameRequired": "Name is required",
         "required": "Required",
-        "numeric": "Numbers only"
+        "numeric": "Numbers only",
+        "hex": "Use a hex color like #1f1f1f"
       },
       "save": "Save print",
       "cancel": "Cancel",
@@ -1003,7 +1004,7 @@
     },
     "help": {
       "title": "Prints — the catalog of artwork applied to garments",
-      "body": "Each print holds the artwork and the application method — DTF, silk or sublimation — with its print size. It is what the Montador lays out on the sheet and what each piece's label shows.",
+      "body": "Each print holds the artwork and the application method — DTF, silk or sublimation — with its print size. It is what gets laid out on the sheet and what each piece's label shows.",
       "flow": {
         "artwork": "Artwork sent",
         "artworkSub": ".png file",
@@ -1035,6 +1036,45 @@
         "title": "Products using this print",
         "empty": "No product uses this print yet."
       }
+    },
+    "sides": {
+      "label": "Sides",
+      "front": "Front",
+      "back": "Back",
+      "hint": "Sides apply to every color — set whether the art goes on the front, the back, or both. Then upload one PNG per side for each color.",
+      "removeFront": "Remove front from all colors",
+      "removeBack": "Remove back from all colors",
+      "addFront": "Front",
+      "addBack": "Back",
+      "atLeastOne": "Keep at least one side."
+    },
+    "variations": {
+      "title": "Color variations & PNG files",
+      "add": "Color variation",
+      "addInk": "Add color variation",
+      "inkColor": "Ink color",
+      "name": "Color name",
+      "front": "Front",
+      "back": "Back",
+      "uploadPng": "Upload PNG",
+      "replace": "Replace file",
+      "pngOk": "Uploaded",
+      "pngPending": "PNG not uploaded",
+      "pngOnlyError": "Only PNG images are accepted.",
+      "uploadError": "Could not upload the PNG.",
+      "complete": "Complete",
+      "pendingCount": "{count, plural, one {# pending} other {# pending}}",
+      "pendingPngs": "{count, plural, one {# pending PNG} other {# pending PNGs}}",
+      "summary": "{ready}/{total} color(s) complete",
+      "countLabel": "Color variations",
+      "removeVariation": "Remove variation",
+      "empty": "No color variations yet — add one to upload artwork.",
+      "created": "Variation added",
+      "updated": "Variation updated",
+      "deleted": "Variation removed",
+      "saveError": "Could not save the variation.",
+      "allColorsUsed": "All ink colors are in use.",
+      "noPalette": "Set ink colors in Settings › Catalog first."
     }
   },
   "cutting": {
@@ -1927,6 +1967,7 @@
     },
     "groups": {
       "organization": "Organization",
+      "personalization": "Personalization",
       "account": "Account"
     },
     "nav": {
@@ -1938,6 +1979,7 @@
       "integrations": "Integrations",
       "profile": "Profile",
       "notifications": "Notifications",
+      "catalog": "Catalog",
       "stockAlerts": "Stock alerts"
     },
     "company": {
@@ -2067,6 +2109,7 @@
       "members": "You don't have access to members.",
       "roles": "You don't have access to roles.",
       "stockAlerts": "You don't have access to stock alerts.",
+      "catalog": "You don't have access to the catalog configuration.",
       "integrations": "You don't have access to integrations."
     },
     "integrations": {
@@ -2112,6 +2155,124 @@
       "validation": {
         "invalid": "Enter a whole number of 0 or more."
       }
+    }
+  },
+  "catalogConfig": {
+    "title": "Catalog",
+    "sub": "Colors, sizes, garment types and trims used across the catalog.",
+    "loadError": "Could not load the catalog configuration.",
+    "save": "Save changes",
+    "saved": "Catalog configuration saved.",
+    "saveError": "Could not save the catalog configuration.",
+    "reset": "Restore defaults",
+    "footnote": "Changes apply to new products. Existing products keep what was already saved.",
+    "productColors": {
+      "title": "Fabric colors",
+      "sub": "Material colors available when creating a product. Each product picks from these.",
+      "add": "Add fabric color"
+    },
+    "printColors": {
+      "title": "Print colors",
+      "sub": "Ink colors available for the applied artwork — paired with each material color on the product.",
+      "add": "Add print color"
+    },
+    "sizes": {
+      "title": "Sizes",
+      "sub": "Size grid that can be enabled on each product's variations.",
+      "add": "Add",
+      "placeholder": "e.g. XG, 38, One size…",
+      "empty": "No sizes — add at least one.",
+      "duplicate": "That size already exists."
+    },
+    "fabricTypes": {
+      "title": "Fabric types",
+      "sub": "Available when receiving rolls in Stock › Fabric and on the tech sheet.",
+      "add": "Add fabric type",
+      "placeholder": "e.g. 100% cotton jersey"
+    },
+    "garmentTypes": {
+      "title": "Garment types",
+      "sub": "Tech-sheet models. Each has an icon and a SKU prefix.",
+      "add": "Add garment type",
+      "colIcon": "Icon",
+      "colName": "Name",
+      "colSku": "SKU",
+      "namePlaceholder": "e.g. T-shirt",
+      "skuPlaceholder": "CAM",
+      "chooseIcon": "Choose icon"
+    },
+    "aviamentos": {
+      "title": "Trims",
+      "sub": "Items that can be added to a tech sheet's cost.",
+      "add": "Add trim",
+      "placeholder": "e.g. Composition label"
+    },
+    "techniques": {
+      "title": "Print techniques",
+      "sub": "Print methods available in Catalog › Prints.",
+      "add": "Add technique",
+      "placeholder": "e.g. DTF, Silkscreen…"
+    },
+    "colorNamePlaceholder": "Color name",
+    "remove": "Remove",
+    "validation": {
+      "hex": "Use a hex color like #1f1f1f",
+      "required": "Required",
+      "skuPrefix": "1–4 letters/digits",
+      "needName": "Give every color a name.",
+      "needLabel": "Give every garment type a name.",
+      "needSku": "Each garment type needs a valid SKU prefix."
+    }
+  },
+  "thresholds": {
+    "title": "Low-stock alerts",
+    "sub": "Orion highlights the item and warns you when the balance crosses the limit set here.",
+    "loadError": "Could not load the thresholds.",
+    "save": "Save changes",
+    "saved": "Thresholds saved.",
+    "saveError": "Could not save the thresholds.",
+    "reset": "Restore defaults",
+    "noAlert": "No alert",
+    "footnote": "Turning a tier off silences its reorder alerts across Orion — useful for items your shop doesn't keep in stock.",
+    "enabledOn": "Alert on",
+    "enabledOff": "Alert off",
+    "units": {
+      "pct": "%",
+      "qty": "un.",
+      "kg": "kg",
+      "m": "m"
+    },
+    "tiers": {
+      "fabric": {
+        "label": "Fabric rolls",
+        "where": "Stock › Fabric rolls",
+        "scope": "per roll"
+      },
+      "paper": {
+        "label": "Paper / film rolls",
+        "where": "Stock › Paper",
+        "scope": "per roll"
+      },
+      "blank": {
+        "label": "Blank pieces",
+        "where": "Stock › Blank pieces",
+        "scope": "per variation"
+      },
+      "printed": {
+        "label": "Printed transfers",
+        "where": "Stock › Printed transfers",
+        "scope": "per print · side"
+      },
+      "product": {
+        "label": "Finished products",
+        "where": "Stock › Products",
+        "scope": "per SKU"
+      }
+    },
+    "summary": {
+      "off": "No alert — this tier is not tracked.",
+      "pct": "Warns below {value}% of the initial balance · {scope}",
+      "abs": "Warns below {value} {unit} remaining · {scope}"
     }
   },
   "members": {
@@ -2475,7 +2636,7 @@
     "list": {
       "title": "Production",
       "titleEm": "batches",
-      "sub": "Pack orders into a batch, adjust print runs, then print labels and dispatch.",
+      "sub": "Pack orders into a batch, print labels and dispatch.",
       "loadError": "Could not load batches.",
       "noResults": "No batches yet.",
       "empty": "No batches yet. Create one from selected orders."
@@ -2503,8 +2664,8 @@
     },
     "statuses": {
       "open": "Open",
-      "adjusted": "Adjusted",
-      "printed": "Printed",
+      "in_production": "In production",
+      "dispatched": "Dispatched",
       "done": "Done",
       "cancelled": "Cancelled"
     },
@@ -2514,32 +2675,8 @@
       "needed": "Needed",
       "toPrint": "To print"
     },
-    "adjustments": {
-      "title": "Print designs",
-      "stamp": "Design",
-      "color": "Color",
-      "needed": "Needed",
-      "onHand": "On hand",
-      "toPrint": "To print",
-      "sent": "Sent",
-      "empty": "No print designs in this batch.",
-      "save": "Save adjustments"
-    },
-    "printQueue": {
-      "title": "Print queue",
-      "totalToPrint": "{count} to print",
-      "design": "Design",
-      "color": "Color",
-      "needed": "Needed",
-      "onHand": "On hand",
-      "toPrint": "To print",
-      "batches": "Batches",
-      "emptyTitle": "Nothing to print",
-      "emptyDesc": "Stamp stock covers all open batches."
-    },
     "detail": {
       "printLabels": "Print labels",
-      "sendMontador": "Send to Montador DTF",
       "printShipping": "Print shipping labels",
       "markDone": "Mark done",
       "cancel": "Cancel batch",
@@ -2549,9 +2686,6 @@
     },
     "toast": {
       "created": "Batch created",
-      "saved": "Adjustments saved",
-      "montadorOk": "Sent to Montador: {ok} ok, {failed} failed",
-      "montadorErr": "Could not send to Montador DTF",
       "deleted": "Batch deleted",
       "noShippingLabels": "No shipping labels available for this batch."
     },

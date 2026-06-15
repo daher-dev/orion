@@ -5,6 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,7 @@ const FIELD_INPUT_CLASS =
 export function PrintForm({ formId, initial, onSubmit }: Props) {
   const t = useTranslations("prints.form");
   const tTech = useTranslations("prints.techniques");
+  const tSides = useTranslations("prints.sides");
   const tValidation = useTranslations("prints.form.validation");
 
   const defaultValues: PrintFormValues = {
@@ -43,6 +45,8 @@ export function PrintForm({ formId, initial, onSubmit }: Props) {
     cost_per_unit: initial?.cost_per_unit ?? "0",
     technique: initial?.technique ?? "dtf",
     tag: initial?.tag ?? "",
+    has_front: initial?.has_front ?? true,
+    has_back: initial?.has_back ?? false,
     image_url_front: initial?.image_url_front ?? "",
     image_url_back: initial?.image_url_back ?? "",
     width_cm: initial?.width_cm ?? "",
@@ -154,6 +158,43 @@ export function PrintForm({ formId, initial, onSubmit }: Props) {
             className={FIELD_INPUT_CLASS}
             placeholder={t("placeholders.tag")}
             {...form.register("tag")}
+          />
+        </div>
+      </div>
+
+      {/* Sides — drives has_front / has_back (every color carries these sides) */}
+      <div className="flex flex-col gap-1.5">
+        <label className={FIELD_LABEL_CLASS}>{tSides("label")}</label>
+        <div className="flex flex-wrap gap-2" data-testid="print-sides">
+          <Controller
+            control={form.control}
+            name="has_front"
+            render={({ field }) => (
+              <label className="inline-flex items-center gap-2 rounded-[8px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-3 py-2 text-[13px] text-[color:var(--orion-ink)]">
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  data-testid="print-side-front"
+                  aria-label={tSides("front")}
+                />
+                {tSides("front")}
+              </label>
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="has_back"
+            render={({ field }) => (
+              <label className="inline-flex items-center gap-2 rounded-[8px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-3 py-2 text-[13px] text-[color:var(--orion-ink)]">
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  data-testid="print-side-back"
+                  aria-label={tSides("back")}
+                />
+                {tSides("back")}
+              </label>
+            )}
           />
         </div>
       </div>

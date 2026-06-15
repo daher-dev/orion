@@ -985,7 +985,8 @@
         "codeRequired": "Código é obrigatório",
         "nameRequired": "Nome é obrigatório",
         "required": "Campo obrigatório",
-        "numeric": "Use apenas números"
+        "numeric": "Use apenas números",
+        "hex": "Use uma cor hex como #1f1f1f"
       },
       "save": "Salvar estampa",
       "cancel": "Cancelar",
@@ -1003,7 +1004,7 @@
     },
     "help": {
       "title": "Estampas — o catálogo de artes que vão na peça",
-      "body": "Cada estampa guarda a arte e o método de aplicação — DTF, silk ou sublimação — com tamanho de impressão. É o que o Montador encaixa na folha e o que a etiqueta de cada peça mostra.",
+      "body": "Cada estampa guarda a arte e o método de aplicação — DTF, silk ou sublimação — com tamanho de impressão. É o que vai pra folha de impressão e o que a etiqueta de cada peça mostra.",
       "flow": {
         "artwork": "Arte enviada",
         "artworkSub": "arquivo .png",
@@ -1035,6 +1036,45 @@
         "title": "Produtos que usam esta estampa",
         "empty": "Nenhum produto usa esta estampa ainda."
       }
+    },
+    "sides": {
+      "label": "Lados",
+      "front": "Frente",
+      "back": "Costas",
+      "hint": "Os lados valem para todas as cores — defina aqui se a arte vai na frente, nas costas, ou ambos. Depois suba um PNG por lado em cada cor.",
+      "removeFront": "Remover a frente de todas as cores",
+      "removeBack": "Remover as costas de todas as cores",
+      "addFront": "Frente",
+      "addBack": "Costas",
+      "atLeastOne": "Mantenha ao menos um lado."
+    },
+    "variations": {
+      "title": "Variações de cor & arquivos PNG",
+      "add": "Variação",
+      "addInk": "Adicionar variação de cor",
+      "inkColor": "Cor da tinta",
+      "name": "Nome da cor",
+      "front": "Frente",
+      "back": "Costas",
+      "uploadPng": "Subir PNG",
+      "replace": "Substituir arquivo",
+      "pngOk": "Enviado",
+      "pngPending": "PNG não enviado",
+      "pngOnlyError": "Apenas imagens PNG são aceitas.",
+      "uploadError": "Não foi possível enviar o PNG.",
+      "complete": "Completo",
+      "pendingCount": "{count, plural, one {# pendente} other {# pendentes}}",
+      "pendingPngs": "{count, plural, one {# PNG pendente} other {# PNGs pendentes}}",
+      "summary": "{ready}/{total} cor(es) completas",
+      "countLabel": "Variações de cor",
+      "removeVariation": "Remover variação",
+      "empty": "Nenhuma variação de cor ainda — adicione uma para subir a arte.",
+      "created": "Variação adicionada",
+      "updated": "Variação atualizada",
+      "deleted": "Variação removida",
+      "saveError": "Não foi possível salvar a variação.",
+      "allColorsUsed": "Todas as cores de tinta estão em uso.",
+      "noPalette": "Defina cores de tinta em Ajustes › Catálogo primeiro."
     }
   },
   "cutting": {
@@ -1927,6 +1967,7 @@
     },
     "groups": {
       "organization": "Organização",
+      "personalization": "Personalização",
       "account": "Conta"
     },
     "nav": {
@@ -1938,6 +1979,7 @@
       "integrations": "Integrações",
       "profile": "Perfil",
       "notifications": "Notificações",
+      "catalog": "Catálogo",
       "stockAlerts": "Alertas de estoque"
     },
     "company": {
@@ -2067,6 +2109,7 @@
       "members": "Você não tem acesso aos membros.",
       "roles": "Você não tem acesso às funções.",
       "stockAlerts": "Você não tem acesso aos alertas de estoque.",
+      "catalog": "Você não tem acesso à configuração do catálogo.",
       "integrations": "Você não tem acesso às integrações."
     },
     "integrations": {
@@ -2112,6 +2155,124 @@
       "validation": {
         "invalid": "Informe um número inteiro de 0 ou mais."
       }
+    }
+  },
+  "catalogConfig": {
+    "title": "Catálogo",
+    "sub": "Cores, tamanhos, tipos de peça e aviamentos usados no catálogo.",
+    "loadError": "Não foi possível carregar a configuração do catálogo.",
+    "save": "Salvar alterações",
+    "saved": "Configuração do catálogo salva.",
+    "saveError": "Não foi possível salvar a configuração do catálogo.",
+    "reset": "Restaurar padrão",
+    "footnote": "As mudanças valem para novos produtos. Produtos existentes mantêm o que já foi salvo.",
+    "productColors": {
+      "title": "Cores de tecidos",
+      "sub": "Cores de material disponíveis ao criar um produto. Cada produto escolhe entre estas.",
+      "add": "Adicionar cor de tecido"
+    },
+    "printColors": {
+      "title": "Cores de estampa",
+      "sub": "Cores de tinta disponíveis para a arte aplicada — combinadas a cada cor de material no produto.",
+      "add": "Adicionar cor de estampa"
+    },
+    "sizes": {
+      "title": "Tamanhos",
+      "sub": "Grade de tamanhos que pode ser ativada nas variações de cada produto.",
+      "add": "Adicionar",
+      "placeholder": "Ex: XG, 38, Único…",
+      "empty": "Nenhum tamanho — adicione ao menos um.",
+      "duplicate": "Esse tamanho já existe."
+    },
+    "fabricTypes": {
+      "title": "Tipos de tecido",
+      "sub": "Disponíveis ao receber bobinas em Estoque › Tecidos e na ficha técnica.",
+      "add": "Adicionar tipo de tecido",
+      "placeholder": "Ex: Malha 100% algodão"
+    },
+    "garmentTypes": {
+      "title": "Tipos de peça",
+      "sub": "Modelagens da ficha técnica. Cada uma tem um ícone e um prefixo de SKU.",
+      "add": "Adicionar tipo de peça",
+      "colIcon": "Ícone",
+      "colName": "Nome",
+      "colSku": "SKU",
+      "namePlaceholder": "Ex: Camiseta",
+      "skuPlaceholder": "CAM",
+      "chooseIcon": "Escolher ícone"
+    },
+    "aviamentos": {
+      "title": "Aviamentos",
+      "sub": "Itens que podem ser somados ao custo de uma ficha técnica.",
+      "add": "Adicionar aviamento",
+      "placeholder": "Ex: Etiqueta de composição"
+    },
+    "techniques": {
+      "title": "Técnicas de estampa",
+      "sub": "Métodos de estampa disponíveis em Catálogo › Estampas.",
+      "add": "Adicionar técnica",
+      "placeholder": "Ex: DTF, Silkscreen…"
+    },
+    "colorNamePlaceholder": "Nome da cor",
+    "remove": "Remover",
+    "validation": {
+      "hex": "Use uma cor hex como #1f1f1f",
+      "required": "Campo obrigatório",
+      "skuPrefix": "1–4 letras/dígitos",
+      "needName": "Dê um nome a cada cor.",
+      "needLabel": "Dê um nome a cada tipo de peça.",
+      "needSku": "Cada tipo de peça precisa de um prefixo de SKU válido."
+    }
+  },
+  "thresholds": {
+    "title": "Avisos de estoque baixo",
+    "sub": "O Orion destaca o item e avisa quando o saldo cruza o limite definido aqui.",
+    "loadError": "Não foi possível carregar os limites.",
+    "save": "Salvar alterações",
+    "saved": "Limites salvos.",
+    "saveError": "Não foi possível salvar os limites.",
+    "reset": "Restaurar padrão",
+    "noAlert": "Sem alerta",
+    "footnote": "Desligar um estoque silencia os avisos de reposição dele em todo o Orion — útil para itens que sua confecção não mantém em estoque.",
+    "enabledOn": "Avisar",
+    "enabledOff": "Sem aviso",
+    "units": {
+      "pct": "%",
+      "qty": "un.",
+      "kg": "kg",
+      "m": "m"
+    },
+    "tiers": {
+      "fabric": {
+        "label": "Bobinas de tecido",
+        "where": "Estoque › Bobinas de tecido",
+        "scope": "por bobina"
+      },
+      "paper": {
+        "label": "Bobinas de papel / filme",
+        "where": "Estoque › Papel",
+        "scope": "por bobina"
+      },
+      "blank": {
+        "label": "Peças lisas",
+        "where": "Estoque › Peças lisas",
+        "scope": "por variação"
+      },
+      "printed": {
+        "label": "Impressos",
+        "where": "Estoque › Impressos",
+        "scope": "por estampa · lado"
+      },
+      "product": {
+        "label": "Produtos acabados",
+        "where": "Estoque › Produtos",
+        "scope": "por SKU"
+      }
+    },
+    "summary": {
+      "off": "Sem aviso — este estoque não é acompanhado.",
+      "pct": "Avisa abaixo de {value}% do saldo inicial · {scope}",
+      "abs": "Avisa abaixo de {value} {unit} restantes · {scope}"
     }
   },
   "members": {
@@ -2475,7 +2636,7 @@
     "list": {
       "title": "Produção",
       "titleEm": "em lotes",
-      "sub": "Agrupe pedidos em um lote, ajuste as impressões e então imprima etiquetas e despache.",
+      "sub": "Agrupe pedidos em um lote, imprima etiquetas e despache.",
       "loadError": "Não foi possível carregar os lotes.",
       "noResults": "Nenhum lote ainda.",
       "empty": "Nenhum lote ainda. Crie um a partir dos pedidos selecionados."
@@ -2503,8 +2664,8 @@
     },
     "statuses": {
       "open": "Aberto",
-      "adjusted": "Ajustado",
-      "printed": "Impresso",
+      "in_production": "Em produção",
+      "dispatched": "Despachado",
       "done": "Concluído",
       "cancelled": "Cancelado"
     },
@@ -2514,32 +2675,8 @@
       "needed": "Necessário",
       "toPrint": "A imprimir"
     },
-    "adjustments": {
-      "title": "Estampas",
-      "stamp": "Estampa",
-      "color": "Cor",
-      "needed": "Necessário",
-      "onHand": "Em estoque",
-      "toPrint": "A imprimir",
-      "sent": "Enviado",
-      "empty": "Nenhuma estampa neste lote.",
-      "save": "Salvar ajustes"
-    },
-    "printQueue": {
-      "title": "Fila de impressão",
-      "totalToPrint": "{count} a imprimir",
-      "design": "Estampa",
-      "color": "Cor",
-      "needed": "Necessário",
-      "onHand": "Em estoque",
-      "toPrint": "A imprimir",
-      "batches": "Lotes",
-      "emptyTitle": "Nada a imprimir",
-      "emptyDesc": "O estoque de estampas cobre todos os lotes abertos."
-    },
     "detail": {
       "printLabels": "Imprimir etiquetas",
-      "sendMontador": "Enviar para o Montador DTF",
       "printShipping": "Imprimir etiquetas de envio",
       "markDone": "Concluir",
       "cancel": "Cancelar lote",
@@ -2549,9 +2686,6 @@
     },
     "toast": {
       "created": "Lote criado",
-      "saved": "Ajustes salvos",
-      "montadorOk": "Enviado ao Montador: {ok} ok, {failed} falhas",
-      "montadorErr": "Não foi possível enviar ao Montador DTF",
       "deleted": "Lote excluído",
       "noShippingLabels": "Nenhuma etiqueta de envio disponível para este lote."
     },

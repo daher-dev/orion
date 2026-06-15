@@ -9,6 +9,7 @@ from routers.billing import router as billing_router
 from routers.channel_integration import router as channel_integration_router
 from routers.clients import router as clients_router
 from routers.company import router as company_router
+from routers.company import settings_router as company_settings_router
 from routers.contractors import router as contractors_router
 from routers.cutting import router as cutting_router
 from routers.dashboard import router as dashboard_router
@@ -41,6 +42,7 @@ api_router.include_router(billing_router)
 api_router.include_router(channel_integration_router)
 api_router.include_router(clients_router)
 api_router.include_router(company_router)
+api_router.include_router(company_settings_router)
 api_router.include_router(contractors_router)
 api_router.include_router(cutting_router)
 api_router.include_router(dashboard_router)
@@ -72,6 +74,7 @@ __all__ = [
     "channel_integration_router",
     "clients_router",
     "company_router",
+    "company_settings_router",
     "contractors_router",
     "cutting_router",
     "dashboard_router",

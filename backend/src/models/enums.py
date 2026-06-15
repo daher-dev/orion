@@ -2,10 +2,19 @@ from enum import StrEnum
 
 
 class ProductType(StrEnum):
-    TSHIRT = "tshirt"
-    SWEATSHIRT = "sweatshirt"
-    SHORTS = "shorts"
-    TANKTOP = "tanktop"
+    """Garment types (tipos de peça) — the base silhouette of a product.
+
+    Mirrors the ``garmentTypes`` catalog config used across the shop floor.
+    """
+
+    CAMISETA = "camiseta"
+    MOLETOM = "moletom"
+    REGATA = "regata"
+    BLUSA = "blusa"
+    CALCA = "calca"
+    BERMUDA = "bermuda"
+    ECOBAG = "ecobag"
+    CROPPED = "cropped"
 
 
 class Size(StrEnum):
@@ -13,6 +22,7 @@ class Size(StrEnum):
     M = "m"
     G = "g"
     GG = "gg"
+    U = "u"  # Único — one-size (shown as "U" in the UI)
 
 
 class FabricType(StrEnum):
@@ -82,6 +92,7 @@ class StockSource(StrEnum):
     SHIPMENT = "shipment"
     ADJUSTMENT = "adjustment"
     RETURN = "return"
+    ASSEMBLY = "assembly"  # finished pieces credited by an Assembly (Montagem) run
 
 
 class StockExitReason(StrEnum):
@@ -93,7 +104,7 @@ class StockExitReason(StrEnum):
 class PrintStockDirection(StrEnum):
     """Direction of a printed-stamp (estampa impressa) stock movement.
 
-    ENTRY: printed stamps flowing into stock (a print run / Montador batch).
+    ENTRY: printed stamps flowing into stock (a print run).
     EXIT: printed stamps consumed (applied to a piece, lost).
     ADJUSTMENT: a signed correction recorded as a positive quantity in the
         chosen direction — kept as its own kind so manual reconciliations are
@@ -113,6 +124,76 @@ class SupplyMovementKind(StrEnum):
     ADJUSTMENT: a signed-positive correction credited to stock — kept as its
         own kind so manual reconciliations are distinguishable from operational
         entries/exits in the ledger. Like ENTRY, it credits on-hand.
+    """
+
+    ENTRY = "entry"
+    EXIT = "exit"
+    ADJUSTMENT = "adjustment"
+
+
+class PaperType(StrEnum):
+    """Kind of print-transfer paper/film roll (bobina de papel)."""
+
+    DTF_FILM = "dtf_film"
+    SUBLIMATION_PAPER = "sublimation_paper"
+    TRANSFER_PAPER = "transfer_paper"
+
+
+class PrintSide(StrEnum):
+    """Which face of a garment an estampa is applied to."""
+
+    FRONT = "front"
+    BACK = "back"
+
+
+class PrintOrderStatus(StrEnum):
+    """Lifecycle of a print order (ordem de impressão)."""
+
+    PENDING = "pending"
+    PRINTING = "printing"
+    DONE = "done"
+
+
+class ArtworkStatus(StrEnum):
+    """Whether a print-design variation's artwork (PNG) has been uploaded.
+
+    Server-derived from the presence of the side's file URL — clients never
+    set it directly.
+    """
+
+    OK = "ok"
+    PENDING = "pending"
+
+
+class BlankMovementKind(StrEnum):
+    """Direction of a blank-piece (peça lisa) stock movement.
+
+    ENTRY and ADJUSTMENT credit on-hand; EXIT debits it (every row holds a
+    strictly-positive quantity).
+    """
+
+    ENTRY = "entry"
+    EXIT = "exit"
+    ADJUSTMENT = "adjustment"
+
+
+class PaperMovementKind(StrEnum):
+    """Direction of a paper/film-roll (bobina de papel) stock movement.
+
+    ENTRY and ADJUSTMENT credit on-hand; EXIT debits it (every row holds a
+    strictly-positive quantity).
+    """
+
+    ENTRY = "entry"
+    EXIT = "exit"
+    ADJUSTMENT = "adjustment"
+
+
+class PrintedMovementKind(StrEnum):
+    """Direction of a printed-transfer (estampado) stock movement.
+
+    ENTRY and ADJUSTMENT credit on-hand; EXIT debits it (every row holds a
+    strictly-positive quantity).
     """
 
     ENTRY = "entry"
@@ -140,16 +221,16 @@ class PrintTechnique(StrEnum):
 class BatchStatus(StrEnum):
     """Lifecycle of a production/dispatch batch (lote).
 
-    OPEN: just created, print quantities not yet finalized.
-    ADJUSTED: per-stamp print quantities reviewed and saved.
-    PRINTED: separation labels generated/printed.
+    OPEN: just created, member orders being grouped.
+    IN_PRODUCTION: pieces being assembled/picked for the batch.
+    DISPATCHED: batch handed off to shipping.
     DONE: batch finished.
     CANCELLED: batch abandoned (member orders unlinked).
     """
 
     OPEN = "open"
-    ADJUSTED = "adjusted"
-    PRINTED = "printed"
+    IN_PRODUCTION = "in_production"
+    DISPATCHED = "dispatched"
     DONE = "done"
     CANCELLED = "cancelled"
 

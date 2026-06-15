@@ -6,9 +6,7 @@ import {
   useBatches,
   useBatch,
   useCreateBatch,
-  useSaveBatchAdjustments,
   useTransitionBatch,
-  useSendBatchToMontador,
   useDeleteBatch,
 } from "@/hooks/use-batches";
 import { TestProviders, makeQueryClient } from "@/__tests__/test-utils";
@@ -68,23 +66,10 @@ const sampleBatch = {
   total_orders: 3,
   total_pieces: 7,
   labels_printed_at: null,
-  prints_sent_at: null,
   completed_at: null,
   notes: null,
   created_at: "2026-06-04T12:00:00Z",
   updated_at: "2026-06-04T12:00:00Z",
-  adjustments: [
-    {
-      print_design_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-      print_design_code: "EST01",
-      print_design_name: "Caveira",
-      product_color: "Preto",
-      qty_needed: 7,
-      qty_stock: 0,
-      qty_to_print: 7,
-      prints_sent: false,
-    },
-  ],
 };
 
 const server = setupServer();
@@ -124,7 +109,7 @@ describe("useBatches", () => {
 });
 
 describe("useBatch", () => {
-  it("fetches a batch detail with adjustments", async () => {
+  it("fetches a batch detail", async () => {
     server.use(
       http.get("http://api.test/v1/batches/:id", ({ params }) => {
         expect(params.id).toBe(sampleBatch.id);
@@ -133,7 +118,7 @@ describe("useBatch", () => {
     );
     const { result } = renderHook(() => useBatch(sampleBatch.id), { wrapper: wrap() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.adjustments[0].qty_needed).toBe(7);
+    expect(result.current.data?.total_pieces).toBe(7);
   });
 });
 
@@ -156,59 +141,21 @@ describe("batch mutations", () => {
     expect((returned as { code: string }).code).toBe(sampleBatch.code);
   });
 
-  it("saves adjustments to the right endpoint", async () => {
-    let url: string | undefined;
-    let body: unknown;
-    server.use(
-      http.patch("http://api.test/v1/batches/:id/adjustments", async ({ request }) => {
-        url = request.url;
-        body = await request.json();
-        return HttpResponse.json(sampleBatch);
-      }),
-    );
-    const { result } = renderHook(() => useSaveBatchAdjustments(), { wrapper: wrap() });
-    await act(async () => {
-      await result.current.mutateAsync({
-        id: sampleBatch.id,
-        payload: { adjustments: [{ print_design_id: "d1", qty_to_print: 5 }] },
-      });
-    });
-    expect(url).toContain(`/v1/batches/${sampleBatch.id}/adjustments`);
-    expect(body).toEqual({ adjustments: [{ print_design_id: "d1", qty_to_print: 5 }] });
-  });
-
   it("transitions status", async () => {
     let body: { status?: string } | undefined;
     server.use(
       http.post("http://api.test/v1/batches/:id/status", async ({ request }) => {
         body = (await request.json()) as { status?: string };
-        return HttpResponse.json({ ...sampleBatch, status: "printed" });
+        return HttpResponse.json({ ...sampleBatch, status: "in_production" });
       }),
     );
     const { result } = renderHook(() => useTransitionBatch(), { wrapper: wrap() });
     let returned: { status?: string } | undefined;
     await act(async () => {
-      returned = await result.current.mutateAsync({ id: sampleBatch.id, status: "printed" });
+      returned = await result.current.mutateAsync({ id: sampleBatch.id, status: "in_production" });
     });
-    expect(body?.status).toBe("printed");
-    expect(returned?.status).toBe("printed");
-  });
-
-  it("sends to montador", async () => {
-    let url: string | undefined;
-    let returned: { succeeded?: number } | undefined;
-    server.use(
-      http.post("http://api.test/v1/batches/:id/send-to-montador", ({ request }) => {
-        url = request.url;
-        return HttpResponse.json({ total: 2, succeeded: 2, failed: 0, results: [] });
-      }),
-    );
-    const { result } = renderHook(() => useSendBatchToMontador(), { wrapper: wrap() });
-    await act(async () => {
-      returned = await result.current.mutateAsync(sampleBatch.id);
-    });
-    expect(url).toContain(`/v1/batches/${sampleBatch.id}/send-to-montador`);
-    expect(returned?.succeeded).toBe(2);
+    expect(body?.status).toBe("in_production");
+    expect(returned?.status).toBe("in_production");
   });
 
   it("deletes a batch", async () => {

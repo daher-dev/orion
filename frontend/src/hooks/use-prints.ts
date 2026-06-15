@@ -9,7 +9,16 @@ import {
 import { useApi } from "@/hooks/use-api";
 import { qk } from "@/lib/query-keys";
 import type { ApiError } from "@/lib/api-client";
-import type { Print, PrintFilters, PrintPage, PrintFormPayload } from "@/lib/schemas/print";
+import type {
+  Print,
+  PrintFilters,
+  PrintPage,
+  PrintFormPayload,
+  PrintSide,
+  PrintVariation,
+  PrintVariationCreatePayload,
+  PrintVariationUpdatePayload,
+} from "@/lib/schemas/print";
 
 const buildQuery = (filters: PrintFilters | undefined) => {
   if (!filters) return undefined;
@@ -68,5 +77,78 @@ export function useDeletePrint() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.prints.lists() });
     },
+  });
+}
+
+// ----------------------------------------------------------------- variations
+
+const invalidatePrint = (
+  qc: ReturnType<typeof useQueryClient>,
+  printId: string,
+) => {
+  qc.invalidateQueries({ queryKey: qk.prints.detail(printId) });
+  qc.invalidateQueries({ queryKey: qk.prints.lists() });
+};
+
+/** POST /v1/prints/{printId}/variations */
+export function useCreateVariation(printId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation<PrintVariation, ApiError, PrintVariationCreatePayload>({
+    mutationFn: (payload) =>
+      api.post<PrintVariation>(`/v1/prints/${printId}/variations`, payload),
+    onSuccess: () => invalidatePrint(qc, printId),
+  });
+}
+
+/** PATCH /v1/prints/{printId}/variations/{id} */
+export function useUpdateVariation(printId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation<
+    PrintVariation,
+    ApiError,
+    { id: string; payload: PrintVariationUpdatePayload }
+  >({
+    mutationFn: ({ id, payload }) =>
+      api.patch<PrintVariation>(`/v1/prints/${printId}/variations/${id}`, payload),
+    onSuccess: () => invalidatePrint(qc, printId),
+  });
+}
+
+/** DELETE /v1/prints/{printId}/variations/{id} */
+export function useDeleteVariation(printId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation<void, ApiError, string>({
+    mutationFn: (id) =>
+      api.delete<void>(`/v1/prints/${printId}/variations/${id}`),
+    onSuccess: () => invalidatePrint(qc, printId),
+  });
+}
+
+/**
+ * POST /v1/prints/{printId}/variations/{id}/artwork — multipart PNG upload.
+ * Follows the `use-orders-import.ts` pattern: the api-client auto-detects
+ * FormData and omits the Content-Type so the browser sets the boundary.
+ */
+export function useUploadArtwork(printId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation<
+    PrintVariation,
+    ApiError,
+    { variationId: string; side: PrintSide; file: File }
+  >({
+    mutationFn: ({ variationId, side, file }) => {
+      const fd = new FormData();
+      fd.append("file", file, file.name);
+      fd.append("side", side);
+      return api.post<PrintVariation>(
+        `/v1/prints/${printId}/variations/${variationId}/artwork`,
+        fd,
+      );
+    },
+    onSuccess: () => invalidatePrint(qc, printId),
   });
 }

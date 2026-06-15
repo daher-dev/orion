@@ -115,13 +115,20 @@ async def _assert_batch_in_company(db: AsyncSession, *, company_id: uuid.UUID, b
 # ----------------------------------------------------------------- assemble (T5)
 
 
-async def assemble(
+async def assemble_internal(
     db: AsyncSession,
     *,
     company_id: uuid.UUID,
     user_id: uuid.UUID,
     payload: AssembleBody,
 ) -> AssemblyRunRead:
+    """The T5 transition WITHOUT committing — the caller owns the transaction.
+
+    Identical to :func:`assemble` minus the final ``db.commit()``. Used by the
+    lote "montar" path (``batch.assemble_batch``) so several assembles land in a
+    single transaction; the on-hand guards (409) still apply per call.
+    """
+
     blank = await _load_blank(db, company_id=company_id, blank_piece_id=payload.blank_piece_id)
     transfer = await _load_transfer(db, company_id=company_id, printed_transfer_id=payload.printed_transfer_id)
     spec = await _load_spec(db, company_id=company_id, spec_id=blank.spec_id)
@@ -231,7 +238,7 @@ async def assemble(
             f"Assembled {payload.quantity}x {variation.sku} (blank -{payload.quantity}, printed -{payload.quantity})"
         ),
     )
-    await db.commit()
+    await db.flush()
 
     return AssemblyRunRead(
         id=run.id,
@@ -250,6 +257,20 @@ async def assemble(
         batch_id=run.batch_id,
         created_at=run.created_at,
     )
+
+
+async def assemble(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    user_id: uuid.UUID,
+    payload: AssembleBody,
+) -> AssemblyRunRead:
+    """T5 single-run entry point: :func:`assemble_internal` + commit."""
+
+    result = await assemble_internal(db, company_id=company_id, user_id=user_id, payload=payload)
+    await db.commit()
+    return result
 
 
 # --------------------------------------------------------------- buildable assist
@@ -361,5 +382,6 @@ async def list_buildable(
 
 __all__ = [
     "assemble",
+    "assemble_internal",
     "list_buildable",
 ]

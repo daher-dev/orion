@@ -16,7 +16,10 @@ from models import Batch, User
 from models.enums import BatchStatus
 from schemas._common import PageParams
 from schemas.batch import (
+    BatchAssembleBody,
+    BatchAssembleResult,
     BatchCreate,
+    BatchDetailRead,
     BatchListItem,
     BatchPage,
     BatchRead,
@@ -70,14 +73,45 @@ async def create_batch_endpoint(
     return _to_read(batch)
 
 
-@router.get("/{batch_id}", response_model=BatchRead)
+@router.get("/{batch_id}", response_model=BatchDetailRead)
 async def get_batch_endpoint(
     batch_id: uuid.UUID,
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("orders.read"))],
-) -> BatchRead:
-    batch = await batch_service.get_batch(db, company_id=user.company_id, batch_id=batch_id)
-    return _to_read(batch)
+) -> BatchDetailRead:
+    return await batch_service.get_batch_detail(db, company_id=user.company_id, batch_id=batch_id)
+
+
+@router.post("/{batch_id}/assemble", response_model=BatchAssembleResult)
+async def assemble_batch_endpoint(
+    batch_id: uuid.UUID,
+    payload: BatchAssembleBody,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+) -> BatchAssembleResult:
+    """Montar o lote — bulk-assemble the SKUs the batch is short on (reuses T5)."""
+    return await batch_service.assemble_batch(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        batch_id=batch_id,
+        payload=payload,
+    )
+
+
+@router.post("/{batch_id}/ship", response_model=BatchDetailRead)
+async def ship_batch_endpoint(
+    batch_id: uuid.UUID,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+) -> BatchDetailRead:
+    """Enviar o lote — ship member orders (T6 exits) and set status dispatched."""
+    return await batch_service.ship_batch(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        batch_id=batch_id,
+    )
 
 
 @router.post("/{batch_id}/status", response_model=BatchRead)

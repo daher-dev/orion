@@ -53,6 +53,10 @@ const baseOrder: Order = {
   ordered_at: "2026-05-10T12:00:00Z",
   status: "pending",
   external_order_id: "EXT-1",
+  batch_id: null,
+  ready: false,
+  on_hand: 0,
+  has_unmapped_items: false,
   created_at: "2026-05-10T12:00:00Z",
   updated_at: "2026-05-10T12:00:00Z",
 };

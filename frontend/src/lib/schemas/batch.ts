@@ -58,6 +58,90 @@ export const batchPageSchema = z.object({
 
 export type BatchPage = z.infer<typeof batchPageSchema>;
 
+// ---------- detail (computed estampa grid) ----------
+
+/** Print design reference embedded in a grid row — mirrors `PrintDesignRef`. */
+export const printDesignRefSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  name: z.string(),
+  technique: z.string(),
+  image_url: z.string().nullable().optional(),
+});
+
+export type PrintDesignRef = z.infer<typeof printDesignRefSchema>;
+
+/**
+ * One row of the lote's per-estampa production grid (computed live, grouped by
+ * print design). Mirrors `BatchEstampaRow`.
+ * - `items` — pieces needing this estampa.
+ * - `to_print` — pieces still missing a FRONT printed transfer.
+ * - `montado` — pieces already covered by finished stock (`is_assembled` when ≥ items).
+ * - `enviado` — pieces whose order already shipped (`is_shipped` when all shipped).
+ */
+export const batchEstampaRowSchema = z.object({
+  design: printDesignRefSchema.nullable().optional(),
+  code: z.string(),
+  items: z.number().int(),
+  to_print: z.number().int(),
+  montado: z.number().int(),
+  is_assembled: z.boolean(),
+  enviado: z.number().int(),
+  is_shipped: z.boolean(),
+});
+
+export type BatchEstampaRow = z.infer<typeof batchEstampaRowSchema>;
+
+/** `GET /v1/batches/{id}` — the lean fields + the computed grid + roll-ups. */
+export const batchDetailReadSchema = batchReadSchema.extend({
+  estampas: z.array(batchEstampaRowSchema).default([]),
+  orders_ready: z.number().int().default(0),
+  orders_total: z.number().int().default(0),
+  pieces_total: z.number().int().default(0),
+  to_print_total: z.number().int().default(0),
+  needs_assembly: z.boolean().default(false),
+  can_ship: z.boolean().default(false),
+});
+
+export type BatchDetail = z.infer<typeof batchDetailReadSchema>;
+
+// ---------- montar / enviar ----------
+
+export const batchAssembledRowSchema = z.object({
+  variation_id: z.string(),
+  sku: z.string(),
+  quantity: z.number().int(),
+});
+
+export type BatchAssembledRow = z.infer<typeof batchAssembledRowSchema>;
+
+export const batchAssembleSkippedSchema = z.object({
+  variation_id: z.string(),
+  sku: z.string(),
+  reason: z.string(),
+});
+
+export type BatchAssembleSkipped = z.infer<typeof batchAssembleSkippedSchema>;
+
+/** Result of `POST /v1/batches/{id}/assemble` — recomputed grid + montar summary. */
+export const batchAssembleResultSchema = z.object({
+  batch: batchDetailReadSchema,
+  assembled: z.array(batchAssembledRowSchema).default([]),
+  skipped: z.array(batchAssembleSkippedSchema).default([]),
+});
+
+export type BatchAssembleResult = z.infer<typeof batchAssembleResultSchema>;
+
+/** Optional per-design partial-montar request rows. */
+export type BatchAssembleRow = {
+  design_id: string;
+  quantity: number;
+};
+
+export type BatchAssemblePayload = {
+  rows?: BatchAssembleRow[];
+};
+
 export type BatchCreatePayload = {
   order_ids: string[];
   name?: string | null;

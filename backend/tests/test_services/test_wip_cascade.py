@@ -25,6 +25,7 @@ from models import (
     CuttingStatus,
     FabricRoll,
     FabricRollMovement,
+    OrderStatus,
     PaperRoll,
     PaperRollMovement,
     PaperType,
@@ -33,9 +34,12 @@ from models import (
     PrintOrderStatus,
     PrintSide,
     PrintTechnique,
+    Product,
     ProductVariation,
     Size,
     StockEntry,
+    StockExit,
+    StockExitReason,
     StockSource,
 )
 from schemas._common import PageParams
@@ -58,14 +62,19 @@ from schemas.sewing import (
 from services import assembly as assembly_service
 from services import blank_stock as blank_stock_service
 from services import cutting as cutting_service
+from services import order as order_service
 from services import print_order as print_order_service
 from services import printed_transfer as printed_transfer_service
 from services import sewing as sewing_service
+from services import stock as stock_service
 from shared.exceptions import ConflictError
 from tests.factories import (
+    create_ad,
+    create_client,
     create_company,
     create_cutting_order,
     create_fabric_roll,
+    create_order,
     create_paper_roll,
     create_print_design,
     create_print_design_variation,
@@ -339,8 +348,13 @@ async def _seed_t3_end_state(db_session):
     return company, user, spec, blank
 
 
-async def test_full_cascade_t4_t5(db_session):
-    """Continue the spec+color+size walk into T4 (print) → T5 (assembly)."""
+async def test_full_cascade_t4_t5_t6(db_session):
+    """Continue the spec+color+size walk into T4 (print) → T5 (assembly) → T6 (ship).
+
+    Closes the full T1→T6 loop: after T5 credits 10 finished pieces, an order for
+    that exact SKU ships and debits finished stock by its quantity (one
+    StockExit, reason=sale, order provenance). Re-ship is idempotent.
+    """
 
     company, user, spec, blank = await _seed_t3_end_state(db_session)
     assert await _blank_on_hand(db_session, company_id=company.id, spec_id=spec.id, size=Size.M, color_code="PRT") == 12
@@ -504,10 +518,157 @@ async def test_full_cascade_t4_t5(db_session):
     assert len(list(printed_exit)) == 1
 
     # Finished stock on-hand for the resolved SKU == 10 (immediately order-ready).
-    from services import stock as stock_service
-
     on_hand = await stock_service._compute_on_hand(db_session, company_id=company.id, variation_id=run.variation.id)
     assert on_hand == 10
+
+    # ---- T6: ship an order for the finished SKU → finished stock debited ----
+    # The finished variation belongs to the product assembly auto-created.
+    finished_variation = (
+        await db_session.exec(select(ProductVariation).where(ProductVariation.id == run.variation.id))
+    ).first()
+    ad = await create_ad(db_session, company_id=company.id, product_id=finished_variation.product_id)
+    client = await create_client(db_session, company_id=company.id)
+    order = await create_order(
+        db_session,
+        company_id=company.id,
+        ad_id=ad.id,
+        variation_id=finished_variation.id,
+        client_id=client.id,
+        status=OrderStatus.PAID,
+        quantity=4,
+    )
+
+    # Order is ready: finished on-hand (10) covers its quantity (4).
+    _row, readiness = await order_service.get_order(db_session, company_id=company.id, order_id=order.id)
+    assert readiness.ready is True
+    assert readiness.on_hand == 10
+    assert readiness.has_unmapped_items is False
+
+    _row, _readiness = await order_service.transition_status(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        order_id=order.id,
+        target=OrderStatus.SHIPPED,
+    )
+
+    # Exactly one sale exit, order provenance, quantity == 4; finished 10 → 6.
+    exits = list((await db_session.exec(select(StockExit).where(StockExit.order_id == order.id))).all())
+    assert len(exits) == 1
+    assert exits[0].reason == StockExitReason.SALE
+    assert exits[0].quantity == 4
+    assert exits[0].variation_id == finished_variation.id
+    after_ship = await stock_service._compute_on_hand(
+        db_session, company_id=company.id, variation_id=finished_variation.id
+    )
+    assert after_ship == 6
+
+    # Re-ship is idempotent: status already SHIPPED, no second exit, on-hand stable.
+    _row, _readiness = await order_service.transition_status(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        order_id=order.id,
+        target=OrderStatus.SHIPPED,
+    )
+    exits_again = list((await db_session.exec(select(StockExit).where(StockExit.order_id == order.id))).all())
+    assert len(exits_again) == 1
+    assert (
+        await stock_service._compute_on_hand(db_session, company_id=company.id, variation_id=finished_variation.id) == 6
+    )
+
+
+async def test_ship_guard_beyond_on_hand_no_exit(db_session):
+    """T6 guard: shipping beyond finished on-hand → 409, no StockExit written."""
+
+    company, user, _spec, blank = await _seed_t3_end_state(db_session)
+    design = await create_print_design(
+        db_session, company_id=company.id, code="FLR03", name="Floral", technique=PrintTechnique.DTF
+    )
+    variation = await create_print_design_variation(db_session, company_id=company.id, print_design_id=design.id)
+    roll = await create_paper_roll(db_session, company_id=company.id, paper_type=PaperType.DTF_FILM)
+    created = await print_order_service.create_print_order(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        payload=PrintOrderCreate(
+            print_design_id=design.id,
+            paper_roll_id=roll.id,
+            planned_outputs=[
+                PrintOrderOutputItem(print_design_variation_id=variation.id, side=PrintSide.FRONT, planned_quantity=12)
+            ],
+        ),
+    )
+    await print_order_service.update_print_order(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        order_id=created.id,
+        payload=PrintOrderUpdate(
+            printed_outputs=[
+                PrintOrderOutputItem2(print_design_variation_id=variation.id, side=PrintSide.FRONT, printed_quantity=12)
+            ],
+        ),
+    )
+    await print_order_service.complete_print_order(
+        db_session, company_id=company.id, user_id=user.id, order_id=created.id, payload=PrintOrderComplete()
+    )
+    transfer = (
+        await db_session.exec(
+            select(PrintedTransfer).where(
+                PrintedTransfer.company_id == company.id,
+                PrintedTransfer.print_design_id == design.id,
+                PrintedTransfer.side == PrintSide.FRONT,
+            )
+        )
+    ).first()
+    # Assemble only 3 finished pieces.
+    run = await assembly_service.assemble(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        payload=AssembleBody(blank_piece_id=blank.id, printed_transfer_id=transfer.id, quantity=3),
+    )
+    finished_variation = (
+        await db_session.exec(select(ProductVariation).where(ProductVariation.id == run.variation.id))
+    ).first()
+    ad = await create_ad(db_session, company_id=company.id, product_id=finished_variation.product_id)
+    client = await create_client(db_session, company_id=company.id)
+    # Order needs 5 but only 3 are in finished stock.
+    order = await create_order(
+        db_session,
+        company_id=company.id,
+        ad_id=ad.id,
+        variation_id=finished_variation.id,
+        client_id=client.id,
+        status=OrderStatus.PAID,
+        quantity=5,
+    )
+    _row, readiness = await order_service.get_order(db_session, company_id=company.id, order_id=order.id)
+    assert readiness.ready is False
+    assert readiness.on_hand == 3
+
+    raised = False
+    try:
+        await order_service.transition_status(
+            db_session,
+            company_id=company.id,
+            user_id=user.id,
+            order_id=order.id,
+            target=OrderStatus.SHIPPED,
+        )
+    except ConflictError:
+        raised = True
+    assert raised
+
+    # No exit written; finished on-hand intact; order not shipped.
+    exits = list((await db_session.exec(select(StockExit).where(StockExit.order_id == order.id))).all())
+    assert exits == []
+    assert (
+        await stock_service._compute_on_hand(db_session, company_id=company.id, variation_id=finished_variation.id) == 3
+    )
+    reloaded = (await db_session.exec(select(Product).where(Product.id == finished_variation.product_id))).first()
+    assert reloaded is not None  # product survived the rolled-back ship
 
 
 async def test_assemble_guard_beyond_on_hand_no_partial_writes(db_session):

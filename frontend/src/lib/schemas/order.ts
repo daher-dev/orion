@@ -67,9 +67,20 @@ export const orderReadSchema = z.object({
   ordered_at: z.string(),
   status: orderStatusSchema,
   external_order_id: z.string().nullable().optional(),
+  // Production batch (lote) this order belongs to, if any — lets the board
+  // place batched orders in the Envio column without a second fetch.
+  batch_id: z.string().nullable().optional(),
   // Fulfillment artifacts from the marketplace import (when present).
   shipping_label_url: z.string().nullable().optional(),
   tracking_code: z.string().nullable().optional(),
+  // Readiness flags (computed server-side, no extra fetch).
+  // `ready`: finished stock covers the full quantity (the prototype's
+  // `orderReady`). `on_hand`: finished on-hand for the order's variation
+  // (drives the ready/total progress bar). `has_unmapped_items`: ≥1 piece
+  // still awaiting De/Para (blocks Separação; sits in Mapeamento).
+  ready: z.boolean().default(false),
+  on_hand: z.number().int().default(0),
+  has_unmapped_items: z.boolean().default(false),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -193,4 +204,29 @@ export function phaseIndex(status: OrderStatus): number {
   const idx = ORDER_TIMELINE_PHASES.indexOf(status as OrderTimelinePhase);
   if (idx >= 0) return idx;
   return -1;
+}
+
+/** The four columns of the Pedidos lifecycle board (mirrors `orderStage`). */
+export const BOARD_STAGES = [
+  "mapeamento",
+  "producao",
+  "separacao",
+  "envio",
+] as const;
+
+export type BoardStage = (typeof BOARD_STAGES)[number];
+
+/**
+ * Which lifecycle column an order belongs to, derived from the readiness
+ * flags (mirrors the prototype `orderStage` in `separacao.jsx`):
+ * - any unmapped piece → Mapeamento
+ * - else in a lote → Envio
+ * - else finished stock covers it → Separação
+ * - else → Produção
+ */
+export function orderStage(o: Order): BoardStage {
+  if (o.has_unmapped_items) return "mapeamento";
+  if (o.batch_id) return "envio";
+  if (o.ready) return "separacao";
+  return "producao";
 }

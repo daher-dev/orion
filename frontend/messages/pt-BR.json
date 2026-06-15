@@ -190,6 +190,39 @@
       "updated": "Atualizado há {minutes} min",
       "viewDetails": "Ver detalhes"
     },
+    "conference": {
+      "title": "Conferência do dia",
+      "sub": "Do pedido à peça pronta",
+      "kpis": {
+        "orders": "Total de pedidos",
+        "ordersFoot": "Carteira de pedidos",
+        "pieces": "Total de itens",
+        "piecesFoot": "Em {count} pedidos",
+        "mapped": "Estampas mapeadas",
+        "mappedFoot": "Todas vinculadas a uma estampa",
+        "pending": "Pendentes",
+        "pendingFoot": "Aguardando mapeamento",
+        "pendingNone": "Nada a resolver"
+      },
+      "progress": {
+        "title": "Resumo da conferência",
+        "sub": "Progresso da carteira",
+        "ordersDone": "Pedidos 100% conferidos",
+        "piecesDone": "Peças conferidas"
+      },
+      "subtiles": {
+        "toCheck": "A conferir",
+        "inLote": "Em lote",
+        "pending": "Pendentes"
+      },
+      "pipeline": {
+        "title": "Pipeline de pedidos",
+        "mapeamento": "Mapeamento",
+        "producao": "Produção",
+        "separacao": "Separação",
+        "envio": "Envio"
+      }
+    },
     "needsAction": {
       "title": "Precisa da sua atenção",
       "sub": "{count, plural, =0 {Nenhuma pendência} one {# pendência} other {# pendências}}",
@@ -238,6 +271,41 @@
         "body": "Crie seu primeiro pedido ou aguarde a chegada via canal.",
         "cta": "Novo pedido"
       }
+    },
+    "view": {
+      "board": "Quadro",
+      "table": "Tabela"
+    },
+    "board": {
+      "columns": {
+        "mapeamento": "Mapeamento",
+        "producao": "Produção",
+        "separacao": "Separação",
+        "envio": "Envio"
+      },
+      "empty": {
+        "mapeamento": "Tudo vinculado.",
+        "producao": "Nada em produção.",
+        "separacao": "Nenhum pedido pronto. Conclua a montagem.",
+        "envio": "Nenhum lote ainda."
+      },
+      "card": {
+        "vincular": "Vincular",
+        "printLabels": "Imprimir etiquetas",
+        "itemsLabel": "{count, plural, one {item} other {itens}}",
+        "today": "hoje",
+        "ageDays": "há {count}d"
+      },
+      "createBatch": "Lote ({count})",
+      "createError": "Não foi possível criar o lote.",
+      "labelError": "Não foi possível gerar as etiquetas."
+    },
+    "journey": {
+      "title": "Jornada do pedido",
+      "mapped": "Mapeado",
+      "produced": "Produzido",
+      "separated": "Separado",
+      "shipped": "Enviado"
     },
     "filters": {
       "searchPlaceholder": "Procurar pedido…",
@@ -2633,6 +2701,28 @@
       "forbidden": "Você não tem permissão para ver o De/Para de pedidos."
     }
   },
+  "vincular": {
+    "title": "Vincular pedido",
+    "subtitle": "Escolha o SKU interno de cada item — {picked}/{total} vinculados",
+    "skuLabel": "SKU interno",
+    "choose": "Escolher SKU…",
+    "chooseProduct": "Escolher produto…",
+    "chooseVariation": "Variação (SKU)…",
+    "pickProductFirst": "Escolha o produto primeiro",
+    "suggestion": "Sugestão",
+    "use": "Usar",
+    "toLink": "a vincular",
+    "linked": "vinculados",
+    "confirm": "Vincular pedido",
+    "cancel": "Cancelar",
+    "empty": "Este pedido não tem itens aguardando vínculo.",
+    "loadError": "Não foi possível carregar os itens do pedido.",
+    "toast": {
+      "linked": "Pedido {code} vinculado — segue para produção",
+      "itemLinked": "Item vinculado a {sku}",
+      "error": "Não foi possível vincular o item."
+    }
+  },
   "batches": {
     "page": {
       "eyebrow": "Vendas"
@@ -2647,7 +2737,9 @@
     },
     "actions": {
       "create": "Novo lote",
-      "back": "Voltar aos lotes"
+      "back": "Voltar aos lotes",
+      "assemble": "Montar lote",
+      "ship": "Despachar lote"
     },
     "create": {
       "title": "Novo lote",
@@ -2677,7 +2769,20 @@
       "orders": "Pedidos",
       "pieces": "Peças",
       "needed": "Necessário",
-      "toPrint": "A imprimir"
+      "toPrint": "A imprimir",
+      "ready": "Prontos",
+      "readyOf": "{ready}/{total} prontos"
+    },
+    "estampas": {
+      "title": "Estampas",
+      "subtitle": "{designs} estampas · {items} itens",
+      "empty": "Lote vazio — todos os pedidos foram removidos.",
+      "noEstampa": "Sem estampa",
+      "items": "itens",
+      "toPrint": "a imprimir",
+      "montado": "montado",
+      "enviado": "enviado",
+      "colCount": "{count, plural, one {# cor} other {# cores}}"
     },
     "detail": {
       "printLabels": "Imprimir etiquetas",
@@ -2686,12 +2791,23 @@
       "cancel": "Cancelar lote",
       "delete": "Excluir lote",
       "deleteConfirm": "Excluir este lote? Os pedidos serão desvinculados.",
-      "notFound": "Lote não encontrado."
+      "notFound": "Lote não encontrado.",
+      "assembleDisabled": "Tudo já está no estoque de produtos.",
+      "shipDisabled": "Todos os pedidos precisam estar prontos (em estoque) antes de despachar.",
+      "ordersInBatch": "Pedidos no lote ({count})",
+      "removeOrder": "Remover",
+      "dispatched": "Lote despachado"
     },
     "toast": {
       "created": "Lote criado",
       "deleted": "Lote excluído",
-      "noShippingLabels": "Nenhuma etiqueta de envio disponível para este lote."
+      "noShippingLabels": "Nenhuma etiqueta de envio disponível para este lote.",
+      "assembled": "{count, plural, one {# SKU montado} other {# SKUs montados}}",
+      "assembledSome": "{assembled} montados · {skipped} sem estoque suficiente",
+      "assembleNothing": "Nada a montar.",
+      "shipped": "Lote despachado · {count, plural, one {# pedido enviado} other {# pedidos enviados}}",
+      "shipError": "Não foi possível despachar o lote.",
+      "assembleError": "Não foi possível montar o lote."
     },
     "fallback": {
       "forbidden": "Você não tem acesso aos lotes."

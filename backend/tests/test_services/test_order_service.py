@@ -33,6 +33,7 @@ from tests.factories import (
     create_product,
     create_product_spec,
     create_product_variation,
+    create_stock_entry,
     create_stock_exit,
     create_user,
 )
@@ -62,7 +63,7 @@ async def _scaffold(db_session):
 async def test_create_order_persists_and_audits(db_session):
     company, user, _, variation, client, ad = await _scaffold(db_session)
 
-    row = await create_order(
+    row, _readiness = await create_order(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -220,7 +221,7 @@ async def test_get_order_returns_joined_data(db_session):
         client_id=client.id,
     )
 
-    row = await get_order(db_session, company_id=company.id, order_id=order.id)
+    row, _readiness = await get_order(db_session, company_id=company.id, order_id=order.id)
     (
         fetched_order,
         fetched_ad,
@@ -282,7 +283,9 @@ async def test_list_orders_returns_only_tenant_rows(db_session):
         client_id=client_b.id,
     )
 
-    rows, total = await list_orders(db_session, company_id=company_a.id, filters=OrderFilters(), page=PageParams())
+    rows, total, _readiness = await list_orders(
+        db_session, company_id=company_a.id, filters=OrderFilters(), page=PageParams()
+    )
     assert total == 1
     assert rows[0][0].company_id == company_a.id
 
@@ -307,7 +310,7 @@ async def test_list_orders_filters_by_status(db_session):
         external_order_id="A2",
     )
 
-    rows, total = await list_orders(
+    rows, total, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(status=OrderStatus.PAID),
@@ -349,7 +352,7 @@ async def test_list_orders_filters_by_channel(db_session):
         external_order_id="B-1",
     )
 
-    rows, total = await list_orders(
+    rows, total, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(channel=Ecommerce.INSTAGRAM),
@@ -378,7 +381,7 @@ async def test_list_orders_filters_by_client_and_ad(db_session):
         external_order_id="O-2",
     )
 
-    rows, total = await list_orders(
+    rows, total, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(client_id=other_client.id),
@@ -387,7 +390,7 @@ async def test_list_orders_filters_by_client_and_ad(db_session):
     assert total == 1
     assert rows[0][5].id == other_client.id
 
-    _rows2, total2 = await list_orders(
+    _rows2, total2, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(ad_id=ad.id),
@@ -417,7 +420,7 @@ async def test_list_orders_filters_by_search_text(db_session):
         external_order_id="NOMATCH",
     )
 
-    rows, total = await list_orders(
+    rows, total, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(q="maria"),
@@ -427,7 +430,7 @@ async def test_list_orders_filters_by_search_text(db_session):
     assert rows[0][5].id == targeted.id
 
     # search by external_order_id substring
-    _rows2, total2 = await list_orders(
+    _rows2, total2, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(q="ext-ok"),
@@ -458,7 +461,7 @@ async def test_list_orders_filters_by_date_range(db_session):
         external_order_id="L1",
     )
 
-    rows, total = await list_orders(
+    rows, total, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(date_from=datetime(2026, 1, 1, tzinfo=UTC)),
@@ -467,7 +470,7 @@ async def test_list_orders_filters_by_date_range(db_session):
     assert total == 1
     assert rows[0][0].ordered_at == late
 
-    rows2, total2 = await list_orders(
+    rows2, total2, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(date_to=datetime(2024, 12, 31, tzinfo=UTC)),
@@ -504,7 +507,7 @@ async def test_list_orders_filters_by_unbatched_and_batch_id(db_session):
     db_session.add(batched)
     await db_session.commit()
 
-    _rows, unbatched_total = await list_orders(
+    _rows, unbatched_total, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(unbatched=True),
@@ -512,7 +515,7 @@ async def test_list_orders_filters_by_unbatched_and_batch_id(db_session):
     )
     assert unbatched_total == 1
 
-    rows, batch_total = await list_orders(
+    rows, batch_total, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(batch_id=batch.id),
@@ -547,7 +550,7 @@ async def test_list_orders_filters_by_product_id(db_session):
         external_order_id="P2",
     )
 
-    rows, total = await list_orders(
+    rows, total, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(product_id=product.id),
@@ -569,7 +572,7 @@ async def test_list_orders_paginates(db_session):
             external_order_id=f"E{i}",
         )
 
-    rows, total = await list_orders(
+    rows, total, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(),
@@ -578,7 +581,7 @@ async def test_list_orders_paginates(db_session):
     assert total == 5
     assert len(rows) == 2
 
-    rows_p3, _ = await list_orders(
+    rows_p3, _, _readiness = await list_orders(
         db_session,
         company_id=company.id,
         filters=OrderFilters(),
@@ -600,7 +603,7 @@ async def test_update_order_changes_fields_and_audits(db_session):
         client_id=client.id,
     )
 
-    row = await update_order(
+    row, _readiness = await update_order(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -626,7 +629,7 @@ async def test_update_order_can_change_status(db_session):
         status=OrderStatus.PENDING,
     )
 
-    row = await update_order(
+    row, _readiness = await update_order(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -730,7 +733,7 @@ async def test_transition_to_paid_audits(db_session):
         status=OrderStatus.PENDING,
     )
 
-    row = await transition_status(
+    row, _readiness = await transition_status(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -754,8 +757,10 @@ async def test_transition_to_shipped_creates_stock_exit(db_session):
         status=OrderStatus.PAID,
         quantity=3,
     )
+    # Finished stock must cover the order before it can ship (T6 guard).
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=10)
 
-    row = await transition_status(
+    row, _readiness = await transition_status(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -780,6 +785,8 @@ async def test_transition_to_shipped_idempotent_on_retry(db_session):
         client_id=client.id,
         status=OrderStatus.PAID,
     )
+    # Finished stock must cover the order before it can ship (T6 guard).
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=10)
     # First transition.
     await transition_status(
         db_session,
@@ -843,6 +850,8 @@ async def test_transition_to_delivered_then_returned_writes_entry(db_session):
         status=OrderStatus.PAID,
         quantity=2,
     )
+    # Finished stock must cover the order before it can ship (T6 guard).
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=10)
     await transition_status(
         db_session,
         company_id=company.id,
@@ -857,7 +866,7 @@ async def test_transition_to_delivered_then_returned_writes_entry(db_session):
         order_id=order.id,
         target=OrderStatus.DELIVERED,
     )
-    row = await transition_status(
+    row, _readiness = await transition_status(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -927,7 +936,7 @@ async def test_transition_noop_returns_current(db_session):
         client_id=client.id,
         status=OrderStatus.PENDING,
     )
-    row = await transition_status(
+    row, _readiness = await transition_status(
         db_session,
         company_id=company.id,
         user_id=user.id,

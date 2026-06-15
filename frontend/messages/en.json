@@ -190,6 +190,39 @@
       "updated": "Updated {minutes} min ago",
       "viewDetails": "View details"
     },
+    "conference": {
+      "title": "Today's check",
+      "sub": "From order to finished piece",
+      "kpis": {
+        "orders": "Total orders",
+        "ordersFoot": "Open order book",
+        "pieces": "Total items",
+        "piecesFoot": "Across {count} orders",
+        "mapped": "Prints mapped",
+        "mappedFoot": "All linked to a print",
+        "pending": "Pending",
+        "pendingFoot": "Awaiting mapping",
+        "pendingNone": "Nothing to resolve"
+      },
+      "progress": {
+        "title": "Check summary",
+        "sub": "Order book progress",
+        "ordersDone": "Orders 100% checked",
+        "piecesDone": "Items checked"
+      },
+      "subtiles": {
+        "toCheck": "To check",
+        "inLote": "In batch",
+        "pending": "Pending"
+      },
+      "pipeline": {
+        "title": "Order pipeline",
+        "mapeamento": "Mapping",
+        "producao": "Production",
+        "separacao": "Separation",
+        "envio": "Dispatch"
+      }
+    },
     "needsAction": {
       "title": "Needs your attention",
       "sub": "{count, plural, =0 {No pending items} one {# pending item} other {# pending items}}",
@@ -238,6 +271,41 @@
         "body": "Create your first order or wait for a channel webhook to drop one in.",
         "cta": "New order"
       }
+    },
+    "view": {
+      "board": "Board",
+      "table": "Table"
+    },
+    "board": {
+      "columns": {
+        "mapeamento": "Mapping",
+        "producao": "Production",
+        "separacao": "Separation",
+        "envio": "Dispatch"
+      },
+      "empty": {
+        "mapeamento": "Everything is mapped.",
+        "producao": "Nothing in production.",
+        "separacao": "No order ready. Finish assembly.",
+        "envio": "No batch yet."
+      },
+      "card": {
+        "vincular": "Link",
+        "printLabels": "Print labels",
+        "itemsLabel": "{count, plural, one {item} other {items}}",
+        "today": "today",
+        "ageDays": "{count}d ago"
+      },
+      "createBatch": "Batch ({count})",
+      "createError": "Could not create the batch.",
+      "labelError": "Could not generate the labels."
+    },
+    "journey": {
+      "title": "Order journey",
+      "mapped": "Mapped",
+      "produced": "Produced",
+      "separated": "Separated",
+      "shipped": "Shipped"
     },
     "filters": {
       "searchPlaceholder": "Search order…",
@@ -2633,6 +2701,28 @@
       "forbidden": "You don't have permission to view order mapping."
     }
   },
+  "vincular": {
+    "title": "Link order",
+    "subtitle": "Pick the internal SKU for each item — {picked}/{total} linked",
+    "skuLabel": "Internal SKU",
+    "choose": "Choose SKU…",
+    "chooseProduct": "Choose product…",
+    "chooseVariation": "Variation (SKU)…",
+    "pickProductFirst": "Choose the product first",
+    "suggestion": "Suggestion",
+    "use": "Use",
+    "toLink": "to link",
+    "linked": "linked",
+    "confirm": "Link order",
+    "cancel": "Cancel",
+    "empty": "This order has no items awaiting mapping.",
+    "loadError": "Could not load the order's items.",
+    "toast": {
+      "linked": "Order {code} linked — moving to production",
+      "itemLinked": "Item linked to {sku}",
+      "error": "Could not link the item."
+    }
+  },
   "batches": {
     "page": {
       "eyebrow": "Sales"
@@ -2647,7 +2737,9 @@
     },
     "actions": {
       "create": "New batch",
-      "back": "Back to batches"
+      "back": "Back to batches",
+      "assemble": "Assemble batch",
+      "ship": "Dispatch batch"
     },
     "create": {
       "title": "New batch",
@@ -2677,7 +2769,20 @@
       "orders": "Orders",
       "pieces": "Pieces",
       "needed": "Needed",
-      "toPrint": "To print"
+      "toPrint": "To print",
+      "ready": "Ready",
+      "readyOf": "{ready}/{total} ready"
+    },
+    "estampas": {
+      "title": "Prints",
+      "subtitle": "{designs} prints · {items} items",
+      "empty": "Empty batch — every order was removed.",
+      "noEstampa": "No print",
+      "items": "items",
+      "toPrint": "to print",
+      "montado": "assembled",
+      "enviado": "sent",
+      "colCount": "{count, plural, one {# color} other {# colors}}"
     },
     "detail": {
       "printLabels": "Print labels",
@@ -2686,12 +2791,23 @@
       "cancel": "Cancel batch",
       "delete": "Delete batch",
       "deleteConfirm": "Delete this batch? Orders will be unlinked.",
-      "notFound": "Batch not found."
+      "notFound": "Batch not found.",
+      "assembleDisabled": "Everything is already in finished stock.",
+      "shipDisabled": "Every order must be ready (in finished stock) before dispatching.",
+      "ordersInBatch": "Orders in batch ({count})",
+      "removeOrder": "Remove",
+      "dispatched": "Batch dispatched"
     },
     "toast": {
       "created": "Batch created",
       "deleted": "Batch deleted",
-      "noShippingLabels": "No shipping labels available for this batch."
+      "noShippingLabels": "No shipping labels available for this batch.",
+      "assembled": "{count, plural, one {# SKU assembled} other {# SKUs assembled}}",
+      "assembledSome": "{assembled} assembled · {skipped} short on stock",
+      "assembleNothing": "Nothing to assemble.",
+      "shipped": "Batch dispatched · {count, plural, one {# order shipped} other {# orders shipped}}",
+      "shipError": "Could not dispatch the batch.",
+      "assembleError": "Could not assemble the batch."
     },
     "fallback": {
       "forbidden": "You don't have access to batches."

@@ -1,9 +1,6 @@
 import {
   LayoutDashboard,
   ShoppingBag,
-  GitMerge,
-  Package,
-  ScanLine,
   Users,
   Megaphone,
   Shirt,
@@ -71,30 +68,13 @@ export const navSections: NavSection[] = [
     titleKey: "nav.sections.sales",
     items: [
       {
+        // Pedidos is the single fulfillment workspace — the De/Para
+        // (mapping), Separação and Lotes surfaces are now tabs/columns of the
+        // board on `/orders`. Those routes stay alive as deep links but only
+        // Pedidos shows in the sidebar.
         href: "/orders",
         icon: ShoppingBag,
         labelKey: "nav.orders",
-        permission: "orders.read",
-        subColor: "var(--brand-sales)",
-      },
-      {
-        href: "/orders/separation",
-        icon: ScanLine,
-        labelKey: "nav.separation",
-        permission: "orders.read",
-        subColor: "var(--brand-sales)",
-      },
-      {
-        href: "/orders/batches",
-        icon: Package,
-        labelKey: "nav.batches",
-        permission: "orders.read",
-        subColor: "var(--brand-sales)",
-      },
-      {
-        href: "/orders/mapping",
-        icon: GitMerge,
-        labelKey: "nav.mapping",
         permission: "orders.read",
         subColor: "var(--brand-sales)",
       },

@@ -5,9 +5,18 @@ from decimal import Decimal
 import pytest
 from sqlmodel import select
 
-from models import AuditLog, FabricRoll, FabricRollKind, FabricType
+from models import (
+    AuditLog,
+    FabricMovementKind,
+    FabricRoll,
+    FabricRollKind,
+    FabricRollMovement,
+    FabricType,
+)
 from schemas._common import PageParams
 from schemas.fabric import (
+    FabricMovementCreate,
+    FabricMovementFilters,
     FabricRollCreate,
     FabricRollFilters,
     FabricRollUpdate,
@@ -18,7 +27,7 @@ from tests.factories import (
     create_company,
     create_cutting_order,
     create_fabric_roll,
-    create_product,
+    create_fabric_roll_movement,
     create_product_spec,
     create_user,
 )
@@ -514,11 +523,10 @@ async def test_delete_fabric_roll_blocked_when_linked_to_cutting_order(db_sessio
     company, user = await _setup(db_session)
     roll = await create_fabric_roll(db_session, company_id=company.id)
     spec = await create_product_spec(db_session, company_id=company.id)
-    product = await create_product(db_session, company_id=company.id, spec_id=spec.id)
     await create_cutting_order(
         db_session,
         company_id=company.id,
-        product_id=product.id,
+        spec_id=spec.id,
         body_roll_id=roll.id,
     )
 
@@ -541,11 +549,10 @@ async def test_delete_fabric_roll_blocked_when_linked_as_rib_roll(db_session):
     body = await create_fabric_roll(db_session, company_id=company.id, kind=FabricRollKind.BODY)
     rib = await create_fabric_roll(db_session, company_id=company.id, kind=FabricRollKind.RIB)
     spec = await create_product_spec(db_session, company_id=company.id)
-    product = await create_product(db_session, company_id=company.id, spec_id=spec.id)
     await create_cutting_order(
         db_session,
         company_id=company.id,
-        product_id=product.id,
+        spec_id=spec.id,
         body_roll_id=body.id,
         rib_roll_id=rib.id,
     )
@@ -602,3 +609,189 @@ async def test_to_read_kwargs_computes_consumed(db_session):
     assert kwargs["current_weight_kg"] == Decimal("18.250")
     assert isinstance(kwargs["created_at"], datetime)
     assert kwargs["created_at"].astimezone(UTC) is not None
+
+
+# ---------- movement ledger (entry / exit / adjustment) ----------
+
+
+async def test_create_movement_entry_adds_to_current(db_session):
+    company, user = await _setup(db_session)
+    roll = await create_fabric_roll(
+        db_session,
+        company_id=company.id,
+        initial_weight_kg=Decimal("20.000"),
+        current_weight_kg=Decimal("10.000"),
+    )
+    movement = await fabric_service.create_movement(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        payload=FabricMovementCreate(
+            fabric_roll_id=roll.id,
+            kind=FabricMovementKind.ENTRY,
+            quantity=Decimal("5.000"),
+        ),
+    )
+    assert movement.kind == FabricMovementKind.ENTRY
+    assert movement.cutting_order_id is None
+    refreshed = (await db_session.exec(select(FabricRoll).where(FabricRoll.id == roll.id))).first()
+    assert refreshed.current_weight_kg == Decimal("15.000")
+
+    audits = list(
+        (
+            await db_session.exec(
+                select(AuditLog).where(
+                    AuditLog.resource_id == movement.id,
+                    AuditLog.resource_type == "fabric_roll_movements",
+                )
+            )
+        ).all()
+    )
+    assert any("Fabric roll movement" in a.message for a in audits)
+
+
+async def test_create_movement_exit_clamps_at_zero(db_session):
+    company, user = await _setup(db_session)
+    roll = await create_fabric_roll(
+        db_session,
+        company_id=company.id,
+        initial_weight_kg=Decimal("20.000"),
+        current_weight_kg=Decimal("3.000"),
+    )
+    await fabric_service.create_movement(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        payload=FabricMovementCreate(
+            fabric_roll_id=roll.id,
+            kind=FabricMovementKind.EXIT,
+            quantity=Decimal("8.000"),
+        ),
+    )
+    refreshed = (await db_session.exec(select(FabricRoll).where(FabricRoll.id == roll.id))).first()
+    assert refreshed.current_weight_kg == Decimal("0.000")
+
+
+async def test_create_movement_adjustment_credits(db_session):
+    company, user = await _setup(db_session)
+    roll = await create_fabric_roll(db_session, company_id=company.id, current_weight_kg=Decimal("10.000"))
+    await fabric_service.create_movement(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        payload=FabricMovementCreate(
+            fabric_roll_id=roll.id,
+            kind=FabricMovementKind.ADJUSTMENT,
+            quantity=Decimal("2.500"),
+        ),
+    )
+    refreshed = (await db_session.exec(select(FabricRoll).where(FabricRoll.id == roll.id))).first()
+    assert refreshed.current_weight_kg == Decimal("12.500")
+
+
+async def test_create_movement_unknown_roll_404(db_session):
+    company, user = await _setup(db_session)
+    with pytest.raises(NotFoundError):
+        await fabric_service.create_movement(
+            db_session,
+            company_id=company.id,
+            user_id=user.id,
+            payload=FabricMovementCreate(fabric_roll_id=uuid.uuid4(), quantity=Decimal("1.000")),
+        )
+
+
+async def test_consume_records_actual_and_clamps(db_session):
+    """The transition-internal consume helper clamps + records the actual amount, no commit."""
+
+    company, _ = await _setup(db_session)
+    roll = await create_fabric_roll(db_session, company_id=company.id, current_weight_kg=Decimal("2.000"))
+    movement = await fabric_service.consume(
+        db_session,
+        company_id=company.id,
+        roll=roll,
+        quantity=Decimal("5.000"),
+        notes="manual",
+    )
+    assert movement.quantity == Decimal("2.000")  # clamped to what was held
+    assert roll.current_weight_kg == Decimal("0.000")
+    await db_session.commit()
+
+
+async def test_list_movements_newest_first_with_roll(db_session):
+    company, _ = await _setup(db_session)
+    roll = await create_fabric_roll(db_session, company_id=company.id, supplier_name="Têxtil Z")
+    await create_fabric_roll_movement(
+        db_session, company_id=company.id, fabric_roll_id=roll.id, kind=FabricMovementKind.ENTRY
+    )
+    await create_fabric_roll_movement(
+        db_session,
+        company_id=company.id,
+        fabric_roll_id=roll.id,
+        kind=FabricMovementKind.EXIT,
+        quantity=Decimal("1.000"),
+    )
+
+    rows, total = await fabric_service.list_movements(
+        db_session,
+        company_id=company.id,
+        filters=FabricMovementFilters(),
+        page=PageParams(),
+    )
+    assert total == 2
+    assert rows[0]["fabric_roll"]["supplier_name"] == "Têxtil Z"
+    assert {r["kind"] for r in rows} == {FabricMovementKind.ENTRY, FabricMovementKind.EXIT}
+
+
+async def test_list_movements_filter_by_kind_and_roll(db_session):
+    company, _ = await _setup(db_session)
+    roll = await create_fabric_roll(db_session, company_id=company.id)
+    other = await create_fabric_roll(db_session, company_id=company.id)
+    await create_fabric_roll_movement(
+        db_session, company_id=company.id, fabric_roll_id=roll.id, kind=FabricMovementKind.ENTRY
+    )
+    await create_fabric_roll_movement(
+        db_session, company_id=company.id, fabric_roll_id=other.id, kind=FabricMovementKind.ENTRY
+    )
+
+    rows, total = await fabric_service.list_movements(
+        db_session,
+        company_id=company.id,
+        filters=FabricMovementFilters(fabric_roll_id=roll.id, kind=FabricMovementKind.ENTRY),
+        page=PageParams(),
+    )
+    assert total == 1
+    assert rows[0]["fabric_roll_id"] == roll.id
+
+
+async def test_list_movements_isolated_by_tenant(db_session):
+    company, _ = await _setup(db_session)
+    roll = await create_fabric_roll(db_session, company_id=company.id)
+    await create_fabric_roll_movement(db_session, company_id=company.id, fabric_roll_id=roll.id)
+    other = await create_company(db_session)
+    rows, total = await fabric_service.list_movements(
+        db_session,
+        company_id=other.id,
+        filters=FabricMovementFilters(),
+        page=PageParams(),
+    )
+    assert total == 0
+    assert rows == []
+
+
+async def test_delete_fabric_roll_blocked_when_movements_exist(db_session):
+    company, user = await _setup(db_session)
+    roll = await create_fabric_roll(db_session, company_id=company.id)
+    await create_fabric_roll_movement(db_session, company_id=company.id, fabric_roll_id=roll.id)
+
+    with pytest.raises(ConflictError) as exc:
+        await fabric_service.delete_fabric_roll(
+            db_session,
+            company_id=company.id,
+            user_id=user.id,
+            roll_id=roll.id,
+        )
+    assert "movements" in str(exc.value.detail).lower()
+    still = (
+        await db_session.exec(select(FabricRollMovement).where(FabricRollMovement.fabric_roll_id == roll.id))
+    ).all()
+    assert len(list(still)) == 1

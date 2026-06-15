@@ -23,6 +23,7 @@ from models.enums import (
     ChannelStatus,
     CuttingStatus,
     Ecommerce,
+    FabricMovementKind,
     FabricRollKind,
     FabricType,
     LoginOutcome,
@@ -43,7 +44,7 @@ from models.enums import (
     SupplyMovementKind,
     TrimType,
 )
-from models.fabric_roll import FabricRoll
+from models.fabric_roll import FabricRoll, FabricRollMovement
 from models.imported_order import ImportedOrder
 from models.invite import Invite
 from models.login_attempt import LoginAttempt
@@ -85,8 +86,10 @@ __all__ = [
     "CuttingRunCost",
     "CuttingStatus",
     "Ecommerce",
+    "FabricMovementKind",
     "FabricRoll",
     "FabricRollKind",
+    "FabricRollMovement",
     "FabricType",
     "ImportedOrder",
     "Invite",

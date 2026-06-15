@@ -1115,7 +1115,9 @@
         "plannedTotal": "Planejado",
         "actualTotal": "Cortado",
         "cutAt": "Cortada em",
-        "actions": "Ações"
+        "actions": "Ações",
+        "spec": "Ficha",
+        "color": "Cor"
       }
     },
     "status": {
@@ -1143,20 +1145,29 @@
         "product": "Produto",
         "rolls": "Bobinas",
         "plannedOutputs": "Peças por tamanho",
-        "schedule": "Programação"
+        "schedule": "Programação",
+        "spec": "Ficha técnica",
+        "color": "Cor"
       },
       "labels": {
         "product": "Produto a cortar",
         "bodyRoll": "Bobina corpo",
         "ribRoll": "Bobina ribana",
-        "cutAt": "Data de corte"
+        "cutAt": "Data de corte",
+        "spec": "Ficha a cortar",
+        "color": "Cor",
+        "colorCode": "Código"
       },
       "placeholders": {
         "product": "Selecione um produto…",
         "searchProduct": "Procurar produtos…",
         "bodyRoll": "Selecione a bobina corpo…",
         "ribRoll": "Selecione a ribana (opcional)…",
-        "searchRoll": "Procurar bobinas…"
+        "searchRoll": "Procurar bobinas…",
+        "spec": "Selecione uma ficha…",
+        "searchSpec": "Procurar fichas…",
+        "color": "ex.: Preto",
+        "colorCode": "PRT"
       },
       "hints": {
         "optional": "(opcional)",
@@ -1169,7 +1180,10 @@
         "productRequired": "Selecione um produto",
         "bodyRollRequired": "Selecione a bobina corpo",
         "rollsDiffer": "A ribana deve ser diferente do corpo",
-        "atLeastOneSize": "Informe ao menos uma peça"
+        "atLeastOneSize": "Informe ao menos uma peça",
+        "specRequired": "Selecione uma ficha",
+        "colorRequired": "Informe uma cor",
+        "colorCodeFormat": "Use 3 letras (ex.: PRT)"
       },
       "save": "Salvar alterações",
       "submitNew": "Criar ordem",
@@ -1179,7 +1193,8 @@
         "updated": "Ordem atualizada",
         "deleted": "Ordem removida",
         "error": "Operação falhou"
-      }
+      },
+      "noSpecs": "Nenhuma ficha encontrada."
     },
     "detail": {
       "title": "Ordem de corte",
@@ -1193,7 +1208,8 @@
       "plannedOutputs": "Peças planejadas por tamanho",
       "actualOutputs": "Peças cortadas por tamanho",
       "close": "Fechar",
-      "save": "Salvar"
+      "save": "Salvar",
+      "color": "Cor"
     },
     "cost": {
       "title": "Custo de produção",
@@ -1264,7 +1280,14 @@
       "labels": {
         "receivedAt": "Recebida em",
         "sizes": "Peças recebidas"
-      }
+      },
+      "columns": {
+        "size": "Tam.",
+        "sent": "Enviado",
+        "received": "Recebido",
+        "credited": "Creditado"
+      },
+      "deltaHint": "{count} peças lisas serão creditadas no estoque."
     },
     "form": {
       "title": {
@@ -1305,19 +1328,32 @@
         "received": "Recebimento registrado",
         "cancelled": "Remessa cancelada",
         "error": "Operação falhou"
-      }
+      },
+      "availableCount": "{count} disponíveis"
     },
     "detail": {
       "size": "Tamanho",
       "requested": "Solicitado",
       "received": "Recebido",
-      "itemsTitle": "Itens da remessa"
+      "itemsTitle": "Itens da remessa",
+      "credited": "Creditado"
     },
     "timeline": {
       "title": "Linha do tempo",
       "production": "Em produção",
       "inProgress": "em curso",
       "cancelled": "Remessa cancelada — sem próximas etapas."
+    },
+    "view": {
+      "label": "Visão",
+      "kanban": "Quadro",
+      "table": "Tabela"
+    },
+    "available": {
+      "column": "Disponível",
+      "readyCount": "{count} peças prontas",
+      "newShipment": "Nova remessa",
+      "empty": "Nenhuma peça cortada disponível para enviar."
     }
   },
   "contractors": {
@@ -1525,6 +1561,62 @@
     },
     "fallback": {
       "forbidden": "Você não tem acesso às bobinas."
+    },
+    "tabs": {
+      "current": "Bobinas",
+      "movements": "Movimentações"
+    },
+    "movements": {
+      "moveCta": "Registrar movimentação",
+      "columns": {
+        "when": "Quando",
+        "item": "Item",
+        "reason": "Motivo",
+        "quantity": "Qtd"
+      },
+      "kinds": {
+        "entry": "Entrada",
+        "exit": "Consumo",
+        "adjustment": "Ajuste"
+      },
+      "provenance": "Corte {code}",
+      "empty": "Nenhuma movimentação registrada ainda.",
+      "validation": {
+        "rollRequired": "Selecione uma bobina",
+        "quantityPositive": "Informe uma quantidade maior que zero"
+      },
+      "toasts": {
+        "recorded": "Movimentação registrada",
+        "error": "Operação falhou"
+      },
+      "moveSheet": {
+        "title": "Movimentação de tecido",
+        "sub": "Registre uma entrada, consumo ou ajuste em kg.",
+        "labels": {
+          "roll": "Bobina",
+          "moveType": "Movimentação",
+          "quantity": "Quantidade",
+          "preview": "Prévia"
+        },
+        "placeholders": {
+          "roll": "Selecione uma bobina…",
+          "searchRoll": "Procurar bobinas…"
+        },
+        "noRolls": "Nenhuma bobina encontrada.",
+        "moveTypes": {
+          "entry": "Entrada",
+          "exit": "Consumo",
+          "adjustment": "Ajuste"
+        },
+        "preview": {
+          "current": "Atual",
+          "entry": "Entrada",
+          "exit": "Saída",
+          "final": "Final"
+        },
+        "cancel": "Cancelar",
+        "save": "Registrar"
+      }
     }
   },
   "stock": {
@@ -2916,7 +3008,8 @@
         "color": "Cor",
         "size": "Tam.",
         "min": "Mínimo",
-        "onHand": "Em estoque"
+        "onHand": "Em estoque",
+        "inProduction": "Em produção"
       }
     },
     "actions": {

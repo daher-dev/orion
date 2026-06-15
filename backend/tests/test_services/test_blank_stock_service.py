@@ -358,3 +358,201 @@ async def test_compute_on_hand_map(db_session):
     assert on_hand[p1.id] == 10
     # p2 has no movements -> absent from the map (callers default to 0).
     assert p2.id not in on_hand
+
+
+# ---------- in-production (WIP) ----------
+
+
+async def test_in_production_counts_open_cutting(db_session):
+    """Non-DONE cutting orders matching spec+color_code+size feed in-production."""
+
+    from models import CuttingStatus
+    from tests.factories import (
+        create_cutting_order,
+        create_cutting_order_output,
+        create_fabric_roll,
+    )
+
+    company, _user, spec = await _setup(db_session)
+    piece = await create_blank_piece(
+        db_session, company_id=company.id, spec_id=spec.id, size=Size.M, color="Preto", color_code="PRT"
+    )
+    roll = await create_fabric_roll(db_session, company_id=company.id)
+    cutting = await create_cutting_order(
+        db_session,
+        company_id=company.id,
+        spec_id=spec.id,
+        body_roll_id=roll.id,
+        color="Preto",
+        color_code="PRT",
+        status=CuttingStatus.CUTTING,
+    )
+    await create_cutting_order_output(db_session, cutting_order_id=cutting.id, size=Size.M, quantity=15)
+
+    row = await _level_for(db_session, company_id=company.id, blank_piece_id=piece.id)
+    assert row["in_production"] == 15
+
+
+async def test_in_production_ignores_done_cutting(db_session):
+    from models import CuttingStatus
+    from tests.factories import (
+        create_cutting_order,
+        create_cutting_order_output,
+        create_fabric_roll,
+    )
+
+    company, _user, spec = await _setup(db_session)
+    piece = await create_blank_piece(
+        db_session, company_id=company.id, spec_id=spec.id, size=Size.M, color="Preto", color_code="PRT"
+    )
+    roll = await create_fabric_roll(db_session, company_id=company.id)
+    cutting = await create_cutting_order(
+        db_session,
+        company_id=company.id,
+        spec_id=spec.id,
+        body_roll_id=roll.id,
+        color="Preto",
+        color_code="PRT",
+        status=CuttingStatus.DONE,
+    )
+    await create_cutting_order_output(db_session, cutting_order_id=cutting.id, size=Size.M, quantity=15)
+
+    row = await _level_for(db_session, company_id=company.id, blank_piece_id=piece.id)
+    # DONE cutting outputs are available cut pieces, not in-production.
+    assert row["in_production"] == 0
+
+
+async def test_in_production_counts_open_sewing(db_session):
+    """SENT/PARTIAL shipments' outstanding (requested-received) feed in-production."""
+
+    from models import CuttingStatus, ShipmentStatus
+    from tests.factories import (
+        create_cutting_order,
+        create_fabric_roll,
+        create_sewing_contractor,
+        create_sewing_shipment,
+        create_sewing_shipment_item,
+    )
+
+    company, _user, spec = await _setup(db_session)
+    piece = await create_blank_piece(
+        db_session, company_id=company.id, spec_id=spec.id, size=Size.M, color="Preto", color_code="PRT"
+    )
+    roll = await create_fabric_roll(db_session, company_id=company.id)
+    cutting = await create_cutting_order(
+        db_session,
+        company_id=company.id,
+        spec_id=spec.id,
+        body_roll_id=roll.id,
+        color="Preto",
+        color_code="PRT",
+        status=CuttingStatus.DONE,
+    )
+    contractor = await create_sewing_contractor(db_session, company_id=company.id)
+    shipment = await create_sewing_shipment(
+        db_session,
+        company_id=company.id,
+        cutting_order_id=cutting.id,
+        contractor_id=contractor.id,
+        status=ShipmentStatus.PARTIAL,
+    )
+    # 10 requested, 4 already received → 6 still in production at the banca.
+    await create_sewing_shipment_item(
+        db_session, shipment_id=shipment.id, size=Size.M, requested_quantity=10, received_quantity=4
+    )
+
+    row = await _level_for(db_session, company_id=company.id, blank_piece_id=piece.id)
+    assert row["in_production"] == 6
+
+
+async def test_in_production_isolated_by_tenant(db_session):
+    from models import CuttingStatus
+    from tests.factories import (
+        create_cutting_order,
+        create_cutting_order_output,
+        create_fabric_roll,
+    )
+
+    company, _user, spec = await _setup(db_session)
+    piece = await create_blank_piece(
+        db_session, company_id=company.id, spec_id=spec.id, size=Size.M, color="Preto", color_code="PRT"
+    )
+    # Another tenant's open cutting for the SAME spec_id is impossible (spec is
+    # tenant-scoped); build an independent tenant to assert no cross-leak.
+    other = await create_company(db_session)
+    other_spec = await create_product_spec(db_session, company_id=other.id)
+    other_roll = await create_fabric_roll(db_session, company_id=other.id)
+    other_cutting = await create_cutting_order(
+        db_session,
+        company_id=other.id,
+        spec_id=other_spec.id,
+        body_roll_id=other_roll.id,
+        color="Preto",
+        color_code="PRT",
+        status=CuttingStatus.CUTTING,
+    )
+    await create_cutting_order_output(db_session, cutting_order_id=other_cutting.id, size=Size.M, quantity=99)
+
+    row = await _level_for(db_session, company_id=company.id, blank_piece_id=piece.id)
+    assert row["in_production"] == 0
+
+
+# ---------- transition-internal helpers (record_movement / get_or_create) ----------
+
+
+async def test_get_or_create_blank_piece_creates_then_resolves(db_session):
+    company, _user, spec = await _setup(db_session)
+    first = await service.get_or_create_blank_piece(
+        db_session, company_id=company.id, spec_id=spec.id, size=Size.M, color="Preto", color_code="PRT"
+    )
+    assert first.id is not None
+    # A second call with the same key resolves the existing row (no duplicate).
+    second = await service.get_or_create_blank_piece(
+        db_session, company_id=company.id, spec_id=spec.id, size=Size.M, color="Preto", color_code="PRT"
+    )
+    assert second.id == first.id
+    await db_session.commit()
+
+
+async def test_record_movement_credits_with_provenance_no_commit(db_session):
+    from tests.factories import (
+        create_cutting_order,
+        create_fabric_roll,
+        create_sewing_contractor,
+        create_sewing_shipment,
+    )
+
+    company, _user, spec = await _setup(db_session)
+    piece = await create_blank_piece(db_session, company_id=company.id, spec_id=spec.id)
+    roll = await create_fabric_roll(db_session, company_id=company.id)
+    cutting = await create_cutting_order(db_session, company_id=company.id, spec_id=spec.id, body_roll_id=roll.id)
+    contractor = await create_sewing_contractor(db_session, company_id=company.id)
+    shipment = await create_sewing_shipment(
+        db_session, company_id=company.id, cutting_order_id=cutting.id, contractor_id=contractor.id
+    )
+
+    movement = await service.record_movement(
+        db_session,
+        company_id=company.id,
+        blank_piece_id=piece.id,
+        kind=BlankMovementKind.ENTRY,
+        quantity=7,
+        sewing_shipment_id=shipment.id,
+    )
+    assert movement.sewing_shipment_id == shipment.id
+    on_hand = await service._compute_on_hand(db_session, company_id=company.id, blank_piece_id=piece.id)
+    assert on_hand == 7
+    await db_session.commit()
+
+
+async def test_record_movement_exit_guards_on_hand(db_session):
+    company, _user, spec = await _setup(db_session)
+    piece = await create_blank_piece(db_session, company_id=company.id, spec_id=spec.id)
+    with pytest.raises(ConflictError):
+        await service.record_movement(
+            db_session,
+            company_id=company.id,
+            blank_piece_id=piece.id,
+            kind=BlankMovementKind.EXIT,
+            quantity=3,
+        )

@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 type Props = {
-  onCreate: () => void;
+  /** Omit to hide the CTA (e.g. read-only operators). */
+  onCreate?: () => void;
 };
 
 export function SewingEmptyState({ onCreate }: Props) {
@@ -30,15 +31,17 @@ export function SewingEmptyState({ onCreate }: Props) {
         {t("title")}
       </h3>
       <p className="mx-auto mb-3 max-w-[360px] text-[13px] leading-[1.5]">{t("body")}</p>
-      <Button
-        type="button"
-        onClick={onCreate}
-        className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-prod)] px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
-        style={{ borderColor: "color-mix(in oklab, var(--brand-prod) 70%, black)" }}
-      >
-        <Send size={14} strokeWidth={1.8} />
-        {t("cta")}
-      </Button>
+      {onCreate ? (
+        <Button
+          type="button"
+          onClick={onCreate}
+          className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-prod)] px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
+          style={{ borderColor: "color-mix(in oklab, var(--brand-prod) 70%, black)" }}
+        >
+          <Send size={14} strokeWidth={1.8} />
+          {t("cta")}
+        </Button>
+      ) : null}
     </div>
   );
 }

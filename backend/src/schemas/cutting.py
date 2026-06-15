@@ -1,8 +1,9 @@
 """Pydantic schemas for the Cutting (Corte) feature.
 
-A ``CuttingOrder`` is the bridge between fabric rolls (F-006) and sewing
-shipments (F-009). Each order references one product, one mandatory body
-roll, and an optional rib roll, plus two sets of per-size outputs:
+A ``CuttingOrder`` is print-agnostic: it is keyed by a garment base
+(``ProductSpec``) plus a free-text colorway (``color`` + 3-letter
+``color_code``), one mandatory body roll, and an optional rib roll, plus two
+sets of per-size outputs:
 
 * ``planned_outputs`` — declared on create, immutable thereafter through
   the public API (a follow-up edition flow may relax this).
@@ -12,6 +13,10 @@ roll, and an optional rib roll, plus two sets of per-size outputs:
 Both lists are sparse: the operator can omit sizes (they are treated as
 quantity ``0``). The database enforces uniqueness on
 ``(cutting_order_id, size)``.
+
+When a cutting order reaches DONE its actual outputs become *available cut
+pieces* (computed, not stored). The ``AvailableCut*`` schemas project that
+availability per DONE order so the Costura "Disponível" board can draw from it.
 """
 
 from __future__ import annotations
@@ -33,7 +38,9 @@ class OutputItem(BaseModel):
 
 
 class CuttingCreate(BaseModel):
-    product_id: uuid.UUID
+    spec_id: uuid.UUID
+    color: str = Field(min_length=1, max_length=40)
+    color_code: str = Field(pattern=r"^[A-Z]{3}$")
     body_roll_id: uuid.UUID
     rib_roll_id: uuid.UUID | None = None
     planned_outputs: list[OutputItem] = Field(default_factory=list)
@@ -80,14 +87,12 @@ class CuttingOutputRead(BaseModel):
     quantity: int
 
 
-class ProductRef(BaseModel):
-    """Minimal product projection embedded in a CuttingRead row."""
+class SpecRef(BaseModel):
+    """Minimal product-spec (ficha técnica) projection embedded in a CuttingRead row."""
 
     id: uuid.UUID
+    code: str
     name: str
-    # ``code`` is the product spec's code — the canonical short identifier the
-    # frontend displays alongside the long product name.
-    code: str | None = None
 
 
 class RollRef(BaseModel):
@@ -102,7 +107,9 @@ class RollRef(BaseModel):
 
 class CuttingRead(BaseModel):
     id: uuid.UUID
-    product: ProductRef
+    spec: SpecRef
+    color: str
+    color_code: str
     body_roll: RollRef
     rib_roll: RollRef | None = None
     status: CuttingStatus
@@ -116,13 +123,50 @@ class CuttingRead(BaseModel):
 class CuttingFilters(BaseModel):
     q: str | None = Field(default=None, max_length=120)
     status: CuttingStatus | None = None
-    product_id: uuid.UUID | None = None
+    spec_id: uuid.UUID | None = None
+
+
+# ---------- Available cut pieces (T2 input) ----------
+
+
+class AvailableCutSizeRead(BaseModel):
+    size: Size
+    available: int
+
+
+class AvailableCutSpecRead(BaseModel):
+    id: uuid.UUID
+    code: str
+    name: str
+
+
+class AvailableCutRead(BaseModel):
+    """One DONE cutting order with remaining (un-sent) cut pieces per size."""
+
+    cutting_order_id: uuid.UUID
+    code: str
+    spec: AvailableCutSpecRead
+    color: str
+    color_code: str
+    sizes: list[AvailableCutSizeRead]
+    total_available: int
+
+
+class AvailableCutsFilters(BaseModel):
+    q: str | None = Field(default=None, max_length=120)
+    spec_id: uuid.UUID | None = None
 
 
 CuttingPage = Page[CuttingRead]
+AvailableCutsPage = Page[AvailableCutRead]
 
 
 __all__ = [
+    "AvailableCutRead",
+    "AvailableCutSizeRead",
+    "AvailableCutSpecRead",
+    "AvailableCutsFilters",
+    "AvailableCutsPage",
     "CuttingCreate",
     "CuttingFilters",
     "CuttingOutputRead",
@@ -130,6 +174,6 @@ __all__ = [
     "CuttingRead",
     "CuttingUpdate",
     "OutputItem",
-    "ProductRef",
     "RollRef",
+    "SpecRef",
 ]

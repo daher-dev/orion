@@ -13,7 +13,6 @@ from tests.factories import (
     create_cutting_order,
     create_cutting_order_output,
     create_fabric_roll,
-    create_product,
     create_product_spec,
     create_user,
     get_role_by_code,
@@ -28,12 +27,11 @@ async def _seed_admin(db_session):
 
 async def _done_order_with_cost(db_session, company_id):
     spec = await create_product_spec(db_session, company_id=company_id, code="CST01")
-    product = await create_product(db_session, company_id=company_id, spec_id=spec.id, name="Cropped")
     body = await create_fabric_roll(db_session, company_id=company_id, price_per_kg=Decimal("38.00"))
     order = await create_cutting_order(
         db_session,
         company_id=company_id,
-        product_id=product.id,
+        spec_id=spec.id,
         body_roll_id=body.id,
         status=CuttingStatus.CUTTING,
     )

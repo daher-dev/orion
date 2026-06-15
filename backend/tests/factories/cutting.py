@@ -13,6 +13,8 @@ class CuttingOrderFactory(ModelFactory[CuttingOrder]):
 
     status = CuttingStatus.PENDING
     cut_at = None
+    color = "Preto"
+    color_code = "PRT"
     rib_roll_id = None
 
 
@@ -29,13 +31,13 @@ async def create_cutting_order(
     db: AsyncSession,
     *,
     company_id: uuid.UUID,
-    product_id: uuid.UUID,
+    spec_id: uuid.UUID,
     body_roll_id: uuid.UUID,
     **overrides,
 ) -> CuttingOrder:
     order = CuttingOrderFactory.build(
         company_id=company_id,
-        product_id=product_id,
+        spec_id=spec_id,
         body_roll_id=body_roll_id,
         **overrides,
     )

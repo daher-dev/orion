@@ -67,6 +67,8 @@ export const qk = {
     lists: () => tuple("fabric", "list"),
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("fabric", "list", filters),
     detail: (id: string) => tuple("fabric", "detail", id),
+    movements: (filters: Readonly<Record<string, unknown>> = {}) =>
+      tuple("fabric", "movements", filters),
   },
   cutting: {
     all: () => tuple("cutting"),
@@ -74,6 +76,8 @@ export const qk = {
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("cutting", "list", filters),
     detail: (id: string) => tuple("cutting", "detail", id),
     cost: (id: string) => tuple("cutting", "cost", id),
+    available: (filters: Readonly<Record<string, unknown>> = {}) =>
+      tuple("cutting", "available", filters),
   },
   sewing: {
     all: () => tuple("sewing"),

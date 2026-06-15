@@ -284,23 +284,25 @@ async def _seed_fabric(db: AsyncSession, company: Company) -> dict[str, FabricRo
 async def _seed_cutting(
     db: AsyncSession,
     company: Company,
-    products: dict[str, Product],
+    specs: dict[str, ProductSpec],
     rolls: dict[str, FabricRoll],
 ) -> dict[str, CuttingOrder]:
     out: dict[str, CuttingOrder] = {}
-    for spec in CUTTING_ORDERS:
+    for order_spec in CUTTING_ORDERS:
         order = CuttingOrder(
             company_id=company.id,
-            product_id=products[spec["product_key"]].id,
-            body_roll_id=rolls[spec["body_roll_key"]].id,
-            rib_roll_id=rolls[spec["rib_roll_key"]].id if spec["rib_roll_key"] else None,
-            status=spec["status"],
-            cut_at=spec["cut_at"],
+            spec_id=specs[order_spec["spec_key"]].id,
+            color=order_spec["color"],
+            color_code=order_spec["color_code"],
+            body_roll_id=rolls[order_spec["body_roll_key"]].id,
+            rib_roll_id=rolls[order_spec["rib_roll_key"]].id if order_spec["rib_roll_key"] else None,
+            status=order_spec["status"],
+            cut_at=order_spec["cut_at"],
         )
         db.add(order)
         await db.flush()
-        out[spec["key"]] = order
-        for output in spec["outputs"]:
+        out[order_spec["key"]] = order
+        for output in order_spec["outputs"]:
             db.add(
                 CuttingOrderOutput(
                     cutting_order_id=order.id,
@@ -414,7 +416,7 @@ async def seed() -> uuid.UUID:
         products, variations = await _seed_products(db, company, specs, prints)
         ads = await _seed_ads(db, company, products)
         rolls = await _seed_fabric(db, company)
-        cutting = await _seed_cutting(db, company, products, rolls)
+        cutting = await _seed_cutting(db, company, specs, rolls)
         contractors = await _seed_contractors(db, company)
         await _seed_shipments(db, company, cutting, contractors)
         await _seed_orders(db, company, ads, clients, variations)

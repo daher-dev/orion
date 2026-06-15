@@ -15,6 +15,9 @@ from dependencies import DbSession, RequirePermission
 from models import CuttingStatus, User
 from schemas._common import PageParams
 from schemas.cutting import (
+    AvailableCutRead,
+    AvailableCutsFilters,
+    AvailableCutsPage,
     CuttingCreate,
     CuttingFilters,
     CuttingPage,
@@ -37,7 +40,7 @@ async def list_endpoint(
     user: Annotated[User, Depends(RequirePermission("cutting.read"))],
     q: Annotated[str | None, Query(max_length=120)] = None,
     status_filter: Annotated[CuttingStatus | None, Query(alias="status")] = None,
-    product_id: Annotated[uuid.UUID | None, Query()] = None,
+    spec_id: Annotated[uuid.UUID | None, Query()] = None,
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> CuttingPage:
@@ -45,10 +48,31 @@ async def list_endpoint(
     items, total = await cutting_service.list_cutting_orders(
         db,
         company_id=user.company_id,
-        filters=CuttingFilters(q=q, status=status_filter, product_id=product_id),
+        filters=CuttingFilters(q=q, status=status_filter, spec_id=spec_id),
         page=params,
     )
     return CuttingPage.build(items, total, params)
+
+
+# Declared before /{order_id} so "available" isn't swallowed by the UUID matcher.
+@router.get("/available", response_model=AvailableCutsPage)
+async def list_available_endpoint(
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("cutting.read"))],
+    q: Annotated[str | None, Query(max_length=120)] = None,
+    spec_id: Annotated[uuid.UUID | None, Query()] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 50,
+) -> AvailableCutsPage:
+    params = PageParams(page=page, page_size=page_size)
+    rows, total = await cutting_service.list_available_cuts(
+        db,
+        company_id=user.company_id,
+        filters=AvailableCutsFilters(q=q, spec_id=spec_id),
+        page=params,
+    )
+    items = [AvailableCutRead(**row) for row in rows]
+    return AvailableCutsPage.build(items, total, params)
 
 
 @router.get("/{order_id}", response_model=CuttingRead)

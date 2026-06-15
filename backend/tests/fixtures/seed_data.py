@@ -268,10 +268,13 @@ FABRIC_ROLLS = [
 ]
 
 
+# Cutting is print-agnostic: keyed by the garment base (spec) + a colorway.
 CUTTING_ORDERS = [
     {
         "key": "co-209",
-        "product_key": "p-cropped-flora",
+        "spec_key": "ft-cropped",
+        "color": "Preto",
+        "color_code": "PRT",
         "body_roll_key": "fr-jersey-180-blk",
         "rib_roll_key": None,
         "status": CuttingStatus.DONE,
@@ -283,7 +286,9 @@ CUTTING_ORDERS = [
     },
     {
         "key": "co-210",
-        "product_key": "p-tshirt-box",
+        "spec_key": "ft-tshirt",
+        "color": "Branco",
+        "color_code": "BCO",
         "body_roll_key": "fr-jersey-160-wht",
         "rib_roll_key": None,
         "status": CuttingStatus.PENDING,

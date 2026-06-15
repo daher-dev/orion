@@ -1,10 +1,16 @@
 /**
  * Zod schemas for the Cutting (Corte) feature.
  *
- * Mirrors `backend/src/schemas/cutting.py`. A CuttingOrder ties a product
- * to one mandatory body roll, optional rib roll, and a per-size set of
- * planned/actual outputs. The wire payload embeds a small product +
- * roll-reference projection so list rows can render without joins.
+ * Mirrors `backend/src/schemas/cutting.py`. A CuttingOrder is now keyed by a
+ * product SPEC (ficha técnica) + a free-text colorway (`color` + 3-letter
+ * `color_code`) instead of a product — cutting is print-agnostic. It ties that
+ * spec/color to one mandatory body roll, optional rib roll, and a per-size set
+ * of planned/actual outputs. The wire payload embeds a small spec + roll
+ * projection so list rows can render without joins.
+ *
+ * When an order reaches DONE its actual outputs become *available cut pieces*
+ * (see `availableCutReadSchema`) — the input the Costura "Disponível" view
+ * draws from to create a remessa.
  */
 
 import { z } from "zod";
@@ -21,10 +27,10 @@ export const cuttingOutputSchema = z.object({
 
 export type CuttingOutput = z.infer<typeof cuttingOutputSchema>;
 
-export const cuttingProductRefSchema = z.object({
+export const cuttingSpecRefSchema = z.object({
   id: z.string(),
+  code: z.string(),
   name: z.string(),
-  code: z.string().nullable().optional(),
 });
 
 export const cuttingRollRefSchema = z.object({
@@ -34,7 +40,9 @@ export const cuttingRollRefSchema = z.object({
 
 export const cuttingReadSchema = z.object({
   id: z.string(),
-  product: cuttingProductRefSchema,
+  spec: cuttingSpecRefSchema,
+  color: z.string(),
+  color_code: z.string(),
   body_roll: cuttingRollRefSchema,
   rib_roll: cuttingRollRefSchema.nullable().optional(),
   status: cuttingStatusSchema,
@@ -83,15 +91,50 @@ export type CuttingRunCost = z.infer<typeof cuttingRunCostSchema>;
 export type CuttingFilters = {
   q?: string;
   status?: CuttingStatus;
-  product_id?: string;
+  spec_id?: string;
+  page?: number;
+  page_size?: number;
+};
+
+// ---------- Available cut pieces (T2 input) ----------
+
+export const availableCutSizeSchema = z.object({
+  size: z.enum(SIZES),
+  available: z.number().int(),
+});
+export type AvailableCutSize = z.infer<typeof availableCutSizeSchema>;
+
+export const availableCutReadSchema = z.object({
+  cutting_order_id: z.string(),
+  code: z.string(),
+  spec: cuttingSpecRefSchema,
+  color: z.string(),
+  color_code: z.string(),
+  sizes: z.array(availableCutSizeSchema),
+  total_available: z.number().int(),
+});
+export type AvailableCut = z.infer<typeof availableCutReadSchema>;
+
+export const availableCutsPageSchema = z.object({
+  items: z.array(availableCutReadSchema),
+  total: z.number(),
+  page: z.number(),
+  page_size: z.number(),
+  has_more: z.boolean(),
+});
+export type AvailableCutsPage = z.infer<typeof availableCutsPageSchema>;
+
+export type AvailableCutsFilters = {
+  q?: string;
+  spec_id?: string;
   page?: number;
   page_size?: number;
 };
 
 /**
  * Form-side schema. Per-size planned quantities live on a `sizes` map so
- * the form layer can render four `NumberInput`s without a `useFieldArray`.
- * The transform step flattens the map into the backend's `planned_outputs`
+ * the form layer can render the size grid without a `useFieldArray`. The
+ * transform step flattens the map into the backend's `planned_outputs`
  * list of `{size, quantity}`.
  */
 const sizeQuantityMap = z
@@ -100,9 +143,10 @@ const sizeQuantityMap = z
     m: z.coerce.number().int().min(0).default(0),
     g: z.coerce.number().int().min(0).default(0),
     gg: z.coerce.number().int().min(0).default(0),
+    u: z.coerce.number().int().min(0).default(0),
   })
   .superRefine((data, ctx) => {
-    const total = data.p + data.m + data.g + data.gg;
+    const total = data.p + data.m + data.g + data.gg + data.u;
     if (total <= 0) {
       ctx.addIssue({
         code: "custom",
@@ -114,7 +158,12 @@ const sizeQuantityMap = z
 
 export const cuttingFormSchema = z
   .object({
-    product_id: z.string().min(1, { message: "validation.productRequired" }),
+    spec_id: z.string().min(1, { message: "validation.specRequired" }),
+    color: z.string().trim().min(1, { message: "validation.colorRequired" }).max(40),
+    color_code: z
+      .string()
+      .trim()
+      .regex(/^[A-Z]{3}$/, { message: "validation.colorCodeFormat" }),
     body_roll_id: z.string().min(1, { message: "validation.bodyRollRequired" }),
     rib_roll_id: z
       .string()
@@ -143,7 +192,9 @@ export type CuttingFormParsed = z.output<typeof cuttingFormSchema>;
  * Wire payload sent to POST /v1/cutting. Mirrors `CuttingCreate`.
  */
 export type CuttingCreatePayload = {
-  product_id: string;
+  spec_id: string;
+  color: string;
+  color_code: string;
   body_roll_id: string;
   rib_roll_id?: string;
   planned_outputs: Array<{ size: Size; quantity: number }>;
@@ -159,7 +210,9 @@ export function buildCuttingCreatePayload(
     if (quantity > 0) planned_outputs.push({ size, quantity });
   }
   return {
-    product_id: parsed.product_id,
+    spec_id: parsed.spec_id,
+    color: parsed.color,
+    color_code: parsed.color_code,
     body_roll_id: parsed.body_roll_id,
     rib_roll_id: parsed.rib_roll_id,
     planned_outputs,

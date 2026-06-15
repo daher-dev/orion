@@ -26,10 +26,6 @@ class StockProductMini(BaseModel):
     code: str
 
 
-class StockShipmentMini(BaseModel):
-    id: uuid.UUID
-
-
 class StockOrderMini(BaseModel):
     id: uuid.UUID
 
@@ -70,7 +66,6 @@ class StockEntryRead(BaseModel):
     quantity: int
     notes: str | None
     created_at: datetime
-    shipment: StockShipmentMini | None = None
 
 
 # ---------- Ledger exits ----------

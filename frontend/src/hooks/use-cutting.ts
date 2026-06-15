@@ -10,6 +10,8 @@ import { useApi } from "@/hooks/use-api";
 import { qk } from "@/lib/query-keys";
 import type { ApiError } from "@/lib/api-client";
 import type {
+  AvailableCutsFilters,
+  AvailableCutsPage,
   CuttingCreatePayload,
   CuttingFilters,
   CuttingOrder,
@@ -25,7 +27,17 @@ const buildQuery = (filters: CuttingFilters | undefined) => {
   const query: Record<string, string> = {};
   if (filters.q) query.q = filters.q;
   if (filters.status) query.status = filters.status;
-  if (filters.product_id) query.product_id = filters.product_id;
+  if (filters.spec_id) query.spec_id = filters.spec_id;
+  if (filters.page) query.page = String(filters.page);
+  if (filters.page_size) query.page_size = String(filters.page_size);
+  return Object.keys(query).length > 0 ? query : undefined;
+};
+
+const buildAvailableQuery = (filters: AvailableCutsFilters | undefined) => {
+  if (!filters) return undefined;
+  const query: Record<string, string> = {};
+  if (filters.q) query.q = filters.q;
+  if (filters.spec_id) query.spec_id = filters.spec_id;
   if (filters.page) query.page = String(filters.page);
   if (filters.page_size) query.page_size = String(filters.page_size);
   return Object.keys(query).length > 0 ? query : undefined;
@@ -38,6 +50,22 @@ export function useCuttingOrders(
   return useQuery<CuttingPage, ApiError>({
     queryKey: qk.cutting.list(filters ?? {}),
     queryFn: () => api.get<CuttingPage>(ROOT, { query: buildQuery(filters) }),
+  });
+}
+
+/**
+ * Available cut pieces from DONE cutting orders that still have remaining
+ * (un-sent) pieces — the source the Costura "Disponível" view draws from to
+ * create a remessa. Mirrors `GET /v1/cutting/available`.
+ */
+export function useAvailableCuts(
+  filters?: AvailableCutsFilters,
+): UseQueryResult<AvailableCutsPage, ApiError> {
+  const api = useApi();
+  return useQuery<AvailableCutsPage, ApiError>({
+    queryKey: qk.cutting.available(filters ?? {}),
+    queryFn: () =>
+      api.get<AvailableCutsPage>(`${ROOT}/available`, { query: buildAvailableQuery(filters) }),
   });
 }
 
@@ -90,9 +118,13 @@ export function useUpdateCuttingOrder() {
   return useMutation<CuttingOrder, ApiError, { id: string; payload: CuttingUpdatePayload }>({
     mutationFn: ({ id, payload }) => api.patch<CuttingOrder>(`${ROOT}/${id}`, payload),
     onSuccess: (_data, vars) => {
+      // qk.cutting.all() also covers the available-cuts list, but invalidate it
+      // explicitly: a DONE transition (and its fabric debit) creates/updates a
+      // cut-piece position the Costura "Disponível" view reads.
       qc.invalidateQueries({ queryKey: qk.cutting.all() });
       qc.invalidateQueries({ queryKey: qk.cutting.detail(vars.id) });
       qc.invalidateQueries({ queryKey: qk.cutting.cost(vars.id) });
+      qc.invalidateQueries({ queryKey: qk.fabric.all() });
     },
   });
 }

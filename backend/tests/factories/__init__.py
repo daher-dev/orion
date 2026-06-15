@@ -20,7 +20,12 @@ from tests.factories.cutting import (
     create_cutting_order,
     create_cutting_order_output,
 )
-from tests.factories.fabric import FabricRollFactory, create_fabric_roll
+from tests.factories.fabric import (
+    FabricRollFactory,
+    FabricRollMovementFactory,
+    create_fabric_roll,
+    create_fabric_roll_movement,
+)
 from tests.factories.invite import InviteFactory, create_invite
 from tests.factories.order import OrderFactory, create_order
 from tests.factories.order_item import OrderItemFactory, create_order_item
@@ -94,6 +99,7 @@ __all__ = [
     "CuttingOrderFactory",
     "CuttingOrderOutputFactory",
     "FabricRollFactory",
+    "FabricRollMovementFactory",
     "InviteFactory",
     "OrderFactory",
     "OrderItemFactory",
@@ -128,6 +134,7 @@ __all__ = [
     "create_cutting_order",
     "create_cutting_order_output",
     "create_fabric_roll",
+    "create_fabric_roll_movement",
     "create_invite",
     "create_order",
     "create_order_item",

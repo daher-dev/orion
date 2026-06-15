@@ -116,6 +116,20 @@ class SupplyMovementKind(StrEnum):
     ADJUSTMENT = "adjustment"
 
 
+class FabricMovementKind(StrEnum):
+    """Direction of a fabric-roll (bobina) stock movement.
+
+    ENTRY and ADJUSTMENT credit current_weight_kg; EXIT debits it
+    (every row holds a strictly-positive quantity in kg). Like ``PaperRoll``,
+    the authoritative on-hand for fabric is the roll's ``current_weight_kg``
+    column — this ledger exists purely for traceable history.
+    """
+
+    ENTRY = "entry"
+    EXIT = "exit"
+    ADJUSTMENT = "adjustment"
+
+
 class PaperType(StrEnum):
     """Kind of print-transfer paper/film roll (bobina de papel)."""
 

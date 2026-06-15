@@ -1,10 +1,15 @@
 /**
  * Zod schemas for the Sewing (Costura) feature.
  *
- * Mirrors `backend/src/schemas/sewing.py`. A Shipment bundles cut pieces
- * sent from the factory to a contractor; the wire shape embeds compact
- * cutting-order + contractor projections so list rows can render in one
- * fetch.
+ * Mirrors `backend/src/schemas/sewing.py`. A Shipment (remessa) bundles cut
+ * pieces sent from a DONE cutting order to a contractor (banca); the wire shape
+ * embeds compact cutting-order + contractor projections so list rows can render
+ * in one fetch.
+ *
+ * Receiving is now PARTIAL + repeatable: each item carries `requested`,
+ * `received`, and `credited` (the watermark of how much of `received` has
+ * already been posted to blank-piece stock). A receive only credits the new
+ * delta (`received − credited`); re-calling tops up.
  */
 
 import { z } from "zod";
@@ -25,6 +30,7 @@ export const shipmentItemReadSchema = z.object({
   size: z.enum(SIZES),
   requested_quantity: z.number().int().min(0),
   received_quantity: z.number().int().min(0),
+  credited_quantity: z.number().int().min(0),
 });
 
 export type ShipmentItem = z.infer<typeof shipmentItemReadSchema>;
@@ -76,7 +82,9 @@ export type ShipmentFilters = {
  * Form-side schema for creating a shipment. Per-size requested quantities
  * live on a `sizes` map keyed by size; the transform step in
  * `buildShipmentCreatePayload` flattens the map to the backend list shape
- * and drops any size with quantity 0.
+ * and drops any size with quantity 0. The cutting order is picked from the
+ * available-cuts list; the form clamps each size's `max` to availability as a
+ * soft client guard (the backend re-validates against live availability).
  */
 const requestedSizeMap = z
   .object({
@@ -84,9 +92,10 @@ const requestedSizeMap = z
     m: z.coerce.number().int().min(0).default(0),
     g: z.coerce.number().int().min(0).default(0),
     gg: z.coerce.number().int().min(0).default(0),
+    u: z.coerce.number().int().min(0).default(0),
   })
   .superRefine((data, ctx) => {
-    const total = data.p + data.m + data.g + data.gg;
+    const total = data.p + data.m + data.g + data.gg + data.u;
     if (total <= 0) {
       ctx.addIssue({
         code: "custom",
@@ -131,7 +140,9 @@ export function buildShipmentCreatePayload(
 
 /**
  * Receive-side schema. Each size carries the *received* count; values must
- * be non-negative and at least one size must have a positive quantity.
+ * be non-negative and at least one size must have a positive quantity. Sizes
+ * omitted from the payload retain their current received count server-side
+ * (partial = send fewer/lower sizes, re-call to top up).
  */
 export const shipmentReceiveFormSchema = z.object({
   received_at: z.string().trim().min(1, { message: "validation.receivedAtRequired" }),
@@ -141,9 +152,10 @@ export const shipmentReceiveFormSchema = z.object({
       m: z.coerce.number().int().min(0).default(0),
       g: z.coerce.number().int().min(0).default(0),
       gg: z.coerce.number().int().min(0).default(0),
+      u: z.coerce.number().int().min(0).default(0),
     })
     .superRefine((data, ctx) => {
-      const total = data.p + data.m + data.g + data.gg;
+      const total = data.p + data.m + data.g + data.gg + data.u;
       if (total <= 0) {
         ctx.addIssue({
           code: "custom",
@@ -181,4 +193,7 @@ export function sumRequested(items: ShipmentItem[]): number {
 }
 export function sumReceived(items: ShipmentItem[]): number {
   return items.reduce((acc, it) => acc + it.received_quantity, 0);
+}
+export function sumCredited(items: ShipmentItem[]): number {
+  return items.reduce((acc, it) => acc + it.credited_quantity, 0);
 }

@@ -17,7 +17,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useProducts } from "@/hooks/use-products";
+import { useSpecsList } from "@/hooks/use-specs";
 import { useFabricRolls } from "@/hooks/use-fabric";
 import {
   cuttingFormSchema,
@@ -49,36 +49,38 @@ function fabricRollCode(id: string): string {
 
 export function CuttingForm({ formId, onSubmit }: Props) {
   const t = useTranslations("cutting.form");
-  const products = useProducts({ page_size: 100 });
+  const specs = useSpecsList();
   const bodyRolls = useFabricRolls({ kind: "body", page_size: 100 });
   const ribRolls = useFabricRolls({ kind: "rib", page_size: 100 });
-  const [productOpen, setProductOpen] = useState(false);
+  const [specOpen, setSpecOpen] = useState(false);
   const [bodyOpen, setBodyOpen] = useState(false);
   const [ribOpen, setRibOpen] = useState(false);
 
   const form = useForm<CuttingFormValues, unknown, CuttingFormParsed>({
     resolver: zodResolver(cuttingFormSchema),
     defaultValues: {
-      product_id: "",
+      spec_id: "",
+      color: "",
+      color_code: "",
       body_roll_id: "",
       rib_roll_id: "",
-      sizes: { p: 0, m: 0, g: 0, gg: 0 },
+      sizes: { p: 0, m: 0, g: 0, gg: 0, u: 0 },
       cut_at: "",
     },
   });
 
   const errors = form.formState.errors;
-  const productOptions = useMemo(() => products.data?.items ?? [], [products.data]);
+  const specOptions = useMemo(() => specs.data ?? [], [specs.data]);
   const bodyRollOptions = useMemo(() => bodyRolls.data?.items ?? [], [bodyRolls.data]);
   const ribRollOptions = useMemo(() => ribRolls.data?.items ?? [], [ribRolls.data]);
 
-  const productId = form.watch("product_id");
+  const specId = form.watch("spec_id");
   const bodyRollId = form.watch("body_roll_id");
   const ribRollId = form.watch("rib_roll_id");
 
-  const selectedProduct = useMemo(
-    () => productOptions.find((p) => p.id === productId),
-    [productId, productOptions],
+  const selectedSpec = useMemo(
+    () => specOptions.find((s) => s.id === specId),
+    [specId, specOptions],
   );
   const selectedBodyRoll = useMemo(
     () => bodyRollOptions.find((r) => r.id === bodyRollId),
@@ -101,38 +103,46 @@ export function CuttingForm({ formId, onSubmit }: Props) {
       noValidate
       className="flex flex-col"
     >
+      {/* Ficha técnica (spec) — replaces the old Product selector; cutting is
+          now print-agnostic and keyed by the garment base spec. */}
       <div className={SECTION_HEADING_CLASS} style={{ marginTop: 0 }}>
-        {t("sections.product")}
+        {t("sections.spec")}
       </div>
       <div className="mb-[14px] flex flex-col gap-1.5">
-        <label htmlFor={`${formId}-product_id`} className={FIELD_LABEL_CLASS}>
-          {t("labels.product")}
+        <label htmlFor={`${formId}-spec_id`} className={FIELD_LABEL_CLASS}>
+          {t("labels.spec")}
         </label>
         <Controller
           control={form.control}
-          name="product_id"
+          name="spec_id"
           render={({ field }) => (
-            <Popover open={productOpen} onOpenChange={setProductOpen}>
+            <Popover open={specOpen} onOpenChange={setSpecOpen}>
               <PopoverTrigger asChild>
                 <Button
-                  id={`${formId}-product_id`}
+                  id={`${formId}-spec_id`}
+                  data-testid="cutting-spec-trigger"
                   type="button"
                   variant="outline"
                   role="combobox"
-                  aria-expanded={productOpen}
+                  aria-expanded={specOpen}
                   className={cn(
                     "h-auto w-full justify-between gap-2 font-normal",
                     FIELD_INPUT_CLASS,
                   )}
-                  aria-invalid={!!errors.product_id}
+                  aria-invalid={!!errors.spec_id}
                 >
-                  {selectedProduct ? (
-                    <span className="truncate text-[13px] text-[color:var(--orion-ink)]">
-                      {selectedProduct.name}
+                  {selectedSpec ? (
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="font-mono text-[12px] text-[color:var(--orion-ink)]">
+                        {selectedSpec.code}
+                      </span>
+                      <span className="truncate text-[13px] text-[color:var(--orion-ink-2)]">
+                        {selectedSpec.name}
+                      </span>
                     </span>
                   ) : (
                     <span className="text-[13px] text-[color:var(--orion-ink-3)]">
-                      {t("placeholders.product")}
+                      {t("placeholders.spec")}
                     </span>
                   )}
                   <ChevronDown
@@ -140,7 +150,7 @@ export function CuttingForm({ formId, onSubmit }: Props) {
                     strokeWidth={1.6}
                     className={cn(
                       "shrink-0 text-[color:var(--orion-ink-3)] transition-transform duration-150",
-                      productOpen && "rotate-180",
+                      specOpen && "rotate-180",
                     )}
                   />
                 </Button>
@@ -150,32 +160,32 @@ export function CuttingForm({ formId, onSubmit }: Props) {
                 align="start"
               >
                 <Command>
-                  <CommandInput placeholder={t("placeholders.searchProduct")} />
+                  <CommandInput placeholder={t("placeholders.searchSpec")} />
                   <CommandList>
-                    <CommandEmpty>{t("noProducts")}</CommandEmpty>
+                    <CommandEmpty>{t("noSpecs")}</CommandEmpty>
                     <CommandGroup>
-                      {productOptions.map((p) => (
+                      {specOptions.map((s) => (
                         <CommandItem
-                          key={p.id}
-                          value={`${p.name} ${p.product_type}`}
+                          key={s.id}
+                          value={`${s.code} ${s.name}`}
                           onSelect={() => {
-                            field.onChange(p.id);
-                            setProductOpen(false);
+                            field.onChange(s.id);
+                            setSpecOpen(false);
                           }}
                         >
                           <Check
                             size={13}
                             className={cn(
                               "mr-2",
-                              field.value === p.id ? "opacity-100" : "opacity-0",
+                              field.value === s.id ? "opacity-100" : "opacity-0",
                             )}
                           />
                           <span className="flex flex-1 flex-col">
-                            <span className="text-[13px] text-[color:var(--orion-ink)]">
-                              {p.name}
+                            <span className="font-mono text-[12px] text-[color:var(--orion-ink)]">
+                              {s.code}
                             </span>
                             <span className="text-[11px] text-[color:var(--orion-ink-3)]">
-                              {p.product_type}
+                              {s.name}
                             </span>
                           </span>
                         </CommandItem>
@@ -187,11 +197,64 @@ export function CuttingForm({ formId, onSubmit }: Props) {
             </Popover>
           )}
         />
-        {errors.product_id?.message ? (
+        {errors.spec_id?.message ? (
           <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
-            {translateError(errors.product_id.message)}
+            {translateError(errors.spec_id.message)}
           </p>
         ) : null}
+      </div>
+
+      {/* Cor — free-text colour name + 3-letter auto-uppercased code, mirroring
+          the blank-piece / product variation colour pattern. */}
+      <div className={SECTION_HEADING_CLASS}>{t("sections.color")}</div>
+      <div className="mb-[14px] grid grid-cols-[1fr_120px] gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${formId}-color`} className={FIELD_LABEL_CLASS}>
+            {t("labels.color")}
+          </label>
+          <Input
+            id={`${formId}-color`}
+            data-testid="cutting-color-input"
+            className={FIELD_INPUT_CLASS}
+            placeholder={t("placeholders.color")}
+            aria-invalid={!!errors.color}
+            {...form.register("color")}
+          />
+          {errors.color?.message ? (
+            <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
+              {translateError(errors.color.message)}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${formId}-color_code`} className={FIELD_LABEL_CLASS}>
+            {t("labels.colorCode")}
+          </label>
+          <Controller
+            control={form.control}
+            name="color_code"
+            render={({ field }) => (
+              <Input
+                id={`${formId}-color_code`}
+                data-testid="cutting-color-code-input"
+                className={cn(FIELD_INPUT_CLASS, "font-mono uppercase tracking-[0.12em]")}
+                maxLength={3}
+                placeholder={t("placeholders.colorCode")}
+                aria-invalid={!!errors.color_code}
+                value={field.value ?? ""}
+                onChange={(e) =>
+                  field.onChange(e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase())
+                }
+                onBlur={field.onBlur}
+              />
+            )}
+          />
+          {errors.color_code?.message ? (
+            <p role="alert" className="text-[11.5px] text-[color:var(--status-err)]">
+              {translateError(errors.color_code.message)}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       <div className={SECTION_HEADING_CLASS}>{t("sections.rolls")}</div>
@@ -410,24 +473,19 @@ export function CuttingForm({ formId, onSubmit }: Props) {
         ) : null}
       </div>
 
-      {/* Per-size quantities grid — direct port of design's `Peças por
-          tamanho` section in production.jsx. The minimum 1-output total
-          rule is asserted by the zod schema. */}
+      {/* Per-size quantities grid — iterates SIZES (now incl. `u` / Único). The
+          minimum 1-output total rule is asserted by the zod schema. */}
       <div className={SECTION_HEADING_CLASS}>
         <span>{t("sections.plannedOutputs")}</span>
       </div>
       <div className="rounded-[10px] border border-[color:var(--orion-line-soft)] overflow-hidden">
-        <div
-          className="grid grid-cols-4 gap-px bg-[color:var(--orion-line-soft)]"
-        >
+        <div className="grid grid-cols-5 gap-px bg-[color:var(--orion-line-soft)]">
           {SIZES.map((size) => (
             <div
               key={size}
               className="flex flex-col items-center gap-1.5 bg-[color:var(--orion-surface)] px-2 py-3"
             >
-              <span
-                className="font-mono text-[13px] font-medium text-[color:var(--orion-ink)]"
-              >
+              <span className="font-mono text-[13px] font-medium text-[color:var(--orion-ink)]">
                 {size.toUpperCase()}
               </span>
               <Controller

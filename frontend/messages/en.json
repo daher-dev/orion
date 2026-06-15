@@ -1115,7 +1115,9 @@
         "plannedTotal": "Planned",
         "actualTotal": "Cut",
         "cutAt": "Cut at",
-        "actions": "Actions"
+        "actions": "Actions",
+        "spec": "Spec",
+        "color": "Colour"
       }
     },
     "status": {
@@ -1143,20 +1145,29 @@
         "product": "Product",
         "rolls": "Rolls",
         "plannedOutputs": "Pieces by size",
-        "schedule": "Schedule"
+        "schedule": "Schedule",
+        "spec": "Tech spec",
+        "color": "Colour"
       },
       "labels": {
         "product": "Product to cut",
         "bodyRoll": "Body roll",
         "ribRoll": "Rib roll",
-        "cutAt": "Cut date"
+        "cutAt": "Cut date",
+        "spec": "Spec to cut",
+        "color": "Colour",
+        "colorCode": "Code"
       },
       "placeholders": {
         "product": "Pick a product…",
         "searchProduct": "Search products…",
         "bodyRoll": "Pick a body roll…",
         "ribRoll": "Pick a rib roll (optional)…",
-        "searchRoll": "Search rolls…"
+        "searchRoll": "Search rolls…",
+        "spec": "Pick a spec…",
+        "searchSpec": "Search specs…",
+        "color": "e.g. Black",
+        "colorCode": "BLK"
       },
       "hints": {
         "optional": "(optional)",
@@ -1169,7 +1180,10 @@
         "productRequired": "Pick a product",
         "bodyRollRequired": "Pick a body roll",
         "rollsDiffer": "Rib roll must be different from body roll",
-        "atLeastOneSize": "Enter at least one piece"
+        "atLeastOneSize": "Enter at least one piece",
+        "specRequired": "Pick a spec",
+        "colorRequired": "Enter a colour",
+        "colorCodeFormat": "Use 3 letters (e.g. BLK)"
       },
       "save": "Save changes",
       "submitNew": "Create order",
@@ -1179,7 +1193,8 @@
         "updated": "Cutting order updated",
         "deleted": "Cutting order deleted",
         "error": "Operation failed"
-      }
+      },
+      "noSpecs": "No specs found."
     },
     "detail": {
       "title": "Cutting order",
@@ -1193,7 +1208,8 @@
       "plannedOutputs": "Planned pieces by size",
       "actualOutputs": "Cut pieces by size",
       "close": "Close",
-      "save": "Save"
+      "save": "Save",
+      "color": "Colour"
     },
     "cost": {
       "title": "Production cost",
@@ -1264,7 +1280,14 @@
       "labels": {
         "receivedAt": "Received on",
         "sizes": "Pieces received"
-      }
+      },
+      "columns": {
+        "size": "Size",
+        "sent": "Sent",
+        "received": "Received",
+        "credited": "Credited"
+      },
+      "deltaHint": "{count} blank pieces will be credited to stock."
     },
     "form": {
       "title": {
@@ -1305,19 +1328,32 @@
         "received": "Shipment receipt recorded",
         "cancelled": "Shipment cancelled",
         "error": "Operation failed"
-      }
+      },
+      "availableCount": "{count} available"
     },
     "detail": {
       "size": "Size",
       "requested": "Requested",
       "received": "Received",
-      "itemsTitle": "Pieces by size"
+      "itemsTitle": "Pieces by size",
+      "credited": "Credited"
     },
     "timeline": {
       "title": "Timeline",
       "production": "In production",
       "inProgress": "in progress",
       "cancelled": "Shipment cancelled — no further steps."
+    },
+    "view": {
+      "label": "View",
+      "kanban": "Board",
+      "table": "Table"
+    },
+    "available": {
+      "column": "Available",
+      "readyCount": "{count} pieces ready",
+      "newShipment": "New shipment",
+      "empty": "No cut pieces available to send."
     }
   },
   "contractors": {
@@ -1525,6 +1561,62 @@
     },
     "fallback": {
       "forbidden": "You don't have access to fabric rolls."
+    },
+    "tabs": {
+      "current": "Rolls",
+      "movements": "Movements"
+    },
+    "movements": {
+      "moveCta": "Record movement",
+      "columns": {
+        "when": "When",
+        "item": "Item",
+        "reason": "Reason",
+        "quantity": "Qty"
+      },
+      "kinds": {
+        "entry": "Entry",
+        "exit": "Consumption",
+        "adjustment": "Adjustment"
+      },
+      "provenance": "Cut {code}",
+      "empty": "No movements recorded yet.",
+      "validation": {
+        "rollRequired": "Pick a fabric roll",
+        "quantityPositive": "Enter a quantity above zero"
+      },
+      "toasts": {
+        "recorded": "Movement recorded",
+        "error": "Operation failed"
+      },
+      "moveSheet": {
+        "title": "Fabric movement",
+        "sub": "Record an entry, consumption or adjustment in kg.",
+        "labels": {
+          "roll": "Fabric roll",
+          "moveType": "Movement",
+          "quantity": "Quantity",
+          "preview": "Preview"
+        },
+        "placeholders": {
+          "roll": "Pick a fabric roll…",
+          "searchRoll": "Search rolls…"
+        },
+        "noRolls": "No fabric rolls found.",
+        "moveTypes": {
+          "entry": "Entry",
+          "exit": "Consumption",
+          "adjustment": "Adjustment"
+        },
+        "preview": {
+          "current": "Current",
+          "entry": "Entry",
+          "exit": "Out",
+          "final": "Final"
+        },
+        "cancel": "Cancel",
+        "save": "Record"
+      }
     }
   },
   "stock": {
@@ -2916,7 +3008,8 @@
         "color": "Color",
         "size": "Size",
         "min": "Minimum",
-        "onHand": "On hand"
+        "onHand": "On hand",
+        "inProduction": "In production"
       }
     },
     "actions": {

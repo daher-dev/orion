@@ -33,6 +33,9 @@ class ShipmentItemRead(BaseModel):
     size: Size
     requested_quantity: int
     received_quantity: int
+    # How much of ``received_quantity`` has already been posted to blank stock
+    # (the T3 delta-credit watermark).
+    credited_quantity: int
 
 
 class ShipmentCuttingOrderRead(BaseModel):

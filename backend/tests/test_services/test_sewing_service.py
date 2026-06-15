@@ -6,12 +6,13 @@ from sqlmodel import select
 
 from models import (
     AuditLog,
+    BlankPiece,
+    BlankPieceMovement,
+    CuttingStatus,
     SewingShipment,
     SewingShipmentItem,
     ShipmentStatus,
     Size,
-    StockEntry,
-    StockSource,
 )
 from schemas._common import PageParams
 from schemas.sewing import (
@@ -32,10 +33,10 @@ from shared.exceptions import ConflictError, NotFoundError
 from tests.factories import (
     create_company,
     create_cutting_order,
+    create_cutting_order_output,
     create_fabric_roll,
     create_product,
     create_product_spec,
-    create_product_variation,
     create_sewing_contractor,
     create_sewing_shipment,
     create_sewing_shipment_item,
@@ -45,29 +46,37 @@ from tests.factories import (
 # ---------- helpers ----------
 
 
-async def _bootstrap_tenant(db_session):
-    """Create a tenant with a product (P/M/G variations) + cutting order + contractor."""
+async def _bootstrap_tenant(db_session, *, cutting_status=CuttingStatus.DONE, outputs=None):
+    """Create a tenant with a spec-keyed DONE cutting order (+outputs) + contractor.
+
+    Cutting is print-agnostic now, so the shipment draws from the cutting
+    order's outputs (available cut pieces), not product variations. The order
+    defaults to DONE so T2 (create) is allowed; pass ``cutting_status`` to
+    override. ``outputs`` is a ``{Size: qty}`` map of cut pieces available to
+    sew (defaults to generous P/M/G/GG so existing requested quantities fit).
+    """
 
     company = await create_company(db_session)
     user = await create_user(db_session, company_id=company.id)
     spec = await create_product_spec(db_session, company_id=company.id)
-    product = await create_product(db_session, company_id=company.id, spec_id=spec.id)
-    for size in (Size.P, Size.M, Size.G):
-        await create_product_variation(
-            db_session,
-            company_id=company.id,
-            product_id=product.id,
-            size=size,
-            color="Preto",
-            color_code="BLK",
-        )
     roll = await create_fabric_roll(db_session, company_id=company.id)
     cutting = await create_cutting_order(
         db_session,
         company_id=company.id,
-        product_id=product.id,
+        spec_id=spec.id,
         body_roll_id=roll.id,
+        color="Preto",
+        color_code="PRT",
+        status=cutting_status,
     )
+    grade = outputs if outputs is not None else {Size.P: 100, Size.M: 100, Size.G: 100, Size.GG: 100}
+    for size, qty in grade.items():
+        await create_cutting_order_output(
+            db_session,
+            cutting_order_id=cutting.id,
+            size=size,
+            quantity=qty,
+        )
     contractor = await create_sewing_contractor(
         db_session,
         company_id=company.id,
@@ -76,7 +85,7 @@ async def _bootstrap_tenant(db_session):
     return {
         "company": company,
         "user": user,
-        "product": product,
+        "spec": spec,
         "cutting": cutting,
         "contractor": contractor,
     }
@@ -91,11 +100,35 @@ async def _audits_for(db_session, *, resource_id: uuid.UUID) -> list[AuditLog]:
     return list(result.all())
 
 
+async def _blank_on_hand(db_session, *, company_id, spec_id, size, color_code) -> int:
+    """Live blank on-hand for a (spec, size, color_code) key (signed ledger sum)."""
+
+    piece = (
+        await db_session.exec(
+            select(BlankPiece).where(
+                BlankPiece.company_id == company_id,
+                BlankPiece.spec_id == spec_id,
+                BlankPiece.size == size,
+                BlankPiece.color_code == color_code,
+            )
+        )
+    ).first()
+    if piece is None:
+        return 0
+    movements = list(
+        (await db_session.exec(select(BlankPieceMovement).where(BlankPieceMovement.blank_piece_id == piece.id))).all()
+    )
+    on_hand = 0
+    for m in movements:
+        on_hand += -m.quantity if m.kind.value == "exit" else m.quantity
+    return on_hand
+
+
 def _today() -> datetime:
     return datetime.now(UTC).replace(microsecond=0)
 
 
-# ---------- create_shipment ----------
+# ---------- create_shipment (T2) ----------
 
 
 async def test_create_shipment_happy_path(db_session):
@@ -126,12 +159,94 @@ async def test_create_shipment_happy_path(db_session):
     by_size = {item.size: item for item in result.items}
     assert by_size[Size.P].requested_quantity == 5
     assert by_size[Size.M].received_quantity == 0
+    assert by_size[Size.M].credited_quantity == 0
     assert result.cutting_order.id == ctx["cutting"].id
     assert result.cutting_order.code.startswith("OC-")
     assert result.contractor.name == "Banca Alpha"
 
     audits = await _audits_for(db_session, resource_id=result.id)
     assert audits and "Shipment created" in audits[0].message
+
+
+async def test_create_shipment_requires_done_cutting_order(db_session):
+    ctx = await _bootstrap_tenant(db_session, cutting_status=CuttingStatus.CUTTING)
+    payload = ShipmentCreate(
+        cutting_order_id=ctx["cutting"].id,
+        contractor_id=ctx["contractor"].id,
+        sent_at=_today().date(),
+        items=[ShipmentItemInput(size=Size.M, requested_quantity=5)],
+    )
+    with pytest.raises(ConflictError) as exc:
+        await create_shipment(
+            db_session,
+            company_id=ctx["company"].id,
+            user_id=ctx["user"].id,
+            payload=payload,
+        )
+    assert "done" in str(exc.value.detail).lower()
+
+
+async def test_create_shipment_rejects_over_available(db_session):
+    """T2 draws down availability: requesting more than the cut grade is a 409."""
+
+    ctx = await _bootstrap_tenant(db_session, outputs={Size.M: 8})
+    payload = ShipmentCreate(
+        cutting_order_id=ctx["cutting"].id,
+        contractor_id=ctx["contractor"].id,
+        sent_at=_today().date(),
+        items=[ShipmentItemInput(size=Size.M, requested_quantity=9)],
+    )
+    with pytest.raises(ConflictError) as exc:
+        await create_shipment(
+            db_session,
+            company_id=ctx["company"].id,
+            user_id=ctx["user"].id,
+            payload=payload,
+        )
+    assert "exceeds available" in str(exc.value.detail).lower()
+
+
+async def test_create_shipment_second_remessa_consumes_availability(db_session):
+    """A first sent remessa reduces what a second can request."""
+
+    ctx = await _bootstrap_tenant(db_session, outputs={Size.M: 10})
+    await create_shipment(
+        db_session,
+        company_id=ctx["company"].id,
+        user_id=ctx["user"].id,
+        payload=ShipmentCreate(
+            cutting_order_id=ctx["cutting"].id,
+            contractor_id=ctx["contractor"].id,
+            sent_at=_today().date(),
+            items=[ShipmentItemInput(size=Size.M, requested_quantity=7)],
+        ),
+    )
+    # Only 3 remain — a request for 4 must fail.
+    with pytest.raises(ConflictError):
+        await create_shipment(
+            db_session,
+            company_id=ctx["company"].id,
+            user_id=ctx["user"].id,
+            payload=ShipmentCreate(
+                cutting_order_id=ctx["cutting"].id,
+                contractor_id=ctx["contractor"].id,
+                sent_at=_today().date(),
+                items=[ShipmentItemInput(size=Size.M, requested_quantity=4)],
+            ),
+        )
+    # 3 fits.
+    ok = await create_shipment(
+        db_session,
+        company_id=ctx["company"].id,
+        user_id=ctx["user"].id,
+        payload=ShipmentCreate(
+            cutting_order_id=ctx["cutting"].id,
+            contractor_id=ctx["contractor"].id,
+            sent_at=_today().date(),
+            items=[ShipmentItemInput(size=Size.M, requested_quantity=3)],
+        ),
+    )
+    assert ok.status == ShipmentStatus.SENT
 
 
 async def test_create_shipment_rejects_duplicate_sizes(db_session):
@@ -252,6 +367,7 @@ async def test_get_shipment_returns_match(db_session):
     assert result.id == shipment.id
     assert len(result.items) == 1
     assert result.items[0].requested_quantity == 10
+    assert result.items[0].credited_quantity == 0
 
 
 async def test_get_shipment_not_found(db_session):
@@ -374,7 +490,7 @@ async def test_list_shipments_filter_by_cutting_order(db_session):
     second_cutting = await create_cutting_order(
         db_session,
         company_id=ctx["company"].id,
-        product_id=ctx["product"].id,
+        spec_id=ctx["spec"].id,
         body_roll_id=roll2.id,
     )
     await create_sewing_shipment(
@@ -455,12 +571,11 @@ async def test_list_shipments_isolated_by_tenant(db_session):
     other = await create_company(db_session)
     other_user = await create_user(db_session, company_id=other.id)
     other_spec = await create_product_spec(db_session, company_id=other.id)
-    other_product = await create_product(db_session, company_id=other.id, spec_id=other_spec.id)
     other_roll = await create_fabric_roll(db_session, company_id=other.id)
     other_cutting = await create_cutting_order(
         db_session,
         company_id=other.id,
-        product_id=other_product.id,
+        spec_id=other_spec.id,
         body_roll_id=other_roll.id,
     )
     other_contractor = await create_sewing_contractor(
@@ -505,7 +620,7 @@ async def test_list_shipments_empty_result(db_session):
     assert total == 0
 
 
-# ---------- receive_shipment ----------
+# ---------- receive_shipment (T3) ----------
 
 
 async def test_receive_shipment_full_match_status_received(db_session):
@@ -546,11 +661,29 @@ async def test_receive_shipment_full_match_status_received(db_session):
     assert by_size[Size.P].received_quantity == 3
     assert by_size[Size.M].received_quantity == 5
     assert by_size[Size.G].received_quantity == 2
+    # Credited watermark advanced to received.
+    assert all(it.credited_quantity == it.received_quantity for it in result.items)
 
-    stock = list((await db_session.exec(select(StockEntry).where(StockEntry.shipment_id == shipment.id))).all())
-    assert len(stock) == 3
-    assert all(e.source == StockSource.SHIPMENT for e in stock)
-    assert sum(e.quantity for e in stock) == 10
+    # Blank pieces credited per size on the cutting order's spec+color key.
+    async def _oh(size):
+        return await _blank_on_hand(
+            db_session, company_id=ctx["company"].id, spec_id=ctx["spec"].id, size=size, color_code="PRT"
+        )
+
+    assert await _oh(Size.P) == 3
+    assert await _oh(Size.M) == 5
+    assert await _oh(Size.G) == 2
+
+    # Provenance is set on the credit movements.
+    movements = list(
+        (
+            await db_session.exec(
+                select(BlankPieceMovement).where(BlankPieceMovement.sewing_shipment_id == shipment.id)
+            )
+        ).all()
+    )
+    assert len(movements) == 3
+    assert all(m.sewing_shipment_id == shipment.id for m in movements)
 
     audits = await _audits_for(db_session, resource_id=shipment.id)
     assert any("Received shipment" in a.message for a in audits)
@@ -591,11 +724,19 @@ async def test_receive_shipment_partial_status(db_session):
         ),
     )
     assert result.status == ShipmentStatus.PARTIAL
-    stock = list((await db_session.exec(select(StockEntry).where(StockEntry.shipment_id == shipment.id))).all())
-    assert sum(e.quantity for e in stock) == 12
+    spec_id = ctx["spec"].id
+
+    async def _oh(size):
+        return await _blank_on_hand(
+            db_session, company_id=ctx["company"].id, spec_id=spec_id, size=size, color_code="PRT"
+        )
+
+    assert (await _oh(Size.M)) + (await _oh(Size.G)) == 12
 
 
-async def test_receive_shipment_with_zero_quantity_skips_stock_for_that_size(db_session):
+async def test_receive_shipment_delta_only_across_two_partials(db_session):
+    """The core T3 invariant: re-receiving credits ONLY the new delta per line."""
+
     ctx = await _bootstrap_tenant(db_session)
     shipment = await create_sewing_shipment(
         db_session,
@@ -607,15 +748,83 @@ async def test_receive_shipment_with_zero_quantity_skips_stock_for_that_size(db_
         db_session,
         shipment_id=shipment.id,
         size=Size.M,
-        requested_quantity=5,
+        requested_quantity=10,
     )
-    await create_sewing_shipment_item(
-        db_session,
-        shipment_id=shipment.id,
-        size=Size.G,
-        requested_quantity=3,
-    )
+    spec_id = ctx["spec"].id
 
+    async def _oh_m():
+        return await _blank_on_hand(
+            db_session, company_id=ctx["company"].id, spec_id=spec_id, size=Size.M, color_code="PRT"
+        )
+
+    # First partial receive: 4 of 10.
+    first = await receive_shipment(
+        db_session,
+        company_id=ctx["company"].id,
+        user_id=ctx["user"].id,
+        shipment_id=shipment.id,
+        payload=ShipmentReceiveBody(
+            received_at=_today().date(),
+            items=[ShipmentItemReceiveInput(size=Size.M, received_quantity=4)],
+        ),
+    )
+    assert first.status == ShipmentStatus.PARTIAL
+    assert first.items[0].credited_quantity == 4
+    assert await _oh_m() == 4
+
+    # Second receive: top up to 10 → only +6 credited (delta-only).
+    second = await receive_shipment(
+        db_session,
+        company_id=ctx["company"].id,
+        user_id=ctx["user"].id,
+        shipment_id=shipment.id,
+        payload=ShipmentReceiveBody(
+            received_at=_today().date(),
+            items=[ShipmentItemReceiveInput(size=Size.M, received_quantity=10)],
+        ),
+    )
+    assert second.status == ShipmentStatus.RECEIVED
+    assert second.items[0].credited_quantity == 10
+    assert await _oh_m() == 10
+
+    # Exactly two credit movements (4 then 6), never re-crediting the first 4.
+    movements = list(
+        (
+            await db_session.exec(
+                select(BlankPieceMovement)
+                .where(BlankPieceMovement.sewing_shipment_id == shipment.id)
+                .order_by(BlankPieceMovement.created_at.asc())  # type: ignore[attr-defined]
+            )
+        ).all()
+    )
+    assert [m.quantity for m in movements] == [4, 6]
+
+
+async def test_receive_shipment_rereceive_omitted_sizes_retained(db_session):
+    """A re-receive that omits a size keeps that size's prior received quantity."""
+
+    ctx = await _bootstrap_tenant(db_session)
+    shipment = await create_sewing_shipment(
+        db_session,
+        company_id=ctx["company"].id,
+        cutting_order_id=ctx["cutting"].id,
+        contractor_id=ctx["contractor"].id,
+    )
+    await create_sewing_shipment_item(db_session, shipment_id=shipment.id, size=Size.M, requested_quantity=6)
+    await create_sewing_shipment_item(db_session, shipment_id=shipment.id, size=Size.G, requested_quantity=6)
+
+    # Receive M fully.
+    await receive_shipment(
+        db_session,
+        company_id=ctx["company"].id,
+        user_id=ctx["user"].id,
+        shipment_id=shipment.id,
+        payload=ShipmentReceiveBody(
+            received_at=_today().date(),
+            items=[ShipmentItemReceiveInput(size=Size.M, received_quantity=6)],
+        ),
+    )
+    # Now receive only G — M must NOT reset to 0.
     result = await receive_shipment(
         db_session,
         company_id=ctx["company"].id,
@@ -623,17 +832,49 @@ async def test_receive_shipment_with_zero_quantity_skips_stock_for_that_size(db_
         shipment_id=shipment.id,
         payload=ShipmentReceiveBody(
             received_at=_today().date(),
-            items=[
-                ShipmentItemReceiveInput(size=Size.M, received_quantity=5),
-                ShipmentItemReceiveInput(size=Size.G, received_quantity=0),
-            ],
+            items=[ShipmentItemReceiveInput(size=Size.G, received_quantity=6)],
         ),
     )
-    assert result.status == ShipmentStatus.PARTIAL
+    by_size = {it.size: it for it in result.items}
+    assert by_size[Size.M].received_quantity == 6
+    assert by_size[Size.G].received_quantity == 6
+    assert result.status == ShipmentStatus.RECEIVED
 
-    stock = list((await db_session.exec(select(StockEntry).where(StockEntry.shipment_id == shipment.id))).all())
-    assert len(stock) == 1
-    assert stock[0].quantity == 5
+
+async def test_receive_shipment_reduce_below_credited_rejected(db_session):
+    """Lowering received below an already-credited amount is a 409 (no negative credit)."""
+
+    ctx = await _bootstrap_tenant(db_session)
+    shipment = await create_sewing_shipment(
+        db_session,
+        company_id=ctx["company"].id,
+        cutting_order_id=ctx["cutting"].id,
+        contractor_id=ctx["contractor"].id,
+    )
+    await create_sewing_shipment_item(db_session, shipment_id=shipment.id, size=Size.M, requested_quantity=10)
+
+    await receive_shipment(
+        db_session,
+        company_id=ctx["company"].id,
+        user_id=ctx["user"].id,
+        shipment_id=shipment.id,
+        payload=ShipmentReceiveBody(
+            received_at=_today().date(),
+            items=[ShipmentItemReceiveInput(size=Size.M, received_quantity=6)],
+        ),
+    )
+    with pytest.raises(ConflictError) as exc:
+        await receive_shipment(
+            db_session,
+            company_id=ctx["company"].id,
+            user_id=ctx["user"].id,
+            shipment_id=shipment.id,
+            payload=ShipmentReceiveBody(
+                received_at=_today().date(),
+                items=[ShipmentItemReceiveInput(size=Size.M, received_quantity=3)],
+            ),
+        )
+    assert "credited" in str(exc.value.detail).lower()
 
 
 async def test_receive_shipment_rejects_over_delivery(db_session):
@@ -692,7 +933,9 @@ async def test_receive_shipment_rejects_unknown_size(db_session):
         )
 
 
-async def test_receive_shipment_double_receive_rejected(db_session):
+async def test_receive_shipment_already_received_rejected(db_session):
+    """A fully-received shipment cannot be received again."""
+
     ctx = await _bootstrap_tenant(db_session)
     shipment = await create_sewing_shipment(
         db_session,
@@ -711,13 +954,14 @@ async def test_receive_shipment_double_receive_rejected(db_session):
         received_at=_today().date(),
         items=[ShipmentItemReceiveInput(size=Size.M, received_quantity=4)],
     )
-    await receive_shipment(
+    received = await receive_shipment(
         db_session,
         company_id=ctx["company"].id,
         user_id=ctx["user"].id,
         shipment_id=shipment.id,
         payload=payload,
     )
+    assert received.status == ShipmentStatus.RECEIVED
 
     with pytest.raises(ConflictError):
         await receive_shipment(
@@ -755,50 +999,53 @@ def test_receive_body_rejects_duplicate_sizes():
         )
 
 
-async def test_receive_shipment_rejects_when_variation_missing(db_session):
-    """If the product has no variation for a received size, the call fails."""
+async def test_receive_shipment_creates_blank_piece_when_absent(db_session):
+    """T3 resolves/creates the blank piece keyed by the cutting order's spec+color."""
 
-    company = await create_company(db_session)
-    user = await create_user(db_session, company_id=company.id)
-    spec = await create_product_spec(db_session, company_id=company.id)
-    product = await create_product(db_session, company_id=company.id, spec_id=spec.id)
-    # Intentionally do NOT create any variation.
-    roll = await create_fabric_roll(db_session, company_id=company.id)
-    cutting = await create_cutting_order(
-        db_session,
-        company_id=company.id,
-        product_id=product.id,
-        body_roll_id=roll.id,
-    )
-    contractor = await create_sewing_contractor(
-        db_session,
-        company_id=company.id,
-        name="Sole",
-    )
+    ctx = await _bootstrap_tenant(db_session)
     shipment = await create_sewing_shipment(
         db_session,
-        company_id=company.id,
-        cutting_order_id=cutting.id,
-        contractor_id=contractor.id,
+        company_id=ctx["company"].id,
+        cutting_order_id=ctx["cutting"].id,
+        contractor_id=ctx["contractor"].id,
     )
-    await create_sewing_shipment_item(
+    await create_sewing_shipment_item(db_session, shipment_id=shipment.id, size=Size.M, requested_quantity=3)
+
+    # No blank piece exists yet for this spec/size/color.
+    before = (
+        await db_session.exec(
+            select(BlankPiece).where(
+                BlankPiece.company_id == ctx["company"].id,
+                BlankPiece.spec_id == ctx["spec"].id,
+                BlankPiece.size == Size.M,
+            )
+        )
+    ).first()
+    assert before is None
+
+    await receive_shipment(
         db_session,
+        company_id=ctx["company"].id,
+        user_id=ctx["user"].id,
         shipment_id=shipment.id,
-        size=Size.M,
-        requested_quantity=3,
+        payload=ShipmentReceiveBody(
+            received_at=_today().date(),
+            items=[ShipmentItemReceiveInput(size=Size.M, received_quantity=3)],
+        ),
     )
 
-    with pytest.raises(ConflictError):
-        await receive_shipment(
-            db_session,
-            company_id=company.id,
-            user_id=user.id,
-            shipment_id=shipment.id,
-            payload=ShipmentReceiveBody(
-                received_at=_today().date(),
-                items=[ShipmentItemReceiveInput(size=Size.M, received_quantity=3)],
-            ),
+    after = (
+        await db_session.exec(
+            select(BlankPiece).where(
+                BlankPiece.company_id == ctx["company"].id,
+                BlankPiece.spec_id == ctx["spec"].id,
+                BlankPiece.size == Size.M,
+            )
         )
+    ).first()
+    assert after is not None
+    assert after.color == "Preto"
+    assert after.color_code == "PRT"
 
 
 # ---------- cancel_shipment ----------
@@ -903,6 +1150,7 @@ async def test_create_persists_items_with_zero_received(db_session):
     )
     assert len(rows) == 1
     assert rows[0].received_quantity == 0
+    assert rows[0].credited_quantity == 0
 
 
 async def test_shipment_persisted_with_status_sent(db_session):
@@ -922,3 +1170,8 @@ async def test_shipment_persisted_with_status_sent(db_session):
     row = (await db_session.exec(select(SewingShipment).where(SewingShipment.id == result.id))).first()
     assert row is not None
     assert row.status == ShipmentStatus.SENT
+
+
+# Keep create_product importable for cross-feature parity even though sewing no
+# longer keys off products; referenced here so the import isn't flagged unused.
+_ = create_product

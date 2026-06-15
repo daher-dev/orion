@@ -14,6 +14,7 @@ from models.enums import (
     ChannelStatus,
     CuttingStatus,
     Ecommerce,
+    FabricMovementKind,
     FabricRollKind,
     FabricType,
     LoginOutcome,
@@ -69,4 +70,5 @@ PRINT_ORDER_STATUS = _enum(PrintOrderStatus, "print_order_status")
 ARTWORK_STATUS = _enum(ArtworkStatus, "artwork_status")
 BLANK_MOVEMENT_KIND = _enum(BlankMovementKind, "blank_movement_kind")
 PAPER_MOVEMENT_KIND = _enum(PaperMovementKind, "paper_movement_kind")
+FABRIC_MOVEMENT_KIND = _enum(FabricMovementKind, "fabric_movement_kind")
 PRINTED_MOVEMENT_KIND = _enum(PrintedMovementKind, "printed_movement_kind")

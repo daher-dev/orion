@@ -10,19 +10,30 @@ from models.pg_enums import CUTTING_STATUS, SIZE
 
 
 class CuttingOrder(CompanyModel, table=True):
-    """Ordem de corte — a request to cut pieces from raw fabric for a product."""
+    """Ordem de corte — a request to cut pieces from raw fabric.
+
+    Print-agnostic: keyed by the garment base (``ProductSpec``) plus a
+    free-text colorway (``color`` + 3-letter ``color_code``), NOT a finished
+    product. Cut outputs become available blank pieces of this spec+color
+    once the order reaches DONE.
+    """
 
     __tablename__ = "cutting_orders"
-    __table_args__ = (CheckConstraint("body_roll_id <> rib_roll_id", name="body_and_rib_rolls_differ"),)
+    __table_args__ = (
+        CheckConstraint("body_roll_id <> rib_roll_id", name="body_and_rib_rolls_differ"),
+        CheckConstraint(r"color_code ~ '^[A-Z]{3}$'", name="cutting_orders_color_code_format"),
+    )
 
-    product_id: uuid.UUID = Field(
+    spec_id: uuid.UUID = Field(
         sa_column=Column(
             Uuid,
-            ForeignKey("products.id", ondelete="RESTRICT"),
+            ForeignKey("product_specs.id", ondelete="RESTRICT"),
             nullable=False,
             index=True,
         ),
     )
+    color: str = Field(max_length=40)
+    color_code: str = Field(max_length=3)
     body_roll_id: uuid.UUID = Field(
         sa_column=Column(
             Uuid,

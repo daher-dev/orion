@@ -301,7 +301,6 @@ async def test_create_entry_success(authed_client: AsyncClient, db_session):
     assert body["quantity"] == 12
     assert body["source"] == "adjustment"
     assert body["notes"] == "Found"
-    assert body["shipment"] is None
 
     rows = (await db_session.exec(select(StockEntry).where(StockEntry.variation_id == variation.id))).all()
     assert len(list(rows)) == 1

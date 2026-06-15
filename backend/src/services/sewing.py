@@ -4,22 +4,25 @@ Service surface
 ---------------
 - `list_shipments` / `get_shipment` — return `ShipmentRead` shaped DTOs,
   pre-joined with contractor + cutting order + items.
-- `create_shipment` — persists the parent + child items. All received
-  quantities start at zero; status starts as `sent`.
-- `receive_shipment` — sets received_at, distributes received quantities
-  per size, derives status (`received` / `partial`), and creates a
-  `StockEntry` row per non-zero size. Rejects over-delivery and double
-  receive.
+- `create_shipment` — **T2**: persists the parent + child items, drawing down
+  cut-piece availability. Requires the cutting order to be DONE and each
+  requested quantity ≤ available cut pieces for that size. All received +
+  credited quantities start at zero; status starts as `sent`.
+- `receive_shipment` — **T3**: re-receivable, delta-only. Credits **blank
+  pieces** (`BlankPieceMovement(entry)` with `sewing_shipment_id` provenance)
+  for the newly-received delta per line (`received - credited`), resolving /
+  creating the blank piece by the cutting order's spec+size+color/color_code,
+  then advances the per-line `credited_quantity` watermark. No finished
+  `StockEntry` is written. Status is derived (`received` / `partial`).
 - `cancel_shipment` — flips status to `cancelled`. Rejects if the shipment
   is already received/partial/cancelled.
 
-Stock crediting heuristic
--------------------------
-The cutting order knows its `product_id`. A `ProductVariation` is keyed
-by `(product_id, size, color_code)`. The shipment item has only `size`,
-so we pick the FIRST variation that matches `product_id + size`. That
-limitation is documented in F-009 — multi-color cutting orders need a
-shipment-item color field which is out of scope.
+Blank crediting (T3)
+--------------------
+The cutting order carries `spec_id` + `color` + `color_code`. The shipment item
+carries `size`. The blank piece is keyed by `(spec_id, size, color_code)` — a
+real FK, not a free-text product/color heuristic. Crediting is delta-only and
+idempotent across partial receives (clones the prototype's `receiveSewing`).
 """
 
 import uuid
@@ -30,14 +33,13 @@ from sqlmodel import or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from models import (
+    BlankMovementKind,
     CuttingOrder,
-    ProductVariation,
+    CuttingStatus,
     SewingContractor,
     SewingShipment,
     SewingShipmentItem,
     ShipmentStatus,
-    StockEntry,
-    StockSource,
 )
 from schemas._common import PageParams
 from schemas.sewing import (
@@ -49,6 +51,8 @@ from schemas.sewing import (
     ShipmentRead,
     ShipmentReceiveBody,
 )
+from services import blank_stock as blank_stock_service
+from services import cutting as cutting_service
 from services._audit import write_audit
 from services._base import scoped
 from shared.exceptions import ConflictError, NotFoundError
@@ -90,6 +94,7 @@ def _to_read(
                 size=item.size,
                 requested_quantity=item.requested_quantity,
                 received_quantity=item.received_quantity,
+                credited_quantity=item.credited_quantity,
             )
             for item in items
         ],
@@ -269,7 +274,13 @@ async def create_shipment(
     user_id: uuid.UUID,
     payload: ShipmentCreate,
 ) -> ShipmentRead:
-    """Create a new shipment in `sent` status with zero received quantities."""
+    """T2: create a shipment in `sent` status, drawing down cut-piece availability.
+
+    Requires the cutting order to be DONE and each requested quantity ≤ the
+    available cut pieces for that size (availability excludes cancelled
+    shipments; this shipment's own rows are not yet persisted at validation
+    time). Items persist with received + credited quantities at zero.
+    """
 
     # Validate references first — both must belong to the calling tenant.
     contractor = await _load_contractor(
@@ -282,6 +293,24 @@ async def create_shipment(
         company_id=company_id,
         cutting_order_id=payload.cutting_order_id,
     )
+
+    if cutting_order.status != CuttingStatus.DONE:
+        raise ConflictError(detail="Cutting order must be DONE to create a shipment")
+
+    available = await cutting_service.available_by_size(
+        db,
+        company_id=company_id,
+        cutting_order_id=cutting_order.id,
+    )
+    for item in payload.items:
+        avail = available.get(item.size, 0)
+        if item.requested_quantity > avail:
+            raise ConflictError(
+                detail=(
+                    f"Requested {item.requested_quantity} for size {item.size.value} "
+                    f"exceeds available cut pieces ({avail})"
+                ),
+            )
 
     shipment = SewingShipment(
         company_id=company_id,
@@ -300,6 +329,7 @@ async def create_shipment(
             size=item.size,
             requested_quantity=item.requested_quantity,
             received_quantity=0,
+            credited_quantity=0,
         )
         for item in payload.items
     ]
@@ -332,13 +362,15 @@ async def receive_shipment(
     shipment_id: uuid.UUID,
     payload: ShipmentReceiveBody,
 ) -> ShipmentRead:
-    """Apply a receive payload to a `sent` shipment.
+    """T3: apply a (possibly partial, re-receivable) receive to a shipment.
 
-    Side effects:
-    - sets `received_at` and the per-size `received_quantity`;
-    - computes status (`received` if every item matches its requested,
-      `partial` otherwise);
-    - creates a `StockEntry` row per size with non-zero received quantity.
+    Allowed when status is `sent` or `partial`. For each payload line: set the
+    item's `received_quantity` (reject over-delivery), compute the delta
+    `received - credited`, credit that delta to the resolved/created blank piece
+    via `blank_stock.record_movement` (with `sewing_shipment_id` provenance),
+    then advance `credited_quantity = received_quantity`. Sizes omitted from the
+    payload retain their current `received_quantity` (a re-receive only updates
+    provided sizes). No finished `StockEntry` is written. One transaction.
     """
 
     stmt = scoped(select(SewingShipment), SewingShipment, company_id).where(SewingShipment.id == shipment_id)
@@ -346,13 +378,14 @@ async def receive_shipment(
     if shipment is None:
         raise NotFoundError(detail="Shipment not found")
 
-    if shipment.status != ShipmentStatus.SENT:
-        raise ConflictError(detail="Shipment is not in 'sent' state")
+    if shipment.status not in (ShipmentStatus.SENT, ShipmentStatus.PARTIAL):
+        raise ConflictError(detail="Shipment cannot be received in its current state")
 
     items = await _load_items(db, shipment.id)
     items_by_size = {item.size: item for item in items}
 
-    received_by_size: dict = {}
+    # 1) Resolve + validate payload lines (over-delivery, unknown size).
+    received_updates: dict = {}
     for receive_item in payload.items:
         target = items_by_size.get(receive_item.size)
         if target is None:
@@ -367,28 +400,8 @@ async def receive_shipment(
                     f"size {receive_item.size.value}"
                 ),
             )
-        received_by_size[receive_item.size] = receive_item.received_quantity
+        received_updates[receive_item.size] = receive_item.received_quantity
 
-    # Apply the received values. Sizes not in the payload default to zero
-    # received (treated as fully missing — status will be `partial`).
-    total_received = 0
-    total_requested = 0
-    fully_satisfied = True
-    for item in items:
-        rcv = received_by_size.get(item.size, 0)
-        item.received_quantity = rcv
-        total_received += rcv
-        total_requested += item.requested_quantity
-        if rcv != item.requested_quantity:
-            fully_satisfied = False
-        db.add(item)
-
-    shipment.received_at = payload.received_at
-    shipment.status = ShipmentStatus.RECEIVED if fully_satisfied else ShipmentStatus.PARTIAL
-
-    # Look up variations for the cutting order's product so we can credit
-    # stock per (size). We pick the FIRST variation per size when multiple
-    # colors exist (documented limitation).
     cutting_order = await _load_cutting_order(
         db,
         company_id=company_id,
@@ -400,34 +413,52 @@ async def receive_shipment(
         contractor_id=shipment.contractor_id,
     )
 
-    variations_result = await db.exec(
-        scoped(select(ProductVariation), ProductVariation, company_id)
-        .where(ProductVariation.product_id == cutting_order.product_id)
-        .order_by(ProductVariation.created_at.asc())  # type: ignore[attr-defined]
-    )
-    variation_by_size: dict = {}
-    for v in variations_result.all():
-        variation_by_size.setdefault(v.size, v)
-
+    # 2) Apply received values for provided sizes; compute + credit deltas.
+    total_delta = 0
     for item in items:
-        if item.received_quantity <= 0:
+        if item.size not in received_updates:
+            # Omitted sizes keep their current received_quantity (re-receive tops up).
             continue
-        variation = variation_by_size.get(item.size)
-        if variation is None:
+        item.received_quantity = received_updates[item.size]
+        delta = item.received_quantity - item.credited_quantity
+        if delta < 0:
             raise ConflictError(
-                detail=(f"No product variation exists for size {item.size.value} — cannot credit stock"),
+                detail=(f"Cannot reduce received below already-credited quantity for size {item.size.value}"),
             )
-        db.add(
-            StockEntry(
+        if delta > 0:
+            blank = await blank_stock_service.get_or_create_blank_piece(
+                db,
                 company_id=company_id,
-                variation_id=variation.id,
-                shipment_id=shipment.id,
-                quantity=item.received_quantity,
-                source=StockSource.SHIPMENT,
-                notes=None,
+                spec_id=cutting_order.spec_id,
+                size=item.size,
+                color=cutting_order.color,
+                color_code=cutting_order.color_code,
             )
-        )
+            await blank_stock_service.record_movement(
+                db,
+                company_id=company_id,
+                blank_piece_id=blank.id,
+                kind=BlankMovementKind.ENTRY,
+                quantity=delta,
+                sewing_shipment_id=shipment.id,
+                notes=f"Remessa {_cutting_code(cutting_order.id)}",
+            )
+            item.credited_quantity = item.received_quantity
+            total_delta += delta
+        db.add(item)
 
+    # 3) Derive status from the current per-line totals.
+    total_received = sum(item.received_quantity for item in items)
+    total_requested = sum(item.requested_quantity for item in items)
+    fully_satisfied = all(item.received_quantity == item.requested_quantity for item in items)
+    if fully_satisfied:
+        shipment.status = ShipmentStatus.RECEIVED
+    elif total_received > 0:
+        shipment.status = ShipmentStatus.PARTIAL
+    else:
+        shipment.status = ShipmentStatus.SENT
+
+    shipment.received_at = payload.received_at
     db.add(shipment)
     await db.flush()
 
@@ -437,7 +468,10 @@ async def receive_shipment(
         user_id=user_id,
         resource_type=_RESOURCE,
         resource_id=shipment.id,
-        message=(f"Received shipment {_cutting_code(shipment.cutting_order_id)} ({total_received} pieces)"),
+        message=(
+            f"Received shipment {_cutting_code(shipment.cutting_order_id)}: "
+            f"+{total_delta} blank pieces ({total_received}/{total_requested})"
+        ),
     )
     await db.commit()
     await db.refresh(shipment)

@@ -36,7 +36,19 @@ from sqlalchemy import String, case, cast, func, or_
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from models import BlankMovementKind, BlankPiece, BlankPieceMovement, ProductSpec
+from models import (
+    BlankMovementKind,
+    BlankPiece,
+    BlankPieceMovement,
+    CuttingOrder,
+    CuttingOrderOutput,
+    CuttingStatus,
+    ProductSpec,
+    SewingShipment,
+    SewingShipmentItem,
+    ShipmentStatus,
+    Size,
+)
 from schemas._common import PageParams
 from schemas.blank_stock import (
     BlankMovementCreate,
@@ -183,6 +195,105 @@ async def create_blank_piece(
     return piece
 
 
+# ---------- in-production (WIP) ----------
+
+
+async def _in_production_map(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    keys: set[tuple[uuid.UUID, str, Size]],
+) -> dict[tuple[uuid.UUID, str, Size], int]:
+    """Compute in-production WIP per ``(spec_id, color_code, size)``.
+
+    ``in_production = open_cutting + open_sewing`` for the tier:
+
+    - **open_cutting** = Σ ``CuttingOrderOutput.quantity`` over cutting orders
+      with ``status != DONE`` matching ``(spec_id, color_code)`` (with the
+      single-row output model, a non-DONE order's full output is in-production).
+    - **open_sewing** = Σ ``max(0, requested - received)`` over
+      ``SewingShipmentItem`` of shipments in {SENT, PARTIAL} whose cutting order
+      matches ``(spec_id, color_code)``.
+
+    Both queries are tenant-scoped and grouped by ``(spec_id, color_code, size)``,
+    then netted in Python against the page's keys (the blank catalog is small).
+    Keys absent from the result default to 0 at the call site.
+    """
+
+    result: dict[tuple[uuid.UUID, str, Size], int] = {}
+    if not keys:
+        return result
+
+    spec_ids = {k[0] for k in keys}
+
+    # open_cutting: non-DONE cutting orders' outputs, keyed by spec+color_code+size.
+    cutting_stmt = (
+        scoped(
+            select(
+                CuttingOrder.spec_id,
+                CuttingOrder.color_code,
+                CuttingOrderOutput.size,
+                func.coalesce(func.sum(CuttingOrderOutput.quantity), 0),
+            ),
+            CuttingOrder,
+            company_id,
+        )
+        .join(CuttingOrderOutput, CuttingOrderOutput.cutting_order_id == CuttingOrder.id)
+        .where(
+            CuttingOrder.status != CuttingStatus.DONE,
+            CuttingOrder.spec_id.in_(spec_ids),  # type: ignore[attr-defined]
+        )
+        .group_by(CuttingOrder.spec_id, CuttingOrder.color_code, CuttingOrderOutput.size)
+    )
+    for spec_id, color_code, size, total in (await db.exec(cutting_stmt)).all():
+        key = (spec_id, color_code, size)
+        result[key] = result.get(key, 0) + int(total or 0)
+
+    # open_sewing: SENT/PARTIAL shipments' outstanding (requested - received),
+    # keyed by the cutting order's spec+color_code + the item size.
+    open_qty = func.coalesce(
+        func.sum(
+            case(
+                (
+                    SewingShipmentItem.requested_quantity > SewingShipmentItem.received_quantity,
+                    SewingShipmentItem.requested_quantity - SewingShipmentItem.received_quantity,
+                ),
+                else_=0,
+            )
+        ),
+        0,
+    )
+    sewing_stmt = (
+        scoped(
+            select(
+                CuttingOrder.spec_id,
+                CuttingOrder.color_code,
+                SewingShipmentItem.size,
+                open_qty,
+            ),
+            SewingShipment,
+            company_id,
+        )
+        # Anchor the FROM explicitly on SewingShipment (the scoped model) so the
+        # joins to its item rows + the cutting order it draws from resolve
+        # cleanly (selecting only CuttingOrder/Item columns would otherwise leave
+        # SewingShipment unjoined → a cross join).
+        .select_from(SewingShipment)
+        .join(SewingShipmentItem, SewingShipmentItem.shipment_id == SewingShipment.id)
+        .join(CuttingOrder, CuttingOrder.id == SewingShipment.cutting_order_id)
+        .where(
+            SewingShipment.status.in_((ShipmentStatus.SENT, ShipmentStatus.PARTIAL)),  # type: ignore[attr-defined]
+            CuttingOrder.spec_id.in_(spec_ids),  # type: ignore[attr-defined]
+        )
+        .group_by(CuttingOrder.spec_id, CuttingOrder.color_code, SewingShipmentItem.size)
+    )
+    for spec_id, color_code, size, total in (await db.exec(sewing_stmt)).all():
+        key = (spec_id, color_code, size)
+        result[key] = result.get(key, 0) + int(total or 0)
+
+    return {k: v for k, v in result.items() if k in keys}
+
+
 # ---------- list_levels ----------
 
 
@@ -281,6 +392,11 @@ async def list_levels(
         )
         page_rows = (await db.exec(rows_stmt)).all()
 
+    # Compute in-production WIP for just the page's keys (one pair of grouped
+    # queries), then net per row. Keys absent from the map are 0.
+    keys = {(row[0].spec_id, row[0].color_code, row[0].size) for row in page_rows}
+    in_production = await _in_production_map(db, company_id=company_id, keys=keys)
+
     rows: list[dict] = []
     for row in page_rows:
         piece: BlankPiece = row[0]
@@ -296,7 +412,7 @@ async def list_levels(
                 "color_code": piece.color_code,
                 "min_stock": piece.min_stock,
                 "on_hand": on_hand,
-                "in_production": 0,
+                "in_production": in_production.get((piece.spec_id, piece.color_code, piece.size), 0),
                 "low_stock": _is_low_stock(on_hand=on_hand, row_min_stock=piece.min_stock, threshold=threshold),
                 "entries_total": int(row[2] or 0),
                 "exits_total": int(row[3] or 0),
@@ -413,11 +529,97 @@ async def create_movement(
     return movement
 
 
+# ---------- transition-internal helpers (no commit, provenance) ----------
+
+
+async def get_or_create_blank_piece(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    spec_id: uuid.UUID,
+    size: Size,
+    color: str,
+    color_code: str,
+) -> BlankPiece:
+    """Resolve the blank piece for ``(spec, size, color_code)``, creating it if absent.
+
+    Used by the T3 sewing-receipt transition to land credited pieces on the
+    right catalog row (the cutting order carries spec/color/color_code). Does
+    NOT commit — the caller owns the transaction — but flushes the new row so
+    its id is immediately usable for the movement provenance.
+    """
+
+    stmt = scoped(select(BlankPiece), BlankPiece, company_id).where(
+        BlankPiece.spec_id == spec_id,
+        BlankPiece.size == size,
+        BlankPiece.color_code == color_code,
+    )
+    piece = (await db.exec(stmt)).first()
+    if piece is not None:
+        return piece
+
+    piece = BlankPiece(
+        company_id=company_id,
+        spec_id=spec_id,
+        size=size,
+        color=color.strip(),
+        color_code=color_code,
+        min_stock=None,
+    )
+    db.add(piece)
+    await db.flush()
+    return piece
+
+
+async def record_movement(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    blank_piece_id: uuid.UUID,
+    kind: BlankMovementKind,
+    quantity: int,
+    sewing_shipment_id: uuid.UUID | None = None,
+    assembly_run_id: uuid.UUID | None = None,
+    notes: str | None = None,
+) -> BlankPieceMovement:
+    """Append a blank-piece ledger row with provenance, WITHOUT committing.
+
+    The transition-internal sibling of :func:`create_movement`: it reuses the
+    same on-hand guard for EXIT (409 if insufficient) but does NOT commit (the
+    caller — e.g. the T3 sewing-receipt transition — owns the transaction) and
+    does NOT write audit (the caller writes one transition-level entry). The
+    ``assembly_run_id`` provenance is accepted now but unused until Phase 4
+    (the column lands then).
+    """
+
+    if kind == BlankMovementKind.EXIT:
+        on_hand = await _compute_on_hand(db, company_id=company_id, blank_piece_id=blank_piece_id)
+        if on_hand < quantity:
+            raise ConflictError(detail=f"Insufficient blank pieces on-hand — available: {on_hand}")
+
+    movement = BlankPieceMovement(
+        company_id=company_id,
+        blank_piece_id=blank_piece_id,
+        kind=kind,
+        quantity=quantity,
+        sewing_shipment_id=sewing_shipment_id,
+        notes=notes.strip() if notes else None,
+    )
+    # ``assembly_run_id`` is part of the signature for forward-compat; the model
+    # column lands in Phase 4. Silence the unused-arg lint without persisting it.
+    _ = assembly_run_id
+    db.add(movement)
+    await db.flush()
+    return movement
+
+
 __all__ = [
     "_compute_on_hand",
     "compute_on_hand_map",
     "create_blank_piece",
     "create_movement",
+    "get_or_create_blank_piece",
     "list_levels",
     "list_movements",
+    "record_movement",
 ]

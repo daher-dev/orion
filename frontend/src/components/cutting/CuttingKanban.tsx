@@ -199,12 +199,21 @@ export function CuttingKanban({ rows, onView, onCreate }: Props) {
                       </span>
                     </div>
 
-                    {/* Product name in display font, 15px */}
+                    {/* Spec name + colour — port of the prototype's
+                        CardHead glyph title={spec} sub={color}. */}
                     <div
-                      className="font-serif text-[color:var(--orion-ink)]"
-                      style={{ fontSize: 15, marginTop: 4, lineHeight: 1.15 }}
+                      className="flex items-baseline gap-2"
+                      style={{ marginTop: 4 }}
                     >
-                      {c.product.name}
+                      <span
+                        className="font-serif text-[color:var(--orion-ink)]"
+                        style={{ fontSize: 15, lineHeight: 1.15 }}
+                      >
+                        {c.spec.name}
+                      </span>
+                      <span className="text-[11.5px] text-[color:var(--orion-ink-3)]">
+                        {c.color}
+                      </span>
                     </div>
 
                     {/* Fabric/roll row: small swatch + body_roll code + counts */}

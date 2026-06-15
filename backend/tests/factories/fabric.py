@@ -6,7 +6,7 @@ from polyfactory import Use
 from polyfactory.factories.pydantic_factory import ModelFactory
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from models import FabricRoll, FabricRollKind, FabricType
+from models import FabricMovementKind, FabricRoll, FabricRollKind, FabricRollMovement, FabricType
 
 
 class FabricRollFactory(ModelFactory[FabricRoll]):
@@ -22,9 +22,34 @@ class FabricRollFactory(ModelFactory[FabricRoll]):
     received_at = Use(lambda: datetime.now(UTC).date())
 
 
+class FabricRollMovementFactory(ModelFactory[FabricRollMovement]):
+    __model__ = FabricRollMovement
+    __use_defaults__ = True
+    __set_as_default_factory_for_type__ = True
+
+    kind = FabricMovementKind.ENTRY
+    quantity = Decimal("5.000")
+    cutting_order_id = None
+    notes = None
+
+
 async def create_fabric_roll(db: AsyncSession, *, company_id: uuid.UUID, **overrides) -> FabricRoll:
     roll = FabricRollFactory.build(company_id=company_id, **overrides)
     db.add(roll)
     await db.commit()
     await db.refresh(roll)
     return roll
+
+
+async def create_fabric_roll_movement(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    fabric_roll_id: uuid.UUID,
+    **overrides,
+) -> FabricRollMovement:
+    movement = FabricRollMovementFactory.build(company_id=company_id, fabric_roll_id=fabric_roll_id, **overrides)
+    db.add(movement)
+    await db.commit()
+    await db.refresh(movement)
+    return movement

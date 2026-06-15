@@ -18,12 +18,15 @@ import {
   buildShipmentCreatePayload,
   type ShipmentFormParsed,
 } from "@/lib/schemas/sewing";
+import { type AvailableCut } from "@/lib/schemas/cutting";
 import { ApiError } from "@/lib/api-client";
 import { ShipmentForm } from "./ShipmentForm";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Pre-selected available cut (when opened from the Disponível column). */
+  prefill?: AvailableCut | null;
 };
 
 const SHEET_CLASS =
@@ -35,7 +38,7 @@ const CANCEL_BUTTON_CLASS =
 const PRIMARY_BUTTON_CLASS =
   "h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-prod)] px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:bg-[color-mix(in_oklab,var(--brand-prod)_88%,black)]";
 
-export function ShipmentFormSheet({ open, onOpenChange }: Props) {
+export function ShipmentFormSheet({ open, onOpenChange, prefill }: Props) {
   const t = useTranslations("sewing");
   const formId = useId();
   const create = useCreateShipment();
@@ -83,7 +86,14 @@ export function ShipmentFormSheet({ open, onOpenChange }: Props) {
           className="flex-1 overflow-y-auto overflow-x-hidden"
           style={{ padding: "18px 22px" }}
         >
-          <ShipmentForm formId={formId} onSubmit={handleSubmit} />
+          {/* Remount on (open × prefill) so the form re-initialises its
+              defaults from the selected available cut. */}
+          <ShipmentForm
+            key={`${open ? "1" : "0"}-${prefill?.cutting_order_id ?? "free"}`}
+            formId={formId}
+            onSubmit={handleSubmit}
+            prefill={prefill}
+          />
           {serverError ? (
             <p role="alert" className="mt-3 text-[12px] text-[color:var(--status-err)]">
               {serverError}

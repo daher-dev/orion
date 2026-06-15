@@ -11,7 +11,10 @@ import { z } from "zod";
 export const PRODUCT_TYPES = ["tshirt", "sweatshirt", "shorts", "tanktop"] as const;
 export type ProductType = (typeof PRODUCT_TYPES)[number];
 
-export const SIZES = ["p", "m", "g", "gg"] as const;
+// `u` = Único (one-size garments such as ecobag); matches the backend `Size.U`
+// enum value. Spec-keyed cutting (Corte) can target Size.U garments, so the
+// size set must carry it even though most garments only use p/m/g/gg.
+export const SIZES = ["p", "m", "g", "gg", "u"] as const;
 export type Size = (typeof SIZES)[number];
 
 export const variationItemSchema = z.object({

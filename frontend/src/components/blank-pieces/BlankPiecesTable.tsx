@@ -12,7 +12,7 @@ type Props = {
 };
 
 type SortDir = "asc" | "desc";
-type SortKey = "spec" | "color" | "size" | "min_stock" | "on_hand";
+type SortKey = "spec" | "color" | "size" | "min_stock" | "in_production" | "on_hand";
 type SortState = { col: SortKey; dir: SortDir };
 
 function SortableHeader({
@@ -79,6 +79,10 @@ export function BlankPiecesTable({ data, onRowClick }: Props) {
           av = a.min_stock ?? 0;
           bv = b.min_stock ?? 0;
           break;
+        case "in_production":
+          av = a.in_production;
+          bv = b.in_production;
+          break;
         case "on_hand":
           av = a.on_hand;
           bv = b.on_hand;
@@ -125,6 +129,16 @@ export function BlankPiecesTable({ data, onRowClick }: Props) {
             <th style={{ ...th, width: 100 }}>
               <SortableHeader active={sort.col === "min_stock"} dir={sort.dir} num onClick={() => toggle("min_stock")}>
                 {t("min")}
+              </SortableHeader>
+            </th>
+            <th style={{ ...th, width: 120 }}>
+              <SortableHeader
+                active={sort.col === "in_production"}
+                dir={sort.dir}
+                num
+                onClick={() => toggle("in_production")}
+              >
+                {t("inProduction")}
               </SortableHeader>
             </th>
             <th style={{ ...th, width: 110 }}>
@@ -174,6 +188,15 @@ export function BlankPiecesTable({ data, onRowClick }: Props) {
                 </td>
                 <td style={{ ...td, textAlign: "right", color: "var(--orion-ink-3)" }} className="tabular-nums">
                   {row.min_stock ?? "—"}
+                </td>
+                <td style={{ ...td, textAlign: "right" }}>
+                  <span
+                    data-testid={`blank-in-production-${row.blank_piece_id}`}
+                    className="tabular-nums"
+                    style={{ color: row.in_production > 0 ? "var(--brand-prod)" : "var(--orion-ink-3)" }}
+                  >
+                    {row.in_production > 0 ? row.in_production : "—"}
+                  </span>
                 </td>
                 <td style={{ ...td, textAlign: "right" }}>
                   <span

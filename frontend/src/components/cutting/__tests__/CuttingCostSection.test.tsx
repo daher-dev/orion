@@ -16,7 +16,9 @@ const ORDER_ID = "11111111-1111-1111-1111-111111111111";
 function makeOrder(status: CuttingOrder["status"]): CuttingOrder {
   return {
     id: ORDER_ID,
-    product: { id: "p1", name: "Cropped", code: "CRP01" },
+    spec: { id: "p1", code: "CRP01", name: "Cropped" },
+    color: "Preto",
+    color_code: "PRT",
     body_roll: { id: "b1", code: "BB-AAAAAA" },
     rib_roll: null,
     status,

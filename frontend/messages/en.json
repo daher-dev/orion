@@ -721,10 +721,14 @@
       "itemCount": "items"
     },
     "productTypes": {
-      "tshirt": "T-shirt",
-      "sweatshirt": "Sweatshirt",
-      "shorts": "Shorts",
-      "tanktop": "Tank top"
+      "camiseta": "T-shirt",
+      "moletom": "Sweatshirt",
+      "regata": "Tank top",
+      "blusa": "Blouse",
+      "calca": "Trousers",
+      "bermuda": "Shorts",
+      "ecobag": "Eco bag",
+      "cropped": "Cropped"
     },
     "table": {
       "columns": {

@@ -56,7 +56,7 @@ vi.mock("@/hooks/use-products", () => ({
           id: "product-1",
           company_id: "co-1",
           name: "Cropped Oversized",
-          product_type: "tshirt",
+          product_type: "camiseta",
           spec_id: "spec-1",
           print_id: null,
           variations: [

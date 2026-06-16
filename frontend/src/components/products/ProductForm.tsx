@@ -76,7 +76,7 @@ export function ProductForm({ formId, initial, onSubmit, onError }: Props) {
   const initialId = initial?.id ?? null;
   const [snapshotId, setSnapshotId] = useState<string | null>(initialId);
   const [name, setName] = useState(initial?.name ?? "");
-  const [productType, setProductType] = useState<ProductType>(initial?.product_type ?? "tshirt");
+  const [productType, setProductType] = useState<ProductType>(initial?.product_type ?? "camiseta");
   const [specId, setSpecId] = useState<string>(initial?.spec_id ?? "");
   const [printId, setPrintId] = useState<string | null>(initial?.print_id ?? null);
   const [sizes, setSizes] = useState<Size[]>(() => initialSizes(initial));
@@ -88,7 +88,7 @@ export function ProductForm({ formId, initial, onSubmit, onError }: Props) {
   if (initialId !== snapshotId) {
     setSnapshotId(initialId);
     setName(initial?.name ?? "");
-    setProductType(initial?.product_type ?? "tshirt");
+    setProductType(initial?.product_type ?? "camiseta");
     setSpecId(initial?.spec_id ?? "");
     setPrintId(initial?.print_id ?? null);
     setSizes(initialSizes(initial));

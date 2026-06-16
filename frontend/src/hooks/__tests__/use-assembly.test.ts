@@ -55,7 +55,7 @@ const sampleRow = {
   },
   sku: "CAM01-M-PRT-2055",
   max_buildable: 9,
-  product_type: "tshirt",
+  product_type: "camiseta",
 };
 
 const server = setupServer();

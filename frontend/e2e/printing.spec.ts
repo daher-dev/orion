@@ -98,16 +98,27 @@ test.describe("Impressão (Print Orders)", () => {
     await expect(page.getByTestId("print-order-side-grid")).toBeVisible();
 
     // Use the PNG-gated quick button to set printed = planned (front PNG is ok).
-    await page.getByTestId("print-order-side-grid-front").getByRole("button", { name: /printed/i }).first().click();
+    // The button's accessible name is localized ("Marcar como impresso …"), and
+    // it stamps printed = planned for the row.
+    const front = page.getByTestId("print-order-side-grid-front");
+    await front.getByRole("button", { name: /Marcar como impresso/i }).first().click();
+
+    // Wait (web-first) for the printed count to actually land in the grid before
+    // launching — clicking launch before React commits the quick-button update
+    // would POST printed = 0 and credit nothing.
+    await expect(front.getByRole("textbox", { name: /Impresso/i })).toHaveValue("10");
 
     // Post the printed transfers to stock.
     await page.getByTestId("print-order-launch").click();
 
-    // Re-open: the launch posted, so the disabled "In stock" state shows.
-    await expect(page.getByText(order.code).first()).toBeVisible();
+    // Wait for the launch to finish before cross-checking the ledger. The
+    // success toast fires only after the PATCH + complete round-trips resolve;
+    // the order code is already on screen (kanban), so keying off it would race
+    // the completion and read a not-yet-credited ledger.
+    await expect(page.getByText("Impressos lançados no estoque")).toBeVisible();
 
     // Cross-check: printed transfers credited (+10 front for the design).
-    const levels = await (await api(page, "GET", "/v1/printed-transfers/levels?page_size=200")).json();
+    const levels = await (await api(page, "GET", "/v1/printed-transfers/levels?page_size=100")).json();
     const credited = levels.items.find(
       (r: { print_design_id: string; side: string; on_hand: number }) =>
         r.print_design_id === order.design.id && r.side === "front",

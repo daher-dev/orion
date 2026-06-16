@@ -22,7 +22,7 @@ const fixture: Product[] = [
     id: "11111111-1111-1111-1111-111111111111",
     company_id: "comp-1",
     name: "Cropped Oversized",
-    product_type: "tshirt",
+    product_type: "camiseta",
     spec_id: "spec-1",
     print_id: "print-1",
     variations: [
@@ -43,7 +43,7 @@ const fixture: Product[] = [
     id: "22222222-2222-2222-2222-222222222222",
     company_id: "comp-1",
     name: "Box Tee",
-    product_type: "tanktop",
+    product_type: "regata",
     spec_id: "spec-2",
     print_id: null,
     variations: [],

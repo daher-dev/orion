@@ -8,7 +8,19 @@
 
 import { z } from "zod";
 
-export const PRODUCT_TYPES = ["tshirt", "sweatshirt", "shorts", "tanktop"] as const;
+// Garment types (tipos de peça) — mirrors the backend `ProductType` StrEnum
+// (`backend/src/models/enums.py`). These are the values the API accepts and
+// returns; any change here must stay in lock-step with that enum.
+export const PRODUCT_TYPES = [
+  "camiseta",
+  "moletom",
+  "regata",
+  "blusa",
+  "calca",
+  "bermuda",
+  "ecobag",
+  "cropped",
+] as const;
 export type ProductType = (typeof PRODUCT_TYPES)[number];
 
 // `u` = Único (one-size garments such as ecobag); matches the backend `Size.U`

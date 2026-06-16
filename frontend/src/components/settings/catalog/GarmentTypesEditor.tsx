@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { GarmentGlyph } from "@/components/ui/garment-glyph";
-import type { ProductType } from "@/lib/schemas/product";
 import type { GarmentTypeEntry } from "@/lib/schemas/company-settings";
 
 type Props = {
@@ -26,14 +25,14 @@ type Props = {
  * each garment type (the seed config uses "camiseta", "moletom", … which map to
  * the design glyphs). Unknown icons fall back to a generic Shirt at render time.
  */
-const ICON_OPTIONS: { key: string; glyph: ProductType }[] = [
+const ICON_OPTIONS: { key: string; glyph: string }[] = [
   { key: "camiseta", glyph: "tshirt" },
   { key: "moletom", glyph: "sweatshirt" },
   { key: "regata", glyph: "tanktop" },
   { key: "bermuda", glyph: "shorts" },
 ];
 
-const GLYPH_BY_KEY: Record<string, ProductType> = Object.fromEntries(
+const GLYPH_BY_KEY: Record<string, string> = Object.fromEntries(
   ICON_OPTIONS.map((o) => [o.key, o.glyph]),
 );
 

@@ -19,7 +19,7 @@ const suggestions = {
     {
       key: "spec1|PRT",
       spec: { id: "spec1", code: "CAM01", name: "Camiseta Box" },
-      product_type: "tshirt",
+      product_type: "camiseta",
       color: "Preto",
       color_code: "PRT",
       total: 12,

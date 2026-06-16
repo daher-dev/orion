@@ -79,6 +79,16 @@ async function seedDemand(request: APIRequestContext, quantity = 6): Promise<See
     has_back: false,
   });
 
+  // Planning resolves a FRONT-ready PrintDesignVariation when materializing an
+  // impressão suggestion into a print order; a design with no variation is
+  // skipped (reason=no_variation). Seed one with a front artwork URL so the
+  // create produces a real PENDING print order.
+  await apiPost(request, `/v1/prints/${design.id}/variations`, {
+    name: "Default",
+    ink_hex: "#1f1f1f",
+    front_file_url: "https://example.com/front.png",
+  });
+
   // Product MUST carry a print_id — planning's demand join is INNER on the
   // resolved PrintDesign (no estampa = nothing to print/assemble against).
   const product = await apiPost(request, "/v1/products", {

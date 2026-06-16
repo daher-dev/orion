@@ -64,7 +64,7 @@ describe("useProducts", () => {
       () =>
         useProducts({
           q: "crop",
-          product_type: "tshirt",
+          product_type: "camiseta",
           spec_id: "spec-1",
           print_id: "print-1",
         }),
@@ -74,7 +74,7 @@ describe("useProducts", () => {
     expect(apiSpy.get).toHaveBeenCalledWith("/v1/products", {
       query: expect.objectContaining({
         q: "crop",
-        product_type: "tshirt",
+        product_type: "camiseta",
         spec_id: "spec-1",
         print_id: "print-1",
       }),
@@ -104,7 +104,7 @@ describe("useCreateProduct", () => {
     await act(async () => {
       await result.current.mutateAsync({
         name: "Cropped",
-        product_type: "tshirt",
+        product_type: "camiseta",
         spec_id: "spec-1",
         print_id: null,
         variations: [{ size: "m", color: "Preto", color_code: "PRT" }],

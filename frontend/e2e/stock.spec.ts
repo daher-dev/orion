@@ -44,7 +44,7 @@ async function seedVariationAndEntry(page: Page, sku: string, quantity: number) 
 
   const productRes = await api(page, "POST", "/v1/products", {
     name: `Stock Test ${specCode}`,
-    product_type: "tshirt",
+    product_type: "camiseta",
     spec_id: spec.id,
     variations: [{ size: "m", color: "Preto", color_code: "BLK" }],
   });

@@ -721,10 +721,14 @@
       "itemCount": "itens"
     },
     "productTypes": {
-      "tshirt": "Camiseta",
-      "sweatshirt": "Moletom",
-      "shorts": "Bermuda",
-      "tanktop": "Regata"
+      "camiseta": "Camiseta",
+      "moletom": "Moletom",
+      "regata": "Regata",
+      "blusa": "Blusa",
+      "calca": "Calça",
+      "bermuda": "Bermuda",
+      "ecobag": "Ecobag",
+      "cropped": "Cropped"
     },
     "table": {
       "columns": {

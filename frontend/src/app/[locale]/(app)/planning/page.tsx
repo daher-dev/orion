@@ -50,12 +50,17 @@ export default function PlanningPage() {
   // Initialise the selection to every key whenever the underlying key sets
   // change (prototype: re-seed on cortes/impressões length change). Keying on
   // the joined key strings re-seeds on any membership change, not just length.
+  //
+  // NB: we deliberately do NOT clear `createdCodes` here. Creating orders
+  // shrinks the open demand, which makes this effect re-fire (the just-created
+  // suggestions drop out) — clearing the banner here would wipe the success
+  // confirmation the instant it appears. The banner is cleared explicitly by
+  // the "Recalcular" action and overwritten by the next create instead.
   const corteKeysSig = allCortes.map((c) => c.key).join("|");
   const imprKeysSig = allImpr.map((i) => i.key).join("|");
   useEffect(() => {
     setPickedCortes(new Set(allCortes.map((c) => c.key)));
     setPickedImpr(new Set(allImpr.map((i) => i.key)));
-    setCreatedCodes(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [corteKeysSig, imprKeysSig]);
 
@@ -198,7 +203,24 @@ export default function PlanningPage() {
       ) : isError ? (
         <p className="px-6 py-12 text-center text-[13px] text-[color:var(--status-err)]">{t("toasts.error")}</p>
       ) : empty ? (
-        <PlanningEmptyState isAllFilter={filter === "all"} />
+        <>
+          <PlanningEmptyState isAllFilter={filter === "all"} />
+          {/* Creating every suggestion empties the demand, flipping the page to
+              the empty state. Keep the success banner mounted so the "N ordens
+              criadas" confirmation (and the Ver no Corte link) survives that
+              transition instead of vanishing the instant orders are created. */}
+          {canWrite && createdCodes ? (
+            <PlanningActionBar
+              cortesSelected={0}
+              impressoesSelected={0}
+              total={0}
+              isPending={isCreating}
+              createdCodes={createdCodes}
+              onCreate={handleCreate}
+              onViewCutting={() => router.push("/cutting")}
+            />
+          ) : null}
+        </>
       ) : (
         <>
           <div className="grid gap-3 lg:grid-cols-2">

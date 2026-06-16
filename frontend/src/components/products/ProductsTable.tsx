@@ -16,11 +16,11 @@ import {
   ChevronUp,
   FileText,
   Palette,
-  Shirt,
 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import type { Product, ProductType, Size } from "@/lib/schemas/product";
+import { GarmentGlyph } from "@/components/ui/garment-glyph";
+import type { Product, Size } from "@/lib/schemas/product";
 
 export type ProductsTableProps = {
   rows: Product[];
@@ -28,13 +28,6 @@ export type ProductsTableProps = {
   printCodeById: Record<string, string>;
   printImageById: Record<string, string | null>;
   onEdit: (product: Product) => void;
-};
-
-const PRODUCT_TYPE_GLYPH: Record<ProductType, React.ReactNode> = {
-  tshirt: <Shirt className="size-3.5" />,
-  sweatshirt: <Shirt className="size-3.5" />,
-  shorts: <Shirt className="size-3.5" />,
-  tanktop: <Shirt className="size-3.5" />,
 };
 
 /**
@@ -123,7 +116,11 @@ export function ProductsTable({
                   unoptimized
                 />
               ) : (
-                PRODUCT_TYPE_GLYPH[row.original.product_type]
+                <GarmentGlyph
+                  productType={row.original.product_type}
+                  size={14}
+                  className="text-[color:var(--orion-ink-3)]"
+                />
               )}
             </span>
           );

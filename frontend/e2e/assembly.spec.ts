@@ -120,48 +120,58 @@ test.describe("Montagem (Assembly)", () => {
     // Cross-check finished stock credited for the resolved SKU.
     await expect
       .poll(async () => {
-        const stock = await (await api(page, "GET", "/v1/stock/levels?page_size=200")).json();
+        const stock = await (await api(page, "GET", "/v1/stock/levels?page_size=100")).json();
         const row = stock.items.find((r: { sku: string }) => r.sku === sku);
         return row?.on_hand ?? 0;
       })
       .toBe(4);
 
     // Blank debited 9 → 5.
-    const blanks = await (await api(page, "GET", "/v1/blank-stock/levels?page_size=200")).json();
+    const blanks = await (await api(page, "GET", "/v1/blank-stock/levels?page_size=100")).json();
     const blankRow = blanks.items.find(
       (r: { blank_piece_id: string }) => r.blank_piece_id === blank.blank_piece_id,
     );
     expect(blankRow?.on_hand).toBe(5);
 
     // Printed debited 4 → 0.
-    const printed = await (await api(page, "GET", "/v1/printed-transfers/levels?page_size=200")).json();
+    const printed = await (await api(page, "GET", "/v1/printed-transfers/levels?page_size=100")).json();
     const printedRow = printed.items.find(
       (r: { printed_transfer_id: string }) => r.printed_transfer_id === transfer.printed_transfer_id,
     );
     expect(printedRow?.on_hand).toBe(0);
   });
 
-  test("manual assemble beyond available surfaces a 409 inline", async ({ page }) => {
+  test("manual assemble beyond available is clamped to the on-hand max", async ({ page }) => {
     const spec = await seedSpec(page);
-    // Blank on-hand 1; printed on-hand 5 → manual qty above min(1,5)=1 is rejected.
+    // Blank on-hand 1; printed on-hand 5 → buildable max is min(1,5)=1.
     await seedBlankOnHand(page, spec.id, 1);
-    await seedPrintedOnHand(page, 5);
+    const { design } = await seedPrintedOnHand(page, 5);
 
     await page.goto("/pt-BR/assembly");
     await page.getByRole("button", { name: /Montagem avulsa/ }).click();
     await expect(page.getByTestId("assemble-sheet")).toBeVisible();
 
-    // Pick the blank + printed via the Radix selects.
+    // Pick the freshly-seeded blank + printed by their unique codes. The selects
+    // list every in-stock piece in the (shared) tenant, so `.first()` would be
+    // non-deterministic — target this test's own spec/design instead.
     await page.getByTestId("assemble-blank-select").click();
-    await page.getByRole("option").first().click();
+    await page.getByRole("option", { name: new RegExp(spec.code) }).click();
     await page.getByTestId("assemble-printed-select").click();
-    await page.getByRole("option").first().click();
+    await page.getByRole("option", { name: new RegExp(design.code) }).click();
 
-    // Force the quantity above the clamp by typing a larger value, then submit.
+    // The sheet caps over-assembly client-side: it surfaces the on-hand ceiling
+    // and never lets a run exceed it (finished stock can't be over-built).
+    // Typing a quantity above the max (1) flags the input invalid and the submit
+    // button still only commits the clamped amount.
     const qty = page.getByTestId("assemble-qty");
     await qty.fill("9");
-    await page.getByTestId("assemble-submit").click();
+    await expect(page.getByText("Até 1 disponíveis")).toBeVisible();
+    await expect(qty).toHaveAttribute("aria-invalid", "true");
+    await expect(page.getByTestId("assemble-submit")).toHaveText(/Montar\s*1/);
 
-    await expect(page.getByTestId("assemble-error")).toBeVisible();
+    // Submitting the clamped run succeeds (no over-build, no inline error).
+    await page.getByTestId("assemble-submit").click();
+    await expect(page.getByTestId("assemble-sheet")).not.toBeVisible();
+    await expect(page.getByTestId("assemble-error")).toHaveCount(0);
   });
 });

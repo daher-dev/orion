@@ -93,11 +93,35 @@ def upgrade() -> None:
     )
 
     # --- cutting_orders: drop product_id (FK + index + column); add spec-key ---
-    # No data backfill (no backward compat — dev DB, truncate is fine). Columns
-    # added NOT NULL; pre-existing rows are not preserved across this rework.
-    op.add_column("cutting_orders", sa.Column("spec_id", sa.Uuid(), nullable=False))
-    op.add_column("cutting_orders", sa.Column("color", sqlmodel.sql.sqltypes.AutoString(length=40), nullable=False))
-    op.add_column("cutting_orders", sa.Column("color_code", sqlmodel.sql.sqltypes.AutoString(length=3), nullable=False))
+    # Backfill so this is safe on a populated DB (prod may hold pre-rework cutting
+    # orders): spec_id is taken from the old product's spec; color/color_code get
+    # a legacy placeholder (pre-rework cutting orders had no colour dimension).
+    # Add nullable → backfill → enforce NOT NULL.
+    op.add_column("cutting_orders", sa.Column("spec_id", sa.Uuid(), nullable=True))
+    op.add_column("cutting_orders", sa.Column("color", sqlmodel.sql.sqltypes.AutoString(length=40), nullable=True))
+    op.add_column("cutting_orders", sa.Column("color_code", sqlmodel.sql.sqltypes.AutoString(length=3), nullable=True))
+    op.execute(
+        "UPDATE cutting_orders co SET spec_id = p.spec_id "
+        "FROM products p WHERE p.id = co.product_id AND co.spec_id IS NULL"
+    )
+    op.execute("UPDATE cutting_orders SET color = 'Legado' WHERE color IS NULL")
+    op.execute("UPDATE cutting_orders SET color_code = 'LEG' WHERE color_code IS NULL")
+    # Fail loudly rather than silently dropping rows: if any cutting order could
+    # not resolve a spec (orphaned product_id, or an unexpected NULL products.spec_id
+    # — neither should occur under the old NOT NULL FK), abort so it can be
+    # investigated. The single-transaction upgrade rolls back cleanly on raise, so
+    # no rows are modified.
+    unresolved = (
+        op.get_bind().execute(sa.text("SELECT count(*) FROM cutting_orders WHERE spec_id IS NULL")).scalar() or 0
+    )
+    if unresolved:
+        raise RuntimeError(
+            f"{unresolved} cutting_orders row(s) could not resolve spec_id from product_id; "
+            "investigate before enforcing NOT NULL (no rows were modified)."
+        )
+    op.alter_column("cutting_orders", "spec_id", nullable=False)
+    op.alter_column("cutting_orders", "color", nullable=False)
+    op.alter_column("cutting_orders", "color_code", nullable=False)
     op.create_check_constraint("cutting_orders_color_code_format", "cutting_orders", r"color_code ~ '^[A-Z]{3}$'")
     op.drop_index(op.f("ix_cutting_orders_product_id"), table_name="cutting_orders")
     op.create_index(op.f("ix_cutting_orders_spec_id"), "cutting_orders", ["spec_id"], unique=False)

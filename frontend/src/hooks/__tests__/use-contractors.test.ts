@@ -113,7 +113,7 @@ describe("useCreateContractor", () => {
     const created = PAGE.items[0];
     mockPost.mockResolvedValueOnce(created);
     const { result } = renderHook(() => useCreateContractor(), { wrapper: makeWrapper() });
-    const created2 = await result.current.mutateAsync({ name: "Banca A" });
+    const created2 = await result.current.mutateAsync({ name: "Banca A", address: undefined, phone: undefined });
     expect(mockPost).toHaveBeenCalledWith("/v1/contractors", { name: "Banca A" });
     expect(created2).toEqual(created);
   });
@@ -127,7 +127,7 @@ describe("useUpdateContractor", () => {
   it("PATCHes /v1/contractors/{id} with the payload", async () => {
     mockPatch.mockResolvedValueOnce(PAGE.items[0]);
     const { result } = renderHook(() => useUpdateContractor(), { wrapper: makeWrapper() });
-    await result.current.mutateAsync({ id: "ab1", payload: { name: "Banca New" } });
+    await result.current.mutateAsync({ id: "ab1", payload: { name: "Banca New", address: undefined, phone: undefined } });
     expect(mockPatch).toHaveBeenCalledWith("/v1/contractors/ab1", { name: "Banca New" });
   });
 });

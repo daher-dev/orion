@@ -33,6 +33,7 @@ creating a **PENDING** order with no roll / paper. Partial success is allowed.
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
 from sqlalchemy import case, func
 from sqlmodel import select
@@ -488,7 +489,7 @@ async def _build_cortes(
     )
 
     # Seed ``blankNeed`` from the catalog (prototype lines 139-145).
-    blank_need: dict[tuple[uuid.UUID, str, Size], dict] = {}
+    blank_need: dict[tuple[uuid.UUID, str, Size], dict[str, Any]] = {}
     color_by_code: dict[tuple[uuid.UUID, str], str] = {}
     for b in blank_catalog:
         key = (b.spec_id, b.color_code, b.size)
@@ -512,7 +513,7 @@ async def _build_cortes(
         if net <= 0:
             continue
         key = (r["spec_id"], r["color_code"], r["size"])
-        entry = blank_need.get(key)
+        entry: dict[str, Any] | None = blank_need.get(key)
         if entry is None:
             entry = {
                 "spec_id": r["spec_id"],
@@ -532,7 +533,7 @@ async def _build_cortes(
         color_by_code.setdefault((r["spec_id"], r["color_code"]), r["color"])
 
     # Per-tier shortfall, then group by (spec_id, color_code) (prototype lines 158-170).
-    corte_map: dict[tuple[uuid.UUID, str], dict] = {}
+    corte_map: dict[tuple[uuid.UUID, str], dict[str, Any]] = {}
     # Spec display refs (code/name) collected from demand rows; catalog tiers fall
     # back to a loaded spec below.
     spec_ref_by_id: dict[uuid.UUID, PlanningSpecRef] = {}
@@ -549,7 +550,7 @@ async def _build_cortes(
         if total <= 0:
             continue
         group_key = (entry["spec_id"], entry["color_code"])
-        group = corte_map.get(group_key)
+        group: dict[str, Any] | None = corte_map.get(group_key)
         if group is None:
             group = {
                 "spec_id": entry["spec_id"],
@@ -627,7 +628,7 @@ async def _build_impressoes(
 
     # Seed ``imprNeed`` from the FRONT printed-transfer catalog (prototype 179-186),
     # then fold demand (187-197). Silkscreen designs are skipped on both paths.
-    impr_need: dict[uuid.UUID, dict] = {}
+    impr_need: dict[uuid.UUID, dict[str, Any]] = {}
 
     # Load the design rows we may touch (catalog FRONT designs + demand designs).
     catalog_design_ids = set(front_printed_by_design.keys())
@@ -670,7 +671,7 @@ async def _build_impressoes(
         design_id = r["design_id"]
         if r["design_technique"] == PrintTechnique.SILKSCREEN:
             continue
-        entry = impr_need.get(design_id)
+        entry: dict[str, Any] | None = impr_need.get(design_id)
         if entry is None:
             design = designs.get(design_id)
             if design is not None and design.technique == PrintTechnique.SILKSCREEN:
@@ -732,7 +733,7 @@ async def _apply_printed_min_overrides(
     db: AsyncSession,
     *,
     company_id: uuid.UUID,
-    impr_need: dict[uuid.UUID, dict],
+    impr_need: dict[uuid.UUID, dict[str, Any]],
     front_printed_by_design: dict[uuid.UUID, uuid.UUID],
 ) -> None:
     """Override seeded ``min`` with the FRONT transfer's row ``min_stock`` when set."""

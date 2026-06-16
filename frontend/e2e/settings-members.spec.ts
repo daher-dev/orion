@@ -33,7 +33,7 @@ async function revokeAllInvites(page: Page) {
   }
 }
 
-async function listRoles(page: Page) {
+async function listRoles(page: Page): Promise<Array<{ id: string; code: string }>> {
   const r = await page.request.get(`${API_URL}/v1/roles`, { headers: QA_HEADERS });
   if (!r.ok()) return [] as Array<{ id: string; code: string }>;
   return r.json();

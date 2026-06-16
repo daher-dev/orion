@@ -57,7 +57,6 @@ TABLE_ORDER: list[str] = [
     "order",
     "order_item",
     "imported_order",
-    "batch_print_adjustment",
     "stock_entry",
     "stock_exit",
 ]
@@ -972,7 +971,6 @@ def convert(
                 "total_orders": to_int(lote.get("total_pedidos")) or 0,
                 "total_pieces": to_int(lote.get("total_pecas")) or 0,
                 "labels_printed_at": to_datetime(lote.get("etiquetas_impressas_em")),
-                "prints_sent_at": to_datetime(lote.get("estampas_enviadas_em")),
                 "completed_at": to_datetime(lote.get("concluido_em")),
                 "notes": (str(lote.get("observacoes")).strip()[:500] if lote.get("observacoes") else None),
             }
@@ -985,28 +983,6 @@ def convert(
                 report.default("batch.order_linked")
             else:
                 report.skip("batch:pedido_unresolved", str(pi))
-        for idx, adj in enumerate(lote.get("ajustes_estampas") or []):
-            if not isinstance(adj, dict):
-                continue
-            ename = str(adj.get("estampa_nome") or "").strip()
-            pdid = print_design_index.get((cid, norm(ename)))
-            if pdid is None:
-                report.skip("batch_adj:no_print_design", ename)
-                continue
-            data.rows["batch_print_adjustment"].append(
-                {
-                    "id": derive_id("batch_print_adjustment", b44, idx),
-                    "company_id": cid,
-                    "batch_id": batch_id,
-                    "print_design_id": pdid,
-                    "product_color": clean_color(adj.get("cor_produto") or adj.get("cor"))[:80],
-                    "qty_needed": to_int(adj.get("qtd_necessaria")) or 0,
-                    "qty_stock": to_int(adj.get("qtd_estoque_disponivel")) or 0,
-                    "qty_to_print": to_int(adj.get("qtd_imprimir")) or 0,
-                    "prints_sent": to_bool(adj.get("baixa_estoque_realizada")),
-                }
-            )
-            report.add("batch_print_adjustment")
     report.fetched["batch"] = len(_records(raw, "LoteProducao"))
 
     # 12) ItemPedido → order_items (Separação). Many reference superseded order

@@ -502,7 +502,6 @@ async def _apply_status_side_effects(
             StockEntry(
                 company_id=company_id,
                 variation_id=order.variation_id,
-                shipment_id=None,
                 quantity=order.quantity,
                 source=StockSource.RETURN,
                 notes=f"Return for order {_short_code(order.id)}",

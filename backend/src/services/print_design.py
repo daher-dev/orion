@@ -121,7 +121,7 @@ async def create_print(
     company_id: uuid.UUID,
     user_id: uuid.UUID | None,
     payload: PrintCreate,
-) -> PrintDesign:
+) -> PrintWithVariations:
     print_design = PrintDesign(
         company_id=company_id,
         code=payload.code,

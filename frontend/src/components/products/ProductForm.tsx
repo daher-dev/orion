@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { Check, ChevronDown, FileText, Palette, Search } from "lucide-react";
+import { Check, ChevronDown, FileText, Palette } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,7 +69,6 @@ function initialSizes(p: Product | null | undefined): Size[] {
 export function ProductForm({ formId, initial, onSubmit, onError }: Props) {
   const t = useTranslations("products");
   const tValidation = useTranslations("products.form.validation");
-  const isEdit = !!initial;
 
   // Re-initialise the form state whenever the parent passes a different
   // product. We compare by id so the comparison is stable across re-renders

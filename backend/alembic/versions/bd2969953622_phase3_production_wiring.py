@@ -106,9 +106,19 @@ def upgrade() -> None:
     )
     op.execute("UPDATE cutting_orders SET color = 'Legado' WHERE color IS NULL")
     op.execute("UPDATE cutting_orders SET color_code = 'LEG' WHERE color_code IS NULL")
-    # Defensive: drop any orphan that couldn't resolve a spec (the old NOT NULL
-    # product FK should make this a no-op) so the NOT NULL enforcement can't trip.
-    op.execute("DELETE FROM cutting_orders WHERE spec_id IS NULL")
+    # Fail loudly rather than silently dropping rows: if any cutting order could
+    # not resolve a spec (orphaned product_id, or an unexpected NULL products.spec_id
+    # — neither should occur under the old NOT NULL FK), abort so it can be
+    # investigated. The single-transaction upgrade rolls back cleanly on raise, so
+    # no rows are modified.
+    unresolved = (
+        op.get_bind().execute(sa.text("SELECT count(*) FROM cutting_orders WHERE spec_id IS NULL")).scalar() or 0
+    )
+    if unresolved:
+        raise RuntimeError(
+            f"{unresolved} cutting_orders row(s) could not resolve spec_id from product_id; "
+            "investigate before enforcing NOT NULL (no rows were modified)."
+        )
     op.alter_column("cutting_orders", "spec_id", nullable=False)
     op.alter_column("cutting_orders", "color", nullable=False)
     op.alter_column("cutting_orders", "color_code", nullable=False)

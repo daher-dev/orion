@@ -94,7 +94,6 @@ async def test_create_entry_happy_path(db_session):
     assert entry.quantity == 20
     assert entry.source == StockSource.ADJUSTMENT
     assert entry.notes == "Found in warehouse"
-    assert entry.shipment_id is None
 
     audits = await _audits_for(db_session, resource_id=entry.id)
     assert any("Adjusted stock for SKU" in a.message for a in audits)

@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleDot, Sliders, Printer, CheckCircle2, XCircle } from "lucide-react";
+import { CircleDot, Factory, Truck, CheckCircle2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { BatchStatus } from "@/lib/schemas/batch";
 
@@ -8,16 +8,16 @@ type Tone = "muted" | "warn" | "info" | "ok" | "err";
 
 const STATUS_TONE: Record<BatchStatus, Tone> = {
   open: "muted",
-  adjusted: "warn",
-  printed: "info",
+  in_production: "warn",
+  dispatched: "info",
   done: "ok",
   cancelled: "err",
 };
 
 const STATUS_ICON: Record<BatchStatus, typeof CircleDot> = {
   open: CircleDot,
-  adjusted: Sliders,
-  printed: Printer,
+  in_production: Factory,
+  dispatched: Truck,
   done: CheckCircle2,
   cancelled: XCircle,
 };

@@ -13,7 +13,6 @@ export default function AppleIcon() {
   return new ImageResponse(
     (
       <div style={{ display: "flex", width: "100%", height: "100%" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} width={180} height={180} alt="Orion" />
       </div>
     ),

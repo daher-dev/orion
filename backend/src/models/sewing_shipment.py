@@ -44,6 +44,8 @@ class SewingShipmentItem(BaseModel, table=True):
         CheckConstraint("requested_quantity >= 0", name="requested_non_negative"),
         CheckConstraint("received_quantity >= 0", name="received_non_negative"),
         CheckConstraint("received_quantity <= requested_quantity", name="received_within_requested"),
+        CheckConstraint("credited_quantity >= 0", name="credited_non_negative"),
+        CheckConstraint("credited_quantity <= received_quantity", name="credited_within_received"),
     )
 
     shipment_id: uuid.UUID = Field(
@@ -57,3 +59,7 @@ class SewingShipmentItem(BaseModel, table=True):
     size: Size = Field(sa_type=SIZE)
     requested_quantity: int = Field(ge=0)
     received_quantity: int = Field(default=0, ge=0)
+    # How much of ``received_quantity`` has already been posted to blank stock
+    # (T3 delta-credit watermark). The next receive credits only
+    # ``received_quantity - credited_quantity``.
+    credited_quantity: int = Field(default=0, ge=0)

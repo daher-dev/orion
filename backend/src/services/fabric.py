@@ -22,20 +22,38 @@ Convention notes
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, time
 from decimal import Decimal
 
 from sqlalchemy import String, cast, func, or_
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from models import CuttingOrder, FabricRoll, FabricRollKind, FabricType
+from models import (
+    CuttingOrder,
+    FabricMovementKind,
+    FabricRoll,
+    FabricRollKind,
+    FabricRollMovement,
+    FabricType,
+)
 from schemas._common import PageParams
-from schemas.fabric import FabricRollCreate, FabricRollFilters, FabricRollUpdate
+from schemas.fabric import (
+    FabricMovementCreate,
+    FabricMovementFilters,
+    FabricRollCreate,
+    FabricRollFilters,
+    FabricRollUpdate,
+)
 from services._audit import write_audit
 from services._base import scoped
 from shared.exceptions import ConflictError, NotFoundError
 
 _RESOURCE = "fabric_rolls"
+_MOVEMENT_RESOURCE = "fabric_roll_movements"
+
+# ENTRY + ADJUSTMENT credit current_weight_kg; EXIT debits it.
+_CREDIT_KINDS = (FabricMovementKind.ENTRY, FabricMovementKind.ADJUSTMENT)
 
 
 def _to_read_kwargs(roll: FabricRoll) -> dict:
@@ -221,6 +239,14 @@ async def _assert_no_cutting_orders(db: AsyncSession, *, roll_id: uuid.UUID) -> 
         raise ConflictError(detail="Cannot delete fabric roll — it is referenced by a cutting order")
 
 
+async def _assert_no_movements(db: AsyncSession, *, company_id: uuid.UUID, roll_id: uuid.UUID) -> None:
+    stmt = scoped(select(func.count()), FabricRollMovement, company_id).where(
+        FabricRollMovement.fabric_roll_id == roll_id
+    )
+    if int((await db.exec(stmt)).first() or 0) > 0:
+        raise ConflictError(detail="Cannot delete fabric roll — it has stock movements")
+
+
 async def delete_fabric_roll(
     db: AsyncSession,
     *,
@@ -230,6 +256,7 @@ async def delete_fabric_roll(
 ) -> None:
     roll = await get_fabric_roll(db, company_id=company_id, roll_id=roll_id)
     await _assert_no_cutting_orders(db, roll_id=roll.id)
+    await _assert_no_movements(db, company_id=company_id, roll_id=roll.id)
 
     label = f"{roll.supplier_name} / {roll.fabric_type.value}"
     await db.delete(roll)
@@ -244,12 +271,168 @@ async def delete_fabric_roll(
     await db.commit()
 
 
+# ---------- consume (transition-internal, no commit) ----------
+
+
+async def consume(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    roll: FabricRoll,
+    quantity: Decimal,
+    cutting_order_id: uuid.UUID | None = None,
+    notes: str | None = None,
+) -> FabricRollMovement:
+    """Debit kg off the roll, clamping at 0, recording an EXIT movement.
+
+    Transition-internal: the metered-roll rule (``max(0, current - quantity)``)
+    matches ``paper_roll.consume`` and the prototype's ``Math.max(0, …)``. The
+    recorded ``quantity`` is the *actual* amount consumed after the clamp (never
+    more than the roll held). This helper does NOT commit — the caller (the
+    cutting-DONE transition) owns the transaction — and does NOT write audit
+    (the caller writes a transition-level entry).
+    """
+
+    actual = min(quantity, roll.current_weight_kg)
+    roll.current_weight_kg = max(Decimal("0"), roll.current_weight_kg - quantity)
+    db.add(roll)
+
+    movement = FabricRollMovement(
+        company_id=company_id,
+        fabric_roll_id=roll.id,
+        kind=FabricMovementKind.EXIT,
+        quantity=actual if actual > 0 else quantity,
+        cutting_order_id=cutting_order_id,
+        notes=notes,
+    )
+    db.add(movement)
+    await db.flush()
+    return movement
+
+
+# ---------- create_movement (manual move sheet) ----------
+
+
+async def create_movement(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    user_id: uuid.UUID,
+    payload: FabricMovementCreate,
+) -> FabricRollMovement:
+    """Manual ledger entry against a roll that also adjusts ``current_weight_kg``.
+
+    ENTRY/ADJUSTMENT add to current (no upper clamp — entries add stock); EXIT
+    clamps current at 0. ``cutting_order_id`` is always null here (manual);
+    cutting-sourced exits are written by the T1 transition via :func:`consume`.
+    """
+
+    roll = await get_fabric_roll(db, company_id=company_id, roll_id=payload.fabric_roll_id)
+
+    if payload.kind in _CREDIT_KINDS:
+        roll.current_weight_kg = roll.current_weight_kg + payload.quantity
+    else:  # EXIT
+        roll.current_weight_kg = max(Decimal("0"), roll.current_weight_kg - payload.quantity)
+    db.add(roll)
+
+    movement = FabricRollMovement(
+        company_id=company_id,
+        fabric_roll_id=roll.id,
+        kind=payload.kind,
+        quantity=payload.quantity,
+        cutting_order_id=None,
+        notes=payload.notes.strip() if payload.notes else None,
+    )
+    db.add(movement)
+    await db.flush()
+
+    sign = "-" if payload.kind == FabricMovementKind.EXIT else "+"
+    await write_audit(
+        db,
+        company_id=company_id,
+        user_id=user_id,
+        resource_type=_MOVEMENT_RESOURCE,
+        resource_id=movement.id,
+        message=(
+            f"Fabric roll movement for {roll.supplier_name} / {roll.fabric_type.value}: "
+            f"{sign}{movement.quantity} kg ({movement.kind.value})"
+        ),
+    )
+    await db.commit()
+    await db.refresh(movement)
+    return movement
+
+
+# ---------- list_movements ----------
+
+
+def _start_of_day(d) -> datetime:
+    return datetime.combine(d, time.min)
+
+
+def _end_of_day(d) -> datetime:
+    return datetime.combine(d, time.max)
+
+
+async def list_movements(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    filters: FabricMovementFilters,
+    page: PageParams,
+) -> tuple[list[dict], int]:
+    """The ledger, joined to its fabric roll, newest first."""
+
+    base = scoped(select(FabricRollMovement, FabricRoll), FabricRollMovement, company_id).join(
+        FabricRoll, FabricRoll.id == FabricRollMovement.fabric_roll_id, isouter=True
+    )
+
+    if filters.fabric_roll_id is not None:
+        base = base.where(FabricRollMovement.fabric_roll_id == filters.fabric_roll_id)
+    if filters.kind is not None:
+        base = base.where(cast(FabricRollMovement.kind, String) == filters.kind.value)
+    if filters.date_from is not None:
+        base = base.where(FabricRollMovement.created_at >= _start_of_day(filters.date_from))
+    if filters.date_to is not None:
+        base = base.where(FabricRollMovement.created_at <= _end_of_day(filters.date_to))
+
+    total = int((await db.exec(select(func.count()).select_from(base.subquery()))).one() or 0)
+
+    rows_stmt = base.order_by(FabricRollMovement.created_at.desc()).offset(page.offset).limit(page.page_size)
+    result = await db.exec(rows_stmt)
+    rows: list[dict] = []
+    for movement, roll in result.all():
+        rows.append(
+            {
+                "id": movement.id,
+                "fabric_roll_id": movement.fabric_roll_id,
+                "fabric_roll": None
+                if roll is None
+                else {
+                    "id": roll.id,
+                    "fabric_type": roll.fabric_type,
+                    "supplier_name": roll.supplier_name,
+                    "color": roll.color,
+                },
+                "kind": movement.kind,
+                "quantity": movement.quantity,
+                "cutting_order_id": movement.cutting_order_id,
+                "notes": movement.notes,
+                "created_at": movement.created_at,
+            }
+        )
+    return rows, total
+
+
 __all__ = [
     "_to_read_kwargs",
+    "consume",
     "create_fabric_roll",
+    "create_movement",
     "delete_fabric_roll",
     "get_fabric_roll",
     "list_fabric_rolls",
+    "list_movements",
     "update_fabric_roll",
 ]
 

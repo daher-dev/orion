@@ -188,11 +188,14 @@ const EtiquetaModal = ({ open, onClose, pieces = [], onConfirm }) => {
 
 // ───────── Separação / Checkout tab ─────────
 const SeparacaoTab = ({ orders, onCreateLote, openEtiquetas }) => {
+  const store = useStock();
+  const stockV = store.version();
   const [search, setSearch] = React.useState('');
   const [impF, setImpF] = React.useState('all');
   const [statusF, setStatusF] = React.useState('all');
   const [platF, setPlatF] = React.useState('all');
   const [loteF, setLoteF] = React.useState('sem');
+  const [prontoF, setProntoF] = React.useState('all');
   const [estF, setEstF] = React.useState('all');
   const [ordem, setOrdem] = React.useState('id');
   const [showMore, setShowMore] = React.useState(false);
@@ -204,9 +207,12 @@ const SeparacaoTab = ({ orders, onCreateLote, openEtiquetas }) => {
   const estampaOpts = Object.values(FF().estampas);
 
   const rows = React.useMemo(() => {
+    const ready = (o) => window.OrionDemand && window.OrionDemand.orderReady(o);
     let r = orders.filter(o => {
       if (loteF === 'sem' && o.lote) return false;
       if (loteF === 'em' && !o.lote) return false;
+      if (prontoF === 'pronto' && !ready(o)) return false;
+      if (prontoF === 'aguarda' && ready(o)) return false;
       if (impF !== 'all' && o.importId !== impF) return false;
       if (statusF !== 'all' && o.status !== statusF) return false;
       if (platF !== 'all' && o.platform !== platF) return false;
@@ -222,7 +228,7 @@ const SeparacaoTab = ({ orders, onCreateLote, openEtiquetas }) => {
     const cmp = { id: (a, b) => a.id.localeCompare(b.id), pecas: (a, b) => orderPieces(b) - orderPieces(a),
       status: (a, b) => a.status.localeCompare(b.status) };
     return r.slice().sort(cmp[ordem] || cmp.id);
-  }, [orders, loteF, impF, statusF, platF, estF, search, ordem]);
+  }, [orders, loteF, prontoF, impF, statusF, platF, estF, search, ordem, stockV]);
 
   // keep selection within visible set
   const visIds = rows.map(r => r.id);
@@ -264,6 +270,7 @@ const SeparacaoTab = ({ orders, onCreateLote, openEtiquetas }) => {
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ flex: '3 1 280px', minWidth: 200 }}><SearchInput placeholder="Buscar pedido, título, SKU…" value={search} onChange={setSearch}/></div>
           <Sel value={loteF} onChange={setLoteF} options={[{ value: 'sem', label: 'Sem lote (disponíveis)' }, { value: 'em', label: 'Em lote' }, { value: 'all', label: 'Todos os pedidos' }]}/>
+          <Sel value={prontoF} onChange={setProntoF} options={[{ value: 'all', label: 'Toda a separação' }, { value: 'pronto', label: 'Prontos p/ separar' }, { value: 'aguarda', label: 'Aguardando montagem' }]}/>
           <Sel value={statusF} onChange={setStatusF} options={[{ value: 'all', label: 'Todos os status' }, { value: 'a_imprimir', label: 'A imprimir' }, { value: 'impresso', label: 'Impresso' }, { value: 'conferido', label: 'Conferido' }]}/>
           <button className="btn" onClick={() => setShowMore(v => !v)} style={{ flexShrink: 0 }}>
             <Icon name="sliders-horizontal" size={14}/> Mais filtros
@@ -329,6 +336,11 @@ const SeparacaoTab = ({ orders, onCreateLote, openEtiquetas }) => {
                 <span style={{ fontSize: 12.5, color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>{prods} {prods === 1 ? 'produto' : 'produtos'} · {pcs} {pcs === 1 ? 'peça' : 'peças'}</span>
                 {o.lote && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}><Icon name="layers" size={11}/> {o.lote}</span>}
                 <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                  {window.OrionDemand && window.OrionDemand.orderReady(o) && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 999, fontSize: 11, fontWeight: 500, color: 'var(--ok)', background: 'var(--ok-bg)', border: '1px solid color-mix(in oklab, var(--ok) 24%, var(--surface))', whiteSpace: 'nowrap' }}>
+                      <Icon name="package-check" size={11}/> Pronto p/ separar
+                    </span>
+                  )}
                   <StatusPill s={o.status}/>
                   <button onClick={() => openEtiquetas(piecesFromOrders([o]))}
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: 7, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 500,
@@ -364,10 +376,352 @@ const SeparacaoTab = ({ orders, onCreateLote, openEtiquetas }) => {
   );
 };
 
-// ───────── Pedidos shell (tabs + shared state) ─────────
+// ───────── Order-lifecycle board: Mapeamento → Produção → Separação → Envio ─────────
+const uniqueEstampas = (o) => [...new Set(o.items.map(it => it.estampa))];
+
+// per-order SKU readiness: how many item lines are already in finished stock
+const orderSkuStatus = (o) => {
+  let ready = 0;
+  o.items.forEach(it => {
+    const blank = window.OrionDemand && window.OrionDemand.blankFor(it.garment, it.color, it.size);
+    const sku = blank && window.StockStore && window.StockStore.skuFor(blank, it.estampa);
+    const row = sku && ORION_DATA.stock.find(s => s.sku === sku);
+    if (row && row.count >= it.qty) ready++;
+  });
+  return { ready, total: o.items.length };
+};
+
+// which lifecycle column an order belongs to
+const orderStage = (o, unmapped) => {
+  if (unmapped.has(o.id)) return 'mapeamento';
+  if (o.lote) return 'envio';
+  if (window.OrionDemand && window.OrionDemand.orderReady(o)) return 'separacao';
+  return 'producao';
+};
+
+// app "today" (the data world is June 2026) → order age in days from its import
+const PED_TODAY = new Date(2026, 5, 9);
+const orderAgeDays = (o) => {
+  const imp = FF().imports.find(i => i.id === o.importId);
+  const m = imp && (imp.label || '').match(/(\d{2})\/(\d{2})/);
+  if (!m) return null;
+  const d = new Date(2026, +m[2] - 1, +m[1]);
+  return Math.max(0, Math.floor((PED_TODAY - d) / 86400000));
+};
+const orderAgeLabel = (o) => { const d = orderAgeDays(o); if (d == null) return ''; return d === 0 ? 'hoje' : `há ${d}d`; };
+
+const OrderCard = ({ o, stage, selected, onToggleSel, onOpen, onEtiquetas, onVincular }) => {
+  const stop = (e) => e.stopPropagation();
+  const age = orderAgeLabel(o);
+  const old = orderAgeDays(o) >= 5;
+  const st = orderSkuStatus(o);
+  const pct = st.total ? (st.ready / st.total) * 100 : 0;
+  const full = st.ready >= st.total;
+  const action = stage === 'mapeamento' ? { label: 'Vincular', icon: 'git-merge', fn: () => onVincular(o) }
+               : stage === 'separacao'  ? { label: 'Imprimir etiquetas', icon: 'tag', fn: () => onEtiquetas([o]) }
+               : null;
+  return (
+    <div onClick={() => onOpen(o)}
+      style={{ background: 'var(--bg)', border: `1px solid ${selected ? 'var(--accent)' : 'var(--line-soft)'}`, borderRadius: 'var(--radius-sm)', cursor: 'pointer', overflow: 'hidden',
+        boxShadow: selected ? '0 0 0 1px var(--accent)' : 'none', transition: 'border-color .12s, box-shadow .12s' }}>
+      <div style={{ padding: '9px 10px' }}>
+        {/* linha 1: itens cumpridos / total + ID no canto direito */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          {stage === 'separacao' && (
+            <input type="checkbox" checked={selected} onClick={stop} onChange={() => onToggleSel(o.id)}
+              style={{ width: 15, height: 15, accentColor: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}/>
+          )}
+          <span style={{ fontSize: 11.5, color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>
+            <span className="num" style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontVariantNumeric: 'tabular-nums', color: 'var(--ink-3)' }}>
+              <b style={{ color: full ? 'var(--ok)' : 'var(--ink)', fontWeight: 600 }}>{st.ready}</b>/{st.total}
+            </span> {st.total === 1 ? 'item' : 'itens'}
+          </span>
+          <span className="mono" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', whiteSpace: 'nowrap', flexShrink: 0 }}>{o.id}</span>
+        </div>
+
+        {/* linha 2: barra de progresso (itens cumpridos) */}
+        <div style={{ height: 5, background: 'var(--line-soft)', borderRadius: 999, overflow: 'hidden', marginTop: 7 }}>
+          <div style={{ height: '100%', width: `${pct}%`, background: full ? 'var(--ok)' : 'var(--brand-prod)', borderRadius: 999, transition: 'width .25s' }}/>
+        </div>
+
+        {/* linha 3: metadados — plataforma · idade */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+          <PlatformChip id={o.platform}/>
+          <span style={{ marginLeft: 'auto', fontSize: 11, color: old ? 'var(--warn)' : 'var(--ink-3)', fontWeight: old ? 600 : 400, whiteSpace: 'nowrap' }}>{age}</span>
+        </div>
+      </div>
+
+      {/* rodapé: ação full-width integrada */}
+      {action && (
+        <button className="card-foot-btn" onClick={(e) => { stop(e); action.fn(); }}>
+          <Icon name={action.icon} size={13}/> {action.label}
+        </button>
+      )}
+    </div>
+  );
+};
+
+const LoteCard = ({ l, onOpen }) => {
+  const done = l.status !== 'aberto';
+  const dateStr = (l.created || '').split('·')[0].trim();
+  return (
+    <div onClick={() => onOpen(l.id)} style={{ background: 'var(--bg)', border: '1px solid var(--line-soft)', borderRadius: 'var(--radius-sm)', padding: 12, cursor: 'pointer' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+        <LoteGlyph status={done ? 'despachado' : 'aberto'} size={32}/>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, color: 'var(--ink)' }}>{l.num}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 9px', borderRadius: 999, fontSize: 11, fontWeight: 500,
+              color: done ? 'var(--ok)' : 'var(--ink-2)', background: done ? 'var(--ok-bg)' : 'var(--surface-2)',
+              border: `1px solid ${done ? 'color-mix(in oklab, var(--ok) 24%, var(--surface))' : 'var(--line)'}` }}>
+              <Icon name={done ? 'check-circle-2' : 'circle-dashed'} size={11}/> {done ? 'Concluído' : 'Aberto'}
+            </span>
+          </div>
+          <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.id}</div>
+        </div>
+        <Icon name="chevron-right" size={15} style={{ color: 'var(--ink-3)', flexShrink: 0 }}/>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 11, paddingTop: 9, borderTop: '1px solid var(--line-soft)', flexWrap: 'wrap' }}>
+        {done ? (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ok)', fontWeight: 500 }}>
+            <Icon name="calendar-check" size={13}/> Concluído em {dateStr}
+          </span>
+        ) : (
+          <>
+            <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}><b style={{ color: 'var(--ink-2)', fontFamily: 'var(--font-display)', fontSize: 14 }}>{l.pedidos}</b> pedidos</span>
+            <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}><b style={{ color: 'var(--ink-2)', fontFamily: 'var(--font-display)', fontSize: 14 }}>{l.pecas}</b> peças</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const BoardColumn = ({ label, icon, sub, color, count, children, headerExtra }) => (
+  <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: 12, minWidth: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px 10px', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <span style={{ display: 'grid', placeItems: 'center', width: 24, height: 24, borderRadius: 7, background: `color-mix(in oklab, ${color} 15%, var(--surface))`, color, flexShrink: 0 }}>
+          <Icon name={icon} size={14} strokeWidth={1.8}/>
+        </span>
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', whiteSpace: 'nowrap' }}>{label}</span>
+        <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{count}</span>
+      </div>
+      {headerExtra}
+    </div>
+    <div style={{ display: 'grid', gap: 8, minHeight: 40 }}>{children}</div>
+  </div>
+);
+
+const PedidosBoard = ({ orders, lotes, unmapped, sel, onToggleSel, onConfirmMap, onVincular, onOpenOrder, onEtiquetas, onCreateLote, onOpenLote }) => {
+  const byStage = { mapeamento: [], producao: [], separacao: [] };
+  orders.forEach(o => { const st = orderStage(o, unmapped); if (st !== 'envio') byStage[st].push(o); });
+  const selCount = byStage.separacao.filter(o => sel.has(o.id)).length;
+  const sortedLotes = lotes.slice().sort((a, b) => b.num - a.num);
+
+  const colEmpty = (txt) => <div style={{ padding: '22px 12px', textAlign: 'center', fontSize: 12, color: 'var(--ink-3)' }}>{txt}</div>;
+
+  return (
+    <div style={{ overflowX: 'auto', paddingBottom: 6, margin: '0 -2px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(228px, 1fr))', gap: 12, alignItems: 'start' }}>
+      <BoardColumn label="Mapeamento" icon="git-merge" color="var(--brand-sales)" count={byStage.mapeamento.length}>
+        {byStage.mapeamento.length ? byStage.mapeamento.map(o => (
+          <OrderCard key={o.id} o={o} stage="mapeamento" onOpen={onOpenOrder} onVincular={onVincular}/>
+        )) : colEmpty('Tudo vinculado.')}
+      </BoardColumn>
+
+      <BoardColumn label="Produção" icon="factory" color="var(--brand-prod)" count={byStage.producao.length}>
+        {byStage.producao.length ? byStage.producao.map(o => (
+          <OrderCard key={o.id} o={o} stage="producao" onOpen={onOpenOrder}/>
+        )) : colEmpty('Nada em produção.')}
+      </BoardColumn>
+
+      <BoardColumn label="Separação" icon="package-check" color="var(--ok)" count={byStage.separacao.length}
+        headerExtra={selCount > 0 && (
+          <button className="btn btn-primary btn-sm" onClick={() => onCreateLote([...sel].filter(id => byStage.separacao.some(o => o.id === id)))}>
+            <Icon name="layers" size={12}/> Lote ({selCount})
+          </button>
+        )}>
+        {byStage.separacao.length ? byStage.separacao.map(o => (
+          <OrderCard key={o.id} o={o} stage="separacao" selected={sel.has(o.id)} onToggleSel={onToggleSel} onOpen={onOpenOrder} onEtiquetas={onEtiquetas}/>
+        )) : colEmpty('Nenhum pedido pronto. Conclua a montagem.')}
+      </BoardColumn>
+
+      <BoardColumn label="Envio" icon="truck" color="var(--brand-inv)" count={sortedLotes.length}>
+        {sortedLotes.length ? sortedLotes.map(l => <LoteCard key={l.id} l={l} onOpen={onOpenLote}/>) : colEmpty('Nenhum lote ainda.')}
+      </BoardColumn>
+      </div>
+    </div>
+  );
+};
+
+// ───────── Order detail sheet — jornada de cada item pelo pipeline ─────────
+const JOURNEY = [
+  { label: 'Mapeado',   icon: 'git-merge' },
+  { label: 'Produzido', icon: 'factory' },
+  { label: 'Separado',  icon: 'package-check' },
+  { label: 'Enviado',   icon: 'truck' },
+];
+const ItemJourney = ({ done }) => {
+  const current = done.indexOf(false);
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', marginTop: 11 }}>
+      {JOURNEY.map((st, i) => {
+        const isDone = done[i];
+        const isCurrent = i === current;
+        const color = isDone ? 'var(--ok)' : isCurrent ? 'var(--brand-prod)' : 'var(--ink-3)';
+        const bg = isDone ? 'var(--ok-bg)' : isCurrent ? 'color-mix(in oklab, var(--brand-prod) 12%, var(--surface))' : 'var(--surface-2)';
+        return (
+          <React.Fragment key={i}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flexShrink: 0, width: 60 }}>
+              <span style={{ width: 30, height: 30, borderRadius: '50%', display: 'grid', placeItems: 'center', background: bg, color,
+                border: `1px solid color-mix(in oklab, ${color} 28%, var(--surface))` }}>
+                <Icon name={isDone ? 'check' : st.icon} size={15} strokeWidth={isDone ? 2.4 : 1.8}/>
+              </span>
+              <span style={{ fontSize: 10, fontWeight: isDone || isCurrent ? 600 : 400, color: isDone ? 'var(--ok)' : isCurrent ? 'var(--ink)' : 'var(--ink-3)', textAlign: 'center', whiteSpace: 'nowrap' }}>{st.label}</span>
+            </div>
+            {i < JOURNEY.length - 1 && (
+              <div style={{ flex: 1, height: 2, background: isDone ? 'var(--ok)' : 'var(--line)', marginTop: 14, borderRadius: 999 }}/>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+};
+
+const OrderDetailSheet = ({ order, unmapped, lotes, onClose, onEtiquetas, onConfirmMap }) => {
+  if (!order) return null;
+  const o = order;
+  const isUnmapped = unmapped.has(o.id);
+  const lote = o.lote && (lotes || []).find(l => l.id === o.lote);
+  const separated = !!o.lote;
+  const sent = !!(lote && lote.status === 'despachado');
+  return (
+    <Sheet open={!!order} onClose={onClose}
+      title={<span style={{ display: 'flex', alignItems: 'center', gap: 9 }}><span className="mono" style={{ fontFamily: 'var(--font-mono)' }}>{o.id}</span><PlatformChip id={o.platform}/></span>}
+      footer={<>
+        <button className="btn" onClick={onClose}>Fechar</button>
+        {isUnmapped
+          ? <button className="btn btn-primary" onClick={() => { onConfirmMap(o.id); onClose(); }}><Icon name="git-merge" size={13}/> Vincular pedido</button>
+          : <button className="btn btn-primary" onClick={() => { onEtiquetas([o]); }}><Icon name="tag" size={13}/> Imprimir etiquetas</button>}
+      </>}>
+      <div style={{ display: 'grid', gap: 10 }}>
+        {o.items.map((it, k) => {
+          const blank = window.OrionDemand && window.OrionDemand.blankFor(it.garment, it.color, it.size);
+          const sku = blank && window.StockStore && window.StockStore.skuFor(blank, it.estampa);
+          const row = sku && ORION_DATA.stock.find(s => s.sku === sku);
+          const produced = !!(row && row.count >= it.qty);
+          const done = [!isUnmapped, produced, separated, sent];
+          return (
+            <div key={k} style={{ padding: '12px 14px', background: 'var(--surface)', border: '1px solid var(--line-soft)', borderRadius: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <EstampaThumb code={it.estampa} size={38}/>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.product}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 3, flexWrap: 'wrap' }}>
+                    <EstampaTag code={it.estampa}/>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: 'var(--ink-2)' }}><ColorDot color={it.color}/> {it.color} · {it.size}</span>
+                  </div>
+                </div>
+                <span style={{ fontSize: 12, color: 'var(--ink-3)', flexShrink: 0 }}>×{it.qty}</span>
+              </div>
+              <ItemJourney done={done}/>
+            </div>
+          );
+        })}
+      </div>
+    </Sheet>
+  );
+};
+
+// ───────── Vincular drawer: escolher manualmente o SKU interno de cada item ─────────
+const COLOR_CODE_V = { 'Preto': 'PRT', 'Branco': 'BCO', 'Off-white': 'OFF', 'Cru': 'CRU', 'Areia': 'ARE', 'Verde': 'VRD', 'Vermelho': 'VRM', 'Bege': 'BEG', 'Marrom': 'MAR' };
+const skuOf = (code, color, size) => `${code}-${COLOR_CODE_V[color] || 'COR'}-${String(size).toUpperCase()}`;
+const itemSkuOptions = (it) => {
+  const cat = FF().catalogProducts;
+  const match = cat.filter(p => p.estampa === it.estampa);
+  const rest = cat.filter(p => p.estampa !== it.estampa);
+  const opts = [];
+  [...match, ...rest].forEach(p => p.colors.forEach(c => p.sizes.forEach(s => opts.push({ value: skuOf(p.code, c, s), label: `${p.name} · ${c} · ${s}`, sub: skuOf(p.code, c, s) }))));
+  return opts;
+};
+const suggestItemSku = (it) => {
+  const cat = FF().catalogProducts;
+  const base = GARMENT_TO_BASE[it.garment];
+  const p = cat.find(x => x.estampa === it.estampa && GARMENT_TO_BASE[x.garment] === base) || cat.find(x => x.estampa === it.estampa);
+  if (!p) return null;
+  const color = p.colors.find(c => c.toLowerCase() === String(it.color).toLowerCase()) || p.colors[0];
+  const size = p.sizes.find(s => s.toLowerCase() === String(it.size).toLowerCase()) || p.sizes[0];
+  return { sku: skuOf(p.code, color, size), label: `${p.name} · ${color} · ${size}` };
+};
+
+const VincularSheet = ({ order, onConfirm, onClose }) => {
+  const [sel, setSel] = React.useState({});
+  React.useEffect(() => { if (order) setSel({}); }, [order && order.id]);
+  if (!order) return null;
+  const o = order;
+  const allSet = o.items.every((_, k) => !!sel[k]);
+  const pickedCount = o.items.filter((_, k) => !!sel[k]).length;
+  return (
+    <Sheet open={!!order} onClose={onClose}
+      title={<span style={{ display: 'flex', alignItems: 'center', gap: 9 }}><span className="mono" style={{ fontFamily: 'var(--font-mono)' }}>{o.id}</span><PlatformChip id={o.platform}/></span>}
+      sub={<span style={{ fontSize: 12, color: 'var(--ink-3)' }}>Escolha o SKU interno de cada item — {pickedCount}/{o.items.length} vinculados</span>}
+      footer={<>
+        <button className="btn" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" disabled={!allSet} onClick={() => onConfirm(o.id)}><Icon name="check" size={13}/> Vincular pedido</button>
+      </>}>
+      <div style={{ display: 'grid', gap: 12 }}>
+        {o.items.map((it, k) => {
+          const opts = itemSkuOptions(it);
+          const sugg = suggestItemSku(it);
+          const picked = !!sel[k];
+          return (
+            <div key={k} style={{ border: `1px solid ${picked ? 'color-mix(in oklab, var(--ok) 30%, var(--surface))' : 'var(--line)'}`, borderRadius: 10, padding: 12, background: 'var(--surface)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                <EstampaThumb code={it.estampa} size={38}/>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.product}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 3, flexWrap: 'wrap' }}>
+                    <EstampaTag code={it.estampa}/>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: 'var(--ink-2)' }}><ColorDot color={it.color}/> {it.color} · {it.size}</span>
+                    <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>×{it.qty}</span>
+                  </div>
+                </div>
+                {picked
+                  ? <Icon name="check-circle-2" size={18} style={{ color: 'var(--ok)', flexShrink: 0 }}/>
+                  : <span style={{ flexShrink: 0, fontSize: 10.5, fontWeight: 600, color: 'var(--warn)', background: 'var(--warn-bg)', border: '1px solid color-mix(in oklab, var(--warn) 24%, var(--surface))', padding: '2px 8px', borderRadius: 999 }}>a vincular</span>}
+              </div>
+              <div style={{ marginTop: 10 }} className="vinc-select">
+                <div style={{ fontSize: 10.5, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 600, marginBottom: 6 }}>SKU interno</div>
+                <Select searchable value={sel[k] || ''} placeholder="Escolher SKU…" options={opts} onChange={(v) => setSel(s => ({ ...s, [k]: v }))}/>
+                {sugg && sel[k] !== sugg.sku && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 11.5, color: 'var(--ink-3)', flexWrap: 'wrap' }}>
+                    <Icon name="sparkles" size={12} style={{ color: 'var(--accent)', flexShrink: 0 }}/>
+                    <span style={{ minWidth: 0 }}>Sugestão: <b style={{ color: 'var(--ink-2)', fontWeight: 500 }}>{sugg.label}</b></span>
+                    <button className="btn btn-sm" style={{ marginLeft: 'auto', color: 'var(--accent)', borderColor: 'color-mix(in oklab, var(--accent) 30%, var(--surface))', background: 'var(--accent-soft)' }} onClick={() => setSel(s => ({ ...s, [k]: sugg.sku }))}>Usar</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Sheet>
+  );
+};
+
+// ───────── Pedidos shell (board + shared state) ─────────
 function Pedidos({ setRoute }) {
-  const [tab, setTab] = React.useState('separacao');
+  const store = useStock();
+  const [view, setView] = React.useState('quadro');
   const [orders, setOrders] = React.useState(() => JSON.parse(JSON.stringify(FF().orders)));
+  const [unmapped, setUnmapped] = React.useState(() => new Set(
+    FF().orders.filter(o => o.items.some(it => { const e = FF().estampas[it.estampa]; return e && e.png === 'pendente'; })).map(o => o.id)
+  ));
+  const [sel, setSel] = React.useState(() => new Set());
+  const [openOrder, setOpenOrder] = React.useState(null);
+  const [vincOrder, setVincOrder] = React.useState(null);
   const [lotes, setLotes] = React.useState(() => JSON.parse(JSON.stringify(FF().lotes)));
   const [openLoteId, setOpenLoteId] = React.useState(null);
   const [etq, setEtq] = React.useState({ open: false, pieces: [] });
@@ -398,9 +752,16 @@ function Pedidos({ setRoute }) {
       pedidos: selO.length, pecas, estampas: Object.values(byEst) };
     setLotes(ls => [lote, ...ls]);
     setOrders(os => os.map(o => orderIds.includes(o.id) ? { ...o, lote: id } : o));
-    setOpenLoteId(id); setTab('lotes');
+    setOpenLoteId(id); setSel(new Set());
     showToast(`${lote.id} criado · ${selO.length} pedido${selO.length === 1 ? '' : 's'}`);
   };
+
+  const confirmMap = (orderId) => {
+    setUnmapped(s => { const n = new Set(s); n.delete(orderId); return n; });
+    showToast(`Pedido ${orderId} vinculado — segue para produção`);
+  };
+  const toggleSel = (id) => setSel(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const etqFromOrders = (arr) => openEtiquetas(piecesFromOrders(arr));
 
   const removeFromLote = (loteId, orderId) => {
     const o = orders.find(x => x.id === orderId); if (!o) return;
@@ -415,28 +776,42 @@ function Pedidos({ setRoute }) {
     showToast(`Pedido ${orderId} devolvido à separação`);
   };
 
-  const TABS = [
-    { id: 'mapeamento', label: 'Mapeamento', icon: 'book-marked' },
-    { id: 'separacao', label: 'Separação', icon: 'package' },
-    { id: 'lotes', label: 'Lotes', icon: 'layers' },
-  ];
+  const current = lotes.find(l => l.id === openLoteId);
 
   return (
     <div className="page">
-      <PageHead sub="orders" title="Pedidos" titleEm="& expedição"/>
+      {current ? (
+        React.createElement(window.LoteDetail, { lote: current, orders, onBack: () => setOpenLoteId(null), setLotes, openEtiquetas, removeFromLote, showToast })
+      ) : (
+        <>
+          <PageHead sub="orders" title="Pedidos" titleEm="& expedição"
+            desc="Do mapeamento ao despacho."
+            actions={<Seg value={view} onChange={setView} options={[{ value: 'quadro', label: 'Quadro' }, { value: 'tabela', label: 'Tabela' }]}/>}/>
 
-      <div className="ff-tabs">
-        {TABS.map(t => (
-          <button key={t.id} className={`ff-tab ${tab === t.id ? 'on' : ''}`} onClick={() => setTab(t.id)}>
-            <Icon name={t.icon} size={15}/> {t.label}
-          </button>
-        ))}
-      </div>
+          {view === 'quadro' && (
+            <>
+              <HelpCard id="pedidos-board" icon="layout-grid" tone="var(--brand-sales)" maxW={780} title="Pedidos — do mapeamento ao envio">
+                <HelpBody>
+                  Cada <b>pedido</b> avança por quatro etapas. Em <b>Mapeamento</b> o item do anúncio é vinculado ao SKU interno; em <b>Produção</b> ele espera a montagem dos SKUs; em <b>Separação</b>, já em estoque, recebe etiquetas e é agrupado; no <b>Envio</b> vira um lote despachado.
+                </HelpBody>
+                <Flow accent="var(--brand-sales)" steps={[
+                  { icon: 'git-merge', label: 'Mapeamento', sub: 'item → SKU' },
+                  { icon: 'factory', label: 'Produção', sub: 'montagem dos SKUs' },
+                  { icon: 'package-check', label: 'Separação', sub: 'etiqueta & lote', tone: 'accent' },
+                  { icon: 'truck', label: 'Envio', sub: 'lote despachado', tone: 'ok' },
+                ]}/>
+              </HelpCard>
+              <PedidosBoard orders={orders} lotes={lotes} unmapped={unmapped} sel={sel}
+                onToggleSel={toggleSel} onConfirmMap={confirmMap} onVincular={setVincOrder} onOpenOrder={setOpenOrder}
+                onEtiquetas={etqFromOrders} onCreateLote={createLote} onOpenLote={setOpenLoteId}/>
+            </>
+          )}
+          {view === 'tabela' && <SeparacaoTab orders={orders} onCreateLote={createLote} openEtiquetas={openEtiquetas}/>}
+        </>
+      )}
 
-      {tab === 'mapeamento' && React.createElement(window.MapeamentoTab, { showToast })}
-      {tab === 'separacao' && <SeparacaoTab orders={orders} onCreateLote={createLote} openEtiquetas={openEtiquetas}/>}
-      {tab === 'lotes' && React.createElement(window.LotesTab, { lotes, setLotes, orders, openLoteId, setOpenLoteId, openEtiquetas, removeFromLote, showToast })}
-
+      <OrderDetailSheet order={openOrder} unmapped={unmapped} lotes={lotes} onClose={() => setOpenOrder(null)} onEtiquetas={etqFromOrders} onConfirmMap={confirmMap}/>
+      <VincularSheet order={vincOrder} onClose={() => setVincOrder(null)} onConfirm={(id) => { confirmMap(id); setVincOrder(null); }}/>
       <EtiquetaModal open={etq.open} pieces={etq.pieces} onClose={() => setEtq({ open: false, pieces: [] })} onConfirm={confirmPrint}/>
 
       {toast && (

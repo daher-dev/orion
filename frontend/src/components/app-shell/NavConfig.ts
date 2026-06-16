@@ -1,20 +1,20 @@
 import {
   LayoutDashboard,
   ShoppingBag,
-  GitMerge,
-  Package,
-  ScanLine,
   Users,
   Megaphone,
   Shirt,
   FileText,
   Palette,
+  Radar,
   Scissors,
   Send,
   Factory,
   Layers,
   Boxes,
   Stamp,
+  Combine,
+  Scroll,
   FlaskConical,
   BarChart3,
   Settings,
@@ -68,30 +68,13 @@ export const navSections: NavSection[] = [
     titleKey: "nav.sections.sales",
     items: [
       {
+        // Pedidos is the single fulfillment workspace — the De/Para
+        // (mapping), Separação and Lotes surfaces are now tabs/columns of the
+        // board on `/orders`. Those routes stay alive as deep links but only
+        // Pedidos shows in the sidebar.
         href: "/orders",
         icon: ShoppingBag,
         labelKey: "nav.orders",
-        permission: "orders.read",
-        subColor: "var(--brand-sales)",
-      },
-      {
-        href: "/orders/separation",
-        icon: ScanLine,
-        labelKey: "nav.separation",
-        permission: "orders.read",
-        subColor: "var(--brand-sales)",
-      },
-      {
-        href: "/orders/batches",
-        icon: Package,
-        labelKey: "nav.batches",
-        permission: "orders.read",
-        subColor: "var(--brand-sales)",
-      },
-      {
-        href: "/orders/mapping",
-        icon: GitMerge,
-        labelKey: "nav.mapping",
         permission: "orders.read",
         subColor: "var(--brand-sales)",
       },
@@ -141,6 +124,13 @@ export const navSections: NavSection[] = [
     titleKey: "nav.sections.production",
     items: [
       {
+        href: "/planning",
+        icon: Radar,
+        labelKey: "nav.planning",
+        permission: "planning.read",
+        subColor: "var(--brand-prod)",
+      },
+      {
         href: "/cutting",
         icon: Scissors,
         labelKey: "nav.cutting",
@@ -152,6 +142,20 @@ export const navSections: NavSection[] = [
         icon: Send,
         labelKey: "nav.sewing",
         permission: "sewing.read",
+        subColor: "var(--brand-prod)",
+      },
+      {
+        href: "/printing",
+        icon: Stamp,
+        labelKey: "nav.printing",
+        permission: "print_orders.read",
+        subColor: "var(--brand-prod)",
+      },
+      {
+        href: "/assembly",
+        icon: Combine,
+        labelKey: "nav.assembly",
+        permission: "assembly.read",
         subColor: "var(--brand-prod)",
       },
       {
@@ -174,17 +178,31 @@ export const navSections: NavSection[] = [
         subColor: "var(--brand-inv)",
       },
       {
+        href: "/blank-pieces",
+        icon: Shirt,
+        labelKey: "nav.blankPieces",
+        permission: "blank_stock.read",
+        subColor: "var(--brand-inv)",
+      },
+      {
+        href: "/paper",
+        icon: Scroll,
+        labelKey: "nav.paper",
+        permission: "paper.read",
+        subColor: "var(--brand-inv)",
+      },
+      {
+        href: "/printed-transfers",
+        icon: Stamp,
+        labelKey: "nav.printedTransfers",
+        permission: "printed_stock.read",
+        subColor: "var(--brand-inv)",
+      },
+      {
         href: "/stock",
         icon: Boxes,
         labelKey: "nav.stock",
         permission: "stock.read",
-        subColor: "var(--brand-inv)",
-      },
-      {
-        href: "/print-stock",
-        icon: Stamp,
-        labelKey: "nav.printStock",
-        permission: "print_stock.read",
         subColor: "var(--brand-inv)",
       },
       {

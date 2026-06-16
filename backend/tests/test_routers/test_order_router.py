@@ -3,14 +3,16 @@ from datetime import UTC, datetime
 
 from httpx import AsyncClient
 
-from models import Ecommerce, OrderStatus
+from models import Ecommerce, OrderStatus, SeparationStatus
 from tests.factories import (
     create_ad,
     create_client,
     create_company,
+    create_order_item,
     create_product,
     create_product_spec,
     create_product_variation,
+    create_stock_entry,
     create_stock_exit,
     create_user,
     get_role_by_code,
@@ -409,6 +411,8 @@ async def test_transition_to_shipped_writes_stock_exit(authed_client: AsyncClien
         status=OrderStatus.PAID,
         quantity=4,
     )
+    # Finished stock must cover the order before it can ship (T6 guard).
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=10)
 
     response = await authed_client.post(
         f"/v1/orders/{order.id}/status",
@@ -536,3 +540,61 @@ async def test_delete_order_401_anonymous(async_client: AsyncClient, db_session)
 
     response = await async_client.delete(f"/v1/orders/{order.id}")
     assert response.status_code == 401
+
+
+# ---------- Phase 6: readiness flags on the wire + ship guard ----------
+
+
+async def test_order_read_exposes_readiness_fields(authed_client: AsyncClient, db_session):
+    company, _ = await _provision_manager(db_session)
+    _, variation, ad, client, _ = await _seed_full_chain(db_session, company_id=company.id)
+    order = await factory_create_order(
+        db_session, company_id=company.id, ad_id=ad.id, variation_id=variation.id, client_id=client.id, quantity=3
+    )
+    await create_stock_entry(db_session, company_id=company.id, variation_id=variation.id, quantity=5)
+
+    response = await authed_client.get(f"/v1/orders/{order.id}")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ready"] is True
+    assert body["on_hand"] == 5
+    assert body["has_unmapped_items"] is False
+    assert body["batch_id"] is None
+
+
+async def test_order_read_has_unmapped_items_flag(authed_client: AsyncClient, db_session):
+    company, _ = await _provision_manager(db_session)
+    _, variation, ad, client, _ = await _seed_full_chain(db_session, company_id=company.id)
+    order = await factory_create_order(
+        db_session, company_id=company.id, ad_id=ad.id, variation_id=variation.id, client_id=client.id, quantity=2
+    )
+    await create_order_item(
+        db_session, company_id=company.id, order_id=order.id, variation_id=None, status=SeparationStatus.PENDING
+    )
+    response = await authed_client.get(f"/v1/orders/{order.id}")
+    assert response.json()["has_unmapped_items"] is True
+
+
+async def test_ship_409_when_finished_stock_insufficient(authed_client: AsyncClient, db_session):
+    company, _ = await _provision_manager(db_session)
+    _, variation, ad, client, _ = await _seed_full_chain(db_session, company_id=company.id)
+    order = await factory_create_order(
+        db_session,
+        company_id=company.id,
+        ad_id=ad.id,
+        variation_id=variation.id,
+        client_id=client.id,
+        status=OrderStatus.PAID,
+        quantity=5,
+    )
+    # No finished stock → ship must 409.
+    response = await authed_client.post(f"/v1/orders/{order.id}/status", json={"status": "shipped"})
+    assert response.status_code == 409
+
+    # No exit written.
+    from sqlmodel import select
+
+    from models import StockExit
+
+    exits = (await db_session.exec(select(StockExit).where(StockExit.order_id == order.id))).all()
+    assert list(exits) == []

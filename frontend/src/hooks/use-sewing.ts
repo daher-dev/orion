@@ -55,7 +55,11 @@ export function useCreateShipment() {
   const qc = useQueryClient();
   return useMutation<Shipment, ApiError, ShipmentCreatePayload>({
     mutationFn: (payload) => api.post<Shipment>(ROOT, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.sewing.all() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.sewing.all() });
+      // T2 draws down cut-piece availability on creation.
+      qc.invalidateQueries({ queryKey: qk.cutting.available() });
+    },
   });
 }
 
@@ -67,6 +71,11 @@ export function useReceiveShipment() {
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: qk.sewing.all() });
       qc.invalidateQueries({ queryKey: qk.sewing.detail(vars.id) });
+      // T3 credits blank pieces (delta-only) and the shipment status change can
+      // release/commit cut availability — refresh both downstream tiers.
+      qc.invalidateQueries({ queryKey: qk.blankStock.levels() });
+      qc.invalidateQueries({ queryKey: qk.blankStock.movements() });
+      qc.invalidateQueries({ queryKey: qk.cutting.available() });
     },
   });
 }

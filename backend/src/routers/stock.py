@@ -33,7 +33,6 @@ from schemas.stock import (
     StockFilters,
     StockOrderMini,
     StockPage,
-    StockShipmentMini,
     VariationStockRead,
 )
 from schemas.stock_settings import StockSettingsRead, StockSettingsUpdate
@@ -73,7 +72,6 @@ def _entry_to_read(entry: StockEntry, *, sku: str) -> StockEntryRead:
         quantity=entry.quantity,
         notes=entry.notes,
         created_at=entry.created_at,
-        shipment=StockShipmentMini(id=entry.shipment_id) if entry.shipment_id else None,
     )
 
 

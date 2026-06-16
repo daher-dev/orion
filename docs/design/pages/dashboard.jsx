@@ -65,7 +65,7 @@ const Dashboard = ({ role, setRoute }) => {
         sub="dashboard"
         title={`${greet()},`}
         titleEm={u.name.split(' ')[0]}
-        desc="Conferência do lote de hoje, 3 de junho — 859 pedidos importados, prontos para conferir."
+        desc="Lote de hoje, 3 de junho · 859 pedidos importados."
       />
 
       <HelpCard id="dashboard" icon="clipboard-check" maxW={720} title="Conferência do dia — do pedido à peça pronta">

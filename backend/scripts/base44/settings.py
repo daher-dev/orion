@@ -93,18 +93,20 @@ SIZE_MAP: dict[str, Size] = {
 }
 
 # ── Product type (substring match on Produto.tipo / nome) ──────────────────
-DEFAULT_PRODUCT_TYPE = ProductType.TSHIRT
+DEFAULT_PRODUCT_TYPE = ProductType.CAMISETA
 PRODUCT_TYPE_KEYWORDS: list[tuple[str, ProductType]] = [
-    ("calça moletom", ProductType.SWEATSHIRT),
-    ("moletom", ProductType.SWEATSHIRT),
-    ("short", ProductType.SHORTS),
-    ("bermuda", ProductType.SHORTS),
-    ("regata", ProductType.TANKTOP),
-    ("machão", ProductType.TANKTOP),
-    ("cropped", ProductType.TSHIRT),
-    ("camiseta", ProductType.TSHIRT),
-    ("camisa", ProductType.TSHIRT),
-    ("blusa", ProductType.TSHIRT),
+    ("calça moletom", ProductType.CALCA),
+    ("calça", ProductType.CALCA),
+    ("moletom", ProductType.MOLETOM),
+    ("short", ProductType.BERMUDA),
+    ("bermuda", ProductType.BERMUDA),
+    ("regata", ProductType.REGATA),
+    ("machão", ProductType.REGATA),
+    ("cropped", ProductType.CROPPED),
+    ("ecobag", ProductType.ECOBAG),
+    ("camiseta", ProductType.CAMISETA),
+    ("camisa", ProductType.CAMISETA),
+    ("blusa", ProductType.BLUSA),
 ]
 
 # ── Fabric type (substring match on tipo_tecido / nome_tecido) ─────────────
@@ -221,8 +223,8 @@ TRIM_TYPE_KEYWORDS: list[tuple[str, TrimType]] = [
 DEFAULT_BATCH_STATUS = BatchStatus.OPEN
 BATCH_STATUS_MAP: dict[str, BatchStatus] = {
     "aberto": BatchStatus.OPEN,
-    "ajustado": BatchStatus.ADJUSTED,
-    "impresso": BatchStatus.PRINTED,
+    "ajustado": BatchStatus.IN_PRODUCTION,
+    "impresso": BatchStatus.DISPATCHED,
     "concluido": BatchStatus.DONE,
     "concluído": BatchStatus.DONE,
     "cancelado": BatchStatus.CANCELLED,

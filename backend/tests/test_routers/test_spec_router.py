@@ -42,7 +42,10 @@ async def test_list_specs_returns_paginated_envelope(authed_client: AsyncClient,
     spec = await create_product_spec(db_session, company_id=company.id, code="A1")
     await create_spec_trim(db_session, spec_id=spec.id, trim_type=TrimType.LABEL)
 
-    response = await authed_client.get("/v1/specs")
+    # Pin the company explicitly: the shared dev-bypass uid resolves to the
+    # oldest matching membership, so under --random-order an exact-count
+    # assertion must scope to this test's company rather than rely on resolution.
+    response = await authed_client.get("/v1/specs", headers={"X-Orion-Company-Id": str(company.id)})
     assert response.status_code == 200
     body = response.json()
     assert body["total"] == 1
@@ -64,6 +67,7 @@ async def test_list_specs_filter_q_and_fabric_type(authed_client: AsyncClient, d
     response = await authed_client.get(
         "/v1/specs",
         params={"q": "fleece", "fabric_type": FabricType.FLEECE.value},
+        headers={"X-Orion-Company-Id": str(company.id)},
     )
     assert response.status_code == 200
     body = response.json()

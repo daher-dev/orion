@@ -21,7 +21,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { SIZES } from "@/lib/schemas/product";
-import { sumReceived, sumRequested, type Shipment } from "@/lib/schemas/sewing";
+import { sumCredited, sumReceived, sumRequested, type Shipment } from "@/lib/schemas/sewing";
 import { useCanAccess } from "@/hooks/use-permissions";
 import { ShipmentReceiveDialog } from "./ShipmentReceiveDialog";
 import { ShipmentStatusPill } from "./ShipmentStatusPill";
@@ -191,6 +191,7 @@ export function ShipmentDetailSheet({ shipment, open, onOpenChange }: Props) {
 
   const totalRequested = shipment ? sumRequested(shipment.items) : 0;
   const totalReceived = shipment ? sumReceived(shipment.items) : 0;
+  const totalCredited = shipment ? sumCredited(shipment.items) : 0;
 
   function fmtDate(d: Date | null): string {
     if (!d || Number.isNaN(d.getTime())) return "—";
@@ -381,6 +382,9 @@ export function ShipmentDetailSheet({ shipment, open, onOpenChange }: Props) {
                         <th className="px-3 py-2 text-right text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
                           {t("detail.received")}
                         </th>
+                        <th className="px-3 py-2 text-right text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                          {t("detail.credited")}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -422,6 +426,12 @@ export function ShipmentDetailSheet({ shipment, open, onOpenChange }: Props) {
                                 {item.received_quantity}
                               </span>
                             </td>
+                            <td
+                              className="px-3 py-2.5 text-right text-[color:var(--orion-ink-3)]"
+                              style={{ fontVariantNumeric: "tabular-nums" }}
+                            >
+                              {item.credited_quantity}
+                            </td>
                           </tr>
                         );
                       })}
@@ -453,6 +463,12 @@ export function ShipmentDetailSheet({ shipment, open, onOpenChange }: Props) {
                           >
                             {totalReceived}
                           </span>
+                        </td>
+                        <td
+                          className="px-3 py-2 text-right text-[12px] font-medium text-[color:var(--orion-ink-3)]"
+                          style={{ fontVariantNumeric: "tabular-nums" }}
+                        >
+                          {totalCredited}
                         </td>
                       </tr>
                     </tfoot>

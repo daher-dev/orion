@@ -24,20 +24,24 @@ import uuid
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import func
+from sqlalchemy import case, func
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from models import (
     Ad,
     AuditLog,
+    Batch,
+    BatchStatus,
     Company,
     CuttingOrder,
     CuttingStatus,
     FabricRoll,
     Order,
+    OrderItem,
     OrderStatus,
     ProductVariation,
+    SeparationStatus,
     SewingShipment,
     ShipmentStatus,
     StockEntry,
@@ -47,6 +51,10 @@ from models import (
 from schemas.dashboard import (
     ActivityItem,
     ChannelRevenue,
+    ConferenceBatchCounts,
+    ConferencePipeline,
+    ConferenceSummary,
+    ConferenceTotals,
     DashboardKpis,
     DashboardSummary,
     Kpi,
@@ -437,6 +445,132 @@ async def _revenue_by_channel(
     return [ChannelRevenue(channel=str(row.channel), revenue=float(row.revenue)) for row in rows]
 
 
+# --------------------------------------------------------------------------- conference
+
+
+async def _order_piece_counts(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str, int]:
+    """``{mapped, pending, checked, to_check}`` over ``order_items`` (≤2 grouped queries)."""
+
+    # mapped / pending split by (variation_id IS NULL).
+    null_flag = case((OrderItem.variation_id.is_(None), 1), else_=0)  # type: ignore[union-attr]
+    map_stmt = scoped(
+        select(null_flag.label("is_pending"), func.count()),
+        OrderItem,
+        company_id,
+    ).group_by(null_flag)
+    mapped = pending = 0
+    for is_pending, count in (await db.exec(map_stmt)).all():
+        if int(is_pending or 0) == 1:
+            pending = int(count or 0)
+        else:
+            mapped = int(count or 0)
+
+    # checked / to_check by separation status.
+    status_stmt = scoped(
+        select(OrderItem.status, func.count()),
+        OrderItem,
+        company_id,
+    ).group_by(OrderItem.status)
+    checked = to_check = 0
+    for status, count in (await db.exec(status_stmt)).all():
+        if status == SeparationStatus.CHECKED:
+            checked = int(count or 0)
+        elif status == SeparationStatus.LABEL_PRINTED:
+            to_check = int(count or 0)
+
+    return {"mapped": mapped, "pending": pending, "checked": checked, "to_check": to_check}
+
+
+async def _order_totals(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str, int]:
+    """``{orders, pieces, in_lote}`` — scope = orders with ``status != cancelled``."""
+
+    totals_stmt = scoped(
+        select(func.count(), func.coalesce(func.sum(Order.quantity), 0)),
+        Order,
+        company_id,
+    ).where(Order.status != OrderStatus.CANCELLED)
+    orders_count, pieces = (await db.exec(totals_stmt)).one()
+
+    in_lote_stmt = scoped(
+        select(func.count()).select_from(Order),
+        Order,
+        company_id,
+    ).where(
+        Order.status != OrderStatus.CANCELLED,
+        Order.batch_id.is_not(None),  # type: ignore[union-attr]
+    )
+    in_lote = int((await db.exec(in_lote_stmt)).first() or 0)
+
+    return {"orders": int(orders_count or 0), "pieces": int(pieces or 0), "in_lote": in_lote}
+
+
+async def _order_pipeline(db: AsyncSession, *, company_id: uuid.UUID) -> ConferencePipeline:
+    """Bucket non-cancelled orders into the board's four columns (mirrors §3.3).
+
+    Reuses the readiness machinery: finished on-hand over the order variation set
+    + unmapped-order set + batched flag, bucketed in Python.
+    """
+
+    from services import order as order_service
+
+    orders = list(
+        (await db.exec(scoped(select(Order), Order, company_id).where(Order.status != OrderStatus.CANCELLED))).all()
+    )
+    variation_ids = {o.variation_id for o in orders}
+    order_ids = {o.id for o in orders}
+    finished_map = await order_service._finished_on_hand_map(db, company_id=company_id, variation_ids=variation_ids)
+    unmapped_ids = await order_service._unmapped_order_ids(db, company_id=company_id, order_ids=order_ids)
+
+    mapeamento = producao = separacao = envio = 0
+    for o in orders:
+        if o.id in unmapped_ids:
+            mapeamento += 1
+        elif o.batch_id is not None:
+            envio += 1
+        elif max(0, finished_map.get(o.variation_id, 0)) >= o.quantity:
+            separacao += 1
+        else:
+            producao += 1
+    return ConferencePipeline(mapeamento=mapeamento, producao=producao, separacao=separacao, envio=envio)
+
+
+async def _batch_status_counts(db: AsyncSession, *, company_id: uuid.UUID) -> ConferenceBatchCounts:
+    stmt = scoped(select(Batch.status, func.count()), Batch, company_id).group_by(Batch.status)
+    counts: dict[BatchStatus, int] = {}
+    for status, count in (await db.exec(stmt)).all():
+        counts[status] = int(count or 0)
+    return ConferenceBatchCounts(
+        open=counts.get(BatchStatus.OPEN, 0),
+        in_production=counts.get(BatchStatus.IN_PRODUCTION, 0),
+        dispatched=counts.get(BatchStatus.DISPATCHED, 0),
+    )
+
+
+async def _conference(db: AsyncSession, *, company_id: uuid.UUID) -> ConferenceSummary:
+    pieces = await _order_piece_counts(db, company_id=company_id)
+    totals = await _order_totals(db, company_id=company_id)
+    pipeline = await _order_pipeline(db, company_id=company_id)
+    batches = await _batch_status_counts(db, company_id=company_id)
+
+    map_denom = pieces["mapped"] + pieces["pending"]
+    mapped_pct = round(100 * pieces["mapped"] / map_denom) if map_denom else 100
+
+    return ConferenceSummary(
+        totals=ConferenceTotals(
+            orders=totals["orders"],
+            pieces=totals["pieces"],
+            mapped=pieces["mapped"],
+            pending=pieces["pending"],
+            checked=pieces["checked"],
+            to_check=pieces["to_check"],
+            in_lote=totals["in_lote"],
+            mapped_pct=mapped_pct,
+        ),
+        pipeline=pipeline,
+        batches=batches,
+    )
+
+
 # --------------------------------------------------------------------------- public
 
 
@@ -558,6 +692,7 @@ async def get_summary(
     )
     activity = await _activity(db, company_id=company_id)
     revenue_by_channel = await _revenue_by_channel(db, company_id=company_id)
+    conference = await _conference(db, company_id=company_id)
 
     return DashboardSummary(
         kpis=kpis,
@@ -565,6 +700,7 @@ async def get_summary(
         needs_action=needs,
         activity=activity,
         revenue_by_channel=revenue_by_channel,
+        conference=conference,
     )
 
 

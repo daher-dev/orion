@@ -13,6 +13,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { GreetingHeader } from "@/components/dashboard/GreetingHeader";
 import { KpiStrip } from "@/components/dashboard/KpiStrip";
+import { ConferenciaSection } from "@/components/dashboard/ConferenciaSection";
 import { ProductionPipeline } from "@/components/dashboard/ProductionPipeline";
 import { NeedsActionList } from "@/components/dashboard/NeedsActionList";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
@@ -121,6 +122,7 @@ export default function HomePage() {
         //   4. Revenue by channel (full width footer)
         <>
           <KpiStrip kpis={data.kpis} />
+          <ConferenciaSection conference={data.conference} />
           <ProductionPipeline pipeline={data.pipeline} />
           <div className="grid gap-[18px] lg:grid-cols-2">
             <NeedsActionList items={data.needs_action} />

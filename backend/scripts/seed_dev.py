@@ -11,6 +11,8 @@ Usage::
 import asyncio
 import sys
 import uuid
+from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 
 # Make `src/` importable when run as `python scripts/seed_dev.py`.
@@ -31,7 +33,15 @@ from models import (  # noqa: E402
     CuttingOrderOutput,
     FabricRoll,
     Order,
+    PaperRoll,
+    PaperType,
     PrintDesign,
+    PrintDesignVariation,
+    PrintOrder,
+    PrintOrderOutput,
+    PrintOrderStatus,
+    PrintSide,
+    PrintTechnique,
     Product,
     ProductSpec,
     ProductVariation,
@@ -69,9 +79,24 @@ async def _wipe_existing_company(db: AsyncSession, subdomain: str) -> None:
         "audit_logs",
         "stock_exits",
         "stock_entries",
+        # Assembly + print orders before their input/parent tiers (RESTRICT FKs to
+        # blank_pieces / printed_transfers / product_variations / print_designs /
+        # paper_rolls). Movement rows carry SET NULL provenance to these, so the
+        # ledgers below can be deleted in any order relative to them.
+        "assembly_runs",
+        "print_orders",
+        # WIP inventory tiers — ledgers before balances, balances before their
+        # parent specs/designs (RESTRICT FKs).
+        "blank_piece_movements",
+        "blank_pieces",
+        "printed_transfer_movements",
+        "printed_transfers",
+        "print_design_variations",
+        "paper_roll_movements",
+        "paper_rolls",
+        "company_settings",
         "sewing_shipments",
         "cutting_orders",
-        "batch_print_adjustments",
         "batches",
         "orders",
         "ads",
@@ -99,6 +124,13 @@ async def _wipe_existing_company(db: AsyncSession, subdomain: str) -> None:
         text(
             "DELETE FROM cutting_order_outputs WHERE cutting_order_id IN "
             "(SELECT id FROM cutting_orders WHERE company_id = :cid)"
+        ),
+        {"cid": existing.id},
+    )
+    await conn.execute(
+        text(
+            "DELETE FROM print_order_outputs WHERE print_order_id IN "
+            "(SELECT id FROM print_orders WHERE company_id = :cid)"
         ),
         {"cid": existing.id},
     )
@@ -171,6 +203,63 @@ async def _seed_print_designs(db: AsyncSession, company: Company) -> dict[str, P
         out[spec["key"]] = design
     await db.flush()
     return out
+
+
+async def _seed_printing(db: AsyncSession, company: Company, prints: dict[str, PrintDesign]) -> None:
+    """A DTF paper roll + one estampa variation + a pending print order (T4).
+
+    Gives the Impressão board real data: an order with a planned front grade,
+    ready for the operator to record printed counts and "Lançar impressos".
+    """
+
+    design = next(iter(prints.values()), None)
+    if design is None:
+        return
+
+    # Ensure the chosen design is DTF + has a front so the order is valid.
+    design.technique = PrintTechnique.DTF
+    design.has_front = True
+    db.add(design)
+
+    variation = PrintDesignVariation(
+        company_id=company.id,
+        print_design_id=design.id,
+        name="Preto",
+        ink_hex="#1f1f1f",
+    )
+    db.add(variation)
+
+    roll = PaperRoll(
+        company_id=company.id,
+        received_at=datetime.now(UTC).date(),
+        supplier_name="DTF Brasil",
+        paper_type=PaperType.DTF_FILM,
+        width_cm=60,
+        initial_meters=Decimal("100.00"),
+        current_meters=Decimal("100.00"),
+    )
+    db.add(roll)
+    await db.flush()
+
+    order = PrintOrder(
+        company_id=company.id,
+        print_design_id=design.id,
+        paper_roll_id=roll.id,
+        status=PrintOrderStatus.PENDING,
+    )
+    db.add(order)
+    await db.flush()
+
+    db.add(
+        PrintOrderOutput(
+            print_order_id=order.id,
+            print_design_variation_id=variation.id,
+            side=PrintSide.FRONT,
+            planned_quantity=12,
+            printed_quantity=0,
+        )
+    )
+    await db.flush()
 
 
 async def _seed_specs(db: AsyncSession, company: Company) -> dict[str, ProductSpec]:
@@ -275,23 +364,25 @@ async def _seed_fabric(db: AsyncSession, company: Company) -> dict[str, FabricRo
 async def _seed_cutting(
     db: AsyncSession,
     company: Company,
-    products: dict[str, Product],
+    specs: dict[str, ProductSpec],
     rolls: dict[str, FabricRoll],
 ) -> dict[str, CuttingOrder]:
     out: dict[str, CuttingOrder] = {}
-    for spec in CUTTING_ORDERS:
+    for order_spec in CUTTING_ORDERS:
         order = CuttingOrder(
             company_id=company.id,
-            product_id=products[spec["product_key"]].id,
-            body_roll_id=rolls[spec["body_roll_key"]].id,
-            rib_roll_id=rolls[spec["rib_roll_key"]].id if spec["rib_roll_key"] else None,
-            status=spec["status"],
-            cut_at=spec["cut_at"],
+            spec_id=specs[order_spec["spec_key"]].id,
+            color=order_spec["color"],
+            color_code=order_spec["color_code"],
+            body_roll_id=rolls[order_spec["body_roll_key"]].id,
+            rib_roll_id=rolls[order_spec["rib_roll_key"]].id if order_spec["rib_roll_key"] else None,
+            status=order_spec["status"],
+            cut_at=order_spec["cut_at"],
         )
         db.add(order)
         await db.flush()
-        out[spec["key"]] = order
-        for output in spec["outputs"]:
+        out[order_spec["key"]] = order
+        for output in order_spec["outputs"]:
             db.add(
                 CuttingOrderOutput(
                     cutting_order_id=order.id,
@@ -401,11 +492,12 @@ async def seed() -> uuid.UUID:
         await _seed_users(db, company)
         clients = await _seed_clients(db, company)
         prints = await _seed_print_designs(db, company)
+        await _seed_printing(db, company, prints)
         specs = await _seed_specs(db, company)
         products, variations = await _seed_products(db, company, specs, prints)
         ads = await _seed_ads(db, company, products)
         rolls = await _seed_fabric(db, company)
-        cutting = await _seed_cutting(db, company, products, rolls)
+        cutting = await _seed_cutting(db, company, specs, rolls)
         contractors = await _seed_contractors(db, company)
         await _seed_shipments(db, company, cutting, contractors)
         await _seed_orders(db, company, ads, clients, variations)

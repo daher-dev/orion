@@ -153,6 +153,11 @@ const Settings = ({ tweaks, setTweak }) => {
         { id: 'integrations',  label: 'Integrações',  icon: 'plug' },
         { id: 'audit',         label: 'Auditoria',    icon: 'history' },
       ] },
+    { group: 'Personalização',
+      items: [
+        { id: 'catalog',       label: 'Catálogo',     icon: 'swatch-book' },
+        { id: 'estoque',       label: 'Estoque',      icon: 'boxes' },
+      ] },
     { group: 'Conta',
       items: [
         { id: 'profile',       label: 'Perfil',         icon: 'user' },
@@ -162,7 +167,7 @@ const Settings = ({ tweaks, setTweak }) => {
   return (
     <div className="page">
       <PageHead sub="settings" title="Ajustes"
-        desc="Configure sua conta, equipe, integrações e como você quer ser avisado."/>
+        desc="Conta, equipe, funções, integrações e avisos."/>
       <HelpCard id="settings" icon="settings" tone="var(--brand-settings)" title="Ajustes — sua conta, equipe e integrações">
         <HelpBody>
           Configure os dados da <b>empresa</b>, convide a <b>equipe</b> e defina <b>funções</b> (quem vê e edita o quê), conecte <b>canais e integrações</b> e escolha como quer ser <b>avisado</b>.
@@ -209,6 +214,8 @@ const Settings = ({ tweaks, setTweak }) => {
         </aside>
         <div>
           {pane === 'company'        && <CompanyPane       tweaks={tweaks} setTweak={setTweak}/>}
+          {pane === 'catalog'        && <CatalogPane/>}
+          {pane === 'estoque'        && <StockThresholdsPane/>}
           {pane === 'members'        && <MembersPane/>}
           {pane === 'roles'          && <RolesPane/>}
           {pane === 'billing'        && <BillingPane/>}
@@ -790,6 +797,290 @@ const NotificationsPane = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ink-3)', padding: '0 4px' }}>
         <Icon name="info" size={12}/>
         Notificações por WhatsApp usam sua integração WhatsApp Business — verifique o número em <span style={{ color: 'var(--accent)', fontWeight: 500, cursor: 'pointer' }}>Integrações → WhatsApp</span>.
+      </div>
+    </div>
+  );
+};
+
+// ───────── Pane: Catálogo (cores & tamanhos configuráveis) ─────────
+const PaletteEditor = ({ colors, onChange, addLabel }) => {
+  const update = (i, patch) => onChange(colors.map((c, j) => j === i ? { ...c, ...patch } : c));
+  const remove = (i) => onChange(colors.filter((_, j) => j !== i));
+  const add = () => onChange([...colors, { hex: '#cccccc', name: '' }]);
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(216px, 1fr))', gap: 10 }}>
+        {colors.map((c, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 8px 8px 10px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--surface)' }}>
+            <label style={{ position: 'relative', width: 30, height: 30, borderRadius: 8, background: c.hex, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.12)', cursor: 'pointer', flexShrink: 0 }} title="Escolher cor">
+              <input type="color" value={c.hex} onChange={e => update(i, { hex: e.target.value })} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', border: 0, padding: 0 }}/>
+            </label>
+            <input value={c.name} placeholder="Nome da cor" onChange={e => update(i, { name: e.target.value })}
+              style={{ flex: 1, minWidth: 0, border: 'none', background: 'transparent', fontSize: 13, color: 'var(--ink)', fontFamily: 'inherit', outline: 'none', padding: 0 }}/>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-3)', flexShrink: 0 }}>{c.hex}</span>
+            <button className="btn btn-ghost btn-sm" title="Remover" onClick={() => remove(i)} disabled={colors.length <= 1} style={{ padding: 5, color: 'var(--ink-3)', opacity: colors.length <= 1 ? 0.4 : 1, flexShrink: 0 }}><Icon name="x" size={14}/></button>
+          </div>
+        ))}
+      </div>
+      <button className="btn btn-sm" onClick={add} style={{ marginTop: 12 }}><Icon name="plus" size={13}/> {addLabel}</button>
+    </div>
+  );
+};
+
+const SizesEditor = ({ sizes, onChange }) => {
+  const [val, setVal] = React.useState('');
+  const add = () => { const v = val.trim().toUpperCase(); if (v && !sizes.includes(v)) onChange([...sizes, v]); setVal(''); };
+  const remove = (s) => onChange(sizes.filter(x => x !== s));
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {sizes.map(s => (
+          <span key={s} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 5px 5px 12px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--surface)', fontFamily: 'var(--font-display)', fontSize: 14, color: 'var(--ink)' }}>
+            {s}
+            <button className="btn btn-ghost btn-sm" onClick={() => remove(s)} disabled={sizes.length <= 1} style={{ padding: 3, color: 'var(--ink-3)', opacity: sizes.length <= 1 ? 0.4 : 1 }} title="Remover"><Icon name="x" size={13}/></button>
+          </span>
+        ))}
+        {!sizes.length && <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>Nenhum tamanho — adicione ao menos um.</span>}
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, maxWidth: 280, alignItems: 'center' }}>
+        <input value={val} onChange={e => setVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }} placeholder="Ex: XG, 38, Único…"
+          style={{ flex: 1, minWidth: 0, padding: '7px 11px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--surface)', color: 'var(--ink)', fontSize: 13, fontFamily: 'inherit', outline: 'none', appearance: 'none', WebkitAppearance: 'none', height: 34, boxSizing: 'border-box' }}/>
+        <button className="btn" onClick={add} style={{ height: 34 }}><Icon name="plus" size={13}/> Adicionar</button>
+      </div>
+    </div>
+  );
+};
+
+// ── Generic list-of-strings editor (tipos de tecido, aviamentos, técnicas) ──
+const StringListEditor = ({ items, onChange, placeholder, addLabel, icon = 'plus' }) => {
+  const update = (i, val) => onChange(items.map((x, j) => j === i ? val : x));
+  const remove = (i) => onChange(items.filter((_, j) => j !== i));
+  const add = () => onChange([...items, '']);
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(248px, 1fr))', gap: 8 }}>
+        {items.map((it, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 4px 4px 6px', border: '1px solid var(--line)', borderRadius: 9, background: 'var(--surface)' }}>
+            <span style={{ width: 22, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-3)', flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
+            <input value={it} placeholder={placeholder} onChange={e => update(i, e.target.value)}
+              style={{ flex: 1, minWidth: 0, border: 'none', background: 'transparent', fontSize: 13, color: 'var(--ink)', fontFamily: 'inherit', outline: 'none', padding: '6px 0' }}/>
+            <button className="btn btn-ghost btn-sm" title="Remover" onClick={() => remove(i)} disabled={items.length <= 1}
+              style={{ padding: 5, color: 'var(--ink-3)', opacity: items.length <= 1 ? 0.4 : 1, flexShrink: 0 }}><Icon name="x" size={14}/></button>
+          </div>
+        ))}
+      </div>
+      <button className="btn btn-sm" onClick={add} style={{ marginTop: 12 }}><Icon name={icon} size={13}/> {addLabel}</button>
+    </div>
+  );
+};
+
+// Render a glyph from the catalog icon library at an arbitrary size.
+const LibGlyph = ({ icon, size = 18 }) => {
+  const lib = window.GARMENT_ICON_LIBRARY || {};
+  const g = lib[icon] || lib.camiseta;
+  return g ? React.cloneElement(g, { width: size, height: size, strokeWidth: 1.6 }) : <Icon name="shirt" size={size}/>;
+};
+
+// Inline icon chooser — shows the current glyph, expands to a grid of options.
+const IconChooser = ({ value, onChange }) => {
+  const [open, setOpen] = React.useState(false);
+  const keys = Object.keys(window.GARMENT_ICON_LIBRARY || {});
+  return (
+    <div style={{ position: 'relative' }}>
+      <button type="button" onClick={() => setOpen(o => !o)} title="Escolher ícone"
+        style={{ width: 38, height: 38, borderRadius: 9, border: open ? '1.5px solid var(--accent)' : '1px solid var(--line)', background: open ? 'var(--accent-soft)' : 'var(--surface)', color: 'var(--ink)', display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: 0 }}>
+        <LibGlyph icon={value} size={19}/>
+      </button>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }}/>
+          <div style={{ position: 'absolute', top: 44, left: 0, zIndex: 41, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, boxShadow: 'var(--shadow-lg, 0 12px 32px -8px rgba(31,27,21,.22))', padding: 8, display: 'grid', gridTemplateColumns: 'repeat(6, 34px)', gap: 4, width: 'max-content' }}>
+            {keys.map(k => {
+              const active = k === value;
+              return (
+                <button key={k} type="button" onClick={() => { onChange(k); setOpen(false); }} title={k}
+                  style={{ width: 34, height: 34, borderRadius: 8, border: active ? '1.5px solid var(--accent)' : '1px solid var(--line-soft)', background: active ? 'var(--accent-soft)' : 'var(--surface)', color: 'var(--ink-2)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}>
+                  <LibGlyph icon={k} size={17}/>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// Editor for the configurable "Tipo de peça" — icon + label + SKU prefix.
+const GarmentTypesEditor = ({ types, onChange }) => {
+  const update = (i, patch) => onChange(types.map((t, j) => j === i ? { ...t, ...patch } : t));
+  const remove = (i) => onChange(types.filter((_, j) => j !== i));
+  const add = () => onChange([...types, { id: 'tipo-' + Date.now().toString(36), label: '', skuPrefix: '', icon: 'shirt' }]);
+  return (
+    <div>
+      <div style={{ display: 'grid', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '38px 1fr 96px 30px', gap: 10, padding: '0 2px', fontSize: 10.5, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-3)', fontWeight: 600 }}>
+          <span>Ícone</span><span>Nome</span><span>SKU</span><span/>
+        </div>
+        {types.map((t, i) => (
+          <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '38px 1fr 96px 30px', gap: 10, alignItems: 'center' }}>
+            <IconChooser value={t.icon} onChange={v => update(i, { icon: v })}/>
+            <input value={t.label} placeholder="Ex: Camiseta" onChange={e => update(i, { label: e.target.value })}
+              style={{ minWidth: 0, padding: '8px 11px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--surface)', color: 'var(--ink)', fontSize: 13, fontFamily: 'inherit', outline: 'none', height: 38, boxSizing: 'border-box' }}/>
+            <input value={t.skuPrefix} placeholder="CAM" maxLength={4}
+              onChange={e => update(i, { skuPrefix: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
+              style={{ minWidth: 0, padding: '8px 11px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'var(--font-mono)', fontSize: 12.5, letterSpacing: '.06em', outline: 'none', height: 38, boxSizing: 'border-box', textAlign: 'center' }}/>
+            <button className="btn btn-ghost btn-sm" title="Remover" onClick={() => remove(i)} disabled={types.length <= 1}
+              style={{ padding: 5, color: 'var(--ink-3)', opacity: types.length <= 1 ? 0.4 : 1 }}><Icon name="x" size={14}/></button>
+          </div>
+        ))}
+      </div>
+      <button className="btn btn-sm" onClick={add} style={{ marginTop: 12 }}><Icon name="plus" size={13}/> Adicionar tipo de peça</button>
+    </div>
+  );
+};
+
+// ───────── Pane: Estoque (avisos de estoque baixo) ─────────
+const STOCK_TIERS = [
+  { id: 'fabric',  label: 'Bobinas de tecido',        icon: 'layers',  where: 'Estoque › Bobinas de tecido', scope: 'por bobina',
+    units: [{ id: 'pct', label: '%', suffix: '%' }, { id: 'kg', label: 'kg', suffix: 'kg' }] },
+  { id: 'paper',   label: 'Bobinas de papel / filme', icon: 'scroll',  where: 'Estoque › Papel',             scope: 'por bobina',
+    units: [{ id: 'pct', label: '%', suffix: '%' }, { id: 'm', label: 'm', suffix: 'm' }] },
+  { id: 'blank',   label: 'Peças lisas',              icon: 'shirt',   where: 'Estoque › Peças lisas',       scope: 'por variação',
+    units: [{ id: 'qty', label: 'un.', suffix: 'un.' }] },
+  { id: 'printed', label: 'Impressos',                icon: 'palette', where: 'Estoque › Impressos',         scope: 'por estampa · lado',
+    units: [{ id: 'qty', label: 'un.', suffix: 'un.' }] },
+  { id: 'product', label: 'Produtos acabados',        icon: 'boxes',   where: 'Estoque › Produtos',          scope: 'por SKU',
+    units: [{ id: 'qty', label: 'un.', suffix: 'un.' }] },
+];
+
+// Valor sugerido ao trocar a unidade de um estoque.
+const STOCK_UNIT_DEFAULTS = {
+  fabric:  { pct: 25, kg: 5 },
+  paper:   { pct: 25, m: 30 },
+  blank:   { qty: 20 },
+  printed: { qty: 10 },
+  product: { qty: 10 },
+};
+
+const stockSummary = (t, cur) => {
+  if (!cur.enabled) return 'Sem aviso — este estoque não é acompanhado.';
+  const u = t.units.find(x => x.id === cur.unit) || t.units[0];
+  if (cur.unit === 'pct') return `Avisa abaixo de ${cur.value}% do saldo inicial · ${t.scope}`;
+  return `Avisa abaixo de ${cur.value} ${u.label} restantes · ${t.scope}`;
+};
+
+const StockThresholdsPane = () => {
+  const cfg = useCatalogConfig();
+  const store = window.CatalogConfig;
+  const th = cfg.stockThresholds || {};
+  const setTier = (id, patch) => store.set({ ...cfg, stockThresholds: { ...th, [id]: { ...th[id], ...patch } } });
+
+  return (
+    <div style={{ display: 'grid', gap: 18 }}>
+      <Card title="Avisos de estoque baixo" sub="O Orion destaca o item e avisa quando o saldo cruza o limite definido aqui." pad={false}>
+        <div>
+          {STOCK_TIERS.map((t, i) => {
+            const cur = th[t.id] || { enabled: true, unit: t.units[0].id, value: STOCK_UNIT_DEFAULTS[t.id][t.units[0].id] };
+            const on = !!cur.enabled;
+            const unit = t.units.find(u => u.id === cur.unit) || t.units[0];
+            return (
+              <div key={t.id} style={{ padding: '15px 18px', borderTop: i ? '1px solid var(--line-soft)' : 'none', opacity: on ? 1 : 0.78, transition: 'opacity .18s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                  <span style={{ width: 38, height: 38, borderRadius: 9, background: on ? 'color-mix(in oklab, var(--brand-inv) 12%, var(--surface))' : 'var(--surface-2)', color: on ? 'var(--brand-inv)' : 'var(--ink-3)', display: 'grid', placeItems: 'center', flexShrink: 0, transition: 'background .18s, color .18s' }}>
+                    <Icon name={t.icon} size={18} strokeWidth={1.7}/>
+                  </span>
+                  <div style={{ flex: 1, minWidth: 160, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ color: 'var(--ink)', fontWeight: 500, fontSize: 14 }}>{t.label}</span>
+                    <span className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-3)' }}>{t.where}</span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
+                    {on ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {t.units.length > 1 && (
+                          <Seg value={cur.unit} onChange={(u) => setTier(t.id, { unit: u, value: STOCK_UNIT_DEFAULTS[t.id][u] })}
+                            options={t.units.map(u => ({ value: u.id, label: u.label }))}/>
+                        )}
+                        <div style={{ width: 118 }}>
+                          <NumField value={cur.value} onChange={(v) => setTier(t.id, { value: v })}
+                            step={unit.id === 'pct' ? 5 : 1} min={0} max={unit.id === 'pct' ? 100 : undefined}
+                            decimals={0} suffix={unit.suffix} align="right"/>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="pill muted">Sem alerta</span>
+                    )}
+                    <Toggle on={on} onChange={(v) => setTier(t.id, { enabled: v })}/>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 9, marginLeft: 52, fontSize: 12, color: on ? 'var(--ink-2)' : 'var(--ink-3)', textWrap: 'pretty', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {on
+                    ? <Icon name="bell" size={11} style={{ color: 'var(--brand-inv)', flexShrink: 0 }}/>
+                    : <Icon name="bell-off" size={11} style={{ color: 'var(--ink-3)', flexShrink: 0 }}/>}
+                  {stockSummary(t, cur)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ink-3)', maxWidth: '62ch', textWrap: 'pretty' }}>
+          <Icon name="info" size={12} style={{ flexShrink: 0 }}/> Desligar um estoque silencia os avisos de reposição dele em todo o Orion — útil para itens que sua confecção não mantém em estoque.
+        </div>
+        <button className="btn" onClick={() => store.set({ ...cfg, stockThresholds: JSON.parse(JSON.stringify(store.defaults.stockThresholds)) })} style={{ marginLeft: 'auto', flexShrink: 0 }}>
+          <Icon name="rotate-ccw" size={13}/> Restaurar padrão
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const CatalogPane = () => {
+  const cfg = useCatalogConfig();
+  const store = window.CatalogConfig;
+  const setPart = (key, val) => store.set({ ...cfg, [key]: val });
+  return (
+    <div style={{ display: 'grid', gap: 18 }}>
+      <Card title="Cores de tecidos" sub="Cores de material disponíveis ao criar um produto. Cada produto escolhe entre estas.">
+        <PaletteEditor colors={cfg.productColors} onChange={v => setPart('productColors', v)} addLabel="Adicionar cor de tecido"/>
+      </Card>
+
+      <Card title="Cores de estampa" sub="Cores de tinta disponíveis para a arte aplicada — combinadas a cada cor de material no produto.">
+        <PaletteEditor colors={cfg.printColors} onChange={v => setPart('printColors', v)} addLabel="Adicionar cor de estampa"/>
+      </Card>
+
+      <Card title="Tamanhos" sub="Grade de tamanhos que pode ser ativada nas variações de cada produto.">
+        <SizesEditor sizes={cfg.sizes} onChange={v => setPart('sizes', v)}/>
+      </Card>
+
+      <Card title="Tipos de tecido" sub="Disponíveis ao receber bobinas em Estoque › Tecidos e na ficha técnica.">
+        <StringListEditor items={cfg.fabricTypes} onChange={v => setPart('fabricTypes', v)}
+          placeholder="Ex: Malha 100% algodão" addLabel="Adicionar tipo de tecido"/>
+      </Card>
+
+      <Card title="Tipos de peça" sub="Modelagens da ficha técnica. Cada uma tem um ícone e um prefixo de SKU.">
+        <GarmentTypesEditor types={cfg.garmentTypes} onChange={v => setPart('garmentTypes', v)}/>
+      </Card>
+
+      <Card title="Aviamentos" sub="Itens que podem ser somados ao custo de uma ficha técnica.">
+        <StringListEditor items={cfg.aviamentos} onChange={v => setPart('aviamentos', v)}
+          placeholder="Ex: Etiqueta de composição" addLabel="Adicionar aviamento"/>
+      </Card>
+
+      <Card title="Técnicas de estampa" sub="Métodos de estampa disponíveis em Catálogo › Estampas.">
+        <StringListEditor items={cfg.techniques} onChange={v => setPart('techniques', v)}
+          placeholder="Ex: DTF, Silkscreen…" addLabel="Adicionar técnica"/>
+      </Card>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ink-3)' }}>
+          <Icon name="info" size={12}/> As mudanças valem para novos produtos. Produtos existentes mantêm o que já foi salvo.
+        </div>
+        <button className="btn" onClick={() => store.reset()} style={{ marginLeft: 'auto' }}><Icon name="rotate-ccw" size={13}/> Restaurar padrão</button>
       </div>
     </div>
   );

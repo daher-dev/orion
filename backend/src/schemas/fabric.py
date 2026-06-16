@@ -14,7 +14,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
-from models.enums import FabricRollKind, FabricType
+from models.enums import FabricMovementKind, FabricRollKind, FabricType
 from schemas._common import Page
 
 
@@ -62,4 +62,48 @@ class FabricRollFilters(BaseModel):
     fabric_type: FabricType | None = None
 
 
+# ---------- Ledger movements ----------
+
+
+class FabricMovementCreate(BaseModel):
+    """Manual receive/adjust against a roll.
+
+    EXIT-by-cutting is automatic (written by the cutting-DONE transition with a
+    ``cutting_order_id`` provenance); this payload covers operator-driven
+    entries/adjustments/exits only.
+    """
+
+    fabric_roll_id: uuid.UUID
+    kind: FabricMovementKind = Field(default=FabricMovementKind.ENTRY)
+    quantity: Decimal = Field(gt=Decimal("0"), max_digits=12, decimal_places=3)
+    notes: str | None = Field(default=None, max_length=500)
+
+
+class FabricRollMini(BaseModel):
+    id: uuid.UUID
+    fabric_type: FabricType
+    supplier_name: str
+    color: str
+
+
+class FabricMovementRead(BaseModel):
+    id: uuid.UUID
+    fabric_roll_id: uuid.UUID
+    fabric_roll: FabricRollMini | None = None
+    kind: FabricMovementKind
+    quantity: Decimal
+    # Provenance, surfaced read-only (set by the cutting-DONE transition).
+    cutting_order_id: uuid.UUID | None = None
+    notes: str | None
+    created_at: datetime
+
+
+class FabricMovementFilters(BaseModel):
+    fabric_roll_id: uuid.UUID | None = None
+    kind: FabricMovementKind | None = None
+    date_from: date | None = None
+    date_to: date | None = None
+
+
 FabricRollPage = Page[FabricRollRead]
+FabricMovementPage = Page[FabricMovementRead]

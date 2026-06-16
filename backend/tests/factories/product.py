@@ -12,7 +12,7 @@ class ProductFactory(ModelFactory[Product]):
     __use_defaults__ = True
     __set_as_default_factory_for_type__ = True
 
-    product_type = ProductType.TSHIRT
+    product_type = ProductType.CAMISETA
     print_id = None
 
 

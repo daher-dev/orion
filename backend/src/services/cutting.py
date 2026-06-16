@@ -5,6 +5,9 @@ Convention notes
 - Every SELECT is :func:`scoped` to the active tenant.
 - ``company_id`` is set explicitly on every insert (cutting orders carry
   the tenant; output rows are child rows of a tenant-scoped order).
+- Cutting is **print-agnostic**: an order is keyed by the garment base
+  (``ProductSpec``) + a free-text colorway (``color`` + ``color_code``), NOT a
+  finished product. The cost snapshot reads the spec directly off the order.
 - Mutations append an audit-log entry under the ``cutting_orders``
   resource type. Status transitions write a human-readable message
   ("Marked cutting CO-XXXX as DONE") so the audit timeline is legible.
@@ -20,9 +23,19 @@ Convention notes
     ``planned_outputs`` (the original planned snapshot is not preserved
     independently — the model carries one row per size).
 
-  The single source of truth shape mirrors the design's "Planejado /
-  Cortado" grid: a single editable list per size, with the operator
-  overwriting the targets as the floor reports progress.
+- **T1 (cutting → DONE)**: on the rising edge into DONE, in the same
+  transaction as the cost snapshot, the order debits its body (+ rib) fabric
+  roll's ``current_weight_kg`` by the derived consumption (clamped at 0) and
+  writes a ``FabricRollMovement(exit)`` per debited roll with the cutting
+  order as provenance. The debit fires **once per order** (guarded on the
+  absence of any prior movement for the order) so a DONE→CUTTING→DONE
+  re-transition never double-debits.
+
+- **Available cut pieces (T2 input)**: a DONE order's outputs become
+  *available* pieces. Availability per size = output qty - Σ requested across
+  all non-cancelled sewing shipments of that order. :func:`available_by_size`
+  is the single source of truth — it powers the ``/available`` read, remessa
+  creation validation, and blank in-production (open_sewing).
 
 - DELETE is blocked when at least one ``SewingShipment`` references the
   order (RESTRICT FK + an explicit pre-check so we surface a friendly
@@ -45,23 +58,27 @@ from models import (
     CuttingRunCost,
     CuttingStatus,
     FabricRoll,
-    Product,
+    FabricRollMovement,
     ProductSpec,
     SewingShipment,
+    SewingShipmentItem,
+    ShipmentStatus,
     Size,
     SpecTrim,
 )
 from schemas._common import PageParams
 from schemas.cutting import (
+    AvailableCutsFilters,
     CuttingCreate,
     CuttingFilters,
     CuttingOutputRead,
     CuttingRead,
     CuttingUpdate,
-    ProductRef,
     RollRef,
+    SpecRef,
 )
 from schemas.cutting_cost import CuttingCostRead
+from services import fabric as fabric_service
 from services._audit import write_audit
 from services._base import scoped
 from shared.exceptions import ConflictError, NotFoundError, ValidationError
@@ -102,9 +119,8 @@ def _outputs_to_read(
 def _to_read(
     order: CuttingOrder,
     *,
-    product: Product,
-    spec: ProductSpec | None,
-    body_roll: FabricRoll,
+    spec: ProductSpec,
+    body_roll: FabricRoll | None,
     rib_roll: FabricRoll | None,
     outputs: list[CuttingOrderOutput],
 ) -> CuttingRead:
@@ -121,8 +137,11 @@ def _to_read(
         actuals = _outputs_to_read(items)
     return CuttingRead(
         id=order.id,
-        product=ProductRef(id=product.id, name=product.name, code=spec.code if spec else None),
-        body_roll=RollRef(id=body_roll.id, code=_roll_code(body_roll) or ""),
+        spec=SpecRef(id=spec.id, code=spec.code, name=spec.name),
+        color=order.color,
+        color_code=order.color_code,
+        # A planning-created draft may carry no roll yet.
+        body_roll=RollRef(id=body_roll.id, code=_roll_code(body_roll) or "") if body_roll else None,
         rib_roll=RollRef(id=rib_roll.id, code=_roll_code(rib_roll) or "") if rib_roll else None,
         status=order.status,
         planned_outputs=planned,
@@ -150,24 +169,27 @@ async def _load_with_relations(
     *,
     company_id: uuid.UUID,
     order_id: uuid.UUID,
-) -> tuple[CuttingOrder, Product, ProductSpec | None, FabricRoll, FabricRoll | None, list[CuttingOrderOutput]]:
+) -> tuple[CuttingOrder, ProductSpec, FabricRoll | None, FabricRoll | None, list[CuttingOrderOutput]]:
     stmt = scoped(select(CuttingOrder), CuttingOrder, company_id).where(CuttingOrder.id == order_id)
     order = (await db.exec(stmt)).first()
     if order is None:
         raise NotFoundError(detail="Cutting order not found")
 
-    product = (await db.exec(select(Product).where(Product.id == order.product_id))).first()
-    if product is None:  # pragma: no cover — FK-guarded at the DB layer
-        raise NotFoundError(detail="Cutting order references a missing product")
-    spec = (await db.exec(select(ProductSpec).where(ProductSpec.id == product.spec_id))).first()
-    body = (await db.exec(select(FabricRoll).where(FabricRoll.id == order.body_roll_id))).first()
-    if body is None:  # pragma: no cover — FK-guarded at the DB layer
-        raise NotFoundError(detail="Cutting order references a missing body roll")
+    spec = (await db.exec(select(ProductSpec).where(ProductSpec.id == order.spec_id))).first()
+    if spec is None:  # pragma: no cover — FK-guarded at the DB layer
+        raise NotFoundError(detail="Cutting order references a missing product spec")
+    # ``body_roll_id`` is nullable (planning draft): a missing FK is a real
+    # error, but a NULL id just means no roll has been assigned yet.
+    body: FabricRoll | None = None
+    if order.body_roll_id is not None:
+        body = (await db.exec(select(FabricRoll).where(FabricRoll.id == order.body_roll_id))).first()
+        if body is None:  # pragma: no cover — FK-guarded at the DB layer
+            raise NotFoundError(detail="Cutting order references a missing body roll")
     rib: FabricRoll | None = None
     if order.rib_roll_id is not None:
         rib = (await db.exec(select(FabricRoll).where(FabricRoll.id == order.rib_roll_id))).first()
     outputs = await _outputs_for(db, order.id)
-    return order, product, spec, body, rib, outputs
+    return order, spec, body, rib, outputs
 
 
 def _cost_to_read(row: CuttingRunCost) -> CuttingCostRead:
@@ -201,43 +223,48 @@ async def _trims_total_for_spec(db: AsyncSession, *, spec_id: uuid.UUID) -> Deci
     return total
 
 
+def _consumption_kg(*, spec: ProductSpec, total_pieces: int) -> tuple[Decimal, Decimal]:
+    """Derive (body_kg, rib_kg) consumed for ``total_pieces`` of this spec.
+
+    Body weight comes from the spec's per-piece grams; ribana is a percentage
+    of the body weight when the spec carries ribana. This is the same math the
+    cost snapshot uses — reused so the T1 debit and the cost record agree.
+    """
+
+    weight_per_piece_g = Decimal(str(spec.fabric_weight_per_piece_g))
+    body_kg = (Decimal(total_pieces) * weight_per_piece_g / Decimal("1000")).quantize(_KG)
+    if spec.has_ribana and spec.ribana_weight_pct is not None:
+        rib_kg = (body_kg * Decimal(str(spec.ribana_weight_pct)) / Decimal("100")).quantize(_KG)
+    else:
+        rib_kg = Decimal("0.000")
+    return body_kg, rib_kg
+
+
 async def _compute_and_store_cost(
     db: AsyncSession,
     *,
     company_id: uuid.UUID,
     order: CuttingOrder,
-    spec: ProductSpec | None,
+    spec: ProductSpec,
     body_roll: FabricRoll,
     rib_roll: FabricRoll | None,
     outputs: list[CuttingOrderOutput],
 ) -> None:
     """Compute the frozen per-run cost and upsert the ``CuttingRunCost`` row.
 
-    Consumed fabric weight is *derived* from the spec's per-piece weight
-    (and ribana percentage) — the cutting flow never mutates a roll's
-    ``current_weight_kg``, so cost must not depend on roll-weight deltas.
-    All prices/weights/piece-count are persisted so the record is an
-    immutable snapshot even if the spec or roll prices change later.
+    Consumed fabric weight is *derived* from the spec's per-piece weight (and
+    ribana percentage) via :func:`_consumption_kg`. All prices/weights/piece-
+    count are persisted so the record is an immutable snapshot even if the spec
+    or roll prices change later.
 
-    The row is replaced (delete-then-insert) so a second DONE transition
-    after a revert to CUTTING does not violate the UNIQUE constraint.
+    The row is replaced (delete-then-insert) so a second DONE transition after
+    a revert to CUTTING does not violate the UNIQUE constraint.
     """
 
     total_pieces = sum(o.quantity for o in outputs)
 
-    # Per-piece body weight (grams → kg). Spec is FK-guaranteed in practice,
-    # but guard defensively: a missing spec yields a zero-cost record rather
-    # than a crash on a DONE transition.
-    weight_per_piece_g = Decimal(str(spec.fabric_weight_per_piece_g)) if spec is not None else Decimal("0")
-    body_fabric_kg = (Decimal(total_pieces) * weight_per_piece_g / Decimal("1000")).quantize(_KG)
-
-    has_ribana = bool(spec.has_ribana) if spec is not None else False
-    ribana_pct = (
-        Decimal(str(spec.ribana_weight_pct))
-        if spec is not None and spec.has_ribana and spec.ribana_weight_pct is not None
-        else Decimal("0")
-    )
-    ribana_kg = (body_fabric_kg * ribana_pct / Decimal("100")).quantize(_KG) if has_ribana else Decimal("0.000")
+    body_fabric_kg, ribana_kg = _consumption_kg(spec=spec, total_pieces=total_pieces)
+    has_ribana = bool(spec.has_ribana)
 
     body_price = Decimal(str(body_roll.price_per_kg))
     # Ribana is cut from the rib roll when present, else from the body roll.
@@ -246,10 +273,10 @@ async def _compute_and_store_cost(
     fabric_cost = (body_fabric_kg * body_price).quantize(_MONEY)
     ribana_cost = (ribana_kg * rib_price).quantize(_MONEY) if has_ribana else Decimal("0.00")
 
-    trims_per_piece = await _trims_total_for_spec(db, spec_id=spec.id) if spec is not None else Decimal("0")
+    trims_per_piece = await _trims_total_for_spec(db, spec_id=spec.id)
     trims_cost = (trims_per_piece * Decimal(total_pieces)).quantize(_MONEY)
 
-    labor_per_piece = Decimal(str(spec.labor_cost)) if spec is not None else Decimal("0")
+    labor_per_piece = Decimal(str(spec.labor_cost))
     labor_cost = (labor_per_piece * Decimal(total_pieces)).quantize(_MONEY)
 
     total_cost = (fabric_cost + ribana_cost + trims_cost + labor_cost).quantize(_MONEY)
@@ -287,6 +314,67 @@ async def _compute_and_store_cost(
     await db.flush()
 
 
+async def _has_fabric_movements(db: AsyncSession, *, company_id: uuid.UUID, order_id: uuid.UUID) -> bool:
+    """Whether the T1 fabric debit already fired for this order (idempotency)."""
+
+    stmt = scoped(select(func.count()), FabricRollMovement, company_id).where(
+        FabricRollMovement.cutting_order_id == order_id
+    )
+    return int((await db.exec(stmt)).first() or 0) > 0
+
+
+async def _debit_fabric_on_done(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    user_id: uuid.UUID,
+    order: CuttingOrder,
+    spec: ProductSpec,
+    body_roll: FabricRoll,
+    rib_roll: FabricRoll | None,
+    outputs: list[CuttingOrderOutput],
+) -> list[str]:
+    """T1: debit fabric rolls for the cut pieces, once per order.
+
+    Body kg comes off the body roll; rib kg (when the spec has ribana AND a rib
+    roll is on the order) comes off the rib roll. Rolls clamp at 0; the EXIT
+    movement records the actual consumed amount with the cutting order as
+    provenance. Only debits rolls that exist on the order — if the spec has
+    ribana but no rib roll, the rib weight is folded into cost (off the body
+    price) but no separate fabric debit happens.
+
+    Returns audit messages (one per debited roll) for the caller to write.
+    """
+
+    total_pieces = sum(o.quantity for o in outputs)
+    body_kg, rib_kg = _consumption_kg(spec=spec, total_pieces=total_pieces)
+    messages: list[str] = []
+
+    if body_kg > 0:
+        await fabric_service.consume(
+            db,
+            company_id=company_id,
+            roll=body_roll,
+            quantity=body_kg,
+            cutting_order_id=order.id,
+            notes=f"Corte CO-{_short_id(order.id)}",
+        )
+        messages.append(f"Debited fabric {_roll_code(body_roll)} -{body_kg} kg for CO-{_short_id(order.id)}")
+
+    if rib_roll is not None and rib_kg > 0:
+        await fabric_service.consume(
+            db,
+            company_id=company_id,
+            roll=rib_roll,
+            quantity=rib_kg,
+            cutting_order_id=order.id,
+            notes=f"Corte CO-{_short_id(order.id)}",
+        )
+        messages.append(f"Debited fabric {_roll_code(rib_roll)} -{rib_kg} kg for CO-{_short_id(order.id)}")
+
+    return messages
+
+
 async def get_cutting_cost(
     db: AsyncSession,
     *,
@@ -318,11 +406,13 @@ def _apply_filters(stmt, filters: CuttingFilters):
     if filters.q:
         like = f"%{filters.q.strip().lower()}%"
         stmt = (
-            stmt.join(Product, Product.id == CuttingOrder.product_id)
+            stmt.join(ProductSpec, ProductSpec.id == CuttingOrder.spec_id)
             .join(FabricRoll, FabricRoll.id == CuttingOrder.body_roll_id)
             .where(
                 or_(
-                    func.lower(Product.name).like(like),
+                    func.lower(ProductSpec.code).like(like),
+                    func.lower(ProductSpec.name).like(like),
+                    func.lower(CuttingOrder.color).like(like),
                     func.lower(FabricRoll.supplier_name).like(like),
                     func.lower(cast(CuttingOrder.id, String)).like(like),
                 )
@@ -330,8 +420,8 @@ def _apply_filters(stmt, filters: CuttingFilters):
         )
     if filters.status is not None:
         stmt = stmt.where(CuttingOrder.status == filters.status)
-    if filters.product_id is not None:
-        stmt = stmt.where(CuttingOrder.product_id == filters.product_id)
+    if filters.spec_id is not None:
+        stmt = stmt.where(CuttingOrder.spec_id == filters.spec_id)
     return stmt
 
 
@@ -358,15 +448,12 @@ async def list_cutting_orders(
     if not orders:
         return [], total
 
-    product_ids = {o.product_id for o in orders}
-    roll_ids = {o.body_roll_id for o in orders} | {o.rib_roll_id for o in orders if o.rib_roll_id is not None}
+    spec_ids = {o.spec_id for o in orders}
+    roll_ids = {o.body_roll_id for o in orders if o.body_roll_id is not None} | {
+        o.rib_roll_id for o in orders if o.rib_roll_id is not None
+    }
     order_ids = [o.id for o in orders]
 
-    products_by_id = {
-        p.id: p
-        for p in (await db.exec(select(Product).where(Product.id.in_(product_ids)))).all()  # type: ignore[attr-defined]
-    }
-    spec_ids = {p.spec_id for p in products_by_id.values()}
     specs_by_id = {
         s.id: s
         for s in (await db.exec(select(ProductSpec).where(ProductSpec.id.in_(spec_ids)))).all()  # type: ignore[attr-defined]
@@ -388,9 +475,8 @@ async def list_cutting_orders(
         [
             _to_read(
                 order,
-                product=products_by_id[order.product_id],
-                spec=specs_by_id.get(products_by_id[order.product_id].spec_id),
-                body_roll=rolls_by_id[order.body_roll_id],
+                spec=specs_by_id[order.spec_id],
+                body_roll=rolls_by_id.get(order.body_roll_id) if order.body_roll_id else None,
                 rib_roll=rolls_by_id.get(order.rib_roll_id) if order.rib_roll_id else None,
                 outputs=outputs_by_order.get(order.id, []),
             )
@@ -406,19 +492,159 @@ async def get_cutting_order(
     company_id: uuid.UUID,
     order_id: uuid.UUID,
 ) -> CuttingRead:
-    order, product, spec, body, rib, outputs = await _load_with_relations(db, company_id=company_id, order_id=order_id)
-    return _to_read(order, product=product, spec=spec, body_roll=body, rib_roll=rib, outputs=outputs)
+    order, spec, body, rib, outputs = await _load_with_relations(db, company_id=company_id, order_id=order_id)
+    return _to_read(order, spec=spec, body_roll=body, rib_roll=rib, outputs=outputs)
+
+
+# ---------------------------------------------------------- available cut pieces
+
+
+async def available_by_size(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    cutting_order_id: uuid.UUID,
+) -> dict[Size, int]:
+    """Per-size remaining (un-sent) cut pieces for a cutting order.
+
+    ``remaining(size) = output_qty(size) - Σ requested(size)`` across all
+    non-cancelled sewing shipments of the order, clamped at ≥0. The single
+    source of truth for cut availability (used by the ``/available`` read,
+    remessa-create validation, and blank in-production).
+    """
+
+    outputs = await _outputs_for(db, cutting_order_id)
+    output_by_size: dict[Size, int] = {o.size: o.quantity for o in outputs}
+
+    sent_stmt = (
+        scoped(
+            select(SewingShipmentItem.size, func.coalesce(func.sum(SewingShipmentItem.requested_quantity), 0)),
+            SewingShipment,
+            company_id,
+        )
+        .join(SewingShipment, SewingShipment.id == SewingShipmentItem.shipment_id)
+        .where(
+            SewingShipment.cutting_order_id == cutting_order_id,
+            SewingShipment.status != ShipmentStatus.CANCELLED,
+        )
+        .group_by(SewingShipmentItem.size)
+    )
+    sent_by_size: dict[Size, int] = {row[0]: int(row[1] or 0) for row in (await db.exec(sent_stmt)).all()}
+
+    remaining: dict[Size, int] = {}
+    for size, qty in output_by_size.items():
+        remaining[size] = max(0, qty - sent_by_size.get(size, 0))
+    return remaining
+
+
+async def list_available_cuts(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    filters: AvailableCutsFilters,
+    page: PageParams,
+) -> tuple[list[dict], int]:
+    """DONE cutting orders that still have remaining pieces for some size.
+
+    Aggregates committed (requested) quantities across all non-cancelled
+    shipments in one grouped query, then nets against outputs in Python. Only
+    orders with ``total_available > 0`` are surfaced; the result is paginated
+    after the filter (the cutting catalog is small per tenant).
+    """
+
+    base = scoped(select(CuttingOrder), CuttingOrder, company_id).where(CuttingOrder.status == CuttingStatus.DONE)
+    if filters.spec_id is not None:
+        base = base.where(CuttingOrder.spec_id == filters.spec_id)
+    if filters.q:
+        like = f"%{filters.q.strip().lower()}%"
+        base = base.join(ProductSpec, ProductSpec.id == CuttingOrder.spec_id).where(
+            or_(
+                func.lower(ProductSpec.code).like(like),
+                func.lower(ProductSpec.name).like(like),
+                func.lower(CuttingOrder.color).like(like),
+            )
+        )
+
+    orders = list((await db.exec(base.order_by(CuttingOrder.created_at.desc()))).all())  # type: ignore[attr-defined]
+    if not orders:
+        return [], 0
+
+    order_ids = [o.id for o in orders]
+    spec_ids = {o.spec_id for o in orders}
+    specs_by_id = {
+        s.id: s
+        for s in (await db.exec(select(ProductSpec).where(ProductSpec.id.in_(spec_ids)))).all()  # type: ignore[attr-defined]
+    }
+
+    # outputs per order/size
+    outputs_by_order: dict[uuid.UUID, dict[Size, int]] = {}
+    outputs_stmt = select(CuttingOrderOutput).where(
+        CuttingOrderOutput.cutting_order_id.in_(order_ids)  # type: ignore[attr-defined]
+    )
+    for o in (await db.exec(outputs_stmt)).all():
+        outputs_by_order.setdefault(o.cutting_order_id, {})[o.size] = o.quantity
+
+    # committed (requested) per order/size across non-cancelled shipments
+    sent_stmt = (
+        scoped(
+            select(
+                SewingShipment.cutting_order_id,
+                SewingShipmentItem.size,
+                func.coalesce(func.sum(SewingShipmentItem.requested_quantity), 0),
+            ),
+            SewingShipment,
+            company_id,
+        )
+        .join(SewingShipmentItem, SewingShipmentItem.shipment_id == SewingShipment.id)
+        .where(
+            SewingShipment.cutting_order_id.in_(order_ids),  # type: ignore[attr-defined]
+            SewingShipment.status != ShipmentStatus.CANCELLED,
+        )
+        .group_by(SewingShipment.cutting_order_id, SewingShipmentItem.size)
+    )
+    sent_by_order: dict[uuid.UUID, dict[Size, int]] = {}
+    for co_id, size, total in (await db.exec(sent_stmt)).all():
+        sent_by_order.setdefault(co_id, {})[size] = int(total or 0)
+
+    rows: list[dict] = []
+    for order in orders:
+        outputs = outputs_by_order.get(order.id, {})
+        sent = sent_by_order.get(order.id, {})
+        sizes: list[dict] = []
+        total_available = 0
+        for size in sorted(outputs, key=lambda s: s.value):
+            remaining = max(0, outputs[size] - sent.get(size, 0))
+            if remaining > 0:
+                sizes.append({"size": size, "available": remaining})
+                total_available += remaining
+        if total_available <= 0:
+            continue
+        spec = specs_by_id[order.spec_id]
+        rows.append(
+            {
+                "cutting_order_id": order.id,
+                "code": f"CO-{_short_id(order.id)}",
+                "spec": {"id": spec.id, "code": spec.code, "name": spec.name},
+                "color": order.color,
+                "color_code": order.color_code,
+                "sizes": sizes,
+                "total_available": total_available,
+            }
+        )
+
+    total = len(rows)
+    return rows[page.offset : page.offset + page.page_size], total
 
 
 # ----------------------------------------------------------------------- create
 
 
-async def _assert_product_in_company(db: AsyncSession, *, company_id: uuid.UUID, product_id: uuid.UUID) -> Product:
-    stmt = scoped(select(Product), Product, company_id).where(Product.id == product_id)
-    product = (await db.exec(stmt)).first()
-    if product is None:
-        raise ValidationError(detail="Product not found for this company")
-    return product
+async def _assert_spec_in_company(db: AsyncSession, *, company_id: uuid.UUID, spec_id: uuid.UUID) -> ProductSpec:
+    stmt = scoped(select(ProductSpec), ProductSpec, company_id).where(ProductSpec.id == spec_id)
+    spec = (await db.exec(stmt)).first()
+    if spec is None:
+        raise ValidationError(detail="Product spec not found for this company")
+    return spec
 
 
 async def _assert_roll_in_company(db: AsyncSession, *, company_id: uuid.UUID, roll_id: uuid.UUID) -> FabricRoll:
@@ -436,20 +662,28 @@ async def create_cutting_order(
     user_id: uuid.UUID,
     payload: CuttingCreate,
 ) -> CuttingRead:
+    if payload.rib_roll_id is not None and payload.body_roll_id is None:
+        # Mirror the schema-layer guard so a service-level call also rejects a
+        # rib-only draft with a clean error.
+        raise ConflictError(detail="rib_roll_id requires body_roll_id")
     if payload.rib_roll_id is not None and payload.rib_roll_id == payload.body_roll_id:
         # Surfaced as 409 so the frontend can render the same inline error
         # ("Bobina corpo e ribana devem ser diferentes") regardless of
         # whether validation tripped at the schema layer or here.
         raise ConflictError(detail="body_roll_id and rib_roll_id must be different")
 
-    await _assert_product_in_company(db, company_id=company_id, product_id=payload.product_id)
-    await _assert_roll_in_company(db, company_id=company_id, roll_id=payload.body_roll_id)
+    await _assert_spec_in_company(db, company_id=company_id, spec_id=payload.spec_id)
+    # A planning-created draft carries no roll — only validate when present.
+    if payload.body_roll_id is not None:
+        await _assert_roll_in_company(db, company_id=company_id, roll_id=payload.body_roll_id)
     if payload.rib_roll_id is not None:
         await _assert_roll_in_company(db, company_id=company_id, roll_id=payload.rib_roll_id)
 
     order = CuttingOrder(
         company_id=company_id,
-        product_id=payload.product_id,
+        spec_id=payload.spec_id,
+        color=payload.color.strip(),
+        color_code=payload.color_code.upper(),
         body_roll_id=payload.body_roll_id,
         rib_roll_id=payload.rib_roll_id,
         status=CuttingStatus.PENDING,
@@ -535,6 +769,27 @@ async def update_cutting_order(
     if "cut_at" in data:
         order.cut_at = data["cut_at"]
 
+    # Roll assignment on a planning draft. ``exclude_unset`` membership lets the
+    # operator set OR clear a roll; we validate the merged order state (body
+    # required when a rib is present, body != rib) so a PATCH that touches only
+    # one roll is checked against the other already on the order.
+    if "body_roll_id" in data:
+        new_body = data["body_roll_id"]
+        if new_body is not None:
+            await _assert_roll_in_company(db, company_id=company_id, roll_id=new_body)
+        order.body_roll_id = new_body
+    if "rib_roll_id" in data:
+        new_rib = data["rib_roll_id"]
+        if new_rib is not None:
+            await _assert_roll_in_company(db, company_id=company_id, roll_id=new_rib)
+        order.rib_roll_id = new_rib
+    if "body_roll_id" in data or "rib_roll_id" in data:
+        if order.rib_roll_id is not None and order.body_roll_id is None:
+            raise ConflictError(detail="rib_roll_id requires body_roll_id")
+        if order.rib_roll_id is not None and order.rib_roll_id == order.body_roll_id:
+            raise ConflictError(detail="body_roll_id and rib_roll_id must be different")
+        audit_messages.append(f"Assigned rolls for CO-{_short_id(order.id)}")
+
     if "actual_outputs" in data and data["actual_outputs"] is not None:
         await db.exec(
             delete(CuttingOrderOutput).where(CuttingOrderOutput.cutting_order_id == order.id)  # type: ignore[arg-type]
@@ -556,18 +811,44 @@ async def update_cutting_order(
     db.add(order)
     await db.flush()
 
-    # Freeze the production cost the moment the order reaches DONE. We reload
-    # the full entity graph (spec, rolls, outputs) so the snapshot reflects
-    # any actual_outputs applied in this same request, then upsert the row.
+    # T1 + cost snapshot fire on the rising edge into DONE. We reload the full
+    # entity graph (spec, rolls, outputs) so both reflect any actual_outputs
+    # applied in this same request, then debit fabric (once per order) and
+    # upsert the cost row — all in this one transaction.
     if transitioned_to_done:
+        # A planning-created draft must have a roll assigned before it can post
+        # T1: the fabric debit + cost snapshot both read the body roll. Reject
+        # rather than silently completing a roll-less order.
+        if order.body_roll_id is None:
+            raise ConflictError(detail="Cannot complete cutting order — assign a fabric roll first")
+
         (
             done_order,
-            _product,
             spec,
             body_roll,
             rib_roll,
             outputs,
         ) = await _load_with_relations(db, company_id=company_id, order_id=order.id)
+        # Guaranteed non-None by the guard above; narrow for the cost/debit calls.
+        assert body_roll is not None
+
+        # Idempotency: only debit fabric if it has never been debited for this
+        # order. A revert to CUTTING does NOT credit fabric back, so a re-DONE
+        # must not debit again.
+        if not await _has_fabric_movements(db, company_id=company_id, order_id=order.id):
+            audit_messages.extend(
+                await _debit_fabric_on_done(
+                    db,
+                    company_id=company_id,
+                    user_id=user_id,
+                    order=done_order,
+                    spec=spec,
+                    body_roll=body_roll,
+                    rib_roll=rib_roll,
+                    outputs=outputs,
+                )
+            )
+
         await _compute_and_store_cost(
             db,
             company_id=company_id,
@@ -633,10 +914,12 @@ async def delete_cutting_order(
 
 
 __all__ = [
+    "available_by_size",
     "create_cutting_order",
     "delete_cutting_order",
     "get_cutting_cost",
     "get_cutting_order",
+    "list_available_cuts",
     "list_cutting_orders",
     "update_cutting_order",
 ]

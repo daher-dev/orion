@@ -9,7 +9,12 @@ from models.pg_enums import STOCK_EXIT_REASON, STOCK_SOURCE
 
 
 class StockEntry(CompanyModel, table=True):
-    """Pieces flowing into stock (typically from a sewing shipment)."""
+    """Pieces flowing into finished stock.
+
+    Sewing no longer credits finished stock (it credits blank pieces in T3);
+    finished pieces are now credited by an Assembly (Montagem) run
+    (``StockSource.ASSEMBLY``), traced via the ``assembly_run_id`` provenance FK.
+    """
 
     __tablename__ = "stock_entries"
     __table_args__ = (CheckConstraint("quantity > 0", name="quantity_positive"),)
@@ -22,17 +27,20 @@ class StockEntry(CompanyModel, table=True):
             index=True,
         ),
     )
-    shipment_id: uuid.UUID | None = Field(
+    quantity: int = Field(gt=0)
+    source: StockSource = Field(sa_type=STOCK_SOURCE)
+    # Provenance: a finished-stock credit may originate from an assembly run
+    # (T5). Set only by the assemble transition (Phase 4), null on manual /
+    # import entries.
+    assembly_run_id: uuid.UUID | None = Field(
         default=None,
         sa_column=Column(
             Uuid,
-            ForeignKey("sewing_shipments.id", ondelete="SET NULL"),
+            ForeignKey("assembly_runs.id", ondelete="SET NULL"),
             nullable=True,
             index=True,
         ),
     )
-    quantity: int = Field(gt=0)
-    source: StockSource = Field(sa_type=STOCK_SOURCE)
     notes: str | None = Field(default=None)
 
 

@@ -1,7 +1,6 @@
-import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, UniqueConstraint, Uuid
+from sqlalchemy import CheckConstraint, DateTime, UniqueConstraint
 from sqlmodel import Field
 
 from models.base import CompanyModel
@@ -14,9 +13,8 @@ class Batch(CompanyModel, table=True):
     packed into one production/dispatch run.
 
     Orders are linked to a batch via ``Order.batch_id``. A batch aggregates the
-    print designs its orders need, lets the operator adjust how many of each to
-    print (``BatchPrintAdjustment``), then drives separation-label printing and
-    the Montador DTF send.
+    print designs its orders need and drives separation-label printing; its
+    per-estampa production grid is computed live from the linked orders.
     """
 
     __tablename__ = "batches"
@@ -35,63 +33,6 @@ class Batch(CompanyModel, table=True):
     total_pieces: int = Field(default=0, ge=0)
 
     labels_printed_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
-    prints_sent_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
     completed_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
 
     notes: str | None = Field(default=None, max_length=500)
-
-
-class BatchPrintAdjustment(CompanyModel, table=True):
-    """Per-stamp/colour print adjustment for a batch.
-
-    One row per ``(batch, print_design, product_color)``: how many pieces the
-    batch's orders require (``qty_needed``), the live printed-stamp on-hand at
-    the last recompute (``qty_stock``, netted from the print-stock ledger), and
-    the operator's final decision of how many to print (``qty_to_print``, which
-    auto-defaults to ``max(0, qty_needed - qty_stock)`` for new rows but is
-    preserved once an operator has adjusted it). ``prints_sent`` flips to True
-    once the design has been dispatched to the Montador DTF; ``stock_committed_at``
-    flips once its print-stock EXIT has been written (idempotency guard).
-    """
-
-    __tablename__ = "batch_print_adjustments"
-    __table_args__ = (
-        UniqueConstraint(
-            "batch_id",
-            "print_design_id",
-            "product_color",
-            name="uq_batch_print_adjustments_design_color",
-        ),
-        CheckConstraint("qty_needed >= 0", name="qty_needed_non_negative"),
-        CheckConstraint("qty_stock >= 0", name="qty_stock_non_negative"),
-        CheckConstraint("qty_to_print >= 0", name="qty_to_print_non_negative"),
-    )
-
-    batch_id: uuid.UUID = Field(
-        sa_column=Column(
-            Uuid,
-            ForeignKey("batches.id", ondelete="CASCADE"),
-            nullable=False,
-            index=True,
-        ),
-    )
-    print_design_id: uuid.UUID = Field(
-        sa_column=Column(
-            Uuid,
-            ForeignKey("print_designs.id", ondelete="RESTRICT"),
-            nullable=False,
-            index=True,
-        ),
-    )
-    product_color: str = Field(max_length=80)
-
-    qty_needed: int = Field(default=0, ge=0)
-    qty_stock: int = Field(default=0, ge=0)
-    qty_to_print: int = Field(default=0, ge=0)
-    prints_sent: bool = Field(default=False)
-
-    # Idempotency guard: set when the row's ``qty_to_print`` has been debited
-    # from the print-stock ledger (a ``PrintStockMovement`` EXIT was written).
-    # Ensures a re-transition to PRINTED — or a Montador re-send — never
-    # double-decrements the printed-stamp on-hand.
-    stock_committed_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))

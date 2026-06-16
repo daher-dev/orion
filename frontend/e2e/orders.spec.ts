@@ -90,7 +90,7 @@ async function seedRefs(request: APIRequestContext): Promise<SeedRefs> {
   // 2. Product + Variation
   const product = await apiPost(request, "/v1/products", {
     name: "Cropped Oversized",
-    product_type: "tshirt",
+    product_type: "cropped",
     spec_id: spec.id,
     variations: [{ size: "m", color: "Preto", color_code: "BLK" }],
   });
@@ -140,13 +140,42 @@ async function gotoOrders(page: Page) {
   await expect(page.getByRole("heading", { name: /Pedidos/i, level: 1 })).toBeVisible();
 }
 
+/**
+ * The orders page now defaults to the Quadro (board) view. The table-centric
+ * assertions below (empty state, row testids, status filter) live behind the
+ * "Tabela" toggle, so switch to it after the page lands.
+ */
+async function gotoOrdersTable(page: Page) {
+  await gotoOrders(page);
+  await page.getByTestId("orders-view-table").click();
+}
+
+/**
+ * Credit finished stock for a variation so an order can clear the T6 ship
+ * guard (shipping debits finished stock and 409s when on-hand can't cover the
+ * order quantity). A manual `source=adjustment` entry is the canonical way to
+ * seed counted finished inventory.
+ */
+async function creditFinishedStock(
+  request: APIRequestContext,
+  variationId: string,
+  quantity: number,
+) {
+  await apiPost(request, "/v1/stock/entries", {
+    variation_id: variationId,
+    quantity,
+    source: "adjustment",
+    notes: "E2E finished-stock seed",
+  });
+}
+
 test.describe("Sales: Orders", () => {
   test.beforeEach(async ({ request }) => {
     await cleanup(request);
   });
 
   test("empty state CTA is reachable when no orders exist", async ({ page }) => {
-    await gotoOrders(page);
+    await gotoOrdersTable(page);
     await expect(page.getByText("Nenhum pedido ainda")).toBeVisible();
   });
 
@@ -161,7 +190,7 @@ test.describe("Sales: Orders", () => {
       sale_price: "200.00",
     });
 
-    await gotoOrders(page);
+    await gotoOrdersTable(page);
     await expect(page.getByText("Mariana Costa").first()).toBeVisible();
     await expect(page.getByText("Cropped Oversized").first()).toBeVisible();
 
@@ -177,7 +206,7 @@ test.describe("Sales: Orders", () => {
     const paidOrder = await seedOrder(request, refs, { external_order_id: "PAID" });
     await apiPost(request, `/v1/orders/${paidOrder.id}/status`, { status: "paid" });
 
-    await gotoOrders(page);
+    await gotoOrdersTable(page);
     // Both rows visible by default. Target rows by their stable row testid:
     // the localized status pill ("Pendente"/"Pago") substring-collides with the
     // external_order_id text ("PEND"/"PAID") under getByText's case-insensitive
@@ -200,6 +229,9 @@ test.describe("Sales: Orders", () => {
   }) => {
     const refs = await seedRefs(request);
     const order = await seedOrder(request, refs, { external_order_id: "FLOW" });
+    // Shipping debits finished stock (T6 guard) — credit enough first so the
+    // ship transition isn't rejected with 409 "Insufficient finished stock".
+    await creditFinishedStock(request, refs.variationId, 5);
 
     await page.goto(`/pt-BR/orders/${order.id}`);
     await expect(page.getByRole("heading", { name: /ORD-/, level: 1 })).toBeVisible();
@@ -236,7 +268,10 @@ test.describe("Sales: Orders", () => {
   test("delete is blocked when stock has moved", async ({ page, request }) => {
     const refs = await seedRefs(request);
     const order = await seedOrder(request, refs, { external_order_id: "BLOCKED" });
-    // Move through paid → shipped to create a stock exit.
+    // Credit finished stock so the ship transition clears the T6 guard, then
+    // move pending → paid → shipped. Shipping writes an append-only StockExit,
+    // which is what permanently blocks deletion.
+    await creditFinishedStock(request, refs.variationId, 5);
     await apiPost(request, `/v1/orders/${order.id}/status`, { status: "paid" });
     await apiPost(request, `/v1/orders/${order.id}/status`, { status: "shipped" });
 

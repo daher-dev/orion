@@ -40,19 +40,26 @@ export function CuttingTable({ rows, onView }: Props) {
         ),
       },
       {
-        id: "product",
-        header: () => t("table.columns.product"),
+        id: "spec",
+        header: () => t("table.columns.spec"),
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5">
             <span className="text-[13px] font-medium text-[color:var(--orion-ink)]">
-              {row.original.product.name}
+              {row.original.spec.name}
             </span>
-            {row.original.product.code ? (
-              <span className="font-mono text-[11px] text-[color:var(--orion-ink-3)]">
-                {row.original.product.code}
-              </span>
-            ) : null}
+            <span className="font-mono text-[11px] text-[color:var(--orion-ink-3)]">
+              {row.original.spec.code}
+            </span>
           </div>
+        ),
+      },
+      {
+        id: "color",
+        header: () => t("table.columns.color"),
+        cell: ({ row }) => (
+          <span className="text-[13px] text-[color:var(--orion-ink-2)]">
+            {row.original.color}
+          </span>
         ),
       },
       {

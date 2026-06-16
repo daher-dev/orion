@@ -1,9 +1,9 @@
 """Service layer for the per-company stock-alert threshold.
 
-The threshold is stored as ``Company.low_stock_threshold`` (no dedicated
-settings table — mirrors the ``montador_user_email`` precedent). Reads return
-the stored value; writes persist + audit. Tenant scoping is implicit because
-every operation targets the caller's own ``company_id``.
+The threshold is stored as ``Company.low_stock_threshold`` (a scalar column on
+the company row rather than a dedicated settings table). Reads return the stored
+value; writes persist + audit. Tenant scoping is implicit because every
+operation targets the caller's own ``company_id``.
 """
 
 import uuid

@@ -111,9 +111,20 @@ class OrderRead(BaseModel):
     ordered_at: datetime
     status: OrderStatus
     external_order_id: str | None = None
+    # Production batch (lote) this order belongs to, if any — surfaced so the
+    # board can place batched orders in the Envio column without a second fetch.
+    batch_id: uuid.UUID | None = None
     # Fulfillment artifacts surfaced from the marketplace import (when present).
     shipping_label_url: str | None = None
     tracking_code: str | None = None
+    # ---- readiness flags (computed, no extra fetch) ----
+    # ``ready``: finished stock covers the full quantity (the prototype's
+    # ``orderReady``). ``on_hand``: finished on-hand for the order's variation
+    # (drives the ready/total bar). ``has_unmapped_items``: ≥1 piece still
+    # awaiting De/Para (blocks Separação; sits in the Mapeamento column).
+    ready: bool = False
+    on_hand: int = 0
+    has_unmapped_items: bool = False
     created_at: datetime
     updated_at: datetime
 

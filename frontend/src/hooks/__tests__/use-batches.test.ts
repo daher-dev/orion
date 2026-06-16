@@ -4,12 +4,12 @@ import { setupServer } from "msw/node";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import {
   useBatches,
-  useBatch,
+  useBatchDetail,
   useCreateBatch,
-  useSaveBatchAdjustments,
   useTransitionBatch,
-  useSendBatchToMontador,
   useDeleteBatch,
+  useAssembleBatch,
+  useShipBatch,
 } from "@/hooks/use-batches";
 import { TestProviders, makeQueryClient } from "@/__tests__/test-utils";
 
@@ -68,23 +68,10 @@ const sampleBatch = {
   total_orders: 3,
   total_pieces: 7,
   labels_printed_at: null,
-  prints_sent_at: null,
   completed_at: null,
   notes: null,
   created_at: "2026-06-04T12:00:00Z",
   updated_at: "2026-06-04T12:00:00Z",
-  adjustments: [
-    {
-      print_design_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-      print_design_code: "EST01",
-      print_design_name: "Caveira",
-      product_color: "Preto",
-      qty_needed: 7,
-      qty_stock: 0,
-      qty_to_print: 7,
-      prints_sent: false,
-    },
-  ],
 };
 
 const server = setupServer();
@@ -123,17 +110,49 @@ describe("useBatches", () => {
   });
 });
 
-describe("useBatch", () => {
-  it("fetches a batch detail with adjustments", async () => {
+const sampleDetail = {
+  ...sampleBatch,
+  estampas: [
+    {
+      design: {
+        id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        code: "EST-001",
+        name: "Naruto",
+        technique: "dtf",
+        image_url: null,
+      },
+      code: "EST-001",
+      items: 5,
+      to_print: 2,
+      montado: 3,
+      is_assembled: false,
+      enviado: 0,
+      is_shipped: false,
+    },
+  ],
+  orders_ready: 1,
+  orders_total: 3,
+  pieces_total: 7,
+  to_print_total: 2,
+  needs_assembly: true,
+  can_ship: false,
+};
+
+describe("useBatchDetail", () => {
+  it("fetches the batch detail with its estampa grid + roll-ups", async () => {
     server.use(
       http.get("http://api.test/v1/batches/:id", ({ params }) => {
         expect(params.id).toBe(sampleBatch.id);
-        return HttpResponse.json(sampleBatch);
+        return HttpResponse.json(sampleDetail);
       }),
     );
-    const { result } = renderHook(() => useBatch(sampleBatch.id), { wrapper: wrap() });
+    const { result } = renderHook(() => useBatchDetail(sampleBatch.id), {
+      wrapper: wrap(),
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.adjustments[0].qty_needed).toBe(7);
+    expect(result.current.data?.estampas[0].code).toBe("EST-001");
+    expect(result.current.data?.to_print_total).toBe(2);
+    expect(result.current.data?.needs_assembly).toBe(true);
   });
 });
 
@@ -156,59 +175,21 @@ describe("batch mutations", () => {
     expect((returned as { code: string }).code).toBe(sampleBatch.code);
   });
 
-  it("saves adjustments to the right endpoint", async () => {
-    let url: string | undefined;
-    let body: unknown;
-    server.use(
-      http.patch("http://api.test/v1/batches/:id/adjustments", async ({ request }) => {
-        url = request.url;
-        body = await request.json();
-        return HttpResponse.json(sampleBatch);
-      }),
-    );
-    const { result } = renderHook(() => useSaveBatchAdjustments(), { wrapper: wrap() });
-    await act(async () => {
-      await result.current.mutateAsync({
-        id: sampleBatch.id,
-        payload: { adjustments: [{ print_design_id: "d1", qty_to_print: 5 }] },
-      });
-    });
-    expect(url).toContain(`/v1/batches/${sampleBatch.id}/adjustments`);
-    expect(body).toEqual({ adjustments: [{ print_design_id: "d1", qty_to_print: 5 }] });
-  });
-
   it("transitions status", async () => {
     let body: { status?: string } | undefined;
     server.use(
       http.post("http://api.test/v1/batches/:id/status", async ({ request }) => {
         body = (await request.json()) as { status?: string };
-        return HttpResponse.json({ ...sampleBatch, status: "printed" });
+        return HttpResponse.json({ ...sampleBatch, status: "in_production" });
       }),
     );
     const { result } = renderHook(() => useTransitionBatch(), { wrapper: wrap() });
     let returned: { status?: string } | undefined;
     await act(async () => {
-      returned = await result.current.mutateAsync({ id: sampleBatch.id, status: "printed" });
+      returned = await result.current.mutateAsync({ id: sampleBatch.id, status: "in_production" });
     });
-    expect(body?.status).toBe("printed");
-    expect(returned?.status).toBe("printed");
-  });
-
-  it("sends to montador", async () => {
-    let url: string | undefined;
-    let returned: { succeeded?: number } | undefined;
-    server.use(
-      http.post("http://api.test/v1/batches/:id/send-to-montador", ({ request }) => {
-        url = request.url;
-        return HttpResponse.json({ total: 2, succeeded: 2, failed: 0, results: [] });
-      }),
-    );
-    const { result } = renderHook(() => useSendBatchToMontador(), { wrapper: wrap() });
-    await act(async () => {
-      returned = await result.current.mutateAsync(sampleBatch.id);
-    });
-    expect(url).toContain(`/v1/batches/${sampleBatch.id}/send-to-montador`);
-    expect(returned?.succeeded).toBe(2);
+    expect(body?.status).toBe("in_production");
+    expect(returned?.status).toBe("in_production");
   });
 
   it("deletes a batch", async () => {
@@ -224,5 +205,90 @@ describe("batch mutations", () => {
       await result.current.mutateAsync(sampleBatch.id);
     });
     expect(called).toBe(true);
+  });
+});
+
+describe("useAssembleBatch", () => {
+  it("posts to the assemble endpoint and returns the recomputed grid + summary", async () => {
+    let hit = false;
+    server.use(
+      http.post("http://api.test/v1/batches/:id/assemble", ({ params }) => {
+        hit = true;
+        expect(params.id).toBe(sampleBatch.id);
+        return HttpResponse.json({
+          batch: { ...sampleDetail, needs_assembly: false },
+          assembled: [
+            { variation_id: "v1", sku: "EST-001-PRT-M", quantity: 2 },
+          ],
+          skipped: [
+            { variation_id: "v2", sku: "EST-001-PRT-G", reason: "insufficient_blank" },
+          ],
+        });
+      }),
+    );
+    const { result } = renderHook(() => useAssembleBatch(), { wrapper: wrap() });
+    let returned:
+      | { assembled: unknown[]; skipped: { reason: string }[] }
+      | undefined;
+    await act(async () => {
+      returned = await result.current.mutateAsync({ id: sampleBatch.id });
+    });
+    expect(hit).toBe(true);
+    expect(returned?.assembled).toHaveLength(1);
+    expect(returned?.skipped[0].reason).toBe("insufficient_blank");
+  });
+
+  it("forwards partial-montar rows in the request body", async () => {
+    let body: { rows?: unknown[] } | undefined;
+    server.use(
+      http.post("http://api.test/v1/batches/:id/assemble", async ({ request }) => {
+        body = (await request.json()) as { rows?: unknown[] };
+        return HttpResponse.json({ batch: sampleDetail, assembled: [], skipped: [] });
+      }),
+    );
+    const { result } = renderHook(() => useAssembleBatch(), { wrapper: wrap() });
+    await act(async () => {
+      await result.current.mutateAsync({
+        id: sampleBatch.id,
+        payload: { rows: [{ design_id: "d1", quantity: 4 }] },
+      });
+    });
+    expect(body?.rows).toEqual([{ design_id: "d1", quantity: 4 }]);
+  });
+});
+
+describe("useShipBatch", () => {
+  it("posts to the ship endpoint and returns the dispatched batch", async () => {
+    let hit = false;
+    server.use(
+      http.post("http://api.test/v1/batches/:id/ship", ({ params }) => {
+        hit = true;
+        expect(params.id).toBe(sampleBatch.id);
+        return HttpResponse.json({
+          ...sampleDetail,
+          status: "dispatched",
+          can_ship: false,
+        });
+      }),
+    );
+    const { result } = renderHook(() => useShipBatch(), { wrapper: wrap() });
+    let returned: { status?: string } | undefined;
+    await act(async () => {
+      returned = await result.current.mutateAsync(sampleBatch.id);
+    });
+    expect(hit).toBe(true);
+    expect(returned?.status).toBe("dispatched");
+  });
+
+  it("surfaces a 409 when orders aren't ready", async () => {
+    server.use(
+      http.post("http://api.test/v1/batches/:id/ship", () =>
+        HttpResponse.json({ detail: "not ready" }, { status: 409 }),
+      ),
+    );
+    const { result } = renderHook(() => useShipBatch(), { wrapper: wrap() });
+    await act(async () => {
+      await expect(result.current.mutateAsync(sampleBatch.id)).rejects.toThrow();
+    });
   });
 });

@@ -36,6 +36,23 @@ const MOCK_DASHBOARD = {
   needs_action: [],
   activity: [],
   revenue_by_channel: [],
+  // Phase 6 added the Conferência section; the dashboard renders it from
+  // `summary.conference`, so the mock must carry the full shape or the page
+  // crashes on the missing field (taking the greeting <h1> down with it).
+  conference: {
+    totals: {
+      orders: 0,
+      pieces: 0,
+      mapped: 0,
+      pending: 0,
+      checked: 0,
+      to_check: 0,
+      in_lote: 0,
+      mapped_pct: 100,
+    },
+    pipeline: { mapeamento: 0, producao: 0, separacao: 0, envio: 0 },
+    batches: { open: 0, in_production: 0, dispatched: 0 },
+  },
 };
 
 async function mockApis(page: Page) {

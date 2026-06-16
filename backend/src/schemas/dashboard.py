@@ -89,6 +89,55 @@ class ChannelRevenue(BaseModel):
     revenue: float
 
 
+class ConferenceTotals(BaseModel):
+    """Headline conference counters (the prototype's ``conference.totals``).
+
+    Scope: ``orders``/``pieces`` count all orders with ``status != cancelled``;
+    the item counters are over ``order_items``.
+    """
+
+    orders: int
+    pieces: int
+    mapped: int  # order_items with variation_id NOT NULL
+    pending: int  # order_items with variation_id NULL (await De/Para)
+    checked: int  # order_items status == checked (conferido)
+    to_check: int  # order_items status == label_printed (printed, not scanned)
+    in_lote: int  # orders with batch_id NOT NULL
+    mapped_pct: int  # round(100 * mapped / (mapped+pending)); 100 when denom 0
+
+
+class ConferencePipeline(BaseModel):
+    """Order-pipeline counts (distinct from the production ``PipelineCounts``).
+
+    Mirrors the board's four columns, derived from the readiness flags:
+    - ``mapeamento`` — orders with ≥1 unmapped piece.
+    - ``producao`` — mapped, unbatched, NOT ready.
+    - ``separacao`` — mapped, unbatched, ready.
+    - ``envio`` — orders with a batch.
+    """
+
+    mapeamento: int
+    producao: int
+    separacao: int
+    envio: int
+
+
+class ConferenceBatchCounts(BaseModel):
+    """Batch lifecycle counts for the conference strip."""
+
+    open: int
+    in_production: int
+    dispatched: int
+
+
+class ConferenceSummary(BaseModel):
+    """The Conferência section of the dashboard (orders→pieces pipeline)."""
+
+    totals: ConferenceTotals
+    pipeline: ConferencePipeline
+    batches: ConferenceBatchCounts
+
+
 class DashboardSummary(BaseModel):
     """Composite payload returned by ``GET /v1/dashboard/summary``."""
 
@@ -97,11 +146,16 @@ class DashboardSummary(BaseModel):
     needs_action: list[NeedsActionItem]
     activity: list[ActivityItem]
     revenue_by_channel: list[ChannelRevenue]
+    conference: ConferenceSummary
 
 
 __all__ = [
     "ActivityItem",
     "ChannelRevenue",
+    "ConferenceBatchCounts",
+    "ConferencePipeline",
+    "ConferenceSummary",
+    "ConferenceTotals",
     "DashboardKpis",
     "DashboardSummary",
     "Kpi",

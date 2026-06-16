@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/sheet";
 import { OrderChannelChip } from "./OrderChannelChip";
 import { OrderFormSheet } from "./OrderFormSheet";
+import { OrderJourney } from "./OrderJourney";
 import { OrderLineItem } from "./OrderLineItem";
 import { OrderStatusPill } from "./OrderStatusPill";
 import { OrderStatusTimeline } from "./OrderStatusTimeline";
@@ -247,6 +248,13 @@ export function OrderDetailSheet({ order, open, onOpenChange }: Props) {
                       {displayed.sale_price != null ? currency.format(Number(displayed.sale_price) * displayed.quantity) : "—"}
                     </span>
                   </div>
+                </section>
+
+                <section className="mb-4 rounded-[12px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-4">
+                  <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[color:var(--orion-ink-3)]">
+                    {t("journey.title")}
+                  </h3>
+                  <OrderJourney order={displayed} />
                 </section>
 
                 <section className="mb-4 rounded-[12px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-4">

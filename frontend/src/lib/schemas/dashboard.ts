@@ -55,12 +55,53 @@ export const channelRevenueSchema = z.object({
 
 export type ChannelRevenue = z.infer<typeof channelRevenueSchema>;
 
+// ---------- Conferência (orders → pieces fulfillment summary) ----------
+
+export const conferenceTotalsSchema = z.object({
+  orders: z.number().int(),
+  pieces: z.number().int(),
+  mapped: z.number().int(),
+  pending: z.number().int(),
+  checked: z.number().int(),
+  to_check: z.number().int(),
+  in_lote: z.number().int(),
+  mapped_pct: z.number().int(),
+});
+
+export type ConferenceTotals = z.infer<typeof conferenceTotalsSchema>;
+
+export const conferencePipelineSchema = z.object({
+  mapeamento: z.number().int(),
+  producao: z.number().int(),
+  separacao: z.number().int(),
+  envio: z.number().int(),
+});
+
+export type ConferencePipeline = z.infer<typeof conferencePipelineSchema>;
+
+export const conferenceBatchCountsSchema = z.object({
+  open: z.number().int(),
+  in_production: z.number().int(),
+  dispatched: z.number().int(),
+});
+
+export type ConferenceBatchCounts = z.infer<typeof conferenceBatchCountsSchema>;
+
+export const conferenceSummarySchema = z.object({
+  totals: conferenceTotalsSchema,
+  pipeline: conferencePipelineSchema,
+  batches: conferenceBatchCountsSchema,
+});
+
+export type ConferenceSummary = z.infer<typeof conferenceSummarySchema>;
+
 export const dashboardSummarySchema = z.object({
   kpis: dashboardKpisSchema,
   pipeline: pipelineCountsSchema,
   needs_action: z.array(needsActionItemSchema),
   activity: z.array(activityItemSchema),
   revenue_by_channel: z.array(channelRevenueSchema),
+  conference: conferenceSummarySchema,
 });
 
 export type DashboardSummary = z.infer<typeof dashboardSummarySchema>;

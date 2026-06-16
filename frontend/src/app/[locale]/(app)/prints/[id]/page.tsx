@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHead } from "@/components/page/PageHead";
 import { PrintFormSheet } from "@/components/prints/PrintFormSheet";
+import { PrintVariationsEditor } from "@/components/prints/variations/PrintVariationsEditor";
 import { useCanAccess } from "@/hooks/use-permissions";
 import { usePrint } from "@/hooks/use-prints";
 import { useProducts } from "@/hooks/use-products";
@@ -133,6 +134,11 @@ export default function PrintDetailPage({ params }: Props) {
         />
         <DetailCell icon={<Tag className="size-3" />} label={t("detail.fields.tag")} value={print.tag || "—"} />
         <DetailCell icon={<Droplet className="size-3" />} label={t("detail.fields.colors")} value={COLORS_BY_TECHNIQUE[print.technique]} />
+      </section>
+
+      {/* Color variations + per-side PNG upload */}
+      <section className="mb-5">
+        <PrintVariationsEditor print={print} canWrite={canWrite} />
       </section>
 
       {/* Application specs — display only (mockup-derived, not persisted) */}

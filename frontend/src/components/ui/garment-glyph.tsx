@@ -1,24 +1,27 @@
 import * as React from "react";
-import type { ProductType } from "@/lib/schemas/product";
 
 /**
  * Garment glyphs — direct port of the SVG paths from
  * `/docs/design/source/pages/catalog.jsx` (GARMENT_GLYPHS).
  *
- * The design has six garment types; Orion currently has four
- * product types. The mapping is:
- *   tshirt     → camiseta
- *   sweatshirt → moletom
- *   shorts     → bermuda
- *   tanktop    → regata
+ * Glyphs are purely decorative. There are four silhouette shapes; the eight
+ * backend `ProductType` garment values (camiseta, moletom, regata, blusa,
+ * calca, bermuda, ecobag, cropped) each map onto one of them via
+ * `GLYPH_ALIASES`. The shape keys below are an internal detail — the public
+ * `productType` prop accepts any garment identifier and is resolved through
+ * `garmentGlyphType`.
  */
 
+/** Internal silhouette keys — NOT the public garment enum. */
+type GlyphKey = "tshirt" | "sweatshirt" | "shorts" | "tanktop";
+
 type Props = React.SVGProps<SVGSVGElement> & {
-  productType: ProductType;
+  /** Any garment identifier (backend `ProductType`, glyph key, …). */
+  productType: string;
   size?: number;
 };
 
-const PATHS: Record<ProductType, React.ReactNode> = {
+const PATHS: Record<GlyphKey, React.ReactNode> = {
   tshirt: (
     <path d="M8 3 L5 5 L3 8 L5 10 L7 9 L7 21 L17 21 L17 9 L19 10 L21 8 L19 5 L16 3 C16 5 14.5 6 12 6 C9.5 6 8 5 8 3 Z" />
   ),
@@ -41,6 +44,34 @@ const PATHS: Record<ProductType, React.ReactNode> = {
   ),
 };
 
+/**
+ * Resolve any garment identifier — the frontend `ProductType` (`tshirt`…) OR the
+ * backend `ProductType` enum value (`camiseta`, `moletom`, `regata`, `calca`,
+ * `bermuda`, `ecobag`, `cropped`…) — to a glyph-safe key. The glyph is purely
+ * decorative, so unknown garments fall back to the t-shirt silhouette rather
+ * than crashing on a missing path.
+ */
+const GLYPH_ALIASES: Record<string, GlyphKey> = {
+  tshirt: "tshirt",
+  sweatshirt: "sweatshirt",
+  shorts: "shorts",
+  tanktop: "tanktop",
+  // Backend garment-type enum values.
+  camiseta: "tshirt",
+  cropped: "tshirt",
+  blusa: "tshirt",
+  ecobag: "tshirt",
+  moletom: "sweatshirt",
+  regata: "tanktop",
+  bermuda: "shorts",
+  calca: "shorts",
+};
+
+export function garmentGlyphType(value: string | null | undefined): GlyphKey {
+  if (!value) return "tshirt";
+  return GLYPH_ALIASES[value.toLowerCase()] ?? "tshirt";
+}
+
 export function GarmentGlyph({ productType, size = 14, ...rest }: Props) {
   return (
     <svg
@@ -55,7 +86,7 @@ export function GarmentGlyph({ productType, size = 14, ...rest }: Props) {
       aria-hidden="true"
       {...rest}
     >
-      {PATHS[productType]}
+      {PATHS[garmentGlyphType(productType)]}
     </svg>
   );
 }

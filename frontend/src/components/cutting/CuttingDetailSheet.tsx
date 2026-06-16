@@ -167,13 +167,20 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
                   <Scissors size={22} strokeWidth={1.6} />
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <div className="truncate font-serif text-[17px] text-[color:var(--orion-ink)]">
-                    {order.product.name}
+                  <div className="flex items-baseline gap-2">
+                    <span className="truncate font-serif text-[17px] text-[color:var(--orion-ink)]">
+                      {order.spec.name}
+                    </span>
+                    <span className="shrink-0 text-[12px] text-[color:var(--orion-ink-3)]">
+                      {order.color}
+                    </span>
                   </div>
                   <div
                     className="text-[color:var(--orion-ink-3)]"
                     style={{ fontSize: 12, marginTop: 4 }}
                   >
+                    <span className="font-mono">{order.spec.code}</span>
+                    {" · "}
                     {t("detail.bodyRollLabel")}{" "}
                     <span className="font-mono">{order.body_roll.code}</span>
                     {totalPlanned > 0
@@ -278,7 +285,7 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
               {/* Planned read-only grid */}
               <div className={SECTION_CLASS}>{t("detail.plannedOutputs")}</div>
               <div className="mb-4 overflow-hidden rounded-[10px] border border-[color:var(--orion-line-soft)]">
-                <div className="grid grid-cols-4 gap-px bg-[color:var(--orion-line-soft)]">
+                <div className="grid grid-cols-5 gap-px bg-[color:var(--orion-line-soft)]">
                   {SIZES.map((s) => (
                     <div
                       key={s}
@@ -301,7 +308,7 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
               {/* Actual editable grid with per-size mini progress */}
               <div className={SECTION_CLASS}>{t("detail.actualOutputs")}</div>
               <div className="overflow-hidden rounded-[10px] border border-[color:var(--orion-line-soft)]">
-                <div className="grid grid-cols-4 gap-px bg-[color:var(--orion-line-soft)]">
+                <div className="grid grid-cols-5 gap-px bg-[color:var(--orion-line-soft)]">
                   {SIZES.map((s) => {
                     const planned = plannedMap[s] ?? 0;
                     const actual = actualMap[s] ?? 0;

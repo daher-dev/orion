@@ -1,18 +1,24 @@
 import uuid
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 
 from dependencies import DbSession, RequirePermission
-from models import FabricRoll, FabricRollKind, FabricType, User
+from models import FabricMovementKind, FabricRoll, FabricRollKind, FabricType, User
 from schemas._common import PageParams
 from schemas.fabric import (
+    FabricMovementCreate,
+    FabricMovementFilters,
+    FabricMovementPage,
+    FabricMovementRead,
     FabricRollCreate,
     FabricRollFilters,
     FabricRollPage,
     FabricRollRead,
     FabricRollUpdate,
 )
+from services import fabric as fabric_service
 from services.fabric import (
     _to_read_kwargs,
     create_fabric_roll,
@@ -51,6 +57,54 @@ async def list_endpoint(
         page=params,
     )
     return FabricRollPage.build([_to_read(item) for item in items], total, params)
+
+
+# ---------- GET /fabric/movements (declared before /{roll_id}) ----------
+
+
+@router.get("/movements", response_model=FabricMovementPage)
+async def list_movements_endpoint(
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("fabric.read"))],
+    fabric_roll_id: Annotated[uuid.UUID | None, Query()] = None,
+    kind: Annotated[FabricMovementKind | None, Query()] = None,
+    date_from: Annotated[date | None, Query()] = None,
+    date_to: Annotated[date | None, Query()] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 50,
+) -> FabricMovementPage:
+    params = PageParams(page=page, page_size=page_size)
+    rows, total = await fabric_service.list_movements(
+        db,
+        company_id=user.company_id,
+        filters=FabricMovementFilters(fabric_roll_id=fabric_roll_id, kind=kind, date_from=date_from, date_to=date_to),
+        page=params,
+    )
+    items = [FabricMovementRead(**row) for row in rows]
+    return FabricMovementPage.build(items, total, params)
+
+
+@router.post("/movements", response_model=FabricMovementRead, status_code=status.HTTP_201_CREATED)
+async def create_movement_endpoint(
+    payload: FabricMovementCreate,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("fabric.write"))],
+) -> FabricMovementRead:
+    movement = await fabric_service.create_movement(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        payload=payload,
+    )
+    return FabricMovementRead(
+        id=movement.id,
+        fabric_roll_id=movement.fabric_roll_id,
+        kind=movement.kind,
+        quantity=movement.quantity,
+        cutting_order_id=movement.cutting_order_id,
+        notes=movement.notes,
+        created_at=movement.created_at,
+    )
 
 
 @router.get("/{roll_id}", response_model=FabricRollRead)

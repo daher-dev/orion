@@ -10,7 +10,6 @@ from tests.factories import (
     create_company,
     create_cutting_order,
     create_fabric_roll,
-    create_product,
     create_product_spec,
     create_user,
     get_role_by_code,
@@ -351,11 +350,10 @@ async def test_delete_returns_409_when_linked_to_cutting_order(authed_client: As
     company, _ = await _seed_admin(db_session)
     roll = await create_fabric_roll(db_session, company_id=company.id)
     spec = await create_product_spec(db_session, company_id=company.id)
-    product = await create_product(db_session, company_id=company.id, spec_id=spec.id)
     await create_cutting_order(
         db_session,
         company_id=company.id,
-        product_id=product.id,
+        spec_id=spec.id,
         body_roll_id=roll.id,
     )
 
@@ -393,3 +391,71 @@ async def test_operator_can_get_detail(authed_client: AsyncClient, db_session):
 
 # Pin reference type usage so flake8/ruff don't strip imports.
 _ = (date,)
+
+
+# ---------- movements (GET/POST /v1/fabric/movements) ----------
+
+
+async def test_movements_post_and_list(authed_client: AsyncClient, db_session):
+    company, _ = await _seed_admin(db_session)
+    roll = await create_fabric_roll(db_session, company_id=company.id, current_weight_kg=Decimal("10.000"))
+
+    post = await authed_client.post(
+        "/v1/fabric/movements",
+        json={"fabric_roll_id": str(roll.id), "kind": "entry", "quantity": "4.000"},
+    )
+    assert post.status_code == 201, post.text
+    created = post.json()
+    assert created["kind"] == "entry"
+    assert created["cutting_order_id"] is None
+
+    listing = await authed_client.get("/v1/fabric/movements")
+    assert listing.status_code == 200
+    body = listing.json()
+    assert body["total"] == 1
+    assert body["items"][0]["fabric_roll"]["id"] == str(roll.id)
+
+    # current_meters credited.
+    roll_resp = await authed_client.get(f"/v1/fabric/{roll.id}")
+    assert roll_resp.json()["current_weight_kg"] == "14.000"
+
+
+async def test_movements_filter_by_roll(authed_client: AsyncClient, db_session):
+    company, _ = await _seed_admin(db_session)
+    roll = await create_fabric_roll(db_session, company_id=company.id)
+    other = await create_fabric_roll(db_session, company_id=company.id)
+    for target in (roll, other):
+        await authed_client.post(
+            "/v1/fabric/movements",
+            json={"fabric_roll_id": str(target.id), "kind": "entry", "quantity": "1.000"},
+        )
+
+    resp = await authed_client.get("/v1/fabric/movements", params={"fabric_roll_id": str(roll.id)})
+    body = resp.json()
+    assert body["total"] == 1
+    assert body["items"][0]["fabric_roll_id"] == str(roll.id)
+
+
+async def test_movements_post_forbidden_for_no_permission(authed_client: AsyncClient, db_session):
+    company = await create_company(db_session)
+    from models import Role
+
+    role = Role(code=f"custom-no-fabric-{uuid.uuid4().hex[:8]}", name="Custom")
+    db_session.add(role)
+    await db_session.commit()
+    await db_session.refresh(role)
+    await create_user(db_session, company_id=company.id, role_id=role.id, firebase_uid="qa-dev-user")
+    response = await authed_client.post(
+        "/v1/fabric/movements",
+        json={"fabric_roll_id": str(uuid.uuid4()), "kind": "entry", "quantity": "1.000"},
+    )
+    assert response.status_code == 403
+
+
+async def test_movements_route_not_shadowed_by_roll_matcher(authed_client: AsyncClient, db_session):
+    """GET /fabric/movements must hit the ledger, not the /{roll_id} matcher."""
+
+    await _seed_admin(db_session)
+    resp = await authed_client.get("/v1/fabric/movements")
+    assert resp.status_code == 200
+    assert "items" in resp.json()

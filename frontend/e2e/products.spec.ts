@@ -158,19 +158,33 @@ test.describe("F-005 Products — delete blocked when linked Ad", () => {
       await route.fallback();
     });
 
-    await gotoListAndWait(page);
-    // We can't proceed without rows — bail early when the table is empty.
-    const hasRows = await page
-      .getByTestId("products-table")
-      .locator("tbody tr")
-      .first()
-      .isVisible()
-      .catch(() => false);
-    test.skip(!hasRows, "no products available to attempt delete");
+    // Seed a product so there is always a row to drive (the suite shares a DB,
+    // but this test must stand on its own when run in isolation).
+    const stamp = Date.now();
+    const spec = await seedSpec(page, `DEL${stamp}`, "Delete Test Spec");
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+    await page.request.post(`${apiBase}/v1/products`, {
+      headers: {
+        "X-Dev-Bypass-Uid": "qa-dev-user",
+        "X-Dev-Bypass-Name": "QA Dev User",
+        "X-Dev-Bypass-Email": "qa-dev@orion.local",
+      },
+      data: {
+        name: `Deletable ${stamp}`,
+        product_type: "camiseta",
+        spec_id: spec.id,
+        variations: [{ size: "m", color: "Preto", color_code: "BLK" }],
+      },
+    });
 
-    // Per-row delete buttons were removed: the table now uses a row-click → form
-    // sheet pattern. Delete lives in the sheet footer, gated by a confirm dialog.
-    await page.getByTestId("products-table").locator("tbody tr").first().click();
+    await gotoListAndWait(page);
+    // Find the seeded row and open it. A row click navigates to the product
+    // detail page (not an inline sheet); edit + delete live there.
+    await page.getByText(`Deletable ${stamp}`).click();
+    await expect(page.getByTestId("product-detail")).toBeVisible();
+
+    // Open the edit sheet — delete lives in its footer, gated by a confirm dialog.
+    await page.getByTestId("product-detail-edit").click();
     const sheet = page.getByTestId("product-form-sheet");
     await expect(sheet).toBeVisible();
     await sheet.getByRole("button", { name: /excluir/i }).click();

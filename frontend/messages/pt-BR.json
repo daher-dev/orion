@@ -56,12 +56,17 @@
     "products": "Produtos",
     "specs": "Fichas técnicas",
     "prints": "Estampas",
+    "planning": "Planejamento",
     "cutting": "Corte",
     "sewing": "Costura",
+    "printing": "Impressão",
+    "assembly": "Montagem",
     "contractors": "Bancas",
     "fabric": "Tecidos",
+    "blankPieces": "Peças lisas",
+    "paper": "Papel",
+    "printedTransfers": "Impressos",
     "stock": "Estoque",
-    "printStock": "Estoque de estampas",
     "supplies": "Insumos",
     "reports": "Relatórios",
     "settings": "Ajustes",
@@ -185,6 +190,39 @@
       "updated": "Atualizado há {minutes} min",
       "viewDetails": "Ver detalhes"
     },
+    "conference": {
+      "title": "Conferência do dia",
+      "sub": "Do pedido à peça pronta",
+      "kpis": {
+        "orders": "Total de pedidos",
+        "ordersFoot": "Carteira de pedidos",
+        "pieces": "Total de itens",
+        "piecesFoot": "Em {count} pedidos",
+        "mapped": "Estampas mapeadas",
+        "mappedFoot": "Todas vinculadas a uma estampa",
+        "pending": "Pendentes",
+        "pendingFoot": "Aguardando mapeamento",
+        "pendingNone": "Nada a resolver"
+      },
+      "progress": {
+        "title": "Resumo da conferência",
+        "sub": "Progresso da carteira",
+        "ordersDone": "Pedidos 100% conferidos",
+        "piecesDone": "Peças conferidas"
+      },
+      "subtiles": {
+        "toCheck": "A conferir",
+        "inLote": "Em lote",
+        "pending": "Pendentes"
+      },
+      "pipeline": {
+        "title": "Pipeline de pedidos",
+        "mapeamento": "Mapeamento",
+        "producao": "Produção",
+        "separacao": "Separação",
+        "envio": "Envio"
+      }
+    },
     "needsAction": {
       "title": "Precisa da sua atenção",
       "sub": "{count, plural, =0 {Nenhuma pendência} one {# pendência} other {# pendências}}",
@@ -233,6 +271,41 @@
         "body": "Crie seu primeiro pedido ou aguarde a chegada via canal.",
         "cta": "Novo pedido"
       }
+    },
+    "view": {
+      "board": "Quadro",
+      "table": "Tabela"
+    },
+    "board": {
+      "columns": {
+        "mapeamento": "Mapeamento",
+        "producao": "Produção",
+        "separacao": "Separação",
+        "envio": "Envio"
+      },
+      "empty": {
+        "mapeamento": "Tudo vinculado.",
+        "producao": "Nada em produção.",
+        "separacao": "Nenhum pedido pronto. Conclua a montagem.",
+        "envio": "Nenhum lote ainda."
+      },
+      "card": {
+        "vincular": "Vincular",
+        "printLabels": "Imprimir etiquetas",
+        "itemsLabel": "{count, plural, one {item} other {itens}}",
+        "today": "hoje",
+        "ageDays": "há {count}d"
+      },
+      "createBatch": "Lote ({count})",
+      "createError": "Não foi possível criar o lote.",
+      "labelError": "Não foi possível gerar as etiquetas."
+    },
+    "journey": {
+      "title": "Jornada do pedido",
+      "mapped": "Mapeado",
+      "produced": "Produzido",
+      "separated": "Separado",
+      "shipped": "Enviado"
     },
     "filters": {
       "searchPlaceholder": "Procurar pedido…",
@@ -648,10 +721,14 @@
       "itemCount": "itens"
     },
     "productTypes": {
-      "tshirt": "Camiseta",
-      "sweatshirt": "Moletom",
-      "shorts": "Bermuda",
-      "tanktop": "Regata"
+      "camiseta": "Camiseta",
+      "moletom": "Moletom",
+      "regata": "Regata",
+      "blusa": "Blusa",
+      "calca": "Calça",
+      "bermuda": "Bermuda",
+      "ecobag": "Ecobag",
+      "cropped": "Cropped"
     },
     "table": {
       "columns": {
@@ -674,7 +751,8 @@
         "p": "P",
         "m": "M",
         "g": "G",
-        "gg": "GG"
+        "gg": "GG",
+        "u": "U"
       },
       "addColor": "Adicionar cor",
       "removeColor": "Remover cor",
@@ -985,7 +1063,8 @@
         "codeRequired": "Código é obrigatório",
         "nameRequired": "Nome é obrigatório",
         "required": "Campo obrigatório",
-        "numeric": "Use apenas números"
+        "numeric": "Use apenas números",
+        "hex": "Use uma cor hex como #1f1f1f"
       },
       "save": "Salvar estampa",
       "cancel": "Cancelar",
@@ -1003,7 +1082,7 @@
     },
     "help": {
       "title": "Estampas — o catálogo de artes que vão na peça",
-      "body": "Cada estampa guarda a arte e o método de aplicação — DTF, silk ou sublimação — com tamanho de impressão. É o que o Montador encaixa na folha e o que a etiqueta de cada peça mostra.",
+      "body": "Cada estampa guarda a arte e o método de aplicação — DTF, silk ou sublimação — com tamanho de impressão. É o que vai pra folha de impressão e o que a etiqueta de cada peça mostra.",
       "flow": {
         "artwork": "Arte enviada",
         "artworkSub": "arquivo .png",
@@ -1035,6 +1114,45 @@
         "title": "Produtos que usam esta estampa",
         "empty": "Nenhum produto usa esta estampa ainda."
       }
+    },
+    "sides": {
+      "label": "Lados",
+      "front": "Frente",
+      "back": "Costas",
+      "hint": "Os lados valem para todas as cores — defina aqui se a arte vai na frente, nas costas, ou ambos. Depois suba um PNG por lado em cada cor.",
+      "removeFront": "Remover a frente de todas as cores",
+      "removeBack": "Remover as costas de todas as cores",
+      "addFront": "Frente",
+      "addBack": "Costas",
+      "atLeastOne": "Mantenha ao menos um lado."
+    },
+    "variations": {
+      "title": "Variações de cor & arquivos PNG",
+      "add": "Variação",
+      "addInk": "Adicionar variação de cor",
+      "inkColor": "Cor da tinta",
+      "name": "Nome da cor",
+      "front": "Frente",
+      "back": "Costas",
+      "uploadPng": "Subir PNG",
+      "replace": "Substituir arquivo",
+      "pngOk": "Enviado",
+      "pngPending": "PNG não enviado",
+      "pngOnlyError": "Apenas imagens PNG são aceitas.",
+      "uploadError": "Não foi possível enviar o PNG.",
+      "complete": "Completo",
+      "pendingCount": "{count, plural, one {# pendente} other {# pendentes}}",
+      "pendingPngs": "{count, plural, one {# PNG pendente} other {# PNGs pendentes}}",
+      "summary": "{ready}/{total} cor(es) completas",
+      "countLabel": "Variações de cor",
+      "removeVariation": "Remover variação",
+      "empty": "Nenhuma variação de cor ainda — adicione uma para subir a arte.",
+      "created": "Variação adicionada",
+      "updated": "Variação atualizada",
+      "deleted": "Variação removida",
+      "saveError": "Não foi possível salvar a variação.",
+      "allColorsUsed": "Todas as cores de tinta estão em uso.",
+      "noPalette": "Defina cores de tinta em Ajustes › Catálogo primeiro."
     }
   },
   "cutting": {
@@ -1073,7 +1191,9 @@
         "plannedTotal": "Planejado",
         "actualTotal": "Cortado",
         "cutAt": "Cortada em",
-        "actions": "Ações"
+        "actions": "Ações",
+        "spec": "Ficha",
+        "color": "Cor"
       }
     },
     "status": {
@@ -1101,20 +1221,29 @@
         "product": "Produto",
         "rolls": "Bobinas",
         "plannedOutputs": "Peças por tamanho",
-        "schedule": "Programação"
+        "schedule": "Programação",
+        "spec": "Ficha técnica",
+        "color": "Cor"
       },
       "labels": {
         "product": "Produto a cortar",
         "bodyRoll": "Bobina corpo",
         "ribRoll": "Bobina ribana",
-        "cutAt": "Data de corte"
+        "cutAt": "Data de corte",
+        "spec": "Ficha a cortar",
+        "color": "Cor",
+        "colorCode": "Código"
       },
       "placeholders": {
         "product": "Selecione um produto…",
         "searchProduct": "Procurar produtos…",
         "bodyRoll": "Selecione a bobina corpo…",
         "ribRoll": "Selecione a ribana (opcional)…",
-        "searchRoll": "Procurar bobinas…"
+        "searchRoll": "Procurar bobinas…",
+        "spec": "Selecione uma ficha…",
+        "searchSpec": "Procurar fichas…",
+        "color": "ex.: Preto",
+        "colorCode": "PRT"
       },
       "hints": {
         "optional": "(opcional)",
@@ -1127,7 +1256,10 @@
         "productRequired": "Selecione um produto",
         "bodyRollRequired": "Selecione a bobina corpo",
         "rollsDiffer": "A ribana deve ser diferente do corpo",
-        "atLeastOneSize": "Informe ao menos uma peça"
+        "atLeastOneSize": "Informe ao menos uma peça",
+        "specRequired": "Selecione uma ficha",
+        "colorRequired": "Informe uma cor",
+        "colorCodeFormat": "Use 3 letras (ex.: PRT)"
       },
       "save": "Salvar alterações",
       "submitNew": "Criar ordem",
@@ -1137,7 +1269,8 @@
         "updated": "Ordem atualizada",
         "deleted": "Ordem removida",
         "error": "Operação falhou"
-      }
+      },
+      "noSpecs": "Nenhuma ficha encontrada."
     },
     "detail": {
       "title": "Ordem de corte",
@@ -1151,7 +1284,8 @@
       "plannedOutputs": "Peças planejadas por tamanho",
       "actualOutputs": "Peças cortadas por tamanho",
       "close": "Fechar",
-      "save": "Salvar"
+      "save": "Salvar",
+      "color": "Cor"
     },
     "cost": {
       "title": "Custo de produção",
@@ -1222,7 +1356,14 @@
       "labels": {
         "receivedAt": "Recebida em",
         "sizes": "Peças recebidas"
-      }
+      },
+      "columns": {
+        "size": "Tam.",
+        "sent": "Enviado",
+        "received": "Recebido",
+        "credited": "Creditado"
+      },
+      "deltaHint": "{count} peças lisas serão creditadas no estoque."
     },
     "form": {
       "title": {
@@ -1263,19 +1404,32 @@
         "received": "Recebimento registrado",
         "cancelled": "Remessa cancelada",
         "error": "Operação falhou"
-      }
+      },
+      "availableCount": "{count} disponíveis"
     },
     "detail": {
       "size": "Tamanho",
       "requested": "Solicitado",
       "received": "Recebido",
-      "itemsTitle": "Itens da remessa"
+      "itemsTitle": "Itens da remessa",
+      "credited": "Creditado"
     },
     "timeline": {
       "title": "Linha do tempo",
       "production": "Em produção",
       "inProgress": "em curso",
       "cancelled": "Remessa cancelada — sem próximas etapas."
+    },
+    "view": {
+      "label": "Visão",
+      "kanban": "Quadro",
+      "table": "Tabela"
+    },
+    "available": {
+      "column": "Disponível",
+      "readyCount": "{count} peças prontas",
+      "newShipment": "Nova remessa",
+      "empty": "Nenhuma peça cortada disponível para enviar."
     }
   },
   "contractors": {
@@ -1483,6 +1637,62 @@
     },
     "fallback": {
       "forbidden": "Você não tem acesso às bobinas."
+    },
+    "tabs": {
+      "current": "Bobinas",
+      "movements": "Movimentações"
+    },
+    "movements": {
+      "moveCta": "Registrar movimentação",
+      "columns": {
+        "when": "Quando",
+        "item": "Item",
+        "reason": "Motivo",
+        "quantity": "Qtd"
+      },
+      "kinds": {
+        "entry": "Entrada",
+        "exit": "Consumo",
+        "adjustment": "Ajuste"
+      },
+      "provenance": "Corte {code}",
+      "empty": "Nenhuma movimentação registrada ainda.",
+      "validation": {
+        "rollRequired": "Selecione uma bobina",
+        "quantityPositive": "Informe uma quantidade maior que zero"
+      },
+      "toasts": {
+        "recorded": "Movimentação registrada",
+        "error": "Operação falhou"
+      },
+      "moveSheet": {
+        "title": "Movimentação de tecido",
+        "sub": "Registre uma entrada, consumo ou ajuste em kg.",
+        "labels": {
+          "roll": "Bobina",
+          "moveType": "Movimentação",
+          "quantity": "Quantidade",
+          "preview": "Prévia"
+        },
+        "placeholders": {
+          "roll": "Selecione uma bobina…",
+          "searchRoll": "Procurar bobinas…"
+        },
+        "noRolls": "Nenhuma bobina encontrada.",
+        "moveTypes": {
+          "entry": "Entrada",
+          "exit": "Consumo",
+          "adjustment": "Ajuste"
+        },
+        "preview": {
+          "current": "Atual",
+          "entry": "Entrada",
+          "exit": "Saída",
+          "final": "Final"
+        },
+        "cancel": "Cancelar",
+        "save": "Registrar"
+      }
     }
   },
   "stock": {
@@ -1634,99 +1844,6 @@
     },
     "fallback": {
       "forbidden": "Você não tem acesso ao estoque."
-    }
-  },
-  "printStock": {
-    "page": {
-      "eyebrow": "Estoque"
-    },
-    "list": {
-      "title": "Estoque de estampas",
-      "titleEm": "/ impresso",
-      "sub": "Estoque de estampas impressas por estampa e cor.",
-      "empty": {
-        "title": "Nenhuma estampa impressa cadastrada",
-        "body": "As entradas aparecem quando você registra uma impressão ou um ajuste manual.",
-        "cta": "Registrar movimento"
-      }
-    },
-    "filters": {
-      "searchPlaceholder": "Buscar estampa, código, cor…"
-    },
-    "table": {
-      "columns": {
-        "design": "Estampa",
-        "color": "Cor",
-        "onHand": "Em estoque",
-        "status": "Status",
-        "lastMovement": "Últ. mov.",
-        "actions": "Ações"
-      }
-    },
-    "statuses": {
-      "low": "Baixo",
-      "ok": "OK"
-    },
-    "actions": {
-      "viewFullLedger": "Histórico completo",
-      "confirmAdjust": "Registrar movimento"
-    },
-    "adjust": {
-      "title": "Registrar movimento",
-      "sub": "Adicione ou retire estampas impressas de uma estampa e cor.",
-      "fields": {
-        "direction": "Direção",
-        "design": "Estampa",
-        "designPlaceholder": "Selecione uma estampa…",
-        "color": "Cor",
-        "colorPlaceholder": "ex. Preto",
-        "quantity": "Quantidade",
-        "notes": "Observações",
-        "notesPlaceholder": "Observações opcionais…"
-      },
-      "directions": {
-        "entry": "Entrada",
-        "exit": "Saída"
-      },
-      "actions": {
-        "cancel": "Cancelar",
-        "confirm": "Salvar"
-      },
-      "toasts": {
-        "success": "Movimento registrado",
-        "error": "Falha na operação",
-        "insufficient": "Estoque de impresso insuficiente para esta saída."
-      }
-    },
-    "validation": {
-      "designRequired": "Selecione uma estampa",
-      "colorRequired": "Informe uma cor",
-      "quantityPositive": "A quantidade deve ser maior que zero"
-    },
-    "movements": {
-      "title": "Movimentos",
-      "titleEm": "histórico completo",
-      "sub": "Todas as entradas e saídas de impresso, da mais recente.",
-      "columns": {
-        "when": "Quando",
-        "design": "Estampa",
-        "color": "Cor",
-        "direction": "Direção",
-        "quantity": "Qtd",
-        "notes": "Observações"
-      },
-      "directions": {
-        "entry": "Entrada",
-        "exit": "Saída",
-        "adjustment": "Ajuste",
-        "all": "Todos"
-      },
-      "empty": "Nenhum movimento registrado ainda."
-    },
-    "drawer": {
-      "title": "Histórico de movimentos",
-      "close": "Fechar",
-      "empty": "Esta estampa / cor ainda não teve movimentos."
     }
   },
   "supplies": {
@@ -1927,6 +2044,7 @@
     },
     "groups": {
       "organization": "Organização",
+      "personalization": "Personalização",
       "account": "Conta"
     },
     "nav": {
@@ -1938,6 +2056,7 @@
       "integrations": "Integrações",
       "profile": "Perfil",
       "notifications": "Notificações",
+      "catalog": "Catálogo",
       "stockAlerts": "Alertas de estoque"
     },
     "company": {
@@ -2067,6 +2186,7 @@
       "members": "Você não tem acesso aos membros.",
       "roles": "Você não tem acesso às funções.",
       "stockAlerts": "Você não tem acesso aos alertas de estoque.",
+      "catalog": "Você não tem acesso à configuração do catálogo.",
       "integrations": "Você não tem acesso às integrações."
     },
     "integrations": {
@@ -2112,6 +2232,124 @@
       "validation": {
         "invalid": "Informe um número inteiro de 0 ou mais."
       }
+    }
+  },
+  "catalogConfig": {
+    "title": "Catálogo",
+    "sub": "Cores, tamanhos, tipos de peça e aviamentos usados no catálogo.",
+    "loadError": "Não foi possível carregar a configuração do catálogo.",
+    "save": "Salvar alterações",
+    "saved": "Configuração do catálogo salva.",
+    "saveError": "Não foi possível salvar a configuração do catálogo.",
+    "reset": "Restaurar padrão",
+    "footnote": "As mudanças valem para novos produtos. Produtos existentes mantêm o que já foi salvo.",
+    "productColors": {
+      "title": "Cores de tecidos",
+      "sub": "Cores de material disponíveis ao criar um produto. Cada produto escolhe entre estas.",
+      "add": "Adicionar cor de tecido"
+    },
+    "printColors": {
+      "title": "Cores de estampa",
+      "sub": "Cores de tinta disponíveis para a arte aplicada — combinadas a cada cor de material no produto.",
+      "add": "Adicionar cor de estampa"
+    },
+    "sizes": {
+      "title": "Tamanhos",
+      "sub": "Grade de tamanhos que pode ser ativada nas variações de cada produto.",
+      "add": "Adicionar",
+      "placeholder": "Ex: XG, 38, Único…",
+      "empty": "Nenhum tamanho — adicione ao menos um.",
+      "duplicate": "Esse tamanho já existe."
+    },
+    "fabricTypes": {
+      "title": "Tipos de tecido",
+      "sub": "Disponíveis ao receber bobinas em Estoque › Tecidos e na ficha técnica.",
+      "add": "Adicionar tipo de tecido",
+      "placeholder": "Ex: Malha 100% algodão"
+    },
+    "garmentTypes": {
+      "title": "Tipos de peça",
+      "sub": "Modelagens da ficha técnica. Cada uma tem um ícone e um prefixo de SKU.",
+      "add": "Adicionar tipo de peça",
+      "colIcon": "Ícone",
+      "colName": "Nome",
+      "colSku": "SKU",
+      "namePlaceholder": "Ex: Camiseta",
+      "skuPlaceholder": "CAM",
+      "chooseIcon": "Escolher ícone"
+    },
+    "aviamentos": {
+      "title": "Aviamentos",
+      "sub": "Itens que podem ser somados ao custo de uma ficha técnica.",
+      "add": "Adicionar aviamento",
+      "placeholder": "Ex: Etiqueta de composição"
+    },
+    "techniques": {
+      "title": "Técnicas de estampa",
+      "sub": "Métodos de estampa disponíveis em Catálogo › Estampas.",
+      "add": "Adicionar técnica",
+      "placeholder": "Ex: DTF, Silkscreen…"
+    },
+    "colorNamePlaceholder": "Nome da cor",
+    "remove": "Remover",
+    "validation": {
+      "hex": "Use uma cor hex como #1f1f1f",
+      "required": "Campo obrigatório",
+      "skuPrefix": "1–4 letras/dígitos",
+      "needName": "Dê um nome a cada cor.",
+      "needLabel": "Dê um nome a cada tipo de peça.",
+      "needSku": "Cada tipo de peça precisa de um prefixo de SKU válido."
+    }
+  },
+  "thresholds": {
+    "title": "Avisos de estoque baixo",
+    "sub": "O Orion destaca o item e avisa quando o saldo cruza o limite definido aqui.",
+    "loadError": "Não foi possível carregar os limites.",
+    "save": "Salvar alterações",
+    "saved": "Limites salvos.",
+    "saveError": "Não foi possível salvar os limites.",
+    "reset": "Restaurar padrão",
+    "noAlert": "Sem alerta",
+    "footnote": "Desligar um estoque silencia os avisos de reposição dele em todo o Orion — útil para itens que sua confecção não mantém em estoque.",
+    "enabledOn": "Avisar",
+    "enabledOff": "Sem aviso",
+    "units": {
+      "pct": "%",
+      "qty": "un.",
+      "kg": "kg",
+      "m": "m"
+    },
+    "tiers": {
+      "fabric": {
+        "label": "Bobinas de tecido",
+        "where": "Estoque › Bobinas de tecido",
+        "scope": "por bobina"
+      },
+      "paper": {
+        "label": "Bobinas de papel / filme",
+        "where": "Estoque › Papel",
+        "scope": "por bobina"
+      },
+      "blank": {
+        "label": "Peças lisas",
+        "where": "Estoque › Peças lisas",
+        "scope": "por variação"
+      },
+      "printed": {
+        "label": "Impressos",
+        "where": "Estoque › Impressos",
+        "scope": "por estampa · lado"
+      },
+      "product": {
+        "label": "Produtos acabados",
+        "where": "Estoque › Produtos",
+        "scope": "por SKU"
+      }
+    },
+    "summary": {
+      "off": "Sem aviso — este estoque não é acompanhado.",
+      "pct": "Avisa abaixo de {value}% do saldo inicial · {scope}",
+      "abs": "Avisa abaixo de {value} {unit} restantes · {scope}"
     }
   },
   "members": {
@@ -2468,6 +2706,28 @@
       "forbidden": "Você não tem permissão para ver o De/Para de pedidos."
     }
   },
+  "vincular": {
+    "title": "Vincular pedido",
+    "subtitle": "Escolha o SKU interno de cada item — {picked}/{total} vinculados",
+    "skuLabel": "SKU interno",
+    "choose": "Escolher SKU…",
+    "chooseProduct": "Escolher produto…",
+    "chooseVariation": "Variação (SKU)…",
+    "pickProductFirst": "Escolha o produto primeiro",
+    "suggestion": "Sugestão",
+    "use": "Usar",
+    "toLink": "a vincular",
+    "linked": "vinculados",
+    "confirm": "Vincular pedido",
+    "cancel": "Cancelar",
+    "empty": "Este pedido não tem itens aguardando vínculo.",
+    "loadError": "Não foi possível carregar os itens do pedido.",
+    "toast": {
+      "linked": "Pedido {code} vinculado — segue para produção",
+      "itemLinked": "Item vinculado a {sku}",
+      "error": "Não foi possível vincular o item."
+    }
+  },
   "batches": {
     "page": {
       "eyebrow": "Vendas"
@@ -2475,14 +2735,16 @@
     "list": {
       "title": "Produção",
       "titleEm": "em lotes",
-      "sub": "Agrupe pedidos em um lote, ajuste as impressões e então imprima etiquetas e despache.",
+      "sub": "Agrupe pedidos em um lote, imprima etiquetas e despache.",
       "loadError": "Não foi possível carregar os lotes.",
       "noResults": "Nenhum lote ainda.",
       "empty": "Nenhum lote ainda. Crie um a partir dos pedidos selecionados."
     },
     "actions": {
       "create": "Novo lote",
-      "back": "Voltar aos lotes"
+      "back": "Voltar aos lotes",
+      "assemble": "Montar lote",
+      "ship": "Despachar lote"
     },
     "create": {
       "title": "Novo lote",
@@ -2503,8 +2765,8 @@
     },
     "statuses": {
       "open": "Aberto",
-      "adjusted": "Ajustado",
-      "printed": "Impresso",
+      "in_production": "Em produção",
+      "dispatched": "Despachado",
       "done": "Concluído",
       "cancelled": "Cancelado"
     },
@@ -2512,48 +2774,45 @@
       "orders": "Pedidos",
       "pieces": "Peças",
       "needed": "Necessário",
-      "toPrint": "A imprimir"
+      "toPrint": "A imprimir",
+      "ready": "Prontos",
+      "readyOf": "{ready}/{total} prontos"
     },
-    "adjustments": {
+    "estampas": {
       "title": "Estampas",
-      "stamp": "Estampa",
-      "color": "Cor",
-      "needed": "Necessário",
-      "onHand": "Em estoque",
-      "toPrint": "A imprimir",
-      "sent": "Enviado",
-      "empty": "Nenhuma estampa neste lote.",
-      "save": "Salvar ajustes"
-    },
-    "printQueue": {
-      "title": "Fila de impressão",
-      "totalToPrint": "{count} a imprimir",
-      "design": "Estampa",
-      "color": "Cor",
-      "needed": "Necessário",
-      "onHand": "Em estoque",
-      "toPrint": "A imprimir",
-      "batches": "Lotes",
-      "emptyTitle": "Nada a imprimir",
-      "emptyDesc": "O estoque de estampas cobre todos os lotes abertos."
+      "subtitle": "{designs} estampas · {items} itens",
+      "empty": "Lote vazio — todos os pedidos foram removidos.",
+      "noEstampa": "Sem estampa",
+      "items": "itens",
+      "toPrint": "a imprimir",
+      "montado": "montado",
+      "enviado": "enviado",
+      "colCount": "{count, plural, one {# cor} other {# cores}}"
     },
     "detail": {
       "printLabels": "Imprimir etiquetas",
-      "sendMontador": "Enviar para o Montador DTF",
       "printShipping": "Imprimir etiquetas de envio",
       "markDone": "Concluir",
       "cancel": "Cancelar lote",
       "delete": "Excluir lote",
       "deleteConfirm": "Excluir este lote? Os pedidos serão desvinculados.",
-      "notFound": "Lote não encontrado."
+      "notFound": "Lote não encontrado.",
+      "assembleDisabled": "Tudo já está no estoque de produtos.",
+      "shipDisabled": "Todos os pedidos precisam estar prontos (em estoque) antes de despachar.",
+      "ordersInBatch": "Pedidos no lote ({count})",
+      "removeOrder": "Remover",
+      "dispatched": "Lote despachado"
     },
     "toast": {
       "created": "Lote criado",
-      "saved": "Ajustes salvos",
-      "montadorOk": "Enviado ao Montador: {ok} ok, {failed} falhas",
-      "montadorErr": "Não foi possível enviar ao Montador DTF",
       "deleted": "Lote excluído",
-      "noShippingLabels": "Nenhuma etiqueta de envio disponível para este lote."
+      "noShippingLabels": "Nenhuma etiqueta de envio disponível para este lote.",
+      "assembled": "{count, plural, one {# SKU montado} other {# SKUs montados}}",
+      "assembledSome": "{assembled} montados · {skipped} sem estoque suficiente",
+      "assembleNothing": "Nada a montar.",
+      "shipped": "Lote despachado · {count, plural, one {# pedido enviado} other {# pedidos enviados}}",
+      "shipError": "Não foi possível despachar o lote.",
+      "assembleError": "Não foi possível montar o lote."
     },
     "fallback": {
       "forbidden": "Você não tem acesso aos lotes."
@@ -2839,5 +3098,518 @@
       "banner": "Sessão de suporte · você está em {name}",
       "end": "Encerrar"
     }
+  },
+  "blankPieces": {
+    "page": {
+      "eyebrow": "Estoque"
+    },
+    "list": {
+      "title": "Peças",
+      "titleEm": "lisas",
+      "sub": "Peças costuradas, aguardando estampa.",
+      "empty": {
+        "title": "Nenhuma peça lisa ainda",
+        "body": "As peças entram aqui quando uma remessa volta da costura na banca."
+      }
+    },
+    "kpis": {
+      "total": "Total em peças lisas",
+      "totalUnit": "peças",
+      "belowMin": "Abaixo do mínimo",
+      "belowMinHint": "SKUs base a repor"
+    },
+    "tabs": {
+      "current": "Posição atual",
+      "movements": "Movimentações"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar peça lisa…",
+      "lowStockOnly": "Apenas baixos"
+    },
+    "table": {
+      "columns": {
+        "base": "Peça base",
+        "color": "Cor",
+        "size": "Tam.",
+        "min": "Mínimo",
+        "onHand": "Em estoque",
+        "inProduction": "Em produção"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Ver extrato"
+    },
+    "moveSheet": {
+      "title": "Lançar movimentação",
+      "sub": "Ajuste a quantidade de peças lisas desta peça base.",
+      "onHandLabel": "em estoque",
+      "labels": {
+        "moveType": "Tipo de movimentação",
+        "quantity": "Quantidade",
+        "preview": "Pré-visualização",
+        "recent": "Últimas movimentações"
+      },
+      "moveTypes": {
+        "entryAdjustment": {
+          "label": "Ajuste (+)",
+          "desc": "Correção de inventário"
+        },
+        "exitAdjustment": {
+          "label": "Ajuste (−)",
+          "desc": "Correção de inventário"
+        },
+        "damage": {
+          "label": "Avaria",
+          "desc": "Peça danificada"
+        }
+      },
+      "preview": {
+        "current": "Atual",
+        "entry": "Entrada",
+        "exit": "Saída",
+        "final": "Final",
+        "negativeWarning": "Estoque ficaria negativo.",
+        "lowWarning": "O estoque resultante fica abaixo do mínimo."
+      },
+      "ledgerKinds": {
+        "entry": "Entrada",
+        "exit": "Saída",
+        "adjustment": "Ajuste"
+      },
+      "validation": {
+        "quantityPositive": "A quantidade deve ser maior que zero",
+        "insufficient": "Apenas {available} em estoque para esta saída."
+      },
+      "cancel": "Cancelar",
+      "save": "Salvar"
+    },
+    "ledger": {
+      "title": "Movimentações",
+      "titleEm": "extrato completo",
+      "sub": "Todas as entradas e saídas de peças lisas, mais recentes primeiro.",
+      "columns": {
+        "when": "Data",
+        "item": "Item",
+        "reason": "Motivo",
+        "quantity": "Qtd"
+      },
+      "kinds": {
+        "entry": "Entrada",
+        "exit": "Saída",
+        "adjustment": "Ajuste"
+      },
+      "kindFilter": {
+        "all": "Todas"
+      },
+      "empty": "Nenhuma movimentação registrada ainda."
+    },
+    "toasts": {
+      "movementCreated": "Movimentação registrada",
+      "error": "Falha na operação"
+    }
+  },
+  "paperRolls": {
+    "page": {
+      "eyebrow": "Estoque"
+    },
+    "list": {
+      "title": "Bobinas",
+      "titleEm": "de papel",
+      "sub": "Filme DTF e papel de sublimação, por saldo.",
+      "empty": {
+        "title": "Nenhuma bobina ainda",
+        "body": "Receba uma bobina para começar a controlar o insumo da estamparia."
+      }
+    },
+    "kpis": {
+      "total": "Saldo total",
+      "totalUnit": "m",
+      "toReorder": "Bobinas a repor",
+      "toReorderHint": "abaixo do limite de estoque baixo"
+    },
+    "tabs": {
+      "current": "Posição atual",
+      "movements": "Movimentações"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar por tipo, fornecedor…"
+    },
+    "types": {
+      "dtf_film": "Filme DTF",
+      "sublimation_paper": "Papel sublimático",
+      "transfer_paper": "Papel transfer"
+    },
+    "table": {
+      "columns": {
+        "type": "Tipo",
+        "width": "Largura",
+        "supplier": "Fornecedor",
+        "received": "Recebida",
+        "saldo": "Saldo",
+        "remaining": "Restante"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Ver extrato",
+      "receiveRoll": "Receber bobina"
+    },
+    "receive": {
+      "title": "Receber bobina",
+      "sub": "Cadastre uma nova bobina de papel/filme com a metragem inicial.",
+      "fields": {
+        "material": "Material",
+        "width": "Largura (cm)",
+        "meters": "Metragem (m)",
+        "supplier": "Fornecedor",
+        "supplierPlaceholder": "Ex: DTF Brasil"
+      },
+      "cancel": "Cancelar",
+      "submit": "Registrar entrada",
+      "validation": {
+        "invalid": "Informe largura e metragem válidas.",
+        "supplierRequired": "Informe o fornecedor."
+      }
+    },
+    "detail": {
+      "widthLabel": "{width} cm de largura",
+      "remaining": "Restante",
+      "lowWarning": "Estoque baixo — considere repor.",
+      "supplier": "Fornecedor",
+      "received": "Recebida em",
+      "consumed": "Consumido",
+      "width": "Largura",
+      "consumeTitle": "Lançar consumo",
+      "afterConsume": "Saldo após consumo:",
+      "consumeSubmit": "Lançar consumo",
+      "close": "Fechar",
+      "delete": "Excluir bobina"
+    },
+    "ledger": {
+      "title": "Movimentações",
+      "titleEm": "extrato completo",
+      "sub": "Todas as entradas e consumos de bobina, mais recentes primeiro.",
+      "columns": {
+        "when": "Data",
+        "item": "Item",
+        "reason": "Motivo",
+        "quantity": "Qtd"
+      },
+      "kinds": {
+        "entry": "Entrada",
+        "exit": "Consumo",
+        "adjustment": "Ajuste"
+      },
+      "kindFilter": {
+        "all": "Todas"
+      },
+      "empty": "Nenhuma movimentação registrada ainda."
+    },
+    "toasts": {
+      "rollReceived": "Bobina recebida",
+      "consumed": "Consumo registrado",
+      "deleted": "Bobina excluída",
+      "deleteBlocked": "Esta bobina tem histórico de movimentação e não pode ser excluída.",
+      "error": "Falha na operação"
+    }
+  },
+  "printedTransfers": {
+    "page": {
+      "eyebrow": "Estoque"
+    },
+    "list": {
+      "title": "Impressos",
+      "titleEm": "prontos",
+      "sub": "Transfers impressos, por estampa e lado, aguardando a prensa.",
+      "empty": {
+        "title": "Nenhum impresso ainda",
+        "body": "Os impressos entram aqui quando uma impressão é concluída ou ajustada manualmente."
+      }
+    },
+    "kpis": {
+      "total": "Impressos prontos",
+      "totalUnit": "un",
+      "alerting": "Itens em alerta",
+      "alertingHint": "esgotados ou abaixo do mínimo"
+    },
+    "tabs": {
+      "current": "Posição atual",
+      "movements": "Movimentações"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar estampa…",
+      "lowStockOnly": "Apenas baixos"
+    },
+    "sides": {
+      "front": "Frente",
+      "back": "Costas"
+    },
+    "table": {
+      "columns": {
+        "design": "Estampa",
+        "side": "Lado",
+        "min": "Mínimo",
+        "onHand": "Prontos"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Ver extrato"
+    },
+    "moveSheet": {
+      "title": "Lançar movimentação",
+      "sub": "Ajuste a quantidade de impressos desta estampa e lado.",
+      "onHandLabel": "prontos",
+      "labels": {
+        "moveType": "Tipo de movimentação",
+        "quantity": "Quantidade",
+        "preview": "Pré-visualização",
+        "recent": "Últimas movimentações"
+      },
+      "moveTypes": {
+        "entryAdjustment": {
+          "label": "Ajuste (+)",
+          "desc": "Correção de inventário"
+        },
+        "exitAdjustment": {
+          "label": "Ajuste (−)",
+          "desc": "Correção de inventário"
+        },
+        "scrap": {
+          "label": "Refugo",
+          "desc": "Falha de impressão"
+        }
+      },
+      "preview": {
+        "current": "Atual",
+        "entry": "Entrada",
+        "exit": "Saída",
+        "final": "Final",
+        "negativeWarning": "Estoque ficaria negativo.",
+        "lowWarning": "O estoque resultante fica abaixo do mínimo."
+      },
+      "ledgerKinds": {
+        "entry": "Entrada",
+        "exit": "Saída",
+        "adjustment": "Ajuste"
+      },
+      "validation": {
+        "quantityPositive": "A quantidade deve ser maior que zero",
+        "insufficient": "Apenas {available} prontos para esta saída."
+      },
+      "cancel": "Cancelar",
+      "save": "Salvar"
+    },
+    "ledger": {
+      "title": "Movimentações",
+      "titleEm": "extrato completo",
+      "sub": "Todas as entradas e saídas de impressos, mais recentes primeiro.",
+      "columns": {
+        "when": "Data",
+        "item": "Item",
+        "reason": "Motivo",
+        "quantity": "Qtd"
+      },
+      "kinds": {
+        "entry": "Entrada",
+        "exit": "Saída",
+        "adjustment": "Ajuste"
+      },
+      "kindFilter": {
+        "all": "Todas"
+      },
+      "empty": "Nenhuma movimentação registrada ainda."
+    },
+    "toasts": {
+      "movementCreated": "Movimentação registrada",
+      "error": "Falha na operação"
+    }
+  },
+  "printOrders": {
+    "page": { "eyebrow": "Produção" },
+    "list": {
+      "title": "Impressão",
+      "titleEm": "de estampas",
+      "sub": "Lotes de impressão DTF e sublimação.",
+      "loadError": "Não foi possível carregar as ordens de impressão.",
+      "noResults": "Nenhuma ordem de impressão encontrada.",
+      "empty": {
+        "title": "Nenhuma ordem de impressão ainda",
+        "body": "Planeje um lote contra uma bobina de papel para começar a imprimir."
+      }
+    },
+    "filters": { "searchPlaceholder": "Buscar ordens de impressão…" },
+    "view": { "kanban": "Kanban", "table": "Tabela" },
+    "status": { "pending": "Pendente", "printing": "Imprimindo", "done": "Concluído" },
+    "techniques": { "dtf": "DTF", "silkscreen": "Silkscreen", "sublimation": "Sublimação" },
+    "paperTypes": {
+      "dtf_film": "Filme DTF",
+      "sublimation_paper": "Papel sublimático",
+      "transfer_paper": "Papel transfer"
+    },
+    "consumptionRate": "{rate} m/peça",
+    "inStock": "No estoque",
+    "actions": {
+      "create": "Nova ordem",
+      "save": "Salvar",
+      "launch": "Lançar impressos"
+    },
+    "card": { "printed": "impressos", "noPlan": "Sem planejamento" },
+    "table": {
+      "code": "Código",
+      "estampa": "Estampa",
+      "technique": "Técnica",
+      "roll": "Bobina",
+      "status": "Status",
+      "planned": "Plano",
+      "printed": "Impresso"
+    },
+    "detail": {
+      "estampa": "Estampa a imprimir",
+      "estampaPlaceholder": "Selecione uma estampa…",
+      "paperRoll": "Bobina de papel / filme",
+      "rollPlaceholder": "Selecione uma bobina (opcional)…",
+      "sidesGrid": "Impressos por lado e variação",
+      "front": "Frente",
+      "back": "Costas",
+      "variation": "Variação",
+      "planned": "Planejado",
+      "plannedShort": "planejados",
+      "printed": "Impresso",
+      "subtotal": "Subtotal",
+      "total": "total",
+      "markPrinted": "Marcar como impresso (igualar ao planejado)",
+      "pngOk": "PNG",
+      "pngMissing": "sem PNG",
+      "pngMissingHint": "Falta o PNG desta variação/lado",
+      "paperConsumed": "Papel consumido",
+      "consumptionLegend": "previsto · consumido · Δ",
+      "consumido": "Consumido",
+      "pickRollForConsumption": "Selecione uma bobina para registrar o consumo",
+      "pickEstampa": "Selecione uma estampa",
+      "pickEstampaGrid": "Selecione uma estampa para montar a grade de lados e variações",
+      "gradeHint": "Estampa, lados e variações definem a grade",
+      "noRoll": "Sem bobina vinculada",
+      "rollLinked": "Bobina {code}",
+      "plannedCount": "{n} impressos planejados"
+    },
+    "form": {
+      "cancel": "Cancelar",
+      "title": {
+        "new": "Nova ordem de impressão",
+        "newSub": "Planeje um lote contra uma bobina de papel",
+        "edit": "Ordem {code}"
+      },
+      "toasts": {
+        "created": "Ordem de impressão criada",
+        "updated": "Ordem de impressão atualizada",
+        "launched": "Impressos lançados no estoque",
+        "error": "Falha na operação"
+      }
+    },
+    "fallback": { "forbidden": "Você não tem acesso às ordens de impressão." }
+  },
+  "assembly": {
+    "page": { "eyebrow": "Produção" },
+    "list": {
+      "title": "Montagem",
+      "titleEm": "& acabamento",
+      "sub": "Peça lisa + impresso, prensados em produto acabado."
+    },
+    "filters": { "searchPlaceholder": "Buscar por estampa ou ficha…" },
+    "columns": { "waiting": "Aguardando", "todo": "A montar", "done": "Montado" },
+    "actions": {
+      "manual": "Montagem avulsa",
+      "build": "Montar {n}",
+      "buildAll": "Montar prontos ({n})"
+    },
+    "comp": {
+      "blank": "Peça lisa · {onHand} em estoque",
+      "printed": "Impresso · {onHand} em estoque",
+      "blankShort": "peça lisa",
+      "printedShort": "impresso",
+      "missing": "faltando"
+    },
+    "manualSheet": {
+      "title": "Montagem avulsa",
+      "sub": "Escolha uma peça lisa e um impresso para prensar um produto.",
+      "blank": "Peça lisa",
+      "blankPlaceholder": "Selecione uma peça lisa…",
+      "printed": "Impresso",
+      "printedPlaceholder": "Selecione um impresso…",
+      "quantity": "Quantidade",
+      "maxHint": "Até {max} disponíveis",
+      "onHand": "{n} em estoque",
+      "productPreview": "Produto resultante",
+      "newSku": "Novo SKU",
+      "cancel": "Cancelar"
+    },
+    "toasts": {
+      "assembled": "+{n} · {sku}",
+      "error": "Falha na operação",
+      "insufficient": "Estoque insuficiente — disponível: {available}"
+    },
+    "empty": {
+      "buildable": "Nada para montar ainda",
+      "buildableBody": "Quando uma peça lisa e um impresso correspondente estiverem em estoque, o par aparece aqui.",
+      "noStock": "Sem estoque disponível."
+    },
+    "fallback": { "forbidden": "Você não tem acesso à montagem." }
+  },
+  "planning": {
+    "page": { "eyebrow": "planejamento" },
+    "list": {
+      "title": "Planejamento",
+      "titleEm": "de produção",
+      "sub": "Ordens de corte e impressão sugeridas pelo Orion."
+    },
+    "filters": {
+      "all": "Tudo",
+      "demand": "Demanda",
+      "stock": "Estoque baixo"
+    },
+    "columns": {
+      "cortes": "Cortes",
+      "impressoes": "Impressões"
+    },
+    "units": {
+      "pieces": "peças",
+      "prints": "impressos"
+    },
+    "summary": {
+      "toCut": "peças a cortar",
+      "toPrint": "impressos a imprimir"
+    },
+    "row": {
+      "toCut": "a cortar",
+      "toPrint": "a imprimir",
+      "orders": "{count, plural, one {# pedido} other {# pedidos}}"
+    },
+    "sources": {
+      "demanda": "Demanda",
+      "estoque": "Estoque baixo"
+    },
+    "png": {
+      "ok": "PNG ok",
+      "pending": "PNG pendente"
+    },
+    "actions": {
+      "recalc": "Recalcular",
+      "create": "{n, plural, one {Criar # ordem} other {Criar # ordens}}",
+      "viewCutting": "Ver no Corte"
+    },
+    "actionbar": {
+      "selected": "{cortes, plural, =0 {0 cortes} one {# corte} other {# cortes}} · {impressoes, plural, =0 {0 impressões} one {# impressão} other {# impressões}} selecionadas"
+    },
+    "toasts": {
+      "created": "{n} ordens criadas",
+      "error": "Falha na operação",
+      "partial": "{n} criadas · {skipped} ignoradas"
+    },
+    "empty": {
+      "title": "Nada a produzir agora",
+      "bodyAll": "A demanda dos pedidos está coberta e nenhum tier está abaixo do mínimo.",
+      "bodyFiltered": "Nenhuma sugestão para este filtro."
+    },
+    "created": { "banner": "Ordens abertas como pendentes no Corte e na Impressão." },
+    "fallback": { "forbidden": "Você não tem acesso ao planejamento." }
   }
 }

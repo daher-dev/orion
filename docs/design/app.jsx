@@ -11,8 +11,10 @@ const ROUTES = {
   dashboard: 'Dashboard',
   orders: 'Pedidos', clients: 'Clients', ads: 'Ads',
   products: 'Products', specs: 'Specs', prints: 'Prints',
+  planejamento: 'Planejamento',
   cutting: 'Cutting', sewing: 'Sewing', contractors: 'Contractors',
-  fabric: 'Fabric', stock: 'Stock',
+  printing: 'Printing', montagem: 'Montagem',
+  fabric: 'Fabric', blanks: 'BlankPieces', paper: 'PaperRolls', printed: 'Printed', stock: 'Stock',
   reports: 'Reports', settings: 'Settings',
 };
 
@@ -85,8 +87,23 @@ function App() {
           Cada empresa personaliza nome e cor — exibimos como “{tweaks.companyName} <b>por Orion</b>”.
         </div>
       </TweaksPanel>
+      <StockToaster/>
     </div>
   );
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+
+// Global stock toaster — surfaces ledger changes triggered from any feature
+function StockToaster() {
+  const [msg, setMsg] = React.useState(null);
+  React.useEffect(() => window.StockStore.subscribeToast(setMsg), []);
+  if (!msg) return null;
+  return (
+    <div style={{ position: 'fixed', left: '50%', bottom: 26, transform: 'translateX(-50%)', background: 'var(--ink)', color: 'var(--ink-inv)',
+      padding: '11px 17px', borderRadius: 10, fontSize: 13, boxShadow: 'var(--shadow-lg)', zIndex: 3000, display: 'flex', alignItems: 'center', gap: 9, maxWidth: '90vw' }}>
+      <Icon name="arrow-down-up" size={16} style={{ color: '#7ee0a5' }}/> {msg}
+    </div>
+  );
+}
+window.StockToaster = StockToaster;

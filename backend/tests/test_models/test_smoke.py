@@ -110,7 +110,7 @@ async def test_full_domain_smoke(db_session: AsyncSession, admin_role: Role) -> 
     product = Product(
         company_id=company.id,
         name="Camiseta Floral 03",
-        product_type=ProductType.TSHIRT,
+        product_type=ProductType.CAMISETA,
         spec_id=spec.id,
         print_id=print_design.id,
     )
@@ -170,7 +170,9 @@ async def test_full_domain_smoke(db_session: AsyncSession, admin_role: Role) -> 
 
     cutting_order = CuttingOrder(
         company_id=company.id,
-        product_id=product.id,
+        spec_id=spec.id,
+        color="Preto",
+        color_code="PRT",
         body_roll_id=body_roll.id,
         rib_roll_id=rib_roll.id,
         status=CuttingStatus.DONE,
@@ -215,14 +217,14 @@ async def test_full_domain_smoke(db_session: AsyncSession, admin_role: Role) -> 
         ]
     )
 
-    # Stock entry for the M variation we created
+    # Stock entry for the M variation we created (finished stock now comes from
+    # Assembly, not sewing — but the model smoke test just exercises the row).
     db_session.add(
         StockEntry(
             company_id=company.id,
             variation_id=variation.id,
-            shipment_id=shipment.id,
             quantity=18,
-            source=StockSource.SHIPMENT,
+            source=StockSource.ADJUSTMENT,
         )
     )
 
@@ -297,7 +299,7 @@ async def test_product_can_have_no_print(db_session: AsyncSession) -> None:
     product = Product(
         company_id=company.id,
         name="Bermuda lisa preta",
-        product_type=ProductType.SHORTS,
+        product_type=ProductType.BERMUDA,
         spec_id=spec.id,
         print_id=None,
     )

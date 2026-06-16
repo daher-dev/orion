@@ -26,7 +26,6 @@ from models import (
     Ad,
     AdProduct,
     Batch,
-    BatchPrintAdjustment,
     Client,
     Company,
     CuttingOrder,
@@ -74,7 +73,6 @@ TABLE_MODELS: dict[str, type] = {
     "order": Order,
     "order_item": OrderItem,
     "imported_order": ImportedOrder,
-    "batch_print_adjustment": BatchPrintAdjustment,
     "stock_entry": StockEntry,
     "stock_exit": StockExit,
 }
@@ -94,7 +92,6 @@ _TENANT_TABLES: tuple[str, ...] = (
     "order_items",
     "imported_orders",
     "orders",
-    "batch_print_adjustments",
     "batches",
     "ad_products",
     "ads",

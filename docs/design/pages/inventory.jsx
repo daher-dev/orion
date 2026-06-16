@@ -13,25 +13,110 @@ const COLOR_NAMES_INV = {
   'Off white': '#f4f1ea', 'Branco': '#f4f1ea', 'Vermelho': '#b03a2e', 'Cru': '#efe6d3',
 };
 
+// Shared inventory KPI strip — at most 2 figures, the most relevant for the page.
+// Compact: hugs its content rather than spanning the full row.
+// Each item: { label, value, unit?, tone? }
+const InventoryKpis = ({ items = [] }) => (
+  <div className="card" style={{ display: 'inline-flex', alignItems: 'stretch', padding: 0, marginBottom: 12 }}>
+    {items.slice(0, 2).map((k, i) => (
+      <React.Fragment key={i}>
+        {i > 0 && <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--line-soft)' }}/>}
+        <div style={{ padding: '9px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 96 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 21, color: k.tone || 'var(--ink)', lineHeight: 1 }}>{k.value}</span>
+            {k.unit && <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{k.unit}</span>}
+          </div>
+          <div style={{ fontSize: 10, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 600, marginTop: 3 }}>{k.label}</div>
+        </div>
+      </React.Fragment>
+    ))}
+  </div>
+);
+
+// Movements ledger for the bulk roll stocks (tecido / papel). Unit-aware.
+const RollLedger = ({ movements, labelOf, unit = '' }) => {
+  const [sort, setSort] = React.useState({ col: 'date', dir: 'desc' });
+  const rows = React.useMemo(() => {
+    const r = movements.slice();
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    r.sort((a, b) => {
+      const av = a[sort.col], bv = b[sort.col];
+      if (typeof av === 'string') return av.localeCompare(bv) * dir;
+      return ((av ?? 0) - (bv ?? 0)) * dir;
+    });
+    return r;
+  }, [movements, sort]);
+  return (
+    <table className="tbl">
+      <thead><tr>
+        <SortHeader id="date" sort={sort} setSort={setSort}>Data</SortHeader>
+        <th>Bobina</th>
+        <SortHeader id="reason" sort={sort} setSort={setSort}>Motivo</SortHeader>
+        <SortHeader id="qty" sort={sort} setSort={setSort} num>Qtd</SortHeader>
+      </tr></thead>
+      <tbody>
+        {rows.map((m, i) => (
+          <tr key={i}>
+            <td style={{ fontSize: 12, color: 'var(--ink-3)' }}>{m.date}</td>
+            <td>{labelOf(m.id)}</td>
+            <td>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <Icon name={m.qty > 0 ? 'arrow-down-circle' : 'arrow-up-circle'} size={13} style={{ color: m.qty > 0 ? 'var(--ok)' : 'var(--err)' }}/>
+                {m.reason}
+              </span>
+            </td>
+            <td className="num" style={{ color: m.qty > 0 ? 'var(--ok)' : 'var(--err)', fontWeight: 500 }}>{m.qty > 0 ? '+' : ''}{fmt(m.qty, 1)}{unit && <span style={{ color: 'var(--ink-3)', marginLeft: 3 }}>{unit}</span>}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
 const Fabric = () => {
   const [open, setOpen] = React.useState(null);
   const [newOpen, setNewOpen] = React.useState(false);
+  const [tab, setTab] = React.useState('current');
   const [q, setQ] = React.useState('');
   const [filter, setFilter] = React.useState('all');
+  const [sort, setSort] = React.useState({ col: 'current', dir: 'desc' });
 
-  const rows = ORION_DATA.fabric.filter(f => {
-    if (filter !== 'all' && f.kind !== filter) return false;
-    if (q) {
-      const hay = `${f.id} ${f.type} ${f.supplier} ${f.color || ''}`.toLowerCase();
-      if (!hay.includes(q.toLowerCase())) return false;
-    }
-    return true;
-  });
+  const fabricLabelOf = (id) => {
+    const x = ORION_DATA.fabric.find(f => f.id === id);
+    return x ? (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <span aria-hidden style={{ width: 12, height: 12, borderRadius: '50%', background: COLOR_NAMES_INV[x.color] || 'var(--ink-3)', boxShadow: '0 0 0 1px var(--line)' }}/>
+        <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{x.type}</span>
+        <span style={{ color: 'var(--ink-3)', fontSize: 12 }}>{x.color}</span>
+      </span>
+    ) : id;
+  };
+
+  const totalKg = ORION_DATA.fabric.reduce((s, f) => s + f.current, 0);
+  const toReorder = ORION_DATA.fabric.filter(f => (f.current / f.initial) < 0.25).length;
+
+  const rows = React.useMemo(() => {
+    let r = ORION_DATA.fabric.filter(f => {
+      if (filter !== 'all' && f.kind !== filter) return false;
+      if (q) {
+        const hay = `${f.id} ${f.type} ${f.supplier} ${f.color || ''}`.toLowerCase();
+        if (!hay.includes(q.toLowerCase())) return false;
+      }
+      return true;
+    });
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    r.sort((a, b) => {
+      const av = a[sort.col], bv = b[sort.col];
+      if (typeof av === 'string') return av.localeCompare(bv) * dir;
+      return ((av ?? 0) - (bv ?? 0)) * dir;
+    });
+    return r;
+  }, [filter, q, sort]);
 
   return (
     <div className="page">
       <PageHead sub="fabric" title="Bobinas" titleEm="de tecido"
-                desc="Cada bobina recebida e o quanto resta. Saldo é abatido a cada corte."
+                desc="Bobinas de tecido e o saldo de cada uma."
                 actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="layers" size={14}/> Receber bobina</button>}/>
       <HelpCard id="fabric" icon="layers" tone="var(--brand-inv)" title="Bobinas — quanto de tecido você tem, em tempo real">
         <HelpBody>
@@ -43,15 +128,37 @@ const Fabric = () => {
           { icon: 'gauge', label: 'Saldo restante', sub: 'avisa p/ repor', tone: 'ok' },
         ]}/>
       </HelpCard>
+      <InventoryKpis items={[
+        { label: 'Saldo total', value: fmt(totalKg, 1), unit: 'kg' },
+        { label: 'Bobinas a repor', value: toReorder, tone: toReorder ? 'var(--warn)' : 'var(--ink)', hint: 'abaixo de 25% do saldo' },
+      ]}/>
       <div className="card">
         <TableToolbar>
-          <SearchInput placeholder="Buscar por tipo, fornecedor…" value={q} onChange={e => setQ(e.target.value)}/>
-          <Seg value={filter} onChange={setFilter} options={[
-            {value:'all',label:'Todas'},{value:'corpo',label:'Corpo'},{value:'ribana',label:'Ribana'}
+          <Seg value={tab} onChange={setTab} options={[
+            { value: 'current', label: 'Posição atual' },
+            { value: 'movements', label: 'Movimentações' },
           ]}/>
+          <SearchInput placeholder="Buscar por tipo, fornecedor…" value={q} onChange={e => setQ(e.target.value)}/>
+          {tab === 'current' && (
+            <div style={{ marginLeft: 'auto' }}>
+              <Seg value={filter} onChange={setFilter} options={[
+                {value:'all',label:'Todas'},{value:'corpo',label:'Corpo'},{value:'ribana',label:'Ribana'}
+              ]}/>
+            </div>
+          )}
         </TableToolbar>
+        {tab === 'current' ? (
         <table className="tbl">
-          <thead><tr><th>Tipo</th><th>Cor</th><th className="num">GSM</th><th>Fornecedor</th><th>Recebida</th><th style={{width:200}}>Saldo</th><th className="num">Restante</th><th style={{width:36}}/></tr></thead>
+          <thead><tr>
+            <SortHeader id="type" sort={sort} setSort={setSort}>Tipo</SortHeader>
+            <SortHeader id="color" sort={sort} setSort={setSort}>Cor</SortHeader>
+            <SortHeader id="gsm" sort={sort} setSort={setSort} num>GSM</SortHeader>
+            <SortHeader id="supplier" sort={sort} setSort={setSort}>Fornecedor</SortHeader>
+            <SortHeader id="received" sort={sort} setSort={setSort}>Recebida</SortHeader>
+            <th style={{width:200}}>Saldo</th>
+            <SortHeader id="current" sort={sort} setSort={setSort} num>Restante</SortHeader>
+            <th style={{width:36}}/>
+          </tr></thead>
           <tbody>
             {rows.map(f => {
               const pct = (f.current / f.initial) * 100;
@@ -98,6 +205,9 @@ const Fabric = () => {
             })}
           </tbody>
         </table>
+        ) : (
+          <RollLedger movements={ORION_DATA.fabricMovements} labelOf={fabricLabelOf} unit="kg"/>
+        )}
       </div>
 
       <Sheet open={!!open} onClose={() => setOpen(null)}
@@ -180,7 +290,9 @@ const FabricDetail = ({ f }) => {
 };
 
 const NewFabricSheet = ({ open, onClose }) => {
-  const [tipo, setTipo] = React.useState(FABRIC_TYPES[0]);
+  const cfg = useCatalogConfig();
+  const FABRIC_OPTS = cfg.fabricTypes;
+  const [tipo, setTipo] = React.useState(FABRIC_OPTS[0]);
   const [kind, setKind] = React.useState('corpo');
   const [gsm, setGsm] = React.useState(180);
   const [peso, setPeso] = React.useState(20.0);
@@ -223,7 +335,7 @@ const NewFabricSheet = ({ open, onClose }) => {
         </div>
         <div className="field">
           <label>Tipo de tecido</label>
-          <Select searchable value={tipo} onChange={setTipo} options={FABRIC_TYPES}/>
+          <Select searchable value={tipo} onChange={setTipo} options={FABRIC_OPTS}/>
         </div>
       </div>
 
@@ -275,10 +387,9 @@ const NewFabricSheet = ({ open, onClose }) => {
 };
 
 const MOVE_TYPES = [
-  { id: 'entrada-banca',   dir: '+', icon: 'package-check',  label: 'Recebimento',  desc: 'Peças vindas da costura' },
-  { id: 'entrada-devol',   dir: '+', icon: 'undo-2',         label: 'Devolução',     desc: 'Retorno de cliente' },
+  { id: 'entrada-devol',   dir: '+', icon: 'undo-2',         label: 'Devolução',    desc: 'Retorno de cliente' },
   { id: 'entrada-ajuste',  dir: '+', icon: 'plus-circle',    label: 'Ajuste (+)',   desc: 'Correção de inventário' },
-  { id: 'saida-pedido',    dir: '-', icon: 'shopping-bag',   label: 'Pedido',       desc: 'Despacho para cliente' },
+  { id: 'saida-ajuste',    dir: '-', icon: 'minus-circle',   label: 'Ajuste (−)',   desc: 'Correção de inventário' },
   { id: 'saida-avaria',    dir: '-', icon: 'alert-triangle', label: 'Avaria',       desc: 'Peça danificada' },
   { id: 'saida-brinde',    dir: '-', icon: 'gift',           label: 'Brinde',       desc: 'Saída sem venda' },
 ];
@@ -299,6 +410,7 @@ const SortHeader = ({ id, sort, setSort, num, children }) => {
 };
 
 const Stock = () => {
+  const store = useStock();
   const [tab, setTab] = React.useState('current');
   const [open, setOpen] = React.useState(null);
   const [adjustOpen, setAdjustOpen] = React.useState(false);
@@ -319,7 +431,7 @@ const Stock = () => {
       return ((av ?? 0) - (bv ?? 0)) * dir;
     });
     return rows;
-  }, [sort, lowOnly, q]);
+  }, [sort, lowOnly, q, store.version()]);
 
   const movRows = React.useMemo(() => {
     const rows = ORION_DATA.movements.slice();
@@ -330,15 +442,13 @@ const Stock = () => {
       return ((av ?? 0) - (bv ?? 0)) * dir;
     });
     return rows;
-  }, [movSort]);
+  }, [movSort, store.version()]);
 
   return (
     <div className="page">
-      <PageHead sub="stock" title="Estoque" titleEm="de peças prontas"
-                desc="Inventário de produtos acabados por SKU."
-                actions={<>
-                  <button className="btn btn-primary" onClick={() => setAdjustOpen(true)}><Icon name="arrow-down-up" size={14}/> Lançar movimentação</button>
-                </>}/>
+      <PageHead sub="stock" title="Produtos" titleEm="acabados"
+                desc="Produtos acabados em estoque, por SKU."
+                actions={<button className="btn btn-primary" onClick={() => setAdjustOpen(true)}><Icon name="arrow-down-up" size={14}/> Lançar movimentação</button>}/>
       <HelpCard id="stock" icon="boxes" tone="var(--brand-inv)" title="Estoque — peças prontas por SKU">
         <HelpBody>
           O inventário de <b>produtos acabados</b>: cada <b>variação (SKU)</b> <b>entra</b> quando volta da costura e <b>sai</b> quando um pedido é expedido. Defina o <b>mínimo</b> para o Orion avisar antes de faltar.
@@ -349,6 +459,10 @@ const Stock = () => {
           { icon: 'truck', label: 'Pedido expede', sub: 'saída', tone: 'ok' },
         ]}/>
       </HelpCard>
+      <InventoryKpis items={[
+        { label: 'Peças em estoque', value: ORION_DATA.stock.reduce((s, r) => s + r.count, 0), unit: 'peças' },
+        { label: 'SKUs em ruptura', value: ORION_DATA.stock.filter(r => r.count < 10).length, tone: ORION_DATA.stock.filter(r => r.count < 10).length ? 'var(--err)' : 'var(--ink)', hint: 'abaixo de 10 un.' },
+      ]}/>
       <div className="card">
         <TableToolbar>
           <Seg value={tab} onChange={setTab} options={[
@@ -440,9 +554,10 @@ const Stock = () => {
 };
 
 const AdjustStockBody = ({ initialSku, onClose }) => {
+  const store = useStock();
   const [sku, setSku] = React.useState(initialSku || ORION_DATA.stock[0]?.sku || '');
   const [qty, setQty] = React.useState(1);
-  const [type, setType] = React.useState('entrada-banca');
+  const [type, setType] = React.useState('entrada-ajuste');
 
   React.useEffect(() => { if (initialSku) setSku(initialSku); }, [initialSku]);
 
@@ -596,7 +711,7 @@ const AdjustStockBody = ({ initialSku, onClose }) => {
         background: 'var(--bg)', display: 'flex', justifyContent: 'flex-end', gap: 8,
       }}>
         <button className="btn" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" onClick={onClose} disabled={qty <= 0 || !sel}>
+        <button className="btn btn-primary" onClick={() => { if (sel) store.adjustProduct(sel.sku, delta, `${move.dir === '+' ? 'Entrada' : 'Saída'} · ${move.label}`, sel.product); onClose(); }} disabled={qty <= 0 || !sel}>
           <Icon name="check" size={13}/> Confirmar
         </button>
       </div>

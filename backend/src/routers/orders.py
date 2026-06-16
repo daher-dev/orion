@@ -15,8 +15,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 
 from dependencies import DbSession, RequirePermission
-from models import Ad, Client, Ecommerce, OrderStatus, Product, ProductVariation, User
-from models.order import Order
+from models import Ecommerce, OrderStatus, User
 from schemas._common import PageParams
 from schemas.order import (
     OrderAdRead,
@@ -47,16 +46,20 @@ router = APIRouter(
 
 
 def _to_read(
-    order: Order,
-    ad: Ad,
-    variation: ProductVariation,
-    product: Product,
-    spec_code: str | None,
-    client: Client | None,
-    image_url: str | None = None,
-    shipping_label_url: str | None = None,
-    tracking_code: str | None = None,
+    row: order_service.OrderWithRelations,
+    readiness: order_service.OrderReadiness,
 ) -> OrderRead:
+    (
+        order,
+        ad,
+        variation,
+        product,
+        spec_code,
+        client,
+        image_url,
+        shipping_label_url,
+        tracking_code,
+    ) = row
     return OrderRead(
         id=order.id,
         ad=OrderAdRead(id=ad.id, title=ad.title, ecommerce=ad.ecommerce),
@@ -74,8 +77,12 @@ def _to_read(
         ordered_at=order.ordered_at,
         status=order.status,
         external_order_id=order.external_order_id,
+        batch_id=order.batch_id,
         shipping_label_url=shipping_label_url,
         tracking_code=tracking_code,
+        ready=readiness.ready,
+        on_hand=readiness.on_hand,
+        has_unmapped_items=readiness.has_unmapped_items,
         created_at=order.created_at,
         updated_at=order.updated_at,
     )
@@ -111,13 +118,13 @@ async def list_orders_endpoint(
         batch_id=batch_id,
         product_id=product_id,
     )
-    rows, total = await order_service.list_orders(
+    rows, total, readiness = await order_service.list_orders(
         db,
         company_id=user.company_id,
         filters=filters,
         page=params,
     )
-    items = [_to_read(*row) for row in rows]
+    items = [_to_read(row, readiness[row[0].id]) for row in rows]
     return OrderPage.build(items=items, total=total, params=params)
 
 
@@ -147,12 +154,12 @@ async def get_order_endpoint(
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("orders.read"))],
 ) -> OrderRead:
-    row = await order_service.get_order(
+    row, readiness = await order_service.get_order(
         db,
         company_id=user.company_id,
         order_id=order_id,
     )
-    return _to_read(*row)
+    return _to_read(row, readiness)
 
 
 @router.get("/{order_id}/items", response_model=list[OrderItemRead])
@@ -190,13 +197,13 @@ async def create_order_endpoint(
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("orders.write"))],
 ) -> OrderRead:
-    row = await order_service.create_order(
+    row, readiness = await order_service.create_order(
         db,
         company_id=user.company_id,
         user_id=user.id,
         payload=payload,
     )
-    return _to_read(*row)
+    return _to_read(row, readiness)
 
 
 @router.patch("/{order_id}", response_model=OrderRead)
@@ -206,14 +213,14 @@ async def update_order_endpoint(
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("orders.write"))],
 ) -> OrderRead:
-    row = await order_service.update_order(
+    row, readiness = await order_service.update_order(
         db,
         company_id=user.company_id,
         user_id=user.id,
         order_id=order_id,
         payload=payload,
     )
-    return _to_read(*row)
+    return _to_read(row, readiness)
 
 
 @router.post("/{order_id}/status", response_model=OrderRead)
@@ -223,14 +230,14 @@ async def transition_order_status_endpoint(
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("orders.write"))],
 ) -> OrderRead:
-    row = await order_service.transition_status(
+    row, readiness = await order_service.transition_status(
         db,
         company_id=user.company_id,
         user_id=user.id,
         order_id=order_id,
         target=payload.status,
     )
-    return _to_read(*row)
+    return _to_read(row, readiness)
 
 
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)

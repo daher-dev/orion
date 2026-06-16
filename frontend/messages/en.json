@@ -56,12 +56,17 @@
     "products": "Products",
     "specs": "Tech specs",
     "prints": "Prints",
+    "planning": "Planning",
     "cutting": "Cutting",
     "sewing": "Sewing",
+    "printing": "Printing",
+    "assembly": "Assembly",
     "contractors": "Workshops",
     "fabric": "Fabrics",
+    "blankPieces": "Blank pieces",
+    "paper": "Paper",
+    "printedTransfers": "Printed transfers",
     "stock": "Stock",
-    "printStock": "Print stock",
     "supplies": "Supplies",
     "reports": "Reports",
     "settings": "Settings",
@@ -185,6 +190,39 @@
       "updated": "Updated {minutes} min ago",
       "viewDetails": "View details"
     },
+    "conference": {
+      "title": "Today's check",
+      "sub": "From order to finished piece",
+      "kpis": {
+        "orders": "Total orders",
+        "ordersFoot": "Open order book",
+        "pieces": "Total items",
+        "piecesFoot": "Across {count} orders",
+        "mapped": "Prints mapped",
+        "mappedFoot": "All linked to a print",
+        "pending": "Pending",
+        "pendingFoot": "Awaiting mapping",
+        "pendingNone": "Nothing to resolve"
+      },
+      "progress": {
+        "title": "Check summary",
+        "sub": "Order book progress",
+        "ordersDone": "Orders 100% checked",
+        "piecesDone": "Items checked"
+      },
+      "subtiles": {
+        "toCheck": "To check",
+        "inLote": "In batch",
+        "pending": "Pending"
+      },
+      "pipeline": {
+        "title": "Order pipeline",
+        "mapeamento": "Mapping",
+        "producao": "Production",
+        "separacao": "Separation",
+        "envio": "Dispatch"
+      }
+    },
     "needsAction": {
       "title": "Needs your attention",
       "sub": "{count, plural, =0 {No pending items} one {# pending item} other {# pending items}}",
@@ -233,6 +271,41 @@
         "body": "Create your first order or wait for a channel webhook to drop one in.",
         "cta": "New order"
       }
+    },
+    "view": {
+      "board": "Board",
+      "table": "Table"
+    },
+    "board": {
+      "columns": {
+        "mapeamento": "Mapping",
+        "producao": "Production",
+        "separacao": "Separation",
+        "envio": "Dispatch"
+      },
+      "empty": {
+        "mapeamento": "Everything is mapped.",
+        "producao": "Nothing in production.",
+        "separacao": "No order ready. Finish assembly.",
+        "envio": "No batch yet."
+      },
+      "card": {
+        "vincular": "Link",
+        "printLabels": "Print labels",
+        "itemsLabel": "{count, plural, one {item} other {items}}",
+        "today": "today",
+        "ageDays": "{count}d ago"
+      },
+      "createBatch": "Batch ({count})",
+      "createError": "Could not create the batch.",
+      "labelError": "Could not generate the labels."
+    },
+    "journey": {
+      "title": "Order journey",
+      "mapped": "Mapped",
+      "produced": "Produced",
+      "separated": "Separated",
+      "shipped": "Shipped"
     },
     "filters": {
       "searchPlaceholder": "Search order…",
@@ -648,10 +721,14 @@
       "itemCount": "items"
     },
     "productTypes": {
-      "tshirt": "T-shirt",
-      "sweatshirt": "Sweatshirt",
-      "shorts": "Shorts",
-      "tanktop": "Tank top"
+      "camiseta": "T-shirt",
+      "moletom": "Sweatshirt",
+      "regata": "Tank top",
+      "blusa": "Blouse",
+      "calca": "Trousers",
+      "bermuda": "Shorts",
+      "ecobag": "Eco bag",
+      "cropped": "Cropped"
     },
     "table": {
       "columns": {
@@ -674,7 +751,8 @@
         "p": "P",
         "m": "M",
         "g": "G",
-        "gg": "GG"
+        "gg": "GG",
+        "u": "U"
       },
       "addColor": "Add color",
       "removeColor": "Remove color",
@@ -985,7 +1063,8 @@
         "codeRequired": "Code is required",
         "nameRequired": "Name is required",
         "required": "Required",
-        "numeric": "Numbers only"
+        "numeric": "Numbers only",
+        "hex": "Use a hex color like #1f1f1f"
       },
       "save": "Save print",
       "cancel": "Cancel",
@@ -1003,7 +1082,7 @@
     },
     "help": {
       "title": "Prints — the catalog of artwork applied to garments",
-      "body": "Each print holds the artwork and the application method — DTF, silk or sublimation — with its print size. It is what the Montador lays out on the sheet and what each piece's label shows.",
+      "body": "Each print holds the artwork and the application method — DTF, silk or sublimation — with its print size. It is what gets laid out on the sheet and what each piece's label shows.",
       "flow": {
         "artwork": "Artwork sent",
         "artworkSub": ".png file",
@@ -1035,6 +1114,45 @@
         "title": "Products using this print",
         "empty": "No product uses this print yet."
       }
+    },
+    "sides": {
+      "label": "Sides",
+      "front": "Front",
+      "back": "Back",
+      "hint": "Sides apply to every color — set whether the art goes on the front, the back, or both. Then upload one PNG per side for each color.",
+      "removeFront": "Remove front from all colors",
+      "removeBack": "Remove back from all colors",
+      "addFront": "Front",
+      "addBack": "Back",
+      "atLeastOne": "Keep at least one side."
+    },
+    "variations": {
+      "title": "Color variations & PNG files",
+      "add": "Color variation",
+      "addInk": "Add color variation",
+      "inkColor": "Ink color",
+      "name": "Color name",
+      "front": "Front",
+      "back": "Back",
+      "uploadPng": "Upload PNG",
+      "replace": "Replace file",
+      "pngOk": "Uploaded",
+      "pngPending": "PNG not uploaded",
+      "pngOnlyError": "Only PNG images are accepted.",
+      "uploadError": "Could not upload the PNG.",
+      "complete": "Complete",
+      "pendingCount": "{count, plural, one {# pending} other {# pending}}",
+      "pendingPngs": "{count, plural, one {# pending PNG} other {# pending PNGs}}",
+      "summary": "{ready}/{total} color(s) complete",
+      "countLabel": "Color variations",
+      "removeVariation": "Remove variation",
+      "empty": "No color variations yet — add one to upload artwork.",
+      "created": "Variation added",
+      "updated": "Variation updated",
+      "deleted": "Variation removed",
+      "saveError": "Could not save the variation.",
+      "allColorsUsed": "All ink colors are in use.",
+      "noPalette": "Set ink colors in Settings › Catalog first."
     }
   },
   "cutting": {
@@ -1073,7 +1191,9 @@
         "plannedTotal": "Planned",
         "actualTotal": "Cut",
         "cutAt": "Cut at",
-        "actions": "Actions"
+        "actions": "Actions",
+        "spec": "Spec",
+        "color": "Colour"
       }
     },
     "status": {
@@ -1101,20 +1221,29 @@
         "product": "Product",
         "rolls": "Rolls",
         "plannedOutputs": "Pieces by size",
-        "schedule": "Schedule"
+        "schedule": "Schedule",
+        "spec": "Tech spec",
+        "color": "Colour"
       },
       "labels": {
         "product": "Product to cut",
         "bodyRoll": "Body roll",
         "ribRoll": "Rib roll",
-        "cutAt": "Cut date"
+        "cutAt": "Cut date",
+        "spec": "Spec to cut",
+        "color": "Colour",
+        "colorCode": "Code"
       },
       "placeholders": {
         "product": "Pick a product…",
         "searchProduct": "Search products…",
         "bodyRoll": "Pick a body roll…",
         "ribRoll": "Pick a rib roll (optional)…",
-        "searchRoll": "Search rolls…"
+        "searchRoll": "Search rolls…",
+        "spec": "Pick a spec…",
+        "searchSpec": "Search specs…",
+        "color": "e.g. Black",
+        "colorCode": "BLK"
       },
       "hints": {
         "optional": "(optional)",
@@ -1127,7 +1256,10 @@
         "productRequired": "Pick a product",
         "bodyRollRequired": "Pick a body roll",
         "rollsDiffer": "Rib roll must be different from body roll",
-        "atLeastOneSize": "Enter at least one piece"
+        "atLeastOneSize": "Enter at least one piece",
+        "specRequired": "Pick a spec",
+        "colorRequired": "Enter a colour",
+        "colorCodeFormat": "Use 3 letters (e.g. BLK)"
       },
       "save": "Save changes",
       "submitNew": "Create order",
@@ -1137,7 +1269,8 @@
         "updated": "Cutting order updated",
         "deleted": "Cutting order deleted",
         "error": "Operation failed"
-      }
+      },
+      "noSpecs": "No specs found."
     },
     "detail": {
       "title": "Cutting order",
@@ -1151,7 +1284,8 @@
       "plannedOutputs": "Planned pieces by size",
       "actualOutputs": "Cut pieces by size",
       "close": "Close",
-      "save": "Save"
+      "save": "Save",
+      "color": "Colour"
     },
     "cost": {
       "title": "Production cost",
@@ -1222,7 +1356,14 @@
       "labels": {
         "receivedAt": "Received on",
         "sizes": "Pieces received"
-      }
+      },
+      "columns": {
+        "size": "Size",
+        "sent": "Sent",
+        "received": "Received",
+        "credited": "Credited"
+      },
+      "deltaHint": "{count} blank pieces will be credited to stock."
     },
     "form": {
       "title": {
@@ -1263,19 +1404,32 @@
         "received": "Shipment receipt recorded",
         "cancelled": "Shipment cancelled",
         "error": "Operation failed"
-      }
+      },
+      "availableCount": "{count} available"
     },
     "detail": {
       "size": "Size",
       "requested": "Requested",
       "received": "Received",
-      "itemsTitle": "Pieces by size"
+      "itemsTitle": "Pieces by size",
+      "credited": "Credited"
     },
     "timeline": {
       "title": "Timeline",
       "production": "In production",
       "inProgress": "in progress",
       "cancelled": "Shipment cancelled — no further steps."
+    },
+    "view": {
+      "label": "View",
+      "kanban": "Board",
+      "table": "Table"
+    },
+    "available": {
+      "column": "Available",
+      "readyCount": "{count} pieces ready",
+      "newShipment": "New shipment",
+      "empty": "No cut pieces available to send."
     }
   },
   "contractors": {
@@ -1483,6 +1637,62 @@
     },
     "fallback": {
       "forbidden": "You don't have access to fabric rolls."
+    },
+    "tabs": {
+      "current": "Rolls",
+      "movements": "Movements"
+    },
+    "movements": {
+      "moveCta": "Record movement",
+      "columns": {
+        "when": "When",
+        "item": "Item",
+        "reason": "Reason",
+        "quantity": "Qty"
+      },
+      "kinds": {
+        "entry": "Entry",
+        "exit": "Consumption",
+        "adjustment": "Adjustment"
+      },
+      "provenance": "Cut {code}",
+      "empty": "No movements recorded yet.",
+      "validation": {
+        "rollRequired": "Pick a fabric roll",
+        "quantityPositive": "Enter a quantity above zero"
+      },
+      "toasts": {
+        "recorded": "Movement recorded",
+        "error": "Operation failed"
+      },
+      "moveSheet": {
+        "title": "Fabric movement",
+        "sub": "Record an entry, consumption or adjustment in kg.",
+        "labels": {
+          "roll": "Fabric roll",
+          "moveType": "Movement",
+          "quantity": "Quantity",
+          "preview": "Preview"
+        },
+        "placeholders": {
+          "roll": "Pick a fabric roll…",
+          "searchRoll": "Search rolls…"
+        },
+        "noRolls": "No fabric rolls found.",
+        "moveTypes": {
+          "entry": "Entry",
+          "exit": "Consumption",
+          "adjustment": "Adjustment"
+        },
+        "preview": {
+          "current": "Current",
+          "entry": "Entry",
+          "exit": "Out",
+          "final": "Final"
+        },
+        "cancel": "Cancel",
+        "save": "Record"
+      }
     }
   },
   "stock": {
@@ -1634,99 +1844,6 @@
     },
     "fallback": {
       "forbidden": "You don't have access to stock."
-    }
-  },
-  "printStock": {
-    "page": {
-      "eyebrow": "Inventory"
-    },
-    "list": {
-      "title": "Print stock",
-      "titleEm": "of printed stamps",
-      "sub": "Printed-stamp inventory by design and color.",
-      "empty": {
-        "title": "No printed stamps registered yet",
-        "body": "Entries appear when you record a print run or a manual adjustment.",
-        "cta": "Record a movement"
-      }
-    },
-    "filters": {
-      "searchPlaceholder": "Search design, code, color…"
-    },
-    "table": {
-      "columns": {
-        "design": "Design",
-        "color": "Color",
-        "onHand": "On hand",
-        "status": "Status",
-        "lastMovement": "Last move",
-        "actions": "Actions"
-      }
-    },
-    "statuses": {
-      "low": "Low",
-      "ok": "OK"
-    },
-    "actions": {
-      "viewFullLedger": "Full ledger",
-      "confirmAdjust": "Record movement"
-    },
-    "adjust": {
-      "title": "Record movement",
-      "sub": "Add or remove printed stamps for a design and color.",
-      "fields": {
-        "direction": "Direction",
-        "design": "Design",
-        "designPlaceholder": "Select a design…",
-        "color": "Color",
-        "colorPlaceholder": "e.g. Preto",
-        "quantity": "Quantity",
-        "notes": "Notes",
-        "notesPlaceholder": "Optional notes…"
-      },
-      "directions": {
-        "entry": "Entry",
-        "exit": "Exit"
-      },
-      "actions": {
-        "cancel": "Cancel",
-        "confirm": "Save"
-      },
-      "toasts": {
-        "success": "Movement recorded",
-        "error": "Operation failed",
-        "insufficient": "Insufficient print stock for this exit."
-      }
-    },
-    "validation": {
-      "designRequired": "Select a design",
-      "colorRequired": "Enter a color",
-      "quantityPositive": "Quantity must be greater than zero"
-    },
-    "movements": {
-      "title": "Movements",
-      "titleEm": "full ledger",
-      "sub": "Every print-stock entry and exit, newest first.",
-      "columns": {
-        "when": "When",
-        "design": "Design",
-        "color": "Color",
-        "direction": "Direction",
-        "quantity": "Qty",
-        "notes": "Notes"
-      },
-      "directions": {
-        "entry": "Entry",
-        "exit": "Exit",
-        "adjustment": "Adjustment",
-        "all": "All"
-      },
-      "empty": "No movements recorded yet."
-    },
-    "drawer": {
-      "title": "Movement history",
-      "close": "Close",
-      "empty": "This design / color hasn't moved yet."
     }
   },
   "supplies": {
@@ -1927,6 +2044,7 @@
     },
     "groups": {
       "organization": "Organization",
+      "personalization": "Personalization",
       "account": "Account"
     },
     "nav": {
@@ -1938,6 +2056,7 @@
       "integrations": "Integrations",
       "profile": "Profile",
       "notifications": "Notifications",
+      "catalog": "Catalog",
       "stockAlerts": "Stock alerts"
     },
     "company": {
@@ -2067,6 +2186,7 @@
       "members": "You don't have access to members.",
       "roles": "You don't have access to roles.",
       "stockAlerts": "You don't have access to stock alerts.",
+      "catalog": "You don't have access to the catalog configuration.",
       "integrations": "You don't have access to integrations."
     },
     "integrations": {
@@ -2112,6 +2232,124 @@
       "validation": {
         "invalid": "Enter a whole number of 0 or more."
       }
+    }
+  },
+  "catalogConfig": {
+    "title": "Catalog",
+    "sub": "Colors, sizes, garment types and trims used across the catalog.",
+    "loadError": "Could not load the catalog configuration.",
+    "save": "Save changes",
+    "saved": "Catalog configuration saved.",
+    "saveError": "Could not save the catalog configuration.",
+    "reset": "Restore defaults",
+    "footnote": "Changes apply to new products. Existing products keep what was already saved.",
+    "productColors": {
+      "title": "Fabric colors",
+      "sub": "Material colors available when creating a product. Each product picks from these.",
+      "add": "Add fabric color"
+    },
+    "printColors": {
+      "title": "Print colors",
+      "sub": "Ink colors available for the applied artwork — paired with each material color on the product.",
+      "add": "Add print color"
+    },
+    "sizes": {
+      "title": "Sizes",
+      "sub": "Size grid that can be enabled on each product's variations.",
+      "add": "Add",
+      "placeholder": "e.g. XG, 38, One size…",
+      "empty": "No sizes — add at least one.",
+      "duplicate": "That size already exists."
+    },
+    "fabricTypes": {
+      "title": "Fabric types",
+      "sub": "Available when receiving rolls in Stock › Fabric and on the tech sheet.",
+      "add": "Add fabric type",
+      "placeholder": "e.g. 100% cotton jersey"
+    },
+    "garmentTypes": {
+      "title": "Garment types",
+      "sub": "Tech-sheet models. Each has an icon and a SKU prefix.",
+      "add": "Add garment type",
+      "colIcon": "Icon",
+      "colName": "Name",
+      "colSku": "SKU",
+      "namePlaceholder": "e.g. T-shirt",
+      "skuPlaceholder": "CAM",
+      "chooseIcon": "Choose icon"
+    },
+    "aviamentos": {
+      "title": "Trims",
+      "sub": "Items that can be added to a tech sheet's cost.",
+      "add": "Add trim",
+      "placeholder": "e.g. Composition label"
+    },
+    "techniques": {
+      "title": "Print techniques",
+      "sub": "Print methods available in Catalog › Prints.",
+      "add": "Add technique",
+      "placeholder": "e.g. DTF, Silkscreen…"
+    },
+    "colorNamePlaceholder": "Color name",
+    "remove": "Remove",
+    "validation": {
+      "hex": "Use a hex color like #1f1f1f",
+      "required": "Required",
+      "skuPrefix": "1–4 letters/digits",
+      "needName": "Give every color a name.",
+      "needLabel": "Give every garment type a name.",
+      "needSku": "Each garment type needs a valid SKU prefix."
+    }
+  },
+  "thresholds": {
+    "title": "Low-stock alerts",
+    "sub": "Orion highlights the item and warns you when the balance crosses the limit set here.",
+    "loadError": "Could not load the thresholds.",
+    "save": "Save changes",
+    "saved": "Thresholds saved.",
+    "saveError": "Could not save the thresholds.",
+    "reset": "Restore defaults",
+    "noAlert": "No alert",
+    "footnote": "Turning a tier off silences its reorder alerts across Orion — useful for items your shop doesn't keep in stock.",
+    "enabledOn": "Alert on",
+    "enabledOff": "Alert off",
+    "units": {
+      "pct": "%",
+      "qty": "un.",
+      "kg": "kg",
+      "m": "m"
+    },
+    "tiers": {
+      "fabric": {
+        "label": "Fabric rolls",
+        "where": "Stock › Fabric rolls",
+        "scope": "per roll"
+      },
+      "paper": {
+        "label": "Paper / film rolls",
+        "where": "Stock › Paper",
+        "scope": "per roll"
+      },
+      "blank": {
+        "label": "Blank pieces",
+        "where": "Stock › Blank pieces",
+        "scope": "per variation"
+      },
+      "printed": {
+        "label": "Printed transfers",
+        "where": "Stock › Printed transfers",
+        "scope": "per print · side"
+      },
+      "product": {
+        "label": "Finished products",
+        "where": "Stock › Products",
+        "scope": "per SKU"
+      }
+    },
+    "summary": {
+      "off": "No alert — this tier is not tracked.",
+      "pct": "Warns below {value}% of the initial balance · {scope}",
+      "abs": "Warns below {value} {unit} remaining · {scope}"
     }
   },
   "members": {
@@ -2468,6 +2706,28 @@
       "forbidden": "You don't have permission to view order mapping."
     }
   },
+  "vincular": {
+    "title": "Link order",
+    "subtitle": "Pick the internal SKU for each item — {picked}/{total} linked",
+    "skuLabel": "Internal SKU",
+    "choose": "Choose SKU…",
+    "chooseProduct": "Choose product…",
+    "chooseVariation": "Variation (SKU)…",
+    "pickProductFirst": "Choose the product first",
+    "suggestion": "Suggestion",
+    "use": "Use",
+    "toLink": "to link",
+    "linked": "linked",
+    "confirm": "Link order",
+    "cancel": "Cancel",
+    "empty": "This order has no items awaiting mapping.",
+    "loadError": "Could not load the order's items.",
+    "toast": {
+      "linked": "Order {code} linked — moving to production",
+      "itemLinked": "Item linked to {sku}",
+      "error": "Could not link the item."
+    }
+  },
   "batches": {
     "page": {
       "eyebrow": "Sales"
@@ -2475,14 +2735,16 @@
     "list": {
       "title": "Production",
       "titleEm": "batches",
-      "sub": "Pack orders into a batch, adjust print runs, then print labels and dispatch.",
+      "sub": "Pack orders into a batch, print labels and dispatch.",
       "loadError": "Could not load batches.",
       "noResults": "No batches yet.",
       "empty": "No batches yet. Create one from selected orders."
     },
     "actions": {
       "create": "New batch",
-      "back": "Back to batches"
+      "back": "Back to batches",
+      "assemble": "Assemble batch",
+      "ship": "Dispatch batch"
     },
     "create": {
       "title": "New batch",
@@ -2503,8 +2765,8 @@
     },
     "statuses": {
       "open": "Open",
-      "adjusted": "Adjusted",
-      "printed": "Printed",
+      "in_production": "In production",
+      "dispatched": "Dispatched",
       "done": "Done",
       "cancelled": "Cancelled"
     },
@@ -2512,48 +2774,45 @@
       "orders": "Orders",
       "pieces": "Pieces",
       "needed": "Needed",
-      "toPrint": "To print"
-    },
-    "adjustments": {
-      "title": "Print designs",
-      "stamp": "Design",
-      "color": "Color",
-      "needed": "Needed",
-      "onHand": "On hand",
       "toPrint": "To print",
-      "sent": "Sent",
-      "empty": "No print designs in this batch.",
-      "save": "Save adjustments"
+      "ready": "Ready",
+      "readyOf": "{ready}/{total} ready"
     },
-    "printQueue": {
-      "title": "Print queue",
-      "totalToPrint": "{count} to print",
-      "design": "Design",
-      "color": "Color",
-      "needed": "Needed",
-      "onHand": "On hand",
-      "toPrint": "To print",
-      "batches": "Batches",
-      "emptyTitle": "Nothing to print",
-      "emptyDesc": "Stamp stock covers all open batches."
+    "estampas": {
+      "title": "Prints",
+      "subtitle": "{designs} prints · {items} items",
+      "empty": "Empty batch — every order was removed.",
+      "noEstampa": "No print",
+      "items": "items",
+      "toPrint": "to print",
+      "montado": "assembled",
+      "enviado": "sent",
+      "colCount": "{count, plural, one {# color} other {# colors}}"
     },
     "detail": {
       "printLabels": "Print labels",
-      "sendMontador": "Send to Montador DTF",
       "printShipping": "Print shipping labels",
       "markDone": "Mark done",
       "cancel": "Cancel batch",
       "delete": "Delete batch",
       "deleteConfirm": "Delete this batch? Orders will be unlinked.",
-      "notFound": "Batch not found."
+      "notFound": "Batch not found.",
+      "assembleDisabled": "Everything is already in finished stock.",
+      "shipDisabled": "Every order must be ready (in finished stock) before dispatching.",
+      "ordersInBatch": "Orders in batch ({count})",
+      "removeOrder": "Remove",
+      "dispatched": "Batch dispatched"
     },
     "toast": {
       "created": "Batch created",
-      "saved": "Adjustments saved",
-      "montadorOk": "Sent to Montador: {ok} ok, {failed} failed",
-      "montadorErr": "Could not send to Montador DTF",
       "deleted": "Batch deleted",
-      "noShippingLabels": "No shipping labels available for this batch."
+      "noShippingLabels": "No shipping labels available for this batch.",
+      "assembled": "{count, plural, one {# SKU assembled} other {# SKUs assembled}}",
+      "assembledSome": "{assembled} assembled · {skipped} short on stock",
+      "assembleNothing": "Nothing to assemble.",
+      "shipped": "Batch dispatched · {count, plural, one {# order shipped} other {# orders shipped}}",
+      "shipError": "Could not dispatch the batch.",
+      "assembleError": "Could not assemble the batch."
     },
     "fallback": {
       "forbidden": "You don't have access to batches."
@@ -2839,5 +3098,518 @@
       "banner": "Support session · you're acting inside {name}",
       "end": "End session"
     }
+  },
+  "blankPieces": {
+    "page": {
+      "eyebrow": "Inventory"
+    },
+    "list": {
+      "title": "Blank",
+      "titleEm": "pieces",
+      "sub": "Sewn pieces, waiting for printing.",
+      "empty": {
+        "title": "No blank pieces yet",
+        "body": "Pieces land here when a sewing shipment is received from a contractor."
+      }
+    },
+    "kpis": {
+      "total": "Total blank pieces",
+      "totalUnit": "pieces",
+      "belowMin": "Below minimum",
+      "belowMinHint": "base SKUs to replenish"
+    },
+    "tabs": {
+      "current": "Current position",
+      "movements": "Movements"
+    },
+    "filters": {
+      "searchPlaceholder": "Search blank piece…",
+      "lowStockOnly": "Low only"
+    },
+    "table": {
+      "columns": {
+        "base": "Base piece",
+        "color": "Color",
+        "size": "Size",
+        "min": "Minimum",
+        "onHand": "On hand",
+        "inProduction": "In production"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Full ledger"
+    },
+    "moveSheet": {
+      "title": "Record movement",
+      "sub": "Adjust the blank-piece count for this base piece.",
+      "onHandLabel": "in stock",
+      "labels": {
+        "moveType": "Movement type",
+        "quantity": "Quantity",
+        "preview": "Preview",
+        "recent": "Recent movements"
+      },
+      "moveTypes": {
+        "entryAdjustment": {
+          "label": "Adjust (+)",
+          "desc": "Inventory correction"
+        },
+        "exitAdjustment": {
+          "label": "Adjust (−)",
+          "desc": "Inventory correction"
+        },
+        "damage": {
+          "label": "Damage",
+          "desc": "Damaged piece"
+        }
+      },
+      "preview": {
+        "current": "Current",
+        "entry": "Entry",
+        "exit": "Exit",
+        "final": "Final",
+        "negativeWarning": "Stock would go negative.",
+        "lowWarning": "Resulting stock is below the minimum."
+      },
+      "ledgerKinds": {
+        "entry": "Entry",
+        "exit": "Exit",
+        "adjustment": "Adjustment"
+      },
+      "validation": {
+        "quantityPositive": "Quantity must be greater than zero",
+        "insufficient": "Only {available} in stock for this exit."
+      },
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "ledger": {
+      "columns": {
+        "when": "When",
+        "item": "Item",
+        "reason": "Reason",
+        "quantity": "Qty"
+      },
+      "kinds": {
+        "entry": "Entry",
+        "exit": "Exit",
+        "adjustment": "Adjustment"
+      },
+      "kindFilter": {
+        "all": "All"
+      },
+      "empty": "No movements recorded yet.",
+      "title": "Movements",
+      "titleEm": "full ledger",
+      "sub": "Every blank-piece entry and exit, newest first."
+    },
+    "toasts": {
+      "movementCreated": "Movement recorded",
+      "error": "Operation failed"
+    }
+  },
+  "paperRolls": {
+    "page": {
+      "eyebrow": "Inventory"
+    },
+    "list": {
+      "title": "Paper",
+      "titleEm": "rolls",
+      "sub": "DTF film and sublimation paper, tracked by balance.",
+      "empty": {
+        "title": "No paper rolls yet",
+        "body": "Receive a roll to start tracking print-transfer stock."
+      }
+    },
+    "kpis": {
+      "total": "Total balance",
+      "totalUnit": "m",
+      "toReorder": "Rolls to reorder",
+      "toReorderHint": "below the low-stock threshold"
+    },
+    "tabs": {
+      "current": "Current position",
+      "movements": "Movements"
+    },
+    "filters": {
+      "searchPlaceholder": "Search by type, supplier…"
+    },
+    "types": {
+      "dtf_film": "DTF film",
+      "sublimation_paper": "Sublimation paper",
+      "transfer_paper": "Transfer paper"
+    },
+    "table": {
+      "columns": {
+        "type": "Type",
+        "width": "Width",
+        "supplier": "Supplier",
+        "received": "Received",
+        "saldo": "Balance",
+        "remaining": "Remaining"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Full ledger",
+      "receiveRoll": "Receive roll"
+    },
+    "receive": {
+      "title": "Receive roll",
+      "sub": "Register a new paper/film roll with its initial length.",
+      "fields": {
+        "material": "Material",
+        "width": "Width (cm)",
+        "meters": "Length (m)",
+        "supplier": "Supplier",
+        "supplierPlaceholder": "e.g. DTF Brasil"
+      },
+      "cancel": "Cancel",
+      "submit": "Register entry",
+      "validation": {
+        "invalid": "Enter a valid width and length.",
+        "supplierRequired": "Enter a supplier."
+      }
+    },
+    "detail": {
+      "widthLabel": "{width} cm wide",
+      "remaining": "Remaining",
+      "lowWarning": "Low stock — consider reordering.",
+      "supplier": "Supplier",
+      "received": "Received",
+      "consumed": "Consumed",
+      "width": "Width",
+      "consumeTitle": "Record consumption",
+      "afterConsume": "Balance after consumption:",
+      "consumeSubmit": "Record consumption",
+      "close": "Close",
+      "delete": "Delete roll"
+    },
+    "ledger": {
+      "title": "Movements",
+      "titleEm": "full ledger",
+      "sub": "Every paper-roll entry and consumption, newest first.",
+      "columns": {
+        "when": "When",
+        "item": "Item",
+        "reason": "Reason",
+        "quantity": "Qty"
+      },
+      "kinds": {
+        "entry": "Entry",
+        "exit": "Consumption",
+        "adjustment": "Adjustment"
+      },
+      "kindFilter": {
+        "all": "All"
+      },
+      "empty": "No movements recorded yet."
+    },
+    "toasts": {
+      "rollReceived": "Roll received",
+      "consumed": "Consumption recorded",
+      "deleted": "Roll deleted",
+      "deleteBlocked": "This roll has movement history and can't be deleted.",
+      "error": "Operation failed"
+    }
+  },
+  "printedTransfers": {
+    "page": {
+      "eyebrow": "Inventory"
+    },
+    "list": {
+      "title": "Printed",
+      "titleEm": "transfers",
+      "sub": "Printed transfers by design and side, waiting for the press.",
+      "empty": {
+        "title": "No printed transfers yet",
+        "body": "Transfers land here when a print run is completed or adjusted manually."
+      }
+    },
+    "kpis": {
+      "total": "Printed transfers ready",
+      "totalUnit": "un",
+      "alerting": "Items in alert",
+      "alertingHint": "out of stock or below minimum"
+    },
+    "tabs": {
+      "current": "Current position",
+      "movements": "Movements"
+    },
+    "filters": {
+      "searchPlaceholder": "Search design…",
+      "lowStockOnly": "Low only"
+    },
+    "sides": {
+      "front": "Front",
+      "back": "Back"
+    },
+    "table": {
+      "columns": {
+        "design": "Design",
+        "side": "Side",
+        "min": "Minimum",
+        "onHand": "Ready"
+      }
+    },
+    "actions": {
+      "viewFullLedger": "Full ledger"
+    },
+    "moveSheet": {
+      "title": "Record movement",
+      "sub": "Adjust the printed-transfer count for this design and side.",
+      "onHandLabel": "ready",
+      "labels": {
+        "moveType": "Movement type",
+        "quantity": "Quantity",
+        "preview": "Preview",
+        "recent": "Recent movements"
+      },
+      "moveTypes": {
+        "entryAdjustment": {
+          "label": "Adjust (+)",
+          "desc": "Inventory correction"
+        },
+        "exitAdjustment": {
+          "label": "Adjust (−)",
+          "desc": "Inventory correction"
+        },
+        "scrap": {
+          "label": "Scrap",
+          "desc": "Failed print"
+        }
+      },
+      "preview": {
+        "current": "Current",
+        "entry": "Entry",
+        "exit": "Exit",
+        "final": "Final",
+        "negativeWarning": "Stock would go negative.",
+        "lowWarning": "Resulting stock is below the minimum."
+      },
+      "ledgerKinds": {
+        "entry": "Entry",
+        "exit": "Exit",
+        "adjustment": "Adjustment"
+      },
+      "validation": {
+        "quantityPositive": "Quantity must be greater than zero",
+        "insufficient": "Only {available} ready for this exit."
+      },
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "ledger": {
+      "title": "Movements",
+      "titleEm": "full ledger",
+      "sub": "Every printed-transfer entry and exit, newest first.",
+      "columns": {
+        "when": "When",
+        "item": "Item",
+        "reason": "Reason",
+        "quantity": "Qty"
+      },
+      "kinds": {
+        "entry": "Entry",
+        "exit": "Exit",
+        "adjustment": "Adjustment"
+      },
+      "kindFilter": {
+        "all": "All"
+      },
+      "empty": "No movements recorded yet."
+    },
+    "toasts": {
+      "movementCreated": "Movement recorded",
+      "error": "Operation failed"
+    }
+  },
+  "printOrders": {
+    "page": { "eyebrow": "Production" },
+    "list": {
+      "title": "Printing",
+      "titleEm": "of estampas",
+      "sub": "DTF and sublimation print batches.",
+      "loadError": "Could not load print orders.",
+      "noResults": "No print orders matched your search.",
+      "empty": {
+        "title": "No print orders yet",
+        "body": "Plan a batch against a paper roll to start printing transfers."
+      }
+    },
+    "filters": { "searchPlaceholder": "Search print orders…" },
+    "view": { "kanban": "Kanban", "table": "Table" },
+    "status": { "pending": "Pending", "printing": "Printing", "done": "Done" },
+    "techniques": { "dtf": "DTF", "silkscreen": "Silkscreen", "sublimation": "Sublimation" },
+    "paperTypes": {
+      "dtf_film": "DTF film",
+      "sublimation_paper": "Sublimation paper",
+      "transfer_paper": "Transfer paper"
+    },
+    "consumptionRate": "{rate} m/piece",
+    "inStock": "In stock",
+    "actions": {
+      "create": "New order",
+      "save": "Save",
+      "launch": "Post printed"
+    },
+    "card": { "printed": "printed", "noPlan": "No planned outputs" },
+    "table": {
+      "code": "Code",
+      "estampa": "Estampa",
+      "technique": "Technique",
+      "roll": "Roll",
+      "status": "Status",
+      "planned": "Planned",
+      "printed": "Printed"
+    },
+    "detail": {
+      "estampa": "Estampa to print",
+      "estampaPlaceholder": "Pick an estampa…",
+      "paperRoll": "Paper / film roll",
+      "rollPlaceholder": "Pick a roll (optional)…",
+      "sidesGrid": "Printed by side and variation",
+      "front": "Front",
+      "back": "Back",
+      "variation": "Variation",
+      "planned": "Planned",
+      "plannedShort": "planned",
+      "printed": "Printed",
+      "subtotal": "Subtotal",
+      "total": "total",
+      "markPrinted": "Mark printed (match planned)",
+      "pngOk": "PNG",
+      "pngMissing": "no PNG",
+      "pngMissingHint": "This variation/side is missing its PNG",
+      "paperConsumed": "Paper consumed",
+      "consumptionLegend": "expected · consumed · Δ",
+      "consumido": "Consumed",
+      "pickRollForConsumption": "Pick a roll to record consumption",
+      "pickEstampa": "Pick an estampa",
+      "pickEstampaGrid": "Pick an estampa to build the side and variation grid",
+      "gradeHint": "Estampa, sides and variations define the grid",
+      "noRoll": "No roll linked",
+      "rollLinked": "Roll {code}",
+      "plannedCount": "{n} planned"
+    },
+    "form": {
+      "cancel": "Cancel",
+      "title": {
+        "new": "New print order",
+        "newSub": "Plan a batch against a paper roll",
+        "edit": "Order {code}"
+      },
+      "toasts": {
+        "created": "Print order created",
+        "updated": "Print order updated",
+        "launched": "Printed transfers posted to stock",
+        "error": "Operation failed"
+      }
+    },
+    "fallback": { "forbidden": "You don't have access to print orders." }
+  },
+  "assembly": {
+    "page": { "eyebrow": "Production" },
+    "list": {
+      "title": "Assembly",
+      "titleEm": "& finishing",
+      "sub": "Blank piece + printed transfer, pressed into a finished product."
+    },
+    "filters": { "searchPlaceholder": "Search by estampa or spec…" },
+    "columns": { "waiting": "Waiting", "todo": "To assemble", "done": "Assembled" },
+    "actions": {
+      "manual": "Manual assembly",
+      "build": "Assemble {n}",
+      "buildAll": "Assemble ready ({n})"
+    },
+    "comp": {
+      "blank": "Blank piece · {onHand} on hand",
+      "printed": "Printed · {onHand} on hand",
+      "blankShort": "blank",
+      "printedShort": "printed",
+      "missing": "missing"
+    },
+    "manualSheet": {
+      "title": "Manual assembly",
+      "sub": "Pick a blank piece and a printed transfer to press a product.",
+      "blank": "Blank piece",
+      "blankPlaceholder": "Pick a blank piece…",
+      "printed": "Printed transfer",
+      "printedPlaceholder": "Pick a printed transfer…",
+      "quantity": "Quantity",
+      "maxHint": "Up to {max} available",
+      "onHand": "{n} on hand",
+      "productPreview": "Resulting product",
+      "newSku": "New SKU",
+      "cancel": "Cancel"
+    },
+    "toasts": {
+      "assembled": "+{n} · {sku}",
+      "error": "Operation failed",
+      "insufficient": "Insufficient on-hand — available: {available}"
+    },
+    "empty": {
+      "buildable": "Nothing to assemble yet",
+      "buildableBody": "When a blank piece and a matching printed transfer are both in stock, the pair shows up here.",
+      "noStock": "No stock available."
+    },
+    "fallback": { "forbidden": "You don't have access to assembly." }
+  },
+  "planning": {
+    "page": { "eyebrow": "Planning" },
+    "list": {
+      "title": "Production",
+      "titleEm": "planning",
+      "sub": "Cutting and printing orders suggested by Orion."
+    },
+    "filters": {
+      "all": "All",
+      "demand": "Demand",
+      "stock": "Low stock"
+    },
+    "columns": {
+      "cortes": "Cuts",
+      "impressoes": "Prints"
+    },
+    "units": {
+      "pieces": "pieces",
+      "prints": "prints"
+    },
+    "summary": {
+      "toCut": "pieces to cut",
+      "toPrint": "prints to print"
+    },
+    "row": {
+      "toCut": "to cut",
+      "toPrint": "to print",
+      "orders": "{count, plural, one {# order} other {# orders}}"
+    },
+    "sources": {
+      "demanda": "Demand",
+      "estoque": "Low stock"
+    },
+    "png": {
+      "ok": "PNG ok",
+      "pending": "PNG pending"
+    },
+    "actions": {
+      "recalc": "Recalculate",
+      "create": "{n, plural, one {Create # order} other {Create # orders}}",
+      "viewCutting": "View in Cutting"
+    },
+    "actionbar": {
+      "selected": "{cortes, plural, =0 {0 cuts} one {# cut} other {# cuts}} · {impressoes, plural, =0 {0 prints} one {# print} other {# prints}} selected"
+    },
+    "toasts": {
+      "created": "{n} orders created",
+      "error": "Operation failed",
+      "partial": "{n} created · {skipped} skipped"
+    },
+    "empty": {
+      "title": "Nothing to produce now",
+      "bodyAll": "Order demand is covered and no tier is below its minimum.",
+      "bodyFiltered": "No suggestions for this filter."
+    },
+    "created": { "banner": "Orders opened as pending in Cutting and Printing." },
+    "fallback": { "forbidden": "You don't have access to planning." }
   }
 }

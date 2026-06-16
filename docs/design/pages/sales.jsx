@@ -54,7 +54,7 @@ const Orders = ({ setRoute }) => {
   return (
     <div className="page">
       <PageHead sub="orders" title="Pedidos" titleEm="multi-canal"
-                desc="Acompanhe todos os pedidos em um só lugar."
+                desc="Todos os pedidos, de todos os canais."
                 actions={<>
                   <button className="btn btn-primary" onClick={() => setImportOpen(true)}><Icon name="file-up" size={14}/> Importar</button>
                   <button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="shopping-bag" size={14}/> Novo pedido</button>
@@ -254,7 +254,7 @@ const Orders = ({ setRoute }) => {
                           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ display: 'flex', gap: 3 }}>
                               {o._product.colors.map((c, i) => (
-                                <span key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: c, border: '1px solid var(--line-soft)', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.04)' }}/>
+                                <span key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: c.material, border: '1px solid var(--line-soft)', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.04)' }}/>
                               ))}
                             </span>
                             <span style={{ width: 1, height: 10, background: 'var(--line-soft)' }}/>
@@ -274,10 +274,10 @@ const Orders = ({ setRoute }) => {
                       <label style={{ fontSize: 10.5, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, display: 'block', marginBottom: 6 }}>Cor</label>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {prod.colors.map((c, i) => {
-                          const sel = it.color === c;
+                          const sel = it.color === c.material;
                           return (
-                            <button key={i} type="button" onClick={() => updateItem({ color: c })}
-                                    style={{ width: 24, height: 24, borderRadius: '50%', background: c, border: sel ? '2px solid var(--ink)' : '1px solid var(--line)',
+                            <button key={i} type="button" title={`Estampa ${(c.prints||[]).map(colorName).join(', ')}`} onClick={() => updateItem({ color: c.material, print: c.prints[0] })}
+                                    style={{ width: 24, height: 24, borderRadius: '50%', background: c.material, border: sel ? '2px solid var(--ink)' : '1px solid var(--line)',
                                       boxShadow: sel ? '0 0 0 2px var(--surface), 0 0 0 3px var(--ink)' : 'inset 0 0 0 1px rgba(0,0,0,.04)',
                                       cursor: 'pointer', padding: 0 }}/>
                           );
@@ -456,7 +456,7 @@ const Clients = () => {
   }).slice().sort(cmp);
   return (
     <div className="page">
-      <PageHead sub="clients" title="Clientes" desc="Diretório de clientes através de todos os canais."
+      <PageHead sub="clients" title="Clientes" desc="Diretório de clientes de todos os canais."
                 actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="users" size={14}/> Novo cliente</button>}/>
       <HelpCard id="clients" icon="users" tone="var(--brand-sales)" title="Clientes — uma ficha por pessoa, somando todos os canais">
         <HelpBody>
@@ -641,33 +641,42 @@ const ClientDetail = ({ c }) => {
   );
 };
 
+// Resolve a product (by name) to its spec + garment glyph metadata
+const resolveAdProduct = (name) => {
+  const prod = ORION_DATA.products.find(p => p.name === name);
+  const spec = prod && ORION_DATA.specs.find(s => s.id === prod.spec);
+  const garment = spec && GARMENT_TYPES.find(g => g.id === spec.tipo);
+  return { prod, spec, garment };
+};
+
 const Ads = () => {
   const [open, setOpen] = React.useState(null);
   const [newOpen, setNewOpen] = React.useState(false);
-  const [form, setForm] = React.useState({ channels: ['shopee'], title: '', product: 'Cropped Oversized', url: '' });
+  const [form, setForm] = React.useState({ channels: ['shopee'], title: '', products: ['Cropped Oversized'], url: '', thumb: null });
+  const [prodQuery, setProdQuery] = React.useState('');
   const [search, setSearch] = React.useState('');
   const [filter, setFilter] = React.useState('all');
   const [sort, setSort] = React.useState({ col: 'title', dir: 'asc' });
   const cmp = makeCmp(sort, {
     id: a => a.id, title: a => a.title, channel: a => a.channel,
-    product: a => a.product, status: a => a.status, orders30d: a => a.orders30d,
+    product: a => (a.products[0] || ''), status: a => a.status, orders30d: a => a.orders30d,
   });
   const ads = ORION_DATA.ads.filter(a => {
     if (filter !== 'all' && a.status !== filter) return false;
-    if (search) { const q = search.toLowerCase(); if (!a.title.toLowerCase().includes(q) && !a.product.toLowerCase().includes(q) && !a.id.toLowerCase().includes(q)) return false; }
+    if (search) { const q = search.toLowerCase(); if (!a.title.toLowerCase().includes(q) && !a.products.some(p => p.toLowerCase().includes(q)) && !a.id.toLowerCase().includes(q)) return false; }
     return true;
   }).slice().sort(cmp);
   return (
     <div className="page">
       <PageHead sub="ads" title="Anúncios" titleEm="por canal"
-                desc="Gerencie suas listagens em ecommerces e redes sociais."
+                desc="Suas listagens em ecommerces e redes sociais."
                 actions={<button className="btn btn-primary" onClick={() => setNewOpen(true)}><Icon name="megaphone" size={14}/> Novo anúncio</button>}/>
       <HelpCard id="ads" icon="megaphone" tone="var(--brand-sales)" title="Anúncios — sua vitrine em cada canal">
         <HelpBody>
-          Um <b>anúncio</b> é como um <b>produto</b> aparece à venda num canal (Shopee, ML, Instagram…). Quando chega um pedido, o Orion usa o anúncio para descobrir <b>qual produto e variação</b> preparar — por isso mantenha título, foto e status sempre em dia.
+          Um <b>anúncio</b> é sua vitrine num canal (Shopee, ML, Instagram…) e pode reunir <b>um ou vários produtos</b> do catálogo — um combo, um kit ou uma listagem multivariação. Quando chega um pedido, o Orion usa o anúncio para descobrir <b>qual produto e variação</b> preparar.
         </HelpBody>
         <Flow accent="var(--brand-sales)" steps={[
-          { icon: 'shirt', label: 'Produto', sub: 'do catálogo' },
+          { icon: 'shirt', label: 'Produtos', sub: 'um ou vários' },
           { icon: 'megaphone', label: 'Anúncio', sub: 'por canal', tone: 'accent' },
           { icon: 'shopping-bag', label: 'Pedido entra', sub: 'vira venda', tone: 'ok' },
         ]}/>
@@ -687,23 +696,41 @@ const Ads = () => {
             <SortHeader id="id" sort={sort} setSort={setSort}>Código</SortHeader>
             <SortHeader id="title" sort={sort} setSort={setSort}>Título</SortHeader>
             <SortHeader id="channel" sort={sort} setSort={setSort}>Canal</SortHeader>
-            <SortHeader id="product" sort={sort} setSort={setSort}>Produto</SortHeader>
+            <SortHeader id="product" sort={sort} setSort={setSort}>Produtos</SortHeader>
             <SortHeader id="status" sort={sort} setSort={setSort}>Status</SortHeader>
             <SortHeader id="orders30d" sort={sort} setSort={setSort} num>Pedidos 30d</SortHeader>
             <th style={{width:36}}/>
           </tr></thead>
           <tbody>{ads.map(a => {
             const ch = ORION_DATA.channels[a.channel];
-            const prod = ORION_DATA.products.find(p => p.name === a.product);
-            const spec = prod && ORION_DATA.specs.find(s => s.id === prod.spec);
-            const garment = spec && GARMENT_TYPES.find(g => g.id === spec.tipo);
+            const { garment } = resolveAdProduct(a.products[0]);
             return (
               <tr key={a.id} onClick={() => setOpen(a)}>
                 <td><span style={{ display:'grid', placeItems:'center', width: 28, height: 28, borderRadius: 6, background: `linear-gradient(135deg, ${ch.color}, ${ch.color}aa)`, color: 'rgba(255,255,255,.95)' }}>{garment ? React.cloneElement(GARMENT_GLYPHS[garment.id], { width: 14, height: 14, strokeWidth: 1.5 }) : <Icon name="shirt" size={14}/>}</span></td>
                 <td className="mono">{a.id}</td>
                 <td style={{color:'var(--ink)',fontWeight:500}}>{a.title}</td>
                 <td><ChannelChip id={a.channel}/></td>
-                <td>{a.product}</td>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ display: 'flex' }}>
+                      {a.products.slice(0, 3).map((name, i) => {
+                        const g = resolveAdProduct(name).garment;
+                        return (
+                          <span key={i} style={{ marginLeft: i === 0 ? 0 : -8, zIndex: 3 - i, width: 26, height: 26, borderRadius: 6,
+                            background: 'var(--surface-2)', border: '2px solid var(--surface)', display: 'grid', placeItems: 'center', color: 'var(--ink-2)' }}>
+                            {g ? React.cloneElement(GARMENT_GLYPHS[g.id], { width: 13, height: 13, strokeWidth: 1.5 }) : <Icon name="shirt" size={13}/>}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ color: 'var(--ink)', fontWeight: 500, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.products[0]}</div>
+                      {a.products.length > 1 && (
+                        <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>+ {a.products.length - 1} {a.products.length === 2 ? 'produto' : 'produtos'}</div>
+                      )}
+                    </div>
+                  </div>
+                </td>
                 <td><StatusPill s={a.status}/></td>
                 <td className="num" style={{ fontWeight: 500 }}>{a.orders30d}</td>
                 <td><Icon name="chevron-right" size={14} style={{ color: 'var(--ink-3)' }}/></td>
@@ -726,7 +753,7 @@ const Ads = () => {
         {open && <AdDetail a={open}/>}
       </Sheet>
 
-      <Sheet open={newOpen} onClose={() => setNewOpen(false)} title="Novo anúncio"
+      <Sheet open={newOpen} onClose={() => { setNewOpen(false); setProdQuery(''); }} title="Novo anúncio"
              footer={<>
                <button className="btn" onClick={() => setNewOpen(false)}>Cancelar</button>
                <button className="btn btn-primary" onClick={() => setNewOpen(false)}><Icon name="check" size={13}/> Criar anúncio</button>
@@ -768,41 +795,58 @@ const Ads = () => {
             <label>Título do anúncio</label>
             <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Ex: Cropped Oversized — Verão 2026"/>
           </div>
-          <div className="field">
-            <label>Produto vinculado</label>
-            <Select value={form.product} onChange={(v) => setForm({ ...form, product: v })}
-              options={ORION_DATA.products.map(p => {
-                const spec = ORION_DATA.specs.find(s => s.id === p.spec);
-                const garment = spec && GARMENT_TYPES.find(g => g.id === spec.tipo);
-                return { value: p.name, label: p.name, sub: p.code, _product: p, _garment: garment };
-              })}
-              renderOption={(o) => (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                  <span style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--surface-2)', border: '1px solid var(--line-soft)', display: 'grid', placeItems: 'center', color: 'var(--ink-2)', flexShrink: 0 }}>
-                    {o._garment ? React.cloneElement(GARMENT_GLYPHS[o._garment.id], { width: 14, height: 14, strokeWidth: 1.5 }) : <Icon name="shirt" size={14}/>}
-                  </span>
-                  <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, gap: 3, flex: 1 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13 }}>{o.label}</span>
-                      <span className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-3)' }}>{o.sub}</span>
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ display: 'flex', gap: 3 }}>
-                        {o._product.colors.map((c, i) => (
-                          <span key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: c, border: '1px solid var(--line-soft)', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.04)' }}/>
-                        ))}
-                      </span>
-                      <span style={{ width: 1, height: 10, background: 'var(--line-soft)' }}/>
-                      <span style={{ display: 'flex', gap: 3 }}>
-                        {o._product.sizes.map(s => (
-                          <span key={s} style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-3)', padding: '1px 5px', border: '1px solid var(--line-soft)', borderRadius: 3, lineHeight: 1.2 }}>{s}</span>
-                        ))}
-                      </span>
-                    </span>
-                  </span>
-                </span>
-              )}/>
+          <ThumbUpload value={form.thumb} onChange={img => setForm(f => ({ ...f, thumb: img }))} label="Miniatura do anúncio" aspect="1 / 1" hint="quadrada recomendada · até 5 MB"/>
+        </div>
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, paddingBottom: 8, borderBottom: '1px solid var(--line-soft)' }}>
+            <span style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600 }}>Produtos vinculados</span>
+            <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{form.products.length} selecionado{form.products.length === 1 ? '' : 's'}</span>
           </div>
+          <div style={{ fontSize: 11.5, color: 'var(--ink-3)', margin: '10px 0 12px' }}>Um anúncio pode vincular vários produtos do catálogo — útil para combos, kits e listagens multivariação.</div>
+          <div style={{ marginBottom: 10 }}>
+            <SearchInput placeholder="Buscar produto por nome ou código…" value={prodQuery} onChange={setProdQuery}/>
+          </div>
+          {(() => {
+            const q = prodQuery.trim().toLowerCase();
+            const visible = ORION_DATA.products.filter(p => !q || (p.name + ' ' + p.code).toLowerCase().includes(q));
+            if (!visible.length) return (
+              <div style={{ padding: '24px 12px', textAlign: 'center', border: '1px dashed var(--line)', borderRadius: 8 }}>
+                <Icon name="search-x" size={18} style={{ color: 'var(--ink-3)' }}/>
+                <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginTop: 6 }}>Nenhum produto para “{prodQuery}”.</div>
+              </div>
+            );
+            return (
+            <div style={{ display: 'grid', gap: 6, maxHeight: 300, overflowY: 'auto', margin: '0 -2px', padding: '0 2px' }}>
+            {visible.map(p => {
+              const { garment } = resolveAdProduct(p.name);
+              const sel = form.products.includes(p.name);
+              return (
+                <button key={p.id} type="button"
+                  onClick={() => setForm(f => ({ ...f, products: sel ? f.products.filter(x => x !== p.name) : [...f.products, p.name] }))}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', textAlign: 'left',
+                    border: sel ? '1.5px solid var(--accent)' : '1px solid var(--line)', borderRadius: 8, cursor: 'pointer',
+                    background: sel ? 'color-mix(in oklab, var(--accent) 8%, var(--surface))' : 'var(--surface)', fontFamily: 'inherit' }}>
+                  <span style={{ width: 30, height: 30, borderRadius: 6, background: 'var(--surface-2)', border: '1px solid var(--line-soft)', display: 'grid', placeItems: 'center', color: 'var(--ink-2)', flexShrink: 0 }}>
+                    {garment ? React.cloneElement(GARMENT_GLYPHS[garment.id], { width: 15, height: 15, strokeWidth: 1.5 }) : <Icon name="shirt" size={15}/>}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: 13, color: 'var(--ink)', fontWeight: 500 }}>{p.name}</span>
+                    <span className="mono" style={{ display: 'block', fontSize: 10.5, fontFamily: 'var(--font-mono)', color: 'var(--ink-3)' }}>{p.code}</span>
+                  </span>
+                  <span style={{ display: 'flex', gap: 2 }}>
+                    {p.colors.slice(0, 4).map((c, i) => (
+                      <span key={i} style={{ width: 9, height: 9, borderRadius: '50%', background: c.material, border: '1px solid var(--line-soft)' }}/>
+                    ))}
+                  </span>
+                  <span style={{ width: 18, height: 18, borderRadius: '50%', border: sel ? 0 : '1.5px solid var(--line)', background: sel ? 'var(--accent)' : 'transparent', display: 'grid', placeItems: 'center', flexShrink: 0, marginLeft: 4 }}>
+                    {sel && <Icon name="check" size={11} strokeWidth={3} style={{ color: '#fff' }}/>}
+                  </span>
+                </button>
+              );
+            })}
+            </div>
+            );
+          })()}
         </div>
       </Sheet>
     </div>
@@ -821,7 +865,7 @@ const AdDetail = ({ a }) => {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <StatusPill s={a.status}/>
-        <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>SKU: <span style={{ color: 'var(--ink)' }}>{a.product}</span></span>
+        <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>{a.products.length} {a.products.length === 1 ? 'produto vinculado' : 'produtos vinculados'}</span>
       </div>
 
       {/* Hero card with channel color */}
@@ -840,6 +884,47 @@ const AdDetail = ({ a }) => {
         <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,.18)', color: '#fff', border: '1px solid rgba(255,255,255,.3)' }}>
           <Icon name="external-link" size={11}/> Abrir no canal
         </button>
+      </div>
+
+      {/* Linked products — an ad can map to one or many catalog products */}
+      <div style={{ borderTop: '1px solid var(--line-soft)', paddingTop: 14, marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600 }}>Produtos vinculados · {a.products.length}</div>
+          <button className="btn btn-sm btn-ghost"><Icon name="plus" size={11}/> Vincular produto</button>
+        </div>
+        {a.products.map((name, i) => {
+          const { prod, garment } = resolveAdProduct(name);
+          return (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i === a.products.length - 1 ? 0 : '1px solid var(--line-soft)' }}>
+              <span style={{ width: 42, height: 42, borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--line-soft)', display: 'grid', placeItems: 'center', color: 'var(--ink-2)', flexShrink: 0 }}>
+                {garment ? React.cloneElement(GARMENT_GLYPHS[garment.id], { width: 20, height: 20, strokeWidth: 1.4 }) : <Icon name="shirt" size={20}/>}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: 'var(--ink)', fontWeight: 500 }}>
+                  {name}
+                  <Icon name="external-link" size={11} style={{ marginLeft: 6, color: 'var(--ink-3)' }}/>
+                </div>
+                {prod && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5, flexWrap: 'wrap' }}>
+                    <span className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-3)' }}>{prod.code}</span>
+                    <span style={{ display: 'flex', gap: 3 }}>
+                      {prod.colors.map((c, ci) => (
+                        <span key={ci} style={{ width: 11, height: 11, borderRadius: '50%', background: c.material, border: '1px solid var(--line-soft)', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.04)' }}/>
+                      ))}
+                    </span>
+                    <span style={{ width: 1, height: 11, background: 'var(--line-soft)' }}/>
+                    <span style={{ display: 'flex', gap: 3 }}>
+                      {prod.sizes.map(s => (
+                        <span key={s} style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', color: 'var(--ink-3)', padding: '1px 5px', border: '1px solid var(--line-soft)', borderRadius: 3, lineHeight: 1.2 }}>{s}</span>
+                      ))}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <span style={{ fontSize: 11.5, color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>{prod ? `${prod.stock} em estoque` : ''}</span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Performance chart */}

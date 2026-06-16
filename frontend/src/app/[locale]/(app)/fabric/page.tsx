@@ -17,7 +17,9 @@ import { PageHead } from "@/components/page/PageHead";
 import { FabricRollsTable } from "@/components/fabric/FabricRollsTable";
 import { FabricRollsEmptyState } from "@/components/fabric/FabricRollsEmptyState";
 import { FabricRollFormSheet } from "@/components/fabric/FabricRollFormSheet";
-import { useFabricRolls } from "@/hooks/use-fabric";
+import { FabricLedger } from "@/components/fabric/FabricLedger";
+import { FabricMoveSheet } from "@/components/fabric/FabricMoveSheet";
+import { useFabricMovements, useFabricRolls } from "@/hooks/use-fabric";
 import { useCanAccess } from "@/hooks/use-permissions";
 import {
   FABRIC_ROLL_KINDS,
@@ -91,11 +93,13 @@ function KindSeg({
 export default function FabricPage() {
   const t = useTranslations("fabric");
   const tKinds = useTranslations("fabric.fabricRollKinds");
+  const [tab, setTab] = useState<"current" | "movements">("current");
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState<string>(ALL);
   const [fabricType, setFabricType] = useState<string>(ALL);
   const [editing, setEditing] = useState<FabricRoll | null>(null);
   const [creating, setCreating] = useState(false);
+  const [moving, setMoving] = useState(false);
   const canWrite = useCanAccess("fabric.write");
   const debouncedSearch = useDebouncedValue(search, 200);
 
@@ -104,6 +108,7 @@ export default function FabricPage() {
     kind: kind === ALL ? undefined : (kind as FabricRollKind),
     fabric_type: fabricType === ALL ? undefined : (fabricType as FabricType),
   });
+  const movements = useFabricMovements(tab === "movements" ? { page_size: 50 } : {});
 
   const rows = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -127,17 +132,28 @@ export default function FabricPage() {
         sub={t("list.sub")}
         actions={
           canWrite ? (
-            <Button
-              type="button"
-              onClick={() => setCreating(true)}
-              className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-inv)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
-              style={{
-                borderColor: "color-mix(in oklab, var(--brand-inv) 70%, black)",
-              }}
-            >
-              <Layers className="size-3.5" strokeWidth={1.8} />
-              {t("list.empty.cta")}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                data-testid="fabric-move-cta"
+                onClick={() => setMoving(true)}
+                className="h-auto gap-[7px] rounded-[6px] border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] !px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] shadow-none hover:bg-[color:var(--orion-surface-2)]"
+              >
+                {t("movements.moveCta")}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setCreating(true)}
+                className="h-auto gap-[7px] rounded-[6px] border bg-[color:var(--brand-inv)] !px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95"
+                style={{
+                  borderColor: "color-mix(in oklab, var(--brand-inv) 70%, black)",
+                }}
+              >
+                <Layers className="size-3.5" strokeWidth={1.8} />
+                {t("list.empty.cta")}
+              </Button>
+            </div>
           ) : null
         }
       />
@@ -145,44 +161,76 @@ export default function FabricPage() {
       <div className="overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)]">
         {/* .toolbar — 12 16 padding, 8px gap, wraps, line-soft separator. */}
         <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface)] px-4 py-3">
-          <div className="flex min-w-[220px] items-center gap-1.5 rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-2.5 py-[5px] text-[12.5px] text-[color:var(--orion-ink-2)]">
-            <Search className="size-3.5 text-[color:var(--orion-ink-3)]" />
-            <Input
-              placeholder={t("filters.searchPlaceholder")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-auto border-0 bg-transparent p-0 text-[12.5px] text-[color:var(--orion-ink)] shadow-none placeholder:text-[color:var(--orion-ink-3)] focus-visible:ring-0"
-            />
+          <div className="inline-flex rounded-[7px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] p-0.5">
+            {(["current", "movements"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                data-testid={value === "movements" ? "fabric-movements-tab" : `fabric-tab-${value}`}
+                onClick={() => setTab(value)}
+                className="rounded-[5px] px-3 py-[5px] text-[12.5px] font-medium transition-colors"
+                style={{
+                  background: tab === value ? "var(--orion-surface)" : "transparent",
+                  color: tab === value ? "var(--orion-ink)" : "var(--orion-ink-3)",
+                  boxShadow: tab === value ? "0 1px 2px rgba(31,27,21,0.08)" : "none",
+                }}
+              >
+                {t(`tabs.${value}`)}
+              </button>
+            ))}
           </div>
-          {/* Kind filter — Seg per design (was Select). */}
-          <KindSeg value={kind} options={kindOptions} onChange={setKind} />
-          <Select value={fabricType} onValueChange={setFabricType}>
-            <SelectTrigger className="h-auto w-[180px] gap-2 rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-2.5 py-[5px] text-[12.5px] text-[color:var(--orion-ink-2)] shadow-none focus:ring-0">
-              <SelectValue placeholder={t("filters.fabricType")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t("filters.fabricTypeAll")}</SelectItem>
-              {FABRIC_TYPES.map((ft) => (
-                <SelectItem key={ft} value={ft}>
-                  {t(`fabricTypes.${ft}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {tab === "current" ? (
+            <>
+              <div className="flex min-w-[220px] items-center gap-1.5 rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-2.5 py-[5px] text-[12.5px] text-[color:var(--orion-ink-2)]">
+                <Search className="size-3.5 text-[color:var(--orion-ink-3)]" />
+                <Input
+                  placeholder={t("filters.searchPlaceholder")}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-auto border-0 bg-transparent p-0 text-[12.5px] text-[color:var(--orion-ink)] shadow-none placeholder:text-[color:var(--orion-ink-3)] focus-visible:ring-0"
+                />
+              </div>
+              {/* Kind filter — Seg per design (was Select). */}
+              <KindSeg value={kind} options={kindOptions} onChange={setKind} />
+              <Select value={fabricType} onValueChange={setFabricType}>
+                <SelectTrigger className="h-auto w-[180px] gap-2 rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-2.5 py-[5px] text-[12.5px] text-[color:var(--orion-ink-2)] shadow-none focus:ring-0">
+                  <SelectValue placeholder={t("filters.fabricType")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>{t("filters.fabricTypeAll")}</SelectItem>
+                  {FABRIC_TYPES.map((ft) => (
+                    <SelectItem key={ft} value={ft}>
+                      {t(`fabricTypes.${ft}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          ) : null}
         </div>
 
-        {isPending ? (
-          <div className="p-6">
-            <div className="space-y-2">
-              <Skeleton className="h-9" />
-              <Skeleton className="h-9" />
-              <Skeleton className="h-9" />
+        {tab === "current" ? (
+          isPending ? (
+            <div className="p-6">
+              <div className="space-y-2">
+                <Skeleton className="h-9" />
+                <Skeleton className="h-9" />
+                <Skeleton className="h-9" />
+              </div>
             </div>
+          ) : showEmpty ? (
+            <FabricRollsEmptyState onCreate={canWrite ? () => setCreating(true) : undefined} />
+          ) : (
+            <FabricRollsTable data={rows} onRowClick={(roll) => setEditing(roll)} />
+          )
+        ) : movements.isPending ? (
+          <div className="space-y-2 p-6">
+            <Skeleton className="h-9" />
+            <Skeleton className="h-9" />
+            <Skeleton className="h-9" />
           </div>
-        ) : showEmpty ? (
-          <FabricRollsEmptyState onCreate={canWrite ? () => setCreating(true) : undefined} />
         ) : (
-          <FabricRollsTable data={rows} onRowClick={(roll) => setEditing(roll)} />
+          <FabricLedger rows={movements.data?.items ?? []} />
         )}
       </div>
 
@@ -193,6 +241,11 @@ export default function FabricPage() {
           if (!o) setEditing(null);
         }}
         initial={editing ?? undefined}
+      />
+      <FabricMoveSheet
+        open={moving}
+        onOpenChange={(o) => setMoving(o)}
+        rolls={rows}
       />
     </div>
   );

@@ -11,13 +11,13 @@ import { qk } from "@/lib/query-keys";
 import type { ApiError } from "@/lib/api-client";
 import type {
   Batch,
-  BatchAdjustmentUpdatePayload,
+  BatchAssemblePayload,
+  BatchAssembleResult,
   BatchCreatePayload,
+  BatchDetail,
   BatchFilters,
   BatchPage,
   BatchStatus,
-  MontadorSendResult,
-  PrintQueue,
 } from "@/lib/schemas/batch";
 
 const ROOT = "/v1/batches";
@@ -41,21 +41,19 @@ export function useBatches(
   });
 }
 
-export function useBatch(id: string | null): UseQueryResult<Batch, ApiError> {
+/**
+ * Single batch (Lote) detail. `GET /v1/batches/{id}` returns the richer
+ * `BatchDetailRead` shape — the lean fields plus the computed per-estampa grid
+ * and roll-ups (`orders_ready`, `to_print_total`, `needs_assembly`, `can_ship`).
+ */
+export function useBatchDetail(
+  id: string | null,
+): UseQueryResult<BatchDetail, ApiError> {
   const api = useApi();
-  return useQuery<Batch, ApiError>({
+  return useQuery<BatchDetail, ApiError>({
     queryKey: qk.batches.detail(id ?? ""),
     enabled: !!id,
-    queryFn: () => api.get<Batch>(`${ROOT}/${id}`),
-  });
-}
-
-/** Cross-batch demand-driven print queue: what still needs printing now. */
-export function useBatchPrintQueue(): UseQueryResult<PrintQueue, ApiError> {
-  const api = useApi();
-  return useQuery<PrintQueue, ApiError>({
-    queryKey: qk.batches.printQueue(),
-    queryFn: () => api.get<PrintQueue>(`${ROOT}/print-queue`),
+    queryFn: () => api.get<BatchDetail>(`${ROOT}/${id}`),
   });
 }
 
@@ -68,23 +66,6 @@ export function useCreateBatch() {
       qc.invalidateQueries({ queryKey: qk.batches.all() });
       // Orders now carry a batch_id; refresh the orders list too.
       qc.invalidateQueries({ queryKey: qk.orders.all() });
-    },
-  });
-}
-
-export function useSaveBatchAdjustments() {
-  const api = useApi();
-  const qc = useQueryClient();
-  return useMutation<
-    Batch,
-    ApiError,
-    { id: string; payload: BatchAdjustmentUpdatePayload }
-  >({
-    mutationFn: ({ id, payload }) =>
-      api.patch<Batch>(`${ROOT}/${id}/adjustments`, payload),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: qk.batches.all() });
-      qc.invalidateQueries({ queryKey: qk.batches.detail(vars.id) });
     },
   });
 }
@@ -102,20 +83,6 @@ export function useTransitionBatch() {
   });
 }
 
-export function useSendBatchToMontador() {
-  const api = useApi();
-  const qc = useQueryClient();
-  return useMutation<MontadorSendResult, ApiError, string>({
-    mutationFn: (id) =>
-      api.post<MontadorSendResult>(`${ROOT}/${id}/send-to-montador`, {}),
-    onSuccess: (_data, id) => {
-      qc.invalidateQueries({ queryKey: qk.batches.detail(id) });
-      // Sent designs drop out of the cross-batch print queue.
-      qc.invalidateQueries({ queryKey: qk.batches.printQueue() });
-    },
-  });
-}
-
 export function useDeleteBatch() {
   const api = useApi();
   const qc = useQueryClient();
@@ -124,6 +91,51 @@ export function useDeleteBatch() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.batches.all() });
       qc.invalidateQueries({ queryKey: qk.orders.all() });
+    },
+  });
+}
+
+/**
+ * Montar o lote — bulk-assemble the SKUs the batch is short on (reuses T5).
+ * Debits blank pieces + printed transfers, credits finished product. Touches
+ * every WIP tier, so invalidate them all (the grid `montado` rises).
+ */
+export function useAssembleBatch() {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation<
+    BatchAssembleResult,
+    ApiError,
+    { id: string; payload?: BatchAssemblePayload }
+  >({
+    mutationFn: ({ id, payload }) =>
+      api.post<BatchAssembleResult>(`${ROOT}/${id}/assemble`, payload ?? {}),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: qk.batches.detail(vars.id) });
+      qc.invalidateQueries({ queryKey: qk.batches.all() });
+      qc.invalidateQueries({ queryKey: qk.stock.all() });
+      qc.invalidateQueries({ queryKey: qk.blankStock.all() });
+      qc.invalidateQueries({ queryKey: qk.printedTransfers.all() });
+      qc.invalidateQueries({ queryKey: qk.orders.all() });
+    },
+  });
+}
+
+/**
+ * Enviar o lote — ship the batch's orders (T6) and set status `dispatched`.
+ * Readiness-gated server-side (409 if any member order isn't in finished
+ * stock). Writes a finished-stock exit per order, so invalidate stock + orders.
+ */
+export function useShipBatch() {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation<BatchDetail, ApiError, string>({
+    mutationFn: (id) => api.post<BatchDetail>(`${ROOT}/${id}/ship`, {}),
+    onSuccess: (_data, id) => {
+      qc.invalidateQueries({ queryKey: qk.batches.detail(id) });
+      qc.invalidateQueries({ queryKey: qk.batches.all() });
+      qc.invalidateQueries({ queryKey: qk.orders.all() });
+      qc.invalidateQueries({ queryKey: qk.stock.all() });
     },
   });
 }

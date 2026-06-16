@@ -13,7 +13,6 @@ class StockEntryFactory(ModelFactory[StockEntry]):
 
     quantity = 10
     source = StockSource.ADJUSTMENT
-    shipment_id = None
 
 
 class StockExitFactory(ModelFactory[StockExit]):

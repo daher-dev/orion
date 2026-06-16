@@ -57,7 +57,6 @@ TABLE_ORDER: list[str] = [
     "order",
     "order_item",
     "imported_order",
-    "batch_print_adjustment",
     "stock_entry",
     "stock_exit",
 ]
@@ -467,6 +466,7 @@ def convert(
         product_by_b44[b44] = {
             "company_id": cid,
             "product_id": product_id,
+            "spec_id": spec_id,
             "spec_code": spec_code,
             "product_type": product_type,
             "name": (p.get("nome") or spec_code),
@@ -492,6 +492,7 @@ def convert(
 
     # 4) BobinaTecido → fabric_roll
     fabric_by_b44: dict[str, uuid.UUID] = {}
+    fabric_color_by_b44: dict[str, str] = {}
     for b in _records(raw, "BobinaTecido"):
         cid = company_of(b)
         if cid is None:
@@ -533,6 +534,7 @@ def convert(
             }
         )
         fabric_by_b44[b44] = fid
+        fabric_color_by_b44[b44] = clean_color(b.get("cor_tecido"))
         report.add("fabric_roll")
     report.fetched["fabric_roll"] = len(_records(raw, "BobinaTecido"))
 
@@ -553,11 +555,18 @@ def convert(
         rib = fabric_by_b44.get(str(o.get("bobina_ribana_id"))) if o.get("bobina_ribana_id") else None
         if rib == body:
             rib = None
+        # Cutting is now print-agnostic: keyed by spec + colorway. Prefer the
+        # order's own color, falling back to the body roll's color when absent.
+        body_color = fabric_color_by_b44.get(str(o.get("bobina_id")))
+        color = clean_color(o.get("cor") or body_color or "Único")
+        color_code = colors.code(cid, color)
         data.rows["cutting_order"].append(
             {
                 "id": oid,
                 "company_id": cid,
-                "product_id": info["product_id"],
+                "spec_id": info["spec_id"],
+                "color": color[:40],
+                "color_code": color_code,
                 "body_roll_id": body,
                 "rib_roll_id": rib,
                 "status": settings.CUTTING_STATUS_MAP.get(norm(o.get("status")), settings.DEFAULT_CUTTING_STATUS),
@@ -691,7 +700,6 @@ def convert(
                     "id": derive_id("stock_entry", str(e.get("id")), size.value),
                     "company_id": cid,
                     "variation_id": vid,
-                    "shipment_id": None,
                     "quantity": qty,
                     "source": settings.DEFAULT_STOCK_SOURCE,
                     "notes": e.get("observacoes") or None,
@@ -963,7 +971,6 @@ def convert(
                 "total_orders": to_int(lote.get("total_pedidos")) or 0,
                 "total_pieces": to_int(lote.get("total_pecas")) or 0,
                 "labels_printed_at": to_datetime(lote.get("etiquetas_impressas_em")),
-                "prints_sent_at": to_datetime(lote.get("estampas_enviadas_em")),
                 "completed_at": to_datetime(lote.get("concluido_em")),
                 "notes": (str(lote.get("observacoes")).strip()[:500] if lote.get("observacoes") else None),
             }
@@ -976,28 +983,6 @@ def convert(
                 report.default("batch.order_linked")
             else:
                 report.skip("batch:pedido_unresolved", str(pi))
-        for idx, adj in enumerate(lote.get("ajustes_estampas") or []):
-            if not isinstance(adj, dict):
-                continue
-            ename = str(adj.get("estampa_nome") or "").strip()
-            pdid = print_design_index.get((cid, norm(ename)))
-            if pdid is None:
-                report.skip("batch_adj:no_print_design", ename)
-                continue
-            data.rows["batch_print_adjustment"].append(
-                {
-                    "id": derive_id("batch_print_adjustment", b44, idx),
-                    "company_id": cid,
-                    "batch_id": batch_id,
-                    "print_design_id": pdid,
-                    "product_color": clean_color(adj.get("cor_produto") or adj.get("cor"))[:80],
-                    "qty_needed": to_int(adj.get("qtd_necessaria")) or 0,
-                    "qty_stock": to_int(adj.get("qtd_estoque_disponivel")) or 0,
-                    "qty_to_print": to_int(adj.get("qtd_imprimir")) or 0,
-                    "prints_sent": to_bool(adj.get("baixa_estoque_realizada")),
-                }
-            )
-            report.add("batch_print_adjustment")
     report.fetched["batch"] = len(_records(raw, "LoteProducao"))
 
     # 12) ItemPedido → order_items (Separação). Many reference superseded order

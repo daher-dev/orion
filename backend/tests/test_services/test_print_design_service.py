@@ -53,7 +53,7 @@ async def test_list_prints_returns_only_company_rows(db_session):
 
     rows, total = await list_prints(db_session, company_id=company_a.id)
     assert total == 2
-    assert {p.code for p in rows} == {"A1", "A2"}
+    assert {p.code for p, _variations in rows} == {"A1", "A2"}
 
 
 async def test_list_prints_filters_by_q_on_code(db_session):
@@ -63,7 +63,7 @@ async def test_list_prints_filters_by_q_on_code(db_session):
 
     rows, total = await list_prints(db_session, company_id=company.id, filters=PrintFilters(q="flor"))
     assert total == 1
-    assert rows[0].code == "EST-FLOR"
+    assert rows[0][0].code == "EST-FLOR"
 
 
 async def test_list_prints_filters_by_q_on_name(db_session):
@@ -73,7 +73,7 @@ async def test_list_prints_filters_by_q_on_name(db_session):
 
     rows, total = await list_prints(db_session, company_id=company.id, filters=PrintFilters(q="aurora"))
     assert total == 1
-    assert rows[0].name == "Aurora"
+    assert rows[0][0].name == "Aurora"
 
 
 async def test_list_prints_paginates(db_session):
@@ -103,8 +103,9 @@ async def test_get_print_happy_path(db_session):
     company = await create_company(db_session)
     print_design = await create_print_design(db_session, company_id=company.id)
 
-    found = await get_print(db_session, company_id=company.id, print_id=print_design.id)
+    found, variations = await get_print(db_session, company_id=company.id, print_id=print_design.id)
     assert found.id == print_design.id
+    assert variations == []
 
 
 async def test_get_print_404_when_missing(db_session):
@@ -129,7 +130,7 @@ async def test_create_print_happy_path(db_session):
     user = await create_user(db_session, company_id=company.id)
     payload = _payload(code="EST-NEW", name="Cool art", cost_per_unit=Decimal("3.50"))
 
-    print_design = await create_print(
+    print_design, variations = await create_print(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -139,13 +140,14 @@ async def test_create_print_happy_path(db_session):
     assert print_design.name == "Cool art"
     assert print_design.company_id == company.id
     assert print_design.cost_per_unit == Decimal("3.50")
+    assert variations == []
 
 
 async def test_create_print_writes_audit_log(db_session):
     company = await create_company(db_session)
     user = await create_user(db_session, company_id=company.id)
     payload = _payload(code="AUD-1")
-    print_design = await create_print(
+    print_design, _ = await create_print(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -161,7 +163,7 @@ async def test_create_print_with_image_url(db_session):
     user = await create_user(db_session, company_id=company.id)
     payload = _payload(image_url="https://example.com/art.png")
 
-    print_design = await create_print(
+    print_design, _ = await create_print(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -173,7 +175,7 @@ async def test_create_print_with_image_url(db_session):
 async def test_create_print_defaults_technique_to_dtf(db_session):
     company = await create_company(db_session)
     user = await create_user(db_session, company_id=company.id)
-    print_design = await create_print(db_session, company_id=company.id, user_id=user.id, payload=_payload())
+    print_design, _ = await create_print(db_session, company_id=company.id, user_id=user.id, payload=_payload())
     assert print_design.technique == PrintTechnique.DTF
     assert print_design.tag is None
 
@@ -181,7 +183,7 @@ async def test_create_print_defaults_technique_to_dtf(db_session):
 async def test_create_and_update_print_technique_and_tag(db_session):
     company = await create_company(db_session)
     user = await create_user(db_session, company_id=company.id)
-    created = await create_print(
+    created, _ = await create_print(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -198,7 +200,7 @@ async def test_create_and_update_print_technique_and_tag(db_session):
     assert created.image_url_front == "https://cdn/f.png"
     assert created.width_cm == Decimal("28.00")
 
-    updated = await update_print(
+    updated, _ = await update_print(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -225,8 +227,8 @@ async def test_create_print_rejects_duplicate_code(db_session):
 async def test_create_print_allows_same_code_in_different_companies(db_session):
     company_a = await create_company(db_session)
     company_b = await create_company(db_session)
-    p_a = await create_print(db_session, company_id=company_a.id, user_id=None, payload=_payload(code="SHARED"))
-    p_b = await create_print(
+    p_a, _ = await create_print(db_session, company_id=company_a.id, user_id=None, payload=_payload(code="SHARED"))
+    p_b, _ = await create_print(
         db_session,
         company_id=company_b.id,
         user_id=None,
@@ -243,7 +245,7 @@ async def test_update_print_happy_path(db_session):
     user = await create_user(db_session, company_id=company.id)
     print_design = await create_print_design(db_session, company_id=company.id, code="OLD")
 
-    updated = await update_print(
+    updated, _ = await update_print(
         db_session,
         company_id=company.id,
         user_id=user.id,
@@ -322,7 +324,7 @@ async def test_update_print_can_clear_image_url(db_session):
         company_id=company.id,
         image_url="https://example.com/old.png",
     )
-    updated = await update_print(
+    updated, _ = await update_print(
         db_session,
         company_id=company.id,
         user_id=user.id,

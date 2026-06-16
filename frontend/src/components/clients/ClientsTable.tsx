@@ -14,7 +14,6 @@ import {
   ChevronRight,
   ChevronsUpDown,
   ChevronUp,
-  Users as UsersIcon,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import type { ClientRead } from "@/lib/schemas/client";

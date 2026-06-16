@@ -26,7 +26,6 @@ export const qk = {
     lists: () => tuple("batches", "list"),
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("batches", "list", filters),
     detail: (id: string) => tuple("batches", "detail", id),
-    printQueue: () => tuple("batches", "print-queue"),
   },
   mapping: {
     all: () => tuple("mapping"),
@@ -68,6 +67,8 @@ export const qk = {
     lists: () => tuple("fabric", "list"),
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("fabric", "list", filters),
     detail: (id: string) => tuple("fabric", "detail", id),
+    movements: (filters: Readonly<Record<string, unknown>> = {}) =>
+      tuple("fabric", "movements", filters),
   },
   cutting: {
     all: () => tuple("cutting"),
@@ -75,12 +76,28 @@ export const qk = {
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("cutting", "list", filters),
     detail: (id: string) => tuple("cutting", "detail", id),
     cost: (id: string) => tuple("cutting", "cost", id),
+    available: (filters: Readonly<Record<string, unknown>> = {}) =>
+      tuple("cutting", "available", filters),
   },
   sewing: {
     all: () => tuple("sewing"),
     lists: () => tuple("sewing", "list"),
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("sewing", "list", filters),
     detail: (id: string) => tuple("sewing", "detail", id),
+  },
+  printOrders: {
+    all: () => tuple("print-orders"),
+    lists: () => tuple("print-orders", "list"),
+    list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("print-orders", "list", filters),
+    detail: (id: string) => tuple("print-orders", "detail", id),
+  },
+  assembly: {
+    all: () => tuple("assembly"),
+    buildable: (filters: Readonly<Record<string, unknown>> = {}) => tuple("assembly", "buildable", filters),
+  },
+  planning: {
+    all: () => tuple("planning"),
+    suggestions: () => tuple("planning", "suggestions"),
   },
   contractors: {
     all: () => tuple("contractors"),
@@ -94,11 +111,34 @@ export const qk = {
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("stock", "list", filters),
     detail: (id: string) => tuple("stock", "detail", id),
   },
-  printStock: {
-    all: () => tuple("print-stock"),
-    lists: () => tuple("print-stock", "list"),
-    list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("print-stock", "list", filters),
-    detail: (id: string) => tuple("print-stock", "detail", id),
+  blankStock: {
+    all: () => tuple("blank-stock"),
+    lists: () => tuple("blank-stock", "list"),
+    list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("blank-stock", "list", filters),
+    detail: (id: string) => tuple("blank-stock", "detail", id),
+    levels: (filters: Readonly<Record<string, unknown>> = {}) => tuple("blank-stock", "levels", filters),
+    movements: (filters: Readonly<Record<string, unknown>> = {}) =>
+      tuple("blank-stock", "movements", filters),
+  },
+  paperRolls: {
+    all: () => tuple("paper-rolls"),
+    lists: () => tuple("paper-rolls", "list"),
+    list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("paper-rolls", "list", filters),
+    detail: (id: string) => tuple("paper-rolls", "detail", id),
+    levels: (filters: Readonly<Record<string, unknown>> = {}) => tuple("paper-rolls", "levels", filters),
+    movements: (filters: Readonly<Record<string, unknown>> = {}) =>
+      tuple("paper-rolls", "movements", filters),
+  },
+  printedTransfers: {
+    all: () => tuple("printed-transfers"),
+    lists: () => tuple("printed-transfers", "list"),
+    list: (filters: Readonly<Record<string, unknown>> = {}) =>
+      tuple("printed-transfers", "list", filters),
+    detail: (id: string) => tuple("printed-transfers", "detail", id),
+    levels: (filters: Readonly<Record<string, unknown>> = {}) =>
+      tuple("printed-transfers", "levels", filters),
+    movements: (filters: Readonly<Record<string, unknown>> = {}) =>
+      tuple("printed-transfers", "movements", filters),
   },
   supplies: {
     all: () => tuple("supplies"),
@@ -144,6 +184,7 @@ export const qk = {
     company: () => tuple("settings", "company"),
     profile: () => tuple("settings", "profile"),
     stockAlerts: () => tuple("settings", "stock-alerts"),
+    catalog: () => tuple("settings", "catalog"),
   },
   billing: {
     all: () => tuple("billing"),

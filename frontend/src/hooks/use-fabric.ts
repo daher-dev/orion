@@ -5,6 +5,10 @@ import { useApi } from "@/hooks/use-api";
 import { qk } from "@/lib/query-keys";
 import { ApiError } from "@/lib/api-client";
 import type {
+  FabricMovementCreate,
+  FabricMovementFilters,
+  FabricMovementPage,
+  FabricMovementRead,
   FabricRoll,
   FabricRollFilters,
   FabricRollFormPayload,
@@ -12,6 +16,18 @@ import type {
 } from "@/lib/schemas/fabric";
 
 const ROOT = "/v1/fabric";
+
+function pruneUndefined<T extends Record<string, unknown>>(
+  input: T,
+): Record<string, string | number | boolean> {
+  // Strip nullish/empty values so the URL doesn't carry `?key=undefined` noise.
+  const out: Record<string, string | number | boolean> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (value === undefined || value === null || value === "") continue;
+    out[key] = value as string | number | boolean;
+  }
+  return out;
+}
 
 export function useFabricRolls(
   filters: FabricRollFilters = {},
@@ -38,6 +54,40 @@ export function useFabricRoll(id: string | null): UseQueryResult<FabricRoll, Api
     queryKey: qk.fabric.detail(id ?? ""),
     enabled: !!id,
     queryFn: () => api.get<FabricRoll>(`${ROOT}/${id}`),
+  });
+}
+
+export function useFabricMovements(
+  filters: FabricMovementFilters = {},
+): UseQueryResult<FabricMovementPage, ApiError> {
+  const api = useApi();
+  return useQuery<FabricMovementPage, ApiError>({
+    queryKey: qk.fabric.movements(filters as Readonly<Record<string, unknown>>),
+    queryFn: () =>
+      api.get<FabricMovementPage>(`${ROOT}/movements`, {
+        query: pruneUndefined({
+          fabric_roll_id: filters.fabric_roll_id,
+          kind: filters.kind,
+          date_from: filters.date_from,
+          date_to: filters.date_to,
+          page: filters.page,
+          page_size: filters.page_size,
+        }),
+      }),
+  });
+}
+
+export function useCreateFabricMovement() {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation<FabricMovementRead, ApiError, FabricMovementCreate>({
+    mutationFn: (payload) => api.post<FabricMovementRead>(`${ROOT}/movements`, payload),
+    onSuccess: () => {
+      // A manual movement mutates the roll's current_weight_kg AND appends a
+      // ledger row, so refresh both the roll list and the movements view.
+      qc.invalidateQueries({ queryKey: qk.fabric.all() });
+      qc.invalidateQueries({ queryKey: qk.fabric.movements() });
+    },
   });
 }
 

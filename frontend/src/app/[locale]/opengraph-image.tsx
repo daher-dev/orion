@@ -49,7 +49,6 @@ export default async function Image({ params }: { params: Promise<{ locale: stri
           gap: 32,
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={markSrc} width={132} height={139} alt="" />
         {font ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

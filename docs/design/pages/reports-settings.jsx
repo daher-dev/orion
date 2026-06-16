@@ -5,7 +5,7 @@ const Reports = () => {
   return (
     <div className="page">
       <PageHead sub="reports" title="Relatórios" titleEm="& análises"
-                desc="Cruze dados de vendas, produção, estoque e custos."
+                desc="Vendas, produção, estoque e custos."
                 actions={<>
                   <button className="btn"><Icon name="calendar" size={14}/> Últimos 90 dias</button>
                   <button className="btn"><Icon name="download" size={14}/> Exportar CSV</button>

@@ -13,6 +13,47 @@ export const PRINT_TECHNIQUES = ["dtf", "silkscreen", "sublimation"] as const;
 export type PrintTechnique = (typeof PRINT_TECHNIQUES)[number];
 export const printTechniqueSchema = z.enum(PRINT_TECHNIQUES);
 
+/** Server-derived: `ok` once the matching `*_file_url` is non-null, else `pending`. */
+export const ARTWORK_STATUSES = ["ok", "pending"] as const;
+export type ArtworkStatus = (typeof ARTWORK_STATUSES)[number];
+export const artworkStatusSchema = z.enum(ARTWORK_STATUSES);
+
+/** Garment side an artwork PNG is printed on. */
+export const PRINT_SIDES = ["front", "back"] as const;
+export type PrintSide = (typeof PRINT_SIDES)[number];
+export const printSideSchema = z.enum(PRINT_SIDES);
+
+const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
+
+/** A color variation of an estampa, with a per-side PNG + status. */
+export const printVariationSchema = z.object({
+  id: z.string(),
+  print_design_id: z.string(),
+  name: z.string(),
+  ink_hex: z.string(),
+  front_file_url: z.string().nullable(),
+  front_status: artworkStatusSchema,
+  back_file_url: z.string().nullable(),
+  back_status: artworkStatusSchema,
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type PrintVariation = z.infer<typeof printVariationSchema>;
+
+export const printVariationCreateSchema = z.object({
+  name: z.string().trim().min(1, { message: "validation.required" }).max(80),
+  ink_hex: z.string().regex(HEX_RE, { message: "validation.hex" }),
+  front_file_url: z.string().max(500).nullable().optional(),
+  back_file_url: z.string().max(500).nullable().optional(),
+});
+
+export type PrintVariationCreatePayload = z.infer<typeof printVariationCreateSchema>;
+
+export const printVariationUpdateSchema = printVariationCreateSchema.partial();
+
+export type PrintVariationUpdatePayload = z.infer<typeof printVariationUpdateSchema>;
+
 export const printReadSchema = z.object({
   id: z.string(),
   company_id: z.string(),
@@ -22,10 +63,13 @@ export const printReadSchema = z.object({
   cost_per_unit: z.string(),
   technique: printTechniqueSchema,
   tag: z.string().nullable().optional(),
+  has_front: z.boolean(),
+  has_back: z.boolean(),
   image_url_front: z.string().nullable().optional(),
   image_url_back: z.string().nullable().optional(),
   width_cm: z.string().nullable().optional(),
   height_cm: z.string().nullable().optional(),
+  variations: z.array(printVariationSchema).default([]),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -93,6 +137,8 @@ export const printFormSchema = z.object({
     .max(60)
     .optional()
     .transform((value) => (value ? value : undefined)),
+  has_front: z.boolean(),
+  has_back: z.boolean(),
   image_url_front: optionalUrl,
   image_url_back: optionalUrl,
   width_cm: optionalDecimal,

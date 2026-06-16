@@ -35,7 +35,6 @@ from schemas.stock import (
     StockMovementExit,
     StockMovementRead,
     StockOrderMini,
-    StockShipmentMini,
 )
 from services._audit import write_audit
 from services._base import scoped
@@ -216,9 +215,9 @@ async def list_movements(
     """Return the interleaved ledger, sorted by `created_at DESC`.
 
     Built via two parallel queries + Python interleave rather than a SQL
-    UNION because the column shapes differ (entries have `source`/`shipment_id`
-    while exits have `reason`/`order_id`). A union query would need column
-    aliasing and casting that's gnarlier than just joining + sorting in code.
+    UNION because the column shapes differ (entries have `source` while exits
+    have `reason`/`order_id`). A union query would need column aliasing and
+    casting that's gnarlier than just joining + sorting in code.
     """
 
     entry_stmt = (
@@ -263,7 +262,6 @@ async def list_movements(
                     quantity=entry.quantity,
                     notes=entry.notes,
                     created_at=entry.created_at,
-                    shipment=StockShipmentMini(id=entry.shipment_id) if entry.shipment_id else None,
                 )
             )
     if filters.type != "entry":
@@ -303,7 +301,6 @@ async def create_entry(
     entry = StockEntry(
         company_id=company_id,
         variation_id=variation.id,
-        shipment_id=None,
         quantity=payload.quantity,
         source=payload.source,
         notes=payload.notes.strip() if payload.notes else None,

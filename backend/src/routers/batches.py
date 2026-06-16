@@ -12,24 +12,20 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 
 from dependencies import DbSession, RequirePermission
-from models import User
+from models import Batch, User
 from models.enums import BatchStatus
 from schemas._common import PageParams
 from schemas.batch import (
-    BatchAdjustmentRead,
-    BatchAdjustmentUpdate,
+    BatchAssembleBody,
+    BatchAssembleResult,
     BatchCreate,
+    BatchDetailRead,
     BatchListItem,
     BatchPage,
     BatchRead,
     BatchStatusTransition,
-    MontadorSendResult,
-    PrintQueueItem,
-    PrintQueueRead,
 )
 from services import batch as batch_service
-from services import montador as montador_service
-from services.batch import BatchWithAdjustments
 
 router = APIRouter(
     prefix="/batches",
@@ -38,35 +34,8 @@ router = APIRouter(
 )
 
 
-def _to_read(result: BatchWithAdjustments) -> BatchRead:
-    batch, adjustments = result
-    return BatchRead(
-        id=batch.id,
-        code=batch.code,
-        name=batch.name,
-        status=batch.status,
-        total_orders=batch.total_orders,
-        total_pieces=batch.total_pieces,
-        labels_printed_at=batch.labels_printed_at,
-        prints_sent_at=batch.prints_sent_at,
-        completed_at=batch.completed_at,
-        notes=batch.notes,
-        created_at=batch.created_at,
-        updated_at=batch.updated_at,
-        adjustments=[
-            BatchAdjustmentRead(
-                print_design_id=adj.print_design_id,
-                print_design_code=code,
-                print_design_name=name,
-                product_color=adj.product_color,
-                qty_needed=adj.qty_needed,
-                qty_stock=adj.qty_stock,
-                qty_to_print=adj.qty_to_print,
-                prints_sent=adj.prints_sent,
-            )
-            for adj, code, name in adjustments
-        ],
-    )
+def _to_read(batch: Batch) -> BatchRead:
+    return BatchRead.model_validate(batch, from_attributes=True)
 
 
 @router.get("", response_model=BatchPage)
@@ -94,56 +63,55 @@ async def create_batch_endpoint(
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("orders.write"))],
 ) -> BatchRead:
-    result = await batch_service.create_batch(
+    batch = await batch_service.create_batch(
         db,
         company_id=user.company_id,
         user_id=user.id,
         order_ids=payload.order_ids,
         name=payload.name,
     )
-    return _to_read(result)
+    return _to_read(batch)
 
 
-@router.get("/print-queue", response_model=PrintQueueRead)
-async def print_queue_endpoint(
-    db: DbSession,
-    user: Annotated[User, Depends(RequirePermission("orders.read"))],
-) -> PrintQueueRead:
-    """Cross-batch demand-driven print queue: what still needs printing now."""
-
-    rows = await batch_service.list_print_queue(db, company_id=user.company_id)
-    items = [PrintQueueItem(**row) for row in rows]
-    return PrintQueueRead(
-        items=items,
-        total_to_print=sum(item.qty_to_print for item in items),
-    )
-
-
-@router.get("/{batch_id}", response_model=BatchRead)
+@router.get("/{batch_id}", response_model=BatchDetailRead)
 async def get_batch_endpoint(
     batch_id: uuid.UUID,
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("orders.read"))],
-) -> BatchRead:
-    result = await batch_service.get_batch(db, company_id=user.company_id, batch_id=batch_id)
-    return _to_read(result)
+) -> BatchDetailRead:
+    return await batch_service.get_batch_detail(db, company_id=user.company_id, batch_id=batch_id)
 
 
-@router.patch("/{batch_id}/adjustments", response_model=BatchRead)
-async def save_adjustments_endpoint(
+@router.post("/{batch_id}/assemble", response_model=BatchAssembleResult)
+async def assemble_batch_endpoint(
     batch_id: uuid.UUID,
-    payload: BatchAdjustmentUpdate,
+    payload: BatchAssembleBody,
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("orders.write"))],
-) -> BatchRead:
-    result = await batch_service.save_adjustments(
+) -> BatchAssembleResult:
+    """Montar o lote — bulk-assemble the SKUs the batch is short on (reuses T5)."""
+    return await batch_service.assemble_batch(
         db,
         company_id=user.company_id,
         user_id=user.id,
         batch_id=batch_id,
-        adjustments=payload.adjustments,
+        payload=payload,
     )
-    return _to_read(result)
+
+
+@router.post("/{batch_id}/ship", response_model=BatchDetailRead)
+async def ship_batch_endpoint(
+    batch_id: uuid.UUID,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+) -> BatchDetailRead:
+    """Enviar o lote — ship member orders (T6 exits) and set status dispatched."""
+    return await batch_service.ship_batch(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        batch_id=batch_id,
+    )
 
 
 @router.post("/{batch_id}/status", response_model=BatchRead)
@@ -153,29 +121,14 @@ async def transition_batch_endpoint(
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("orders.write"))],
 ) -> BatchRead:
-    result = await batch_service.transition_status(
+    batch = await batch_service.transition_status(
         db,
         company_id=user.company_id,
         user_id=user.id,
         batch_id=batch_id,
         target=payload.status,
     )
-    return _to_read(result)
-
-
-@router.post("/{batch_id}/send-to-montador", response_model=MontadorSendResult)
-async def send_to_montador_endpoint(
-    batch_id: uuid.UUID,
-    db: DbSession,
-    user: Annotated[User, Depends(RequirePermission("orders.write"))],
-) -> MontadorSendResult:
-    result = await montador_service.send_batch_to_montador(
-        db,
-        company_id=user.company_id,
-        user_id=user.id,
-        batch_id=batch_id,
-    )
-    return MontadorSendResult(**result)
+    return _to_read(batch)
 
 
 @router.delete("/{batch_id}", status_code=status.HTTP_204_NO_CONTENT)

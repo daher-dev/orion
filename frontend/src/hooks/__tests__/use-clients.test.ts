@@ -174,7 +174,7 @@ describe("useCreateClient", () => {
     expect(listCalls).toBe(1);
 
     await act(async () => {
-      await result.current.create.mutateAsync({ name: "New" });
+      await result.current.create.mutateAsync({ name: "New", email: undefined, phone: undefined, address: undefined });
     });
     await waitFor(() => expect(listCalls).toBeGreaterThanOrEqual(2));
   });

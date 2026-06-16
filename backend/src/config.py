@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = Field(default="", description="PostgreSQL connection string")
 
     FIREBASE_PROJECT_ID: str = Field(default="", description="Firebase project ID for Admin SDK")
+    FIREBASE_STORAGE_BUCKET: str = Field(default="", description="GCS bucket for artwork uploads")
 
     K_SERVICE: str = Field(default="", description="Cloud Run service name")
 
@@ -28,20 +29,6 @@ class Settings(BaseSettings):
     ANTHROPIC_MODEL: str = Field(
         default="claude-haiku-4-5",
         description="Default Anthropic model id (override per-tenant later if needed)",
-    )
-
-    # Montador DTF integration — print designs in a batch are POSTed to the
-    # external assembler. The shared secret authenticates Orion to the
-    # Montador service (sent as the ``x-orion-secret`` header). Leave the
-    # secret blank in dev; the service surfaces a clear error if it's needed
-    # but unset. Tests mock the endpoint via respx.
-    MONTADOR_URL: str = Field(
-        default="https://montadordtf.com.br/functions/receberEstampa",
-        description="Montador DTF receive-estampa endpoint",
-    )
-    ORION_MONTADOR_SECRET: str = Field(
-        default="",
-        description="Shared secret sent as the x-orion-secret header to the Montador DTF service",
     )
 
     # Marketplace channel integrations (FEATURE — channel integration).

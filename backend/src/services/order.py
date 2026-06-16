@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Iterable
+from typing import NamedTuple
 
 from sqlalchemy import String, cast, func, or_
 from sqlalchemy.exc import IntegrityError
@@ -30,6 +31,7 @@ from models import (
     Client,
     ImportedOrder,
     Order,
+    OrderItem,
     OrderStatus,
     PrintDesign,
     Product,
@@ -47,6 +49,17 @@ from services._base import scoped
 from shared.exceptions import ConflictError, NotFoundError, ValidationError
 
 _RESOURCE = "orders"
+
+
+# Readiness extras computed alongside the joined read rows. ``ready`` is the
+# prototype's ``orderReady`` (finished stock covers the full quantity);
+# ``on_hand`` is the finished on-hand for the order's variation (lets the board
+# draw the ready/total bar); ``has_unmapped_items`` is true when the order has
+# any ``OrderItem`` whose ``variation_id`` is still NULL (awaiting De/Para).
+class OrderReadiness(NamedTuple):
+    ready: bool
+    on_hand: int
+    has_unmapped_items: bool
 
 
 # A single loaded read row: the Order + its ad + variation + product +
@@ -186,6 +199,77 @@ async def _load_with_relations(
     return row  # type: ignore[return-value]
 
 
+# ------------------------------------------------------------- readiness extras
+
+
+async def _finished_on_hand_map(
+    db: AsyncSession, *, company_id: uuid.UUID, variation_ids: set[uuid.UUID]
+) -> dict[uuid.UUID, int]:
+    """``{variation_id: on_hand}`` (entries - exits) for the given variations.
+
+    Two grouped aggregates filtered to the set — the same no-N+1 shape used by
+    ``planning._finished_on_hand_map`` / ``stock.list_stock_levels``. Missing
+    keys default to 0 at the call site.
+    """
+
+    if not variation_ids:
+        return {}
+
+    entries_stmt = (
+        select(StockEntry.variation_id, func.coalesce(func.sum(StockEntry.quantity), 0))
+        .where(StockEntry.company_id == company_id, StockEntry.variation_id.in_(variation_ids))  # type: ignore[union-attr]
+        .group_by(StockEntry.variation_id)
+    )
+    exits_stmt = (
+        select(StockExit.variation_id, func.coalesce(func.sum(StockExit.quantity), 0))
+        .where(StockExit.company_id == company_id, StockExit.variation_id.in_(variation_ids))  # type: ignore[union-attr]
+        .group_by(StockExit.variation_id)
+    )
+
+    on_hand: dict[uuid.UUID, int] = {}
+    for variation_id, total in (await db.exec(entries_stmt)).all():
+        on_hand[variation_id] = int(total or 0)
+    for variation_id, total in (await db.exec(exits_stmt)).all():
+        on_hand[variation_id] = on_hand.get(variation_id, 0) - int(total or 0)
+    return on_hand
+
+
+async def _unmapped_order_ids(db: AsyncSession, *, company_id: uuid.UUID, order_ids: set[uuid.UUID]) -> set[uuid.UUID]:
+    """Subset of ``order_ids`` that have ≥1 ``OrderItem`` with ``variation_id`` NULL.
+
+    One grouped query over the page's order ids — these orders sit in the
+    Mapeamento board column and are blocked from Separação until vinculados.
+    """
+
+    if not order_ids:
+        return set()
+
+    stmt = (
+        select(OrderItem.order_id)
+        .where(
+            OrderItem.company_id == company_id,
+            OrderItem.order_id.in_(order_ids),  # type: ignore[union-attr]
+            OrderItem.variation_id.is_(None),  # type: ignore[union-attr]
+        )
+        .group_by(OrderItem.order_id)
+    )
+    return {row for row in (await db.exec(stmt)).all()}
+
+
+def _readiness_for(
+    order: Order,
+    *,
+    finished_map: dict[uuid.UUID, int],
+    unmapped_ids: set[uuid.UUID],
+) -> OrderReadiness:
+    on_hand = max(0, finished_map.get(order.variation_id, 0))
+    return OrderReadiness(
+        ready=on_hand >= order.quantity,
+        on_hand=on_hand,
+        has_unmapped_items=order.id in unmapped_ids,
+    )
+
+
 # ---------------------------------------------------------------------- list
 
 
@@ -195,7 +279,7 @@ async def list_orders(
     company_id: uuid.UUID,
     filters: OrderFilters | None = None,
     page: PageParams | None = None,
-) -> tuple[list[OrderWithRelations], int]:
+) -> tuple[list[OrderWithRelations], int, dict[uuid.UUID, OrderReadiness]]:
     filters = filters or OrderFilters()
     page = page or PageParams()
 
@@ -220,7 +304,17 @@ async def list_orders(
         .limit(page.page_size)
     )
     rows = list((await db.exec(rows_stmt)).all())
-    return rows, total  # type: ignore[return-value]
+
+    # Readiness extras computed for the page's orders in TWO grouped queries
+    # (no per-order N+1): finished on-hand over the page's variation set + the
+    # set of orders with any unmapped piece.
+    orders = [row[0] for row in rows]
+    variation_ids = {o.variation_id for o in orders}
+    order_ids = {o.id for o in orders}
+    finished_map = await _finished_on_hand_map(db, company_id=company_id, variation_ids=variation_ids)
+    unmapped_ids = await _unmapped_order_ids(db, company_id=company_id, order_ids=order_ids)
+    readiness = {o.id: _readiness_for(o, finished_map=finished_map, unmapped_ids=unmapped_ids) for o in orders}
+    return rows, total, readiness  # type: ignore[return-value]
 
 
 # ---------------------------------------------------------------------- get
@@ -231,11 +325,23 @@ async def get_order(
     *,
     company_id: uuid.UUID,
     order_id: uuid.UUID,
-) -> OrderWithRelations:
-    return await _load_with_relations(db, company_id=company_id, order_id=order_id)
+) -> tuple[OrderWithRelations, OrderReadiness]:
+    row = await _load_with_relations(db, company_id=company_id, order_id=order_id)
+    order: Order = row[0]
+    finished_map = await _finished_on_hand_map(db, company_id=company_id, variation_ids={order.variation_id})
+    unmapped_ids = await _unmapped_order_ids(db, company_id=company_id, order_ids={order.id})
+    return row, _readiness_for(order, finished_map=finished_map, unmapped_ids=unmapped_ids)
 
 
 # ------------------------------------------------------------------- create
+
+
+async def _load_with_readiness(
+    db: AsyncSession, *, company_id: uuid.UUID, order_id: uuid.UUID
+) -> tuple[OrderWithRelations, OrderReadiness]:
+    """Load the joined read row + its readiness extras (single-order path)."""
+
+    return await get_order(db, company_id=company_id, order_id=order_id)
 
 
 async def create_order(
@@ -244,7 +350,7 @@ async def create_order(
     company_id: uuid.UUID,
     user_id: uuid.UUID | None,
     payload: OrderCreate,
-) -> OrderWithRelations:
+) -> tuple[OrderWithRelations, OrderReadiness]:
     ad = await _ensure_ad(db, company_id=company_id, ad_id=payload.ad_id)
     variation = await _ensure_variation(db, company_id=company_id, variation_id=payload.variation_id)
     await _ensure_client(db, company_id=company_id, client_id=payload.client_id)
@@ -289,7 +395,7 @@ async def create_order(
         message=f"Created order {_short_code(order.id)}",
     )
     await db.commit()
-    return await _load_with_relations(db, company_id=company_id, order_id=order.id)
+    return await _load_with_readiness(db, company_id=company_id, order_id=order.id)
 
 
 # ------------------------------------------------------------------- update
@@ -321,6 +427,51 @@ def _assert_valid_transition(current: OrderStatus, target: OrderStatus) -> None:
         )
 
 
+async def _order_has_exit(db: AsyncSession, *, order_id: uuid.UUID) -> bool:
+    existing = await db.exec(select(func.count()).select_from(StockExit).where(StockExit.order_id == order_id))
+    return int(existing.first() or 0) > 0
+
+
+async def _write_sale_exit(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    order: Order,
+) -> None:
+    """T6 finished-stock debit for a shipped order — guarded + idempotent.
+
+    - Idempotent: no-op if a :class:`StockExit` already references the order
+      (re-ship safety — never re-debits).
+    - On-hand guard (counted tier): computes live finished on-hand for the
+      order's variation and raises :class:`ConflictError` (409) when it cannot
+      cover ``order.quantity`` — finished product can never be driven negative.
+    - Provenance: ``reason=sale, order_id, variation_id, quantity``.
+
+    Caller owns the transaction (flush only — no commit here).
+    """
+
+    if await _order_has_exit(db, order_id=order.id):
+        return
+
+    from services import stock as stock_service
+
+    on_hand = await stock_service._compute_on_hand(db, company_id=company_id, variation_id=order.variation_id)
+    if on_hand < order.quantity:
+        raise ConflictError(detail=f"Insufficient finished stock to ship — available: {on_hand}")
+
+    db.add(
+        StockExit(
+            company_id=company_id,
+            variation_id=order.variation_id,
+            order_id=order.id,
+            quantity=order.quantity,
+            reason=StockExitReason.SALE,
+            notes=f"Auto from order {_short_code(order.id)}",
+        )
+    )
+    await db.flush()
+
+
 async def _apply_status_side_effects(
     db: AsyncSession,
     *,
@@ -332,26 +483,15 @@ async def _apply_status_side_effects(
     statuses.
 
     - ``shipped``: insert a single :class:`StockExit` for the order's
-      variation (reason=sale, quantity=order.quantity). Skipped if an
-      exit already exists for the order (idempotent retry safety).
+      variation (reason=sale, quantity=order.quantity), guarded against
+      insufficient finished stock (409) and idempotent on re-ship. See
+      :func:`_write_sale_exit`.
     - ``returned``: insert a :class:`StockEntry` (source=return) to
       reverse the previous exit. Skipped if no exit was ever recorded.
     """
 
     if target == OrderStatus.SHIPPED:
-        existing = await db.exec(select(func.count()).select_from(StockExit).where(StockExit.order_id == order.id))
-        if int(existing.first() or 0) > 0:
-            return
-        db.add(
-            StockExit(
-                company_id=company_id,
-                variation_id=order.variation_id,
-                order_id=order.id,
-                quantity=order.quantity,
-                reason=StockExitReason.SALE,
-                notes=f"Auto from order {_short_code(order.id)}",
-            )
-        )
+        await _write_sale_exit(db, company_id=company_id, order=order)
     elif target == OrderStatus.RETURNED:
         # If the order never shipped (cancelled-from-paid path) there is
         # nothing to reverse and we skip the StockEntry.
@@ -362,7 +502,6 @@ async def _apply_status_side_effects(
             StockEntry(
                 company_id=company_id,
                 variation_id=order.variation_id,
-                shipment_id=None,
                 quantity=order.quantity,
                 source=StockSource.RETURN,
                 notes=f"Return for order {_short_code(order.id)}",
@@ -377,7 +516,7 @@ async def transition_status(
     user_id: uuid.UUID | None,
     order_id: uuid.UUID,
     target: OrderStatus,
-) -> OrderWithRelations:
+) -> tuple[OrderWithRelations, OrderReadiness]:
     """Validated state transition with side effects on shipped/returned."""
 
     stmt = scoped(select(Order), Order, company_id).where(Order.id == order_id)
@@ -389,7 +528,7 @@ async def transition_status(
     if order.status == target:
         # No-op transition: still load and return the wire shape so the
         # caller sees a 200 with consistent payload semantics.
-        return await _load_with_relations(db, company_id=company_id, order_id=order.id)
+        return await _load_with_readiness(db, company_id=company_id, order_id=order.id)
 
     await _apply_status_side_effects(
         db,
@@ -412,7 +551,54 @@ async def transition_status(
         message=(f"Marked order {_short_code(order.id)} as {target.value.upper()} (was {previous.value.upper()})"),
     )
     await db.commit()
-    return await _load_with_relations(db, company_id=company_id, order_id=order.id)
+    return await _load_with_readiness(db, company_id=company_id, order_id=order.id)
+
+
+# A status from which the lote-ship path may fulfill (ship implies fulfillment
+# regardless of payment bookkeeping). Shipping from PENDING or PAID is allowed;
+# already-terminal / shipped / delivered orders are rejected.
+_SHIPPABLE_FROM: frozenset[OrderStatus] = frozenset({OrderStatus.PENDING, OrderStatus.PAID})
+
+
+async def ship_order_internal(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    user_id: uuid.UUID | None,
+    order: Order,
+) -> None:
+    """Ship ONE order (T6) WITHOUT committing — the lote-ship caller owns the tx.
+
+    Idempotent at the order grain: a no-op if the order is already SHIPPED or
+    already carries a :class:`StockExit` (defensive). For a shippable order it
+    runs the T6 guard + writes the sale exit (:func:`_write_sale_exit`), flips
+    the status to SHIPPED, and writes one audit entry. Unlike
+    :func:`transition_status` it permits shipping from ``{PENDING, PAID}`` (ship
+    implies fulfillment) and rejects CANCELLED / RETURNED / DELIVERED /
+    already-SHIPPED with a :class:`ConflictError`.
+    """
+
+    if order.status == OrderStatus.SHIPPED or await _order_has_exit(db, order_id=order.id):
+        return
+
+    if order.status not in _SHIPPABLE_FROM:
+        raise ConflictError(detail=f"Cannot ship order {_short_code(order.id)} from status {order.status.value}")
+
+    await _write_sale_exit(db, company_id=company_id, order=order)
+
+    previous = order.status
+    order.status = OrderStatus.SHIPPED
+    db.add(order)
+    await db.flush()
+
+    await write_audit(
+        db,
+        company_id=company_id,
+        user_id=user_id,
+        resource_type=_RESOURCE,
+        resource_id=order.id,
+        message=(f"Marked order {_short_code(order.id)} as SHIPPED (was {previous.value.upper()})"),
+    )
 
 
 async def update_order(
@@ -422,7 +608,7 @@ async def update_order(
     user_id: uuid.UUID | None,
     order_id: uuid.UUID,
     payload: OrderUpdate,
-) -> OrderWithRelations:
+) -> tuple[OrderWithRelations, OrderReadiness]:
     stmt = scoped(select(Order), Order, company_id).where(Order.id == order_id)
     order = (await db.exec(stmt)).first()
     if order is None:
@@ -474,7 +660,7 @@ async def update_order(
         )
 
     await db.commit()
-    return await _load_with_relations(db, company_id=company_id, order_id=order.id)
+    return await _load_with_readiness(db, company_id=company_id, order_id=order.id)
 
 
 # ------------------------------------------------------------------- delete
@@ -512,11 +698,13 @@ async def delete_order(
 
 
 __all__ = [
+    "OrderReadiness",
     "OrderWithRelations",
     "create_order",
     "delete_order",
     "get_order",
     "list_orders",
+    "ship_order_internal",
     "transition_status",
     "update_order",
 ]

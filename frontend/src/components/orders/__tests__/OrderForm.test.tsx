@@ -56,7 +56,7 @@ vi.mock("@/hooks/use-products", () => ({
           id: "product-1",
           company_id: "co-1",
           name: "Cropped Oversized",
-          product_type: "tshirt",
+          product_type: "camiseta",
           spec_id: "spec-1",
           print_id: null,
           variations: [
@@ -132,6 +132,10 @@ describe("OrderForm", () => {
             ordered_at: "2026-05-10T12:00:00Z",
             status: "pending",
             external_order_id: "EXT-1",
+            batch_id: null,
+            ready: false,
+            on_hand: 0,
+            has_unmapped_items: false,
             created_at: "2026-05-10T12:00:00Z",
             updated_at: "2026-05-10T12:00:00Z",
           }}

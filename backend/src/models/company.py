@@ -11,9 +11,6 @@ class Company(BaseModel, table=True):
     name: str = Field(max_length=120)
     subdomain: str = Field(max_length=63, unique=True, index=True)
     main_color: str = Field(max_length=7)
-    # Email of the account on the Montador DTF service that receives this
-    # company's print jobs (sent as ``owner_email`` in each request).
-    montador_user_email: str | None = Field(default=None, max_length=255)
     # Company-wide low-stock alert threshold: a variation is "low" when its
     # on-hand quantity is <= this value (unless a per-variation override exists).
     # Backfilled to ``DEFAULT_LOW_STOCK_THRESHOLD`` for existing rows.

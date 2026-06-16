@@ -751,7 +751,8 @@
         "p": "P",
         "m": "M",
         "g": "G",
-        "gg": "GG"
+        "gg": "GG",
+        "u": "U"
       },
       "addColor": "Add color",
       "removeColor": "Remove color",

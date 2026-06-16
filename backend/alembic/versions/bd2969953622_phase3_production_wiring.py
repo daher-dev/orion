@@ -44,9 +44,7 @@ depends_on: str | Sequence[str] | None = None
 # The fabric_roll_movements table column references this non-creating handle
 # (``create_type=False``); the type is instead created once explicitly at the
 # top of upgrade() and dropped in downgrade().
-fabric_movement_kind = postgresql.ENUM(
-    "entry", "exit", "adjustment", name="fabric_movement_kind", create_type=False
-)
+fabric_movement_kind = postgresql.ENUM("entry", "exit", "adjustment", name="fabric_movement_kind", create_type=False)
 
 
 def upgrade() -> None:
@@ -99,12 +97,8 @@ def upgrade() -> None:
     # added NOT NULL; pre-existing rows are not preserved across this rework.
     op.add_column("cutting_orders", sa.Column("spec_id", sa.Uuid(), nullable=False))
     op.add_column("cutting_orders", sa.Column("color", sqlmodel.sql.sqltypes.AutoString(length=40), nullable=False))
-    op.add_column(
-        "cutting_orders", sa.Column("color_code", sqlmodel.sql.sqltypes.AutoString(length=3), nullable=False)
-    )
-    op.create_check_constraint(
-        "cutting_orders_color_code_format", "cutting_orders", r"color_code ~ '^[A-Z]{3}$'"
-    )
+    op.add_column("cutting_orders", sa.Column("color_code", sqlmodel.sql.sqltypes.AutoString(length=3), nullable=False))
+    op.create_check_constraint("cutting_orders_color_code_format", "cutting_orders", r"color_code ~ '^[A-Z]{3}$'")
     op.drop_index(op.f("ix_cutting_orders_product_id"), table_name="cutting_orders")
     op.create_index(op.f("ix_cutting_orders_spec_id"), "cutting_orders", ["spec_id"], unique=False)
     op.drop_constraint(op.f("fk_cutting_orders_product_id_products"), "cutting_orders", type_="foreignkey")
@@ -123,9 +117,7 @@ def upgrade() -> None:
         "sewing_shipment_items",
         sa.Column("credited_quantity", sa.Integer(), server_default=sa.text("0"), nullable=False),
     )
-    op.create_check_constraint(
-        "credited_non_negative", "sewing_shipment_items", "credited_quantity >= 0"
-    )
+    op.create_check_constraint("credited_non_negative", "sewing_shipment_items", "credited_quantity >= 0")
     op.create_check_constraint(
         "credited_within_received", "sewing_shipment_items", "credited_quantity <= received_quantity"
     )

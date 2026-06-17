@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FileText, Hash, Search, Shirt } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { PageHead } from "@/components/page/PageHead";
-import { HelpCard } from "@/components/page/HelpCard";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { useRouter } from "@/i18n/routing";
 import { ProductFormSheet } from "@/components/products/ProductFormSheet";
 import { ProductsEmptyState } from "@/components/products/ProductsEmptyState";
@@ -84,6 +84,17 @@ export default function ProductsPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Shirt,
+          tone: "var(--brand-catalog)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: FileText, label: t("help.flow.recipe"), sub: t("help.flow.recipeSub") },
+            { icon: Shirt, label: t("help.flow.product"), sub: t("help.flow.productSub"), tone: "accent" },
+            { icon: Hash, label: t("help.flow.variations"), sub: t("help.flow.variationsSub"), tone: "ok" },
+          ],
+        }}
         actions={
           canWrite ? (
             <Button
@@ -101,19 +112,6 @@ export default function ProductsPage() {
           ) : null
         }
       />
-
-      <HelpCard
-        icon={Shirt}
-        tone="var(--brand-catalog)"
-        title={t("help.title")}
-        steps={[
-          { icon: FileText, label: t("help.flow.recipe"), sub: t("help.flow.recipeSub") },
-          { icon: Shirt, label: t("help.flow.product"), sub: t("help.flow.productSub"), accent: true },
-          { icon: Hash, label: t("help.flow.variations"), sub: t("help.flow.variationsSub") },
-        ]}
-      >
-        {t("help.body")}
-      </HelpCard>
 
       <div className="overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)]">
         <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface)] px-4 py-3">

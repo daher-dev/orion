@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart3, Download } from "lucide-react";
+import { BarChart3, Database, Download, Lightbulb } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { ReportTabs } from "@/components/reports/ReportTabs";
 import { DateRangePicker } from "@/components/reports/DateRangePicker";
 import type { ReportDateRange } from "@/lib/schemas/reports";
@@ -54,6 +55,17 @@ export default function ReportsPage() {
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
         subColor="var(--brand-reports)"
+        help={{
+          icon: BarChart3,
+          tone: "var(--brand-reports)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: Database, label: t("help.flow.data"), sub: t("help.flow.dataSub") },
+            { icon: BarChart3, label: t("help.flow.reports"), sub: t("help.flow.reportsSub"), tone: "accent" },
+            { icon: Lightbulb, label: t("help.flow.decisions"), sub: t("help.flow.decisionsSub"), tone: "ok" },
+          ],
+        }}
         actions={
           <>
             <DateRangePicker value={range} onChange={setRange} />

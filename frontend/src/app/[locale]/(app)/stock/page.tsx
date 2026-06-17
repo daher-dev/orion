@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDownUp, Boxes, Search } from "lucide-react";
+import { ArrowDownUp, Boxes, PackageCheck, Search, Truck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { Link } from "@/i18n/routing";
 import { LowStockToggle } from "@/components/stock/LowStockToggle";
 import { StockLevelsTable } from "@/components/stock/StockLevelsTable";
@@ -69,6 +70,17 @@ export default function StockPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Boxes,
+          tone: "var(--brand-inv)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: PackageCheck, label: t("help.flow.in"), sub: t("help.flow.inSub") },
+            { icon: Boxes, label: t("help.flow.stock"), sub: t("help.flow.stockSub"), tone: "accent" },
+            { icon: Truck, label: t("help.flow.out"), sub: t("help.flow.outSub"), tone: "ok" },
+          ],
+        }}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button

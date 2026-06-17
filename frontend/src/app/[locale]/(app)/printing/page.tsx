@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Printer, Search } from "lucide-react";
+import { Combine, Printer, Scroll, Search, Stamp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { KanbanBoard } from "@/components/inventory/KanbanBoard";
 import { PrintOrderCard } from "@/components/printing/PrintOrderCard";
 import { PrintOrderStatusPill } from "@/components/printing/PrintOrderStatusPill";
@@ -129,6 +130,19 @@ export default function PrintingPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Printer,
+          tone: "var(--brand-prod)",
+          maxW: 720,
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: Scroll, label: t("help.flow.roll"), sub: t("help.flow.rollSub") },
+            { icon: Printer, label: t("help.flow.print"), sub: t("help.flow.printSub"), tone: "accent" },
+            { icon: Stamp, label: t("help.flow.printed"), sub: t("help.flow.printedSub") },
+            { icon: Combine, label: t("help.flow.assembly"), sub: t("help.flow.assemblySub"), tone: "ok" },
+          ],
+        }}
         actions={
           <>
             <ViewToggle value={view} onChange={setView} labels={{ kanban: t("view.kanban"), table: t("view.table") }} />

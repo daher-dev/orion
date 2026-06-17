@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Combine, Search } from "lucide-react";
+import { Combine, PackageCheck, Search, Shirt, Stamp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { BuildableCard } from "@/components/assembly/BuildableCard";
 import { AssembleSheet } from "@/components/assembly/AssembleSheet";
 import { useAssemble, useBuildable } from "@/hooks/use-assembly";
@@ -76,6 +77,19 @@ export default function AssemblyPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Combine,
+          tone: "var(--brand-prod)",
+          maxW: 760,
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: Shirt, label: t("help.flow.blank"), sub: t("help.flow.blankSub") },
+            { icon: Stamp, label: t("help.flow.printed"), sub: t("help.flow.printedSub") },
+            { icon: Combine, label: t("help.flow.assembly"), sub: t("help.flow.assemblySub"), tone: "accent" },
+            { icon: PackageCheck, label: t("help.flow.separation"), sub: t("help.flow.separationSub"), tone: "ok" },
+          ],
+        }}
         actions={
           canWrite ? (
             <Button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setManualOpen(true)}>

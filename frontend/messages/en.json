@@ -13,7 +13,11 @@
     "next": "Next",
     "yes": "Yes",
     "no": "No",
-    "noResults": "No results"
+    "noResults": "No results",
+    "help": {
+      "label": "How it works?",
+      "close": "Close"
+    }
   },
   "brand": {
     "tagline": "SaaS for apparel manufacturing",
@@ -254,6 +258,20 @@
       "title": "Revenue by channel",
       "sub": "Last 30 days",
       "empty": "No revenue data yet."
+    },
+    "help": {
+      "title": "Day check — from order to finished piece",
+      "body": "Every morning Orion imports orders from your channels and builds the <b>day's batch</b>. Here you <b>check</b> each order, resolve <b>partials</b> and <b>problems</b> and watch production advance in real time. The numbers are <b>clickable</b> — they jump straight to the screen that resolves them.",
+      "flow": {
+        "orders": "Orders",
+        "ordersSub": "imported",
+        "check": "Check",
+        "checkSub": "review & resolve",
+        "production": "Production",
+        "productionSub": "in progress",
+        "ship": "Shipping",
+        "shipSub": "ships today"
+      }
     }
   },
   "orders": {
@@ -442,6 +460,20 @@
     "fallback": {
       "forbidden": "You don't have access to orders.",
       "notFound": "Order not found."
+    },
+    "help": {
+      "title": "Orders — from mapping to shipping",
+      "body": "Each <b>order</b> moves through four stages. In <b>Mapping</b> the ad item is linked to the internal SKU; in <b>Production</b> it waits for the SKUs to be assembled; in <b>Separation</b>, now in stock, it gets labels and is grouped; in <b>Shipping</b> it becomes a dispatched batch.",
+      "flow": {
+        "mapping": "Mapping",
+        "mappingSub": "item → SKU",
+        "production": "Production",
+        "productionSub": "assembling SKUs",
+        "separation": "Separation",
+        "separationSub": "label & batch",
+        "ship": "Shipping",
+        "shipSub": "batch dispatched"
+      }
     }
   },
   "ordersImport": {
@@ -598,6 +630,18 @@
         "empty": "No orders yet",
         "loadError": "Could not load orders"
       }
+    },
+    "help": {
+      "title": "Clients — one record per person, across every channel",
+      "body": "Every order, from any channel, is tied to a <b>client</b>. The record gathers <b>contact</b>, purchase history and the <b>total generated</b> (LTV) — flag <b>VIPs</b> and repeat buyers to serve them better.",
+      "flow": {
+        "orders": "Orders",
+        "ordersSub": "every channel",
+        "client": "Client",
+        "clientSub": "contact & profile",
+        "ltv": "History & LTV",
+        "ltvSub": "VIP · repeat"
+      }
     }
   },
   "ads": {
@@ -694,6 +738,18 @@
         "updated": "Ad updated",
         "deleted": "Ad deleted",
         "error": "Operation failed"
+      }
+    },
+    "help": {
+      "title": "Ads — your storefront on every channel",
+      "body": "An <b>ad</b> is your storefront on a channel (Shopee, ML, Instagram…) and can bundle <b>one or several products</b> from the catalog — a combo, a kit or a multi-variation listing. When an order arrives, Orion uses the ad to work out <b>which product and variation</b> to prepare.",
+      "flow": {
+        "products": "Products",
+        "productsSub": "one or several",
+        "ad": "Ad",
+        "adSub": "per channel",
+        "order": "Order arrives",
+        "orderSub": "becomes a sale"
       }
     }
   },
@@ -860,7 +916,7 @@
     },
     "help": {
       "title": "Products — tech spec + print, in colors and sizes",
-      "body": "A product is born by joining a tech spec (fabric and fit) with a print. Each color-and-size combination becomes a variation (SKU) — the unit that stock, ads and production actually move.",
+      "body": "A <b>product</b> is born by joining a <b>tech spec</b> (fabric and fit) with a <b>print</b>. Each <b>color-and-size</b> combination becomes a <b>variation (SKU)</b> — the unit that stock, ads and production actually move.",
       "flow": {
         "recipe": "Spec + print",
         "recipeSub": "fabric + art",
@@ -994,6 +1050,18 @@
     "ribana": {
       "yes": "Yes",
       "no": "No"
+    },
+    "help": {
+      "title": "Tech specs — the production recipe of each piece",
+      "body": "The spec is the <b>recipe</b>: fabric, <b>weight</b>, ribbing, usage per size and the <b>CMT cost</b>. It's what tells Cutting how much fabric to use and management how much each piece costs to produce.",
+      "flow": {
+        "spec": "Tech spec",
+        "specSub": "fabric & cost",
+        "base": "Product base",
+        "baseSub": "the fit",
+        "cut": "Cutting uses",
+        "cutSub": "usage per size"
+      }
     }
   },
   "prints": {
@@ -1082,7 +1150,7 @@
     },
     "help": {
       "title": "Prints — the catalog of artwork applied to garments",
-      "body": "Each print holds the artwork and the application method — DTF, silk or sublimation — with its print size. It is what gets laid out on the sheet and what each piece's label shows.",
+      "body": "Each <b>print</b> holds the <b>artwork</b> and the application <b>method</b> — DTF, silk or sublimation — with its print position and size. It's what the Nester lays out on the sheet and what each piece's label shows.",
       "flow": {
         "artwork": "Artwork sent",
         "artworkSub": ".png file",
@@ -1300,6 +1368,20 @@
       "total": "Total cost",
       "perPiece": "{value} per piece",
       "yield": "{value} pieces/kg"
+    },
+    "help": {
+      "title": "Cutting — plan batches against your rolls",
+      "body": "You plan a <b>cutting order</b> by choosing the spec, sizes and quantities; Orion calculates the <b>fabric usage</b> and <b>deducts it from the roll</b>. The cut pieces move on to sewing at the contractors.",
+      "flow": {
+        "roll": "Roll",
+        "rollSub": "fabric in stock",
+        "cut": "Cutting",
+        "cutSub": "deducts the balance",
+        "cuts": "Cut pieces",
+        "cutsSub": "by size",
+        "sew": "Sewing",
+        "sewSub": "at contractors"
+      }
     }
   },
   "sewing": {
@@ -1430,6 +1512,20 @@
       "readyCount": "{count} pieces ready",
       "newShipment": "New shipment",
       "empty": "No cut pieces available to send."
+    },
+    "help": {
+      "title": "Sewing — shipments that go to and from the contractors",
+      "body": "Cut pieces become a <b>shipment</b> sent to an outsourced <b>contractor</b>. You track what <b>went out</b> and mark what <b>came back</b> sewn — it can return in <b>instalments</b>, and each return credits the <b>blank pieces</b> to stock.",
+      "flow": {
+        "cuts": "Cut pieces",
+        "cutsSub": "ready to send",
+        "shipment": "Shipment",
+        "shipmentSub": "to the contractor",
+        "sew": "Sewing",
+        "sewSub": "at the contractor",
+        "blanks": "Blank pieces",
+        "blanksSub": "enter stock"
+      }
     }
   },
   "contractors": {
@@ -1515,6 +1611,18 @@
     },
     "fallback": {
       "forbidden": "You don't have access to workshops."
+    },
+    "help": {
+      "title": "Contractors — your outsourced sewing team",
+      "body": "A directory of partner <b>contractors</b> with contact, <b>capacity</b> and <b>metrics</b> on lead time and quality. This is where you choose where to send each sewing shipment.",
+      "flow": {
+        "contractor": "Contractor",
+        "contractorSub": "registered",
+        "shipments": "Shipments",
+        "shipmentsSub": "received from cutting",
+        "metrics": "Metrics",
+        "metricsSub": "lead time & quality"
+      }
     }
   },
   "fabric": {
@@ -1693,6 +1801,18 @@
         "cancel": "Cancel",
         "save": "Record"
       }
+    },
+    "help": {
+      "title": "Rolls — how much fabric you have, in real time",
+      "body": "Each <b>roll</b> received enters with its weight and length. On every <b>cutting order</b> Orion <b>deducts the balance</b> automatically — so you always know what's left and when to <b>restock</b>.",
+      "flow": {
+        "roll": "Roll received",
+        "rollSub": "weight & length",
+        "cut": "Cutting",
+        "cutSub": "deducts the balance",
+        "balance": "Remaining balance",
+        "balanceSub": "alerts to restock"
+      }
     }
   },
   "stock": {
@@ -1844,6 +1964,18 @@
     },
     "fallback": {
       "forbidden": "You don't have access to stock."
+    },
+    "help": {
+      "title": "Stock — finished pieces by SKU",
+      "body": "The inventory of <b>finished products</b>: each <b>variation (SKU)</b> <b>comes in</b> when it returns from sewing and <b>goes out</b> when an order is shipped. Set the <b>minimum</b> for Orion to warn you before you run out.",
+      "flow": {
+        "in": "Sewing returns",
+        "inSub": "inflow",
+        "stock": "Stock by SKU",
+        "stockSub": "current position",
+        "out": "Order ships",
+        "outSub": "outflow"
+      }
     }
   },
   "supplies": {
@@ -2032,6 +2164,18 @@
       "avgOnHand": "Avg on-hand",
       "turnoverRatio": "Turnover",
       "dio": "Days inventory"
+    },
+    "help": {
+      "title": "Reports — cross sales, production, stock and cost",
+      "body": "All of Orion's data in one place to <b>analyse</b>: what sells most, <b>production</b> bottlenecks, <b>stock</b> turnover and the real <b>margin</b> per product. Filter by period and <b>export</b> whenever you need.",
+      "flow": {
+        "data": "Data",
+        "dataSub": "sales · production",
+        "reports": "Reports",
+        "reportsSub": "charts & filters",
+        "decisions": "Decisions",
+        "decisionsSub": "what to produce"
+      }
     }
   },
   "settings": {
@@ -2231,6 +2375,18 @@
       "errorToast": "Could not save stock alert settings.",
       "validation": {
         "invalid": "Enter a whole number of 0 or more."
+      }
+    },
+    "help": {
+      "title": "Settings — your account, team and integrations",
+      "body": "Configure the <b>company</b> details, invite the <b>team</b> and define <b>roles</b> (who sees and edits what), connect <b>channels and integrations</b> and choose how you want to be <b>notified</b>.",
+      "flow": {
+        "team": "Team",
+        "teamSub": "company & members",
+        "roles": "Roles",
+        "rolesSub": "who sees what",
+        "integrations": "Integrations",
+        "integrationsSub": "channels & alerts"
       }
     }
   },
@@ -2629,8 +2785,8 @@
     },
     "help": {
       "title": "De/Para — order item → internal variation (SKU)",
-      "body": "Each order item arrives from the marketplace with the ad's variation (colour/size from the title). Here you link it to the internal variation (SKU) of the right product — that's where stock, print and production come from. Anything the system can't yet recognise stays pending and only moves to Separation once linked.",
-      "steps": {
+      "body": "Each <b>order item</b> arrives from the marketplace with the ad's variation (colour/size from the title). Here you link it to the internal <b>variation (SKU)</b> of the right <b>product</b> — that's where stock, print and production come from. Anything the system can't yet recognise stays <b>pending</b> and only moves to Separation once linked.",
+      "flow": {
         "item": "Order item",
         "itemSub": "ad variation",
         "sku": "Product · SKU",
@@ -2816,6 +2972,20 @@
     },
     "fallback": {
       "forbidden": "You don't have access to batches."
+    },
+    "help": {
+      "title": "Batches — group identical pieces to produce together",
+      "body": "A <b>batch</b> groups pieces that need the same <b>print</b> and fabric to print and press in one go. The <b>DTF Nester</b> fits the artwork onto the sheet using as much area as possible. Once the batch is done, the pieces return to Separation already printed.",
+      "flow": {
+        "pieces": "Day's pieces",
+        "piecesSub": "same print",
+        "nest": "DTF Nester",
+        "nestSub": "fits the sheet",
+        "print": "Print",
+        "printSub": "& press",
+        "back": "Separation",
+        "backSub": "now printed"
+      }
     }
   },
   "separation": {
@@ -2906,6 +3076,20 @@
       "printed": "{count, plural, one {# label} other {# labels}} sent to print",
       "noPieces": "This order has no pieces to label.",
       "generateError": "Could not generate labels."
+    },
+    "help": {
+      "title": "Separation — from a linked order to a labelled piece",
+      "body": "Linked orders become a <b>pick list</b>. For each piece Orion generates a <b>label</b> with the right print, colour and size — you print it, pick it off the shelf and <b>scan</b> it. Checked pieces move to <b>checkout</b> and can become a shipping batch.",
+      "flow": {
+        "linked": "Linked",
+        "linkedSub": "ready to pick",
+        "label": "Label",
+        "labelSub": "print · colour · size",
+        "pick": "Pick",
+        "pickSub": "and scan",
+        "checkout": "Checkout",
+        "checkoutSub": "ready to ship"
+      }
     }
   },
   "console": {
@@ -3206,6 +3390,18 @@
     "toasts": {
       "movementCreated": "Movement recorded",
       "error": "Operation failed"
+    },
+    "help": {
+      "title": "Blank pieces — semi-finished, between sewing and printing",
+      "body": "When a <b>shipment</b> returns from the contractor, the pieces enter here as <b>blank pieces</b> (without print). They aren't product yet — they become <b>finished product</b> at <b>Assembly</b>, when they get the print.",
+      "flow": {
+        "shipment": "Shipment received",
+        "shipmentSub": "back from sewing",
+        "blank": "Blank piece",
+        "blankSub": "awaiting print",
+        "assembly": "Assembly",
+        "assemblySub": "+ print → product"
+      }
     }
   },
   "paperRolls": {
@@ -3310,6 +3506,18 @@
       "deleted": "Roll deleted",
       "deleteBlocked": "This roll has movement history and can't be deleted.",
       "error": "Operation failed"
+    },
+    "help": {
+      "title": "Paper rolls — the printing supply",
+      "body": "The mirror of the fabric rolls, but for <b>printing</b>. Each roll enters with its <b>length</b>; on every <b>printed batch</b> the balance is <b>deducted</b> — generating the <b>printed transfers</b> ready to press.",
+      "flow": {
+        "roll": "Roll received",
+        "rollSub": "length",
+        "print": "Printing",
+        "printSub": "deducts the balance",
+        "printed": "Transfers",
+        "printedSub": "ready to press"
+      }
     }
   },
   "printedTransfers": {
@@ -3421,10 +3629,24 @@
     "toasts": {
       "movementCreated": "Movement recorded",
       "error": "Operation failed"
+    },
+    "help": {
+      "title": "Printed transfers — the printed component, before the press",
+      "body": "Each <b>batch print</b> consumes a <b>paper roll</b> and produces ready <b>transfers</b>. They sit in stock by <b>print</b> and <b>side</b> until <b>Assembly</b>, when they are pressed onto the blank piece.",
+      "flow": {
+        "print": "Printing",
+        "printSub": "consumes the roll",
+        "printed": "Transfer",
+        "printedSub": "by print · side",
+        "assembly": "Assembly",
+        "assemblySub": "presses onto piece"
+      }
     }
   },
   "printOrders": {
-    "page": { "eyebrow": "Production" },
+    "page": {
+      "eyebrow": "Production"
+    },
     "list": {
       "title": "Printing",
       "titleEm": "of estampas",
@@ -3436,10 +3658,23 @@
         "body": "Plan a batch against a paper roll to start printing transfers."
       }
     },
-    "filters": { "searchPlaceholder": "Search print orders…" },
-    "view": { "kanban": "Kanban", "table": "Table" },
-    "status": { "pending": "Pending", "printing": "Printing", "done": "Done" },
-    "techniques": { "dtf": "DTF", "silkscreen": "Silkscreen", "sublimation": "Sublimation" },
+    "filters": {
+      "searchPlaceholder": "Search print orders…"
+    },
+    "view": {
+      "kanban": "Kanban",
+      "table": "Table"
+    },
+    "status": {
+      "pending": "Pending",
+      "printing": "Printing",
+      "done": "Done"
+    },
+    "techniques": {
+      "dtf": "DTF",
+      "silkscreen": "Silkscreen",
+      "sublimation": "Sublimation"
+    },
     "paperTypes": {
       "dtf_film": "DTF film",
       "sublimation_paper": "Sublimation paper",
@@ -3452,7 +3687,10 @@
       "save": "Save",
       "launch": "Post printed"
     },
-    "card": { "printed": "printed", "noPlan": "No planned outputs" },
+    "card": {
+      "printed": "printed",
+      "noPlan": "No planned outputs"
+    },
     "table": {
       "code": "Code",
       "estampa": "Estampa",
@@ -3505,17 +3743,41 @@
         "error": "Operation failed"
       }
     },
-    "fallback": { "forbidden": "You don't have access to print orders." }
+    "fallback": {
+      "forbidden": "You don't have access to print orders."
+    },
+    "help": {
+      "title": "Printing — the mirror of Cutting, on the paper path",
+      "body": "You plan a <b>print order</b> by choosing the <b>print</b>, the <b>sides</b> (front/back) and the colour <b>variations</b>; Orion <b>deducts the paper/film roll</b> and generates the <b>printed transfers</b>. They move on to <b>Assembly</b>, where they are pressed onto the blank piece.",
+      "flow": {
+        "roll": "Roll",
+        "rollSub": "paper / film",
+        "print": "Printing",
+        "printSub": "deducts the balance",
+        "printed": "Transfers",
+        "printedSub": "by side · variation",
+        "assembly": "Assembly",
+        "assemblySub": "+ blank piece"
+      }
+    }
   },
   "assembly": {
-    "page": { "eyebrow": "Production" },
+    "page": {
+      "eyebrow": "Production"
+    },
     "list": {
       "title": "Assembly",
       "titleEm": "& finishing",
       "sub": "Blank piece + printed transfer, pressed into a finished product."
     },
-    "filters": { "searchPlaceholder": "Search by estampa or spec…" },
-    "columns": { "waiting": "Waiting", "todo": "To assemble", "done": "Assembled" },
+    "filters": {
+      "searchPlaceholder": "Search by estampa or spec…"
+    },
+    "columns": {
+      "waiting": "Waiting",
+      "todo": "To assemble",
+      "done": "Assembled"
+    },
     "actions": {
       "manual": "Manual assembly",
       "build": "Assemble {n}",
@@ -3552,10 +3814,28 @@
       "buildableBody": "When a blank piece and a matching printed transfer are both in stock, the pair shows up here.",
       "noStock": "No stock available."
     },
-    "fallback": { "forbidden": "You don't have access to assembly." }
+    "fallback": {
+      "forbidden": "You don't have access to assembly."
+    },
+    "help": {
+      "title": "Assembly — where the two paths meet",
+      "body": "Assembly knows which <b>SKUs</b> the orders are waiting for. Each one needs a <b>blank piece</b> (from cutting and sewing) and a <b>printed transfer</b> (from printing). While a component is missing, the SKU stays in <b>Waiting</b>; when both arrive, it moves to <b>To assemble</b>; once pressed, it becomes product in stock and the order is <b>ready for separation</b>.",
+      "flow": {
+        "blank": "Blank piece",
+        "blankSub": "sewing",
+        "printed": "Transfer",
+        "printedSub": "printing",
+        "assembly": "Assembly",
+        "assemblySub": "press",
+        "separation": "Separation",
+        "separationSub": "ready to ship"
+      }
+    }
   },
   "planning": {
-    "page": { "eyebrow": "Planning" },
+    "page": {
+      "eyebrow": "Planning"
+    },
     "list": {
       "title": "Production",
       "titleEm": "planning",
@@ -3609,7 +3889,25 @@
       "bodyAll": "Order demand is covered and no tier is below its minimum.",
       "bodyFiltered": "No suggestions for this filter."
     },
-    "created": { "banner": "Orders opened as pending in Cutting and Printing." },
-    "fallback": { "forbidden": "You don't have access to planning." }
+    "created": {
+      "banner": "Orders opened as pending in Cutting and Printing."
+    },
+    "fallback": {
+      "forbidden": "You don't have access to planning."
+    },
+    "help": {
+      "title": "How Orion suggests production",
+      "body": "Every suggestion has a reason. <sales>Demand</sales>: an order needs a SKU missing from finished stock. <warn>Low stock</warn>: a blank piece or transfer dropped below its minimum. The quantity already subtracts what's in production; on create, the orders enter as <b>pending</b> in Cutting and Printing.",
+      "flow": {
+        "demand": "Demand",
+        "demandSub": "orders & minimum",
+        "suggest": "Suggestions",
+        "suggestSub": "Orion calculates",
+        "review": "You review",
+        "reviewSub": "adjust the selection",
+        "orders": "Orders",
+        "ordersSub": "cutting & printing"
+      }
+    }
   }
 }

@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHead } from "@/components/page/PageHead";
-import { HelpCard } from "@/components/page/HelpCard";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { PrintsTable } from "@/components/prints/PrintsTable";
 import { PrintsEmptyState } from "@/components/prints/PrintsEmptyState";
 import { PrintFormSheet } from "@/components/prints/PrintFormSheet";
@@ -56,6 +56,17 @@ export default function PrintsPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Palette,
+          tone: "var(--brand-catalog)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: ImageIcon, label: t("help.flow.artwork"), sub: t("help.flow.artworkSub") },
+            { icon: Palette, label: t("help.flow.print"), sub: t("help.flow.printSub"), tone: "accent" },
+            { icon: Shirt, label: t("help.flow.applied"), sub: t("help.flow.appliedSub"), tone: "ok" },
+          ],
+        }}
         actions={
           canWrite ? (
             <Button
@@ -72,19 +83,6 @@ export default function PrintsPage() {
           ) : null
         }
       />
-
-      <HelpCard
-        icon={Palette}
-        tone="var(--brand-catalog)"
-        title={t("help.title")}
-        steps={[
-          { icon: ImageIcon, label: t("help.flow.artwork"), sub: t("help.flow.artworkSub") },
-          { icon: Palette, label: t("help.flow.print"), sub: t("help.flow.printSub"), accent: true },
-          { icon: Shirt, label: t("help.flow.applied"), sub: t("help.flow.appliedSub") },
-        ]}
-      >
-        {t("help.body")}
-      </HelpCard>
 
       <div className="overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)]">
         <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface)] px-4 py-3">

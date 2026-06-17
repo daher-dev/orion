@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, ShoppingBag } from "lucide-react";
+import { Factory, GitMerge, LayoutGrid, PackageCheck, Search, ShoppingBag, Truck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { OrdersTable } from "@/components/orders/OrdersTable";
 import { OrdersEmptyState } from "@/components/orders/OrdersEmptyState";
 import { OrderDetailSheet } from "@/components/orders/OrderDetailSheet";
@@ -138,6 +139,19 @@ export default function OrdersPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: LayoutGrid,
+          tone: "var(--brand-sales)",
+          maxW: 780,
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: GitMerge, label: t("help.flow.mapping"), sub: t("help.flow.mappingSub") },
+            { icon: Factory, label: t("help.flow.production"), sub: t("help.flow.productionSub") },
+            { icon: PackageCheck, label: t("help.flow.separation"), sub: t("help.flow.separationSub"), tone: "accent" },
+            { icon: Truck, label: t("help.flow.ship"), sub: t("help.flow.shipSub"), tone: "ok" },
+          ],
+        }}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <ViewToggle

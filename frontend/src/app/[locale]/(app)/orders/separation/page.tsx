@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Package, Printer, Search } from "lucide-react";
+import { CheckCircle2, Loader2, Package, PackageCheck, Printer, ScanLine, Search, Tag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { SeparationRow } from "@/components/orders/separation/SeparationRow";
 import { EtiquetaModal } from "@/components/orders/separation/EtiquetaModal";
 import { ScanCheckBar } from "@/components/orders/separation/ScanCheckBar";
@@ -127,6 +128,19 @@ export default function SeparationPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Package,
+          tone: "var(--brand-sales)",
+          maxW: 720,
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: CheckCircle2, label: t("help.flow.linked"), sub: t("help.flow.linkedSub") },
+            { icon: Tag, label: t("help.flow.label"), sub: t("help.flow.labelSub"), tone: "accent" },
+            { icon: ScanLine, label: t("help.flow.pick"), sub: t("help.flow.pickSub") },
+            { icon: PackageCheck, label: t("help.flow.checkout"), sub: t("help.flow.checkoutSub"), tone: "ok" },
+          ],
+        }}
       />
 
       {/* Check-out scan bar — bip each label's QR to confirm the piece. */}

@@ -3649,7 +3649,7 @@
     },
     "list": {
       "title": "Printing",
-      "titleEm": "of estampas",
+      "titleEm": "of prints",
       "sub": "DTF and sublimation print batches.",
       "loadError": "Could not load print orders.",
       "noResults": "No print orders matched your search.",

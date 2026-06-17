@@ -69,6 +69,14 @@ export function HelpCard({ icon: Icon, title, body, steps, tone, maxW = 600 }: H
     setPos({ left, top: r.bottom + gap, width, caret });
   }, [maxW]);
 
+  // Move keyboard focus into the dialog when it opens by focusing the close
+  // button as it mounts — the popover is portaled to the end of <body>, so tab
+  // order wouldn't otherwise reach it. Focus entering role="dialog" also makes
+  // assistive tech announce the popover and its title.
+  const focusOnMount = useCallback((node: HTMLButtonElement | null) => {
+    node?.focus({ preventScroll: true });
+  }, []);
+
   useLayoutEffect(() => {
     if (open) measure();
   }, [open, measure]);
@@ -84,7 +92,10 @@ export function HelpCard({ icon: Icon, title, body, steps, tone, maxW = 600 }: H
       }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus({ preventScroll: true });
+      }
     };
     // Throttle reposition to one measure per frame: scroll (especially
     // capture-phase events from nested scrollers) and resize can fire rapidly,
@@ -132,7 +143,11 @@ export function HelpCard({ icon: Icon, title, body, steps, tone, maxW = 600 }: H
             <button
               type="button"
               className="help-pop-x"
-              onClick={() => setOpen(false)}
+              ref={focusOnMount}
+              onClick={() => {
+                setOpen(false);
+                triggerRef.current?.focus({ preventScroll: true });
+              }}
               aria-label={t("help.close")}
             >
               <X size={15} />

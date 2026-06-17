@@ -81,12 +81,28 @@ TABLE_MODELS: dict[str, type] = {
 _CHILD_DELETES: tuple[tuple[str, str], ...] = (
     ("sewing_shipment_items", "shipment_id IN (SELECT id FROM sewing_shipments WHERE company_id = :cid)"),
     ("cutting_order_outputs", "cutting_order_id IN (SELECT id FROM cutting_orders WHERE company_id = :cid)"),
+    ("print_order_outputs", "print_order_id IN (SELECT id FROM print_orders WHERE company_id = :cid)"),
     ("spec_trims", "spec_id IN (SELECT id FROM product_specs WHERE company_id = :cid)"),
 )
 _TENANT_TABLES: tuple[str, ...] = (
     "audit_logs",
     "stock_exits",
     "stock_entries",
+    # 5-tier WIP pipeline. The import never creates these, but a live company may
+    # have accrued them through real operations since the rework shipped, so the
+    # wipe must clear them (ledgers + runs first) before the balances/parents they
+    # RESTRICT-reference — otherwise re-import fails deleting specs/prints/fabric.
+    "assembly_runs",
+    "print_orders",
+    "blank_piece_movements",
+    "blank_pieces",
+    "printed_transfer_movements",
+    "printed_transfers",
+    "print_design_variations",
+    "paper_roll_movements",
+    "paper_rolls",
+    "fabric_roll_movements",
+    "company_settings",
     "sewing_shipments",
     "cutting_orders",
     "order_items",

@@ -493,6 +493,8 @@
 .flow-ar.on .flow-ar-line { background: var(--flow-accent, var(--ember)); }
 .flow-ar.on .flow-ar-head { color: var(--flow-accent, var(--ember)); }
 @media (prefers-reduced-motion: reduce) {
+  /* Skip the popover's entrance animation too — no motion burst for opted-out users. */
+  .help-pop { animation: none; }
   .flow-ar-dot { animation: none; opacity: .85; }
   .flow-nd, .flow-nd-ic, .flow-ar-line, .flow-ar-head { transition: none; }
 }

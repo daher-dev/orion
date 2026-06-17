@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -49,6 +50,7 @@ type Pos = { left: number; top: number; width: number; caret: number };
 export function HelpCard({ icon: Icon, title, body, steps, tone, maxW = 600 }: HelpCardProps) {
   const t = useTranslations("common");
   const label = t("help.label");
+  const titleId = useId();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<Pos | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -73,7 +75,9 @@ export function HelpCard({ icon: Icon, title, body, steps, tone, maxW = 600 }: H
 
   useEffect(() => {
     if (!open) return;
-    const onDoc = (e: MouseEvent) => {
+    // pointerdown (not mousedown) so outside-click dismissal also fires for
+    // touch and pen input, not just mouse.
+    const onDoc = (e: PointerEvent) => {
       const target = e.target as Node;
       if (!popRef.current?.contains(target) && !triggerRef.current?.contains(target)) {
         setOpen(false);
@@ -93,13 +97,13 @@ export function HelpCard({ icon: Icon, title, body, steps, tone, maxW = 600 }: H
         measure();
       });
     };
-    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("pointerdown", onDoc);
     document.addEventListener("keydown", onKey);
     window.addEventListener("scroll", onMove, { capture: true, passive: true });
     window.addEventListener("resize", onMove);
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
-      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("pointerdown", onDoc);
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("scroll", onMove, true);
       window.removeEventListener("resize", onMove);
@@ -112,6 +116,8 @@ export function HelpCard({ icon: Icon, title, body, steps, tone, maxW = 600 }: H
           <div
             ref={popRef}
             className="help-pop"
+            role="dialog"
+            aria-labelledby={title ? titleId : undefined}
             style={
               {
                 left: pos.left,
@@ -145,6 +151,7 @@ export function HelpCard({ icon: Icon, title, body, steps, tone, maxW = 600 }: H
               <div style={{ flex: 1, minWidth: 0, paddingRight: 22 }}>
                 {title ? (
                   <div
+                    id={titleId}
                     style={{ fontSize: 14, fontWeight: 600, color: "var(--orion-ink)" }}
                   >
                     {title}
@@ -170,6 +177,7 @@ export function HelpCard({ icon: Icon, title, body, steps, tone, maxW = 600 }: H
         onClick={() => setOpen((v) => !v)}
         title={label}
         aria-label={label}
+        aria-haspopup="dialog"
         aria-expanded={open}
       >
         <HelpCircle size={15} style={{ flexShrink: 0 }} />

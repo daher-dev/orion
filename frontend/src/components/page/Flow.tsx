@@ -62,7 +62,14 @@ function FlowArrow({ on }: { on: boolean }) {
 }
 
 export function Flow({ steps, accent }: { steps: FlowStep[]; accent?: string }) {
-  const [active, setActive] = useState(0);
+  // -1 = no node highlighted. This is the resting state whenever the pulse is
+  // disabled (reduced-motion users, or chains shorter than two nodes): the
+  // effect returns early without starting the interval, so `active` stays at
+  // -1 and the diagram renders fully static with no arbitrary node lit. When
+  // the pulse is enabled the interval is the sole writer of `active` — its
+  // first tick moves -1 → 0, lighting the first node, then travels onward.
+  // (Never set state synchronously in the effect body — that cascades renders.)
+  const [active, setActive] = useState(-1);
 
   useEffect(() => {
     if (

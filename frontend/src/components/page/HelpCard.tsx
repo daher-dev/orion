@@ -82,12 +82,23 @@ export function HelpCard({ icon: Icon, title, body, steps, tone, maxW = 600 }: H
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    const onMove = () => measure();
+    // Throttle reposition to one measure per frame: scroll (especially
+    // capture-phase events from nested scrollers) and resize can fire rapidly,
+    // and an unthrottled setPos on each event causes avoidable re-renders/jank.
+    let rafId = 0;
+    const onMove = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        measure();
+      });
+    };
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
-    window.addEventListener("scroll", onMove, true);
+    window.addEventListener("scroll", onMove, { capture: true, passive: true });
     window.addEventListener("resize", onMove);
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("scroll", onMove, true);

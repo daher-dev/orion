@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Factory, Search } from "lucide-react";
+import { Factory, Gauge, Search, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { useCanAccess } from "@/hooks/use-permissions";
 import { useContractors } from "@/hooks/use-contractors";
 import type { Contractor } from "@/lib/schemas/contractor";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { ContractorsGrid } from "./ContractorsGrid";
 import { ContractorDetailSheet } from "./ContractorDetailSheet";
 import { ContractorsEmptyState } from "./ContractorsEmptyState";
@@ -83,6 +84,17 @@ export function ContractorsPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Factory,
+          tone: "var(--brand-prod)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: Factory, label: t("help.flow.contractor"), sub: t("help.flow.contractorSub"), tone: "accent" },
+            { icon: Send, label: t("help.flow.shipments"), sub: t("help.flow.shipmentsSub") },
+            { icon: Gauge, label: t("help.flow.metrics"), sub: t("help.flow.metricsSub"), tone: "ok" },
+          ],
+        }}
         actions={
           canWrite ? (
             <Button

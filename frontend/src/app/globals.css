@@ -86,6 +86,25 @@
   --status-info: oklch(0.402 0.171 263);         /* #1e40af */
 
   /*
+   * Help/Flow tokens — ported from /docs/design/source/styles.css so the
+   * per-page "Como funciona?" help pill + popover and its animated flow
+   * diagram (.help-pill / .help-pop* / .flow*) render faithfully.
+   *
+   * The prototype's chromatic `--accent` (#2563eb) maps onto Orion's product
+   * accent, Ember — so the pill reads as a coloured control rather than the
+   * near-invisible cream that `--accent` resolves to here (it's mapped to
+   * surface-2 for shadcn). `--accent-soft` is the pill's tinted fill.
+   * `--ok`/`--warn` (and their soft `-bg` tints) back the flow-node tones,
+   * and `--shadow-lg` is the popover's elevation.
+   */
+  --accent-soft: color-mix(in oklab, var(--ember) 12%, var(--orion-surface));
+  --ok: var(--status-ok);
+  --ok-bg: color-mix(in oklab, var(--ok) 12%, var(--orion-surface));
+  --warn: var(--status-warn);
+  --warn-bg: color-mix(in oklab, var(--warn) 12%, var(--orion-surface));
+  --shadow-lg: 0 4px 8px rgba(31, 27, 21, 0.06), 0 24px 48px -12px rgba(31, 27, 21, 0.18);
+
+  /*
    * Platform Console (super-admin backoffice) — a distinct indigo identity so
    * operators always know they're in platform administration, not a tenant.
    * Scoped under `.console-scope` (see below) for the accent; these raw tokens
@@ -360,4 +379,122 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .belt-loader circle { animation: none; opacity: 1; transform: none; }
+}
+
+/*
+ * Per-page "Como funciona?" help — direct port of `.help-pill`, `.help-pop*`,
+ * and `.flow*` from /docs/design/source/styles.css (lines 452-549).
+ *
+ * Prototype → Orion CSS-var mapping:
+ *   --surface → --orion-surface     --line      → --orion-line
+ *   --surface-2 → --orion-surface-2 --line-soft → --orion-line-soft
+ *   --ink   → --orion-ink           --ink-2     → --orion-ink-2
+ *   --ink-3 → --orion-ink-3
+ *   --accent → --ember (scoped below; the frontend's --accent is surface-2)
+ *   --accent-soft / --ok(-bg) / --warn(-bg) / --shadow-lg → defined in :root.
+ * --flow-accent is set inline per-popover/flow to the section's brand tone.
+ */
+
+/* Collapsed help control — icon that expands to a labelled pill on hover */
+.help-pill {
+  --accent: var(--ember);
+  display: inline-flex; align-items: center; gap: 0;
+  height: 30px; padding: 0 7px; border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--accent) 22%, var(--orion-surface));
+  background: var(--accent-soft); color: var(--accent);
+  font: inherit; font-size: 12.5px; font-weight: 500;
+  cursor: pointer; overflow: hidden; white-space: nowrap;
+  transition: gap .16s ease, padding .16s ease;
+}
+.help-pill .help-pill-label {
+  max-width: 0; opacity: 0; overflow: hidden;
+  transition: max-width .22s ease, opacity .18s ease;
+}
+.help-pill:hover { gap: 7px; padding: 0 12px 0 9px; }
+.help-pill:hover .help-pill-label { max-width: 160px; opacity: 1; }
+.help-pill.on { gap: 7px; padding: 0 12px 0 9px; background: var(--accent); color: #fff; border-color: var(--accent); }
+.help-pill.on .help-pill-label { max-width: 160px; opacity: 1; }
+
+/* Help popover — anchored to the "Como funciona?" trigger */
+.help-pop {
+  --accent: var(--ember);
+  background: var(--orion-surface); border: 1px solid var(--orion-line);
+  border-radius: 12px; box-shadow: var(--shadow-lg);
+  padding: 16px; position: fixed;
+  animation: helpPop .16s ease both;
+}
+@keyframes helpPop { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
+.help-pop-caret {
+  position: absolute; top: -7px; width: 12px; height: 12px; margin-left: -6px;
+  background: var(--orion-surface); border-left: 1px solid var(--orion-line); border-top: 1px solid var(--orion-line);
+  transform: rotate(45deg); border-radius: 3px 0 0 0;
+}
+.help-pop-badge {
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; margin-top: 1px;
+  background: var(--accent-soft); color: var(--accent); display: grid; place-items: center;
+}
+.help-pop-x {
+  position: absolute; top: 10px; right: 10px; width: 26px; height: 26px;
+  display: grid; place-items: center; border: 0; border-radius: 7px;
+  background: transparent; color: var(--orion-ink-3); cursor: pointer;
+}
+.help-pop-x:hover { background: var(--orion-surface-2); color: var(--orion-ink); }
+
+/* Help educational paragraph */
+.help-pop-body {
+  margin: 3px 0 0; font-size: 12.5px; color: var(--orion-ink-2);
+  line-height: 1.55; max-width: 600px; text-wrap: pretty;
+}
+.help-pop-body b { font-weight: 600; color: var(--orion-ink); }
+
+/* Animated flow diagram — nodes + arrows with a travelling pulse */
+.flow { display: flex; align-items: stretch; gap: 6px; flex-wrap: nowrap; margin-top: 13px; }
+.flow-nd {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 11px; border-radius: 9px;
+  background: var(--orion-surface); border: 1px solid var(--orion-line);
+  flex: 1 1 0; min-width: 0;
+  transition: border-color .35s ease, box-shadow .35s ease, transform .35s ease, background .35s ease;
+}
+.flow-nd-ic { display: grid; place-items: center; color: var(--orion-ink-3); flex-shrink: 0; transition: color .35s ease; }
+.flow-nd-tx { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.flow-nd-lb { font-size: 12.5px; font-weight: 600; color: var(--orion-ink); text-wrap: balance; }
+.flow-nd-sb { font-size: 10px; color: var(--orion-ink-3); letter-spacing: .01em; }
+/* persistent tones for a specific node */
+.flow-nd.t-accent { background: color-mix(in oklab, var(--flow-accent, var(--ember)) 7%, var(--orion-surface)); border-color: color-mix(in oklab, var(--flow-accent, var(--ember)) 26%, var(--orion-line)); }
+.flow-nd.t-accent .flow-nd-ic { color: var(--flow-accent, var(--ember)); }
+.flow-nd.t-ok { background: var(--ok-bg); border-color: color-mix(in oklab, var(--ok) 24%, var(--orion-line)); }
+.flow-nd.t-ok .flow-nd-ic { color: var(--ok); }
+.flow-nd.t-warn { background: var(--warn-bg); border-color: color-mix(in oklab, var(--warn) 24%, var(--orion-line)); }
+.flow-nd.t-warn .flow-nd-ic { color: var(--warn); }
+/* travelling pulse highlight */
+.flow-nd.on {
+  border-color: color-mix(in oklab, var(--flow-accent, var(--ember)) 55%, var(--orion-line));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--flow-accent, var(--ember)) 13%, transparent);
+  transform: translateY(-1px);
+}
+.flow-nd.on .flow-nd-ic { color: var(--flow-accent, var(--ember)); }
+
+.flow-ar { position: relative; width: 24px; height: 22px; flex-shrink: 0; align-self: center; color: var(--orion-ink-3); }
+.flow-ar-line { position: absolute; left: 1px; right: 6px; top: 50%; height: 1.5px; margin-top: -.75px; background: var(--orion-line); border-radius: 2px; transition: background .35s ease; }
+.flow-ar-head { position: absolute; right: 0; top: 50%; margin-top: -5px; color: var(--orion-ink-3); transition: color .35s ease; }
+.flow-ar-dot {
+  position: absolute; top: 50%; left: 1px; width: 4px; height: 4px; margin-top: -2px;
+  border-radius: 50%; background: var(--flow-accent, var(--ember));
+  box-shadow: 0 0 5px var(--flow-accent, var(--ember));
+  animation: flowDot 1.8s linear infinite;
+}
+@keyframes flowDot {
+  0%   { transform: translateX(0);    opacity: 0; }
+  18%  { opacity: .95; }
+  82%  { opacity: .95; }
+  100% { transform: translateX(16px); opacity: 0; }
+}
+.flow-ar.on .flow-ar-line { background: var(--flow-accent, var(--ember)); }
+.flow-ar.on .flow-ar-head { color: var(--flow-accent, var(--ember)); }
+@media (prefers-reduced-motion: reduce) {
+  /* Skip the popover's entrance animation too — no motion burst for opted-out users. */
+  .help-pop { animation: none; }
+  .flow-ar-dot { animation: none; opacity: .85; }
+  .flow-nd, .flow-nd-ic, .flow-ar-line, .flow-ar-head { transition: none; }
 }

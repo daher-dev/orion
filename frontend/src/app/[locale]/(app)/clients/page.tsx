@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Users } from "lucide-react";
+import { Heart, Search, ShoppingBag, User, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { ClientsTable } from "@/components/clients/ClientsTable";
 import { ClientsEmptyState } from "@/components/clients/ClientsEmptyState";
 import { ClientFormSheet } from "@/components/clients/ClientFormSheet";
@@ -44,6 +45,17 @@ export default function ClientsPage() {
         eyebrow={t("page.eyebrow")}
         title={t("list.title")}
         sub={t("list.sub")}
+        help={{
+          icon: Users,
+          tone: "var(--brand-sales)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: ShoppingBag, label: t("help.flow.orders"), sub: t("help.flow.ordersSub") },
+            { icon: User, label: t("help.flow.client"), sub: t("help.flow.clientSub"), tone: "accent" },
+            { icon: Heart, label: t("help.flow.ltv"), sub: t("help.flow.ltvSub"), tone: "ok" },
+          ],
+        }}
         actions={
           canWrite ? (
             <Button

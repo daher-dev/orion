@@ -13,7 +13,11 @@
     "next": "Próximo",
     "yes": "Sim",
     "no": "Não",
-    "noResults": "Nenhum resultado"
+    "noResults": "Nenhum resultado",
+    "help": {
+      "label": "Como funciona?",
+      "close": "Fechar"
+    }
   },
   "brand": {
     "tagline": "SaaS para confecção",
@@ -253,6 +257,20 @@
       "title": "Receita por canal",
       "sub": "Últimos 30 dias",
       "empty": "Nenhum dado de receita ainda."
+    },
+    "help": {
+      "title": "Conferência do dia — do pedido à peça pronta",
+      "body": "Toda manhã o Orion importa os pedidos dos canais e monta o <b>lote do dia</b>. Aqui você <b>confere</b> cada pedido, resolve <b>parciais</b> e <b>problemas</b> e acompanha a produção avançar em tempo real. Os números são <b>clicáveis</b> — levam direto à tela que resolve.",
+      "flow": {
+        "orders": "Pedidos",
+        "ordersSub": "importados",
+        "check": "Conferência",
+        "checkSub": "confere & resolve",
+        "production": "Produção",
+        "productionSub": "em andamento",
+        "ship": "Expedição",
+        "shipSub": "sai hoje"
+      }
     }
   },
   "orders": {
@@ -441,6 +459,20 @@
     "fallback": {
       "forbidden": "Você não tem acesso aos pedidos.",
       "notFound": "Pedido não encontrado."
+    },
+    "help": {
+      "title": "Pedidos — do mapeamento ao envio",
+      "body": "Cada <b>pedido</b> avança por quatro etapas. Em <b>Mapeamento</b> o item do anúncio é vinculado ao SKU interno; em <b>Produção</b> ele espera a montagem dos SKUs; em <b>Separação</b>, já em estoque, recebe etiquetas e é agrupado; no <b>Envio</b> vira um lote despachado.",
+      "flow": {
+        "mapping": "Mapeamento",
+        "mappingSub": "item → SKU",
+        "production": "Produção",
+        "productionSub": "montagem dos SKUs",
+        "separation": "Separação",
+        "separationSub": "etiqueta & lote",
+        "ship": "Envio",
+        "shipSub": "lote despachado"
+      }
     }
   },
   "ordersImport": {
@@ -597,6 +629,18 @@
         "empty": "Nenhum pedido ainda",
         "loadError": "Não foi possível carregar os pedidos"
       }
+    },
+    "help": {
+      "title": "Clientes — uma ficha por pessoa, somando todos os canais",
+      "body": "Cada pedido, de qualquer canal, é ligado a um <b>cliente</b>. A ficha reúne <b>contato</b>, histórico de compras e o <b>total gerado</b> (LTV) — marque <b>VIPs</b> e recorrentes para atender melhor.",
+      "flow": {
+        "orders": "Pedidos",
+        "ordersSub": "todos os canais",
+        "client": "Cliente",
+        "clientSub": "contato & perfil",
+        "ltv": "Histórico & LTV",
+        "ltvSub": "VIP · recorrente"
+      }
     }
   },
   "ads": {
@@ -693,6 +737,18 @@
         "updated": "Anúncio atualizado",
         "deleted": "Anúncio removido",
         "error": "Operação falhou"
+      }
+    },
+    "help": {
+      "title": "Anúncios — sua vitrine em cada canal",
+      "body": "Um <b>anúncio</b> é sua vitrine num canal (Shopee, ML, Instagram…) e pode reunir <b>um ou vários produtos</b> do catálogo — um combo, um kit ou uma listagem multivariação. Quando chega um pedido, o Orion usa o anúncio para descobrir <b>qual produto e variação</b> preparar.",
+      "flow": {
+        "products": "Produtos",
+        "productsSub": "um ou vários",
+        "ad": "Anúncio",
+        "adSub": "por canal",
+        "order": "Pedido entra",
+        "orderSub": "vira venda"
       }
     }
   },
@@ -859,7 +915,7 @@
     },
     "help": {
       "title": "Produtos — ficha técnica + estampa, em cores e tamanhos",
-      "body": "Um produto nasce ao juntar uma ficha técnica (tecido e modelagem) com uma estampa. Cada combinação de cor e tamanho vira uma variação (SKU) — a unidade que estoque, anúncios e produção realmente movimentam.",
+      "body": "Um <b>produto</b> nasce ao juntar uma <b>ficha técnica</b> (tecido e modelagem) com uma <b>estampa</b>. Cada combinação de <b>cor e tamanho</b> vira uma <b>variação (SKU)</b> — a unidade que estoque, anúncios e produção realmente movimentam.",
       "flow": {
         "recipe": "Ficha + estampa",
         "recipeSub": "tecido + arte",
@@ -993,6 +1049,18 @@
     "ribana": {
       "yes": "Sim",
       "no": "Não"
+    },
+    "help": {
+      "title": "Fichas técnicas — a receita de produção de cada peça",
+      "body": "A ficha é a <b>receita</b>: tecido, <b>gramatura</b>, ribana, consumo por tamanho e o <b>custo CMT</b>. É ela que diz ao Corte quanto de tecido usar e à gestão quanto cada peça custa para produzir.",
+      "flow": {
+        "spec": "Ficha técnica",
+        "specSub": "tecido & custo",
+        "base": "Base do produto",
+        "baseSub": "a modelagem",
+        "cut": "Corte usa",
+        "cutSub": "consumo p/ tam"
+      }
     }
   },
   "prints": {
@@ -1081,7 +1149,7 @@
     },
     "help": {
       "title": "Estampas — o catálogo de artes que vão na peça",
-      "body": "Cada estampa guarda a arte e o método de aplicação — DTF, silk ou sublimação — com tamanho de impressão. É o que vai pra folha de impressão e o que a etiqueta de cada peça mostra.",
+      "body": "Cada <b>estampa</b> guarda a <b>arte</b> e o <b>método</b> de aplicação — DTF, silk ou sublimação — com posição e tamanho de impressão. É o que o Montador encaixa na folha e o que a etiqueta de cada peça mostra.",
       "flow": {
         "artwork": "Arte enviada",
         "artworkSub": "arquivo .png",
@@ -1299,6 +1367,20 @@
       "total": "Custo total",
       "perPiece": "{value} por peça",
       "yield": "{value} peças/kg"
+    },
+    "help": {
+      "title": "Corte — planeje lotes contra suas bobinas",
+      "body": "Você planeja uma <b>ordem de corte</b> escolhendo a ficha, os tamanhos e as quantidades; o Orion calcula o <b>consumo de tecido</b> e <b>abate da bobina</b>. As peças cortadas seguem para a costura nas bancas.",
+      "flow": {
+        "roll": "Bobina",
+        "rollSub": "tecido em estoque",
+        "cut": "Corte",
+        "cutSub": "abate o saldo",
+        "cuts": "Cortadas",
+        "cutsSub": "por tamanho",
+        "sew": "Costura",
+        "sewSub": "nas bancas"
+      }
     }
   },
   "sewing": {
@@ -1429,6 +1511,20 @@
       "readyCount": "{count} peças prontas",
       "newShipment": "Nova remessa",
       "empty": "Nenhuma peça cortada disponível para enviar."
+    },
+    "help": {
+      "title": "Costura — remessas que vão e voltam das bancas",
+      "body": "Peças cortadas viram uma <b>remessa</b> enviada a uma <b>banca</b> terceirizada. Você acompanha o que <b>saiu</b> e marca o que <b>voltou</b> costurado — pode receber em <b>parcelas</b>, e cada retorno credita as <b>peças lisas</b> no estoque.",
+      "flow": {
+        "cuts": "Cortadas",
+        "cutsSub": "prontas p/ enviar",
+        "shipment": "Remessa",
+        "shipmentSub": "à banca",
+        "sew": "Costura",
+        "sewSub": "na banca",
+        "blanks": "Peças lisas",
+        "blanksSub": "entram no estoque"
+      }
     }
   },
   "contractors": {
@@ -1514,6 +1610,18 @@
     },
     "fallback": {
       "forbidden": "Você não tem acesso às bancas."
+    },
+    "help": {
+      "title": "Bancas — seu time de costura terceirizado",
+      "body": "Um diretório das <b>bancas</b> parceiras com contato, <b>capacidade</b> e <b>métricas</b> de prazo e qualidade. É daqui que você escolhe para onde enviar cada remessa de costura.",
+      "flow": {
+        "contractor": "Banca",
+        "contractorSub": "cadastrada",
+        "shipments": "Remessas",
+        "shipmentsSub": "recebe de corte",
+        "metrics": "Métricas",
+        "metricsSub": "prazo & qualidade"
+      }
     }
   },
   "fabric": {
@@ -1692,6 +1800,18 @@
         "cancel": "Cancelar",
         "save": "Registrar"
       }
+    },
+    "help": {
+      "title": "Bobinas — quanto de tecido você tem, em tempo real",
+      "body": "Cada <b>bobina</b> recebida entra com seu peso e metragem. A cada <b>ordem de corte</b> o Orion <b>abate o saldo</b> automaticamente — então você sempre sabe o que resta e quando <b>repor</b>.",
+      "flow": {
+        "roll": "Bobina recebida",
+        "rollSub": "peso & metragem",
+        "cut": "Corte",
+        "cutSub": "abate o saldo",
+        "balance": "Saldo restante",
+        "balanceSub": "avisa p/ repor"
+      }
     }
   },
   "stock": {
@@ -1843,6 +1963,18 @@
     },
     "fallback": {
       "forbidden": "Você não tem acesso ao estoque."
+    },
+    "help": {
+      "title": "Estoque — peças prontas por SKU",
+      "body": "O inventário de <b>produtos acabados</b>: cada <b>variação (SKU)</b> <b>entra</b> quando volta da costura e <b>sai</b> quando um pedido é expedido. Defina o <b>mínimo</b> para o Orion avisar antes de faltar.",
+      "flow": {
+        "in": "Costura retorna",
+        "inSub": "entrada",
+        "stock": "Estoque por SKU",
+        "stockSub": "posição atual",
+        "out": "Pedido expede",
+        "outSub": "saída"
+      }
     }
   },
   "reports": {
@@ -1914,6 +2046,18 @@
       "avgOnHand": "Estoque médio",
       "turnoverRatio": "Giro",
       "dio": "Dias de estoque"
+    },
+    "help": {
+      "title": "Relatórios — cruze vendas, produção, estoque e custo",
+      "body": "Todos os dados do Orion num só lugar para <b>analisar</b>: o que mais vende, gargalos de <b>produção</b>, giro de <b>estoque</b> e a <b>margem</b> real por produto. Filtre por período e <b>exporte</b> quando precisar.",
+      "flow": {
+        "data": "Dados",
+        "dataSub": "vendas · produção",
+        "reports": "Relatórios",
+        "reportsSub": "gráficos & filtros",
+        "decisions": "Decisões",
+        "decisionsSub": "o que produzir"
+      }
     }
   },
   "settings": {
@@ -2113,6 +2257,18 @@
       "errorToast": "Não foi possível salvar os ajustes de alerta de estoque.",
       "validation": {
         "invalid": "Informe um número inteiro de 0 ou mais."
+      }
+    },
+    "help": {
+      "title": "Ajustes — sua conta, equipe e integrações",
+      "body": "Configure os dados da <b>empresa</b>, convide a <b>equipe</b> e defina <b>funções</b> (quem vê e edita o quê), conecte <b>canais e integrações</b> e escolha como quer ser <b>avisado</b>.",
+      "flow": {
+        "team": "Equipe",
+        "teamSub": "empresa & membros",
+        "roles": "Funções",
+        "rolesSub": "quem vê o quê",
+        "integrations": "Integrações",
+        "integrationsSub": "canais & avisos"
       }
     }
   },
@@ -2511,8 +2667,8 @@
     },
     "help": {
       "title": "De/Para — item do pedido → variação (SKU) interna",
-      "body": "Cada item de pedido chega do marketplace com a variação do anúncio (cor/tamanho do título). Aqui você o vincula à variação interna (SKU) do produto certo — daí saem estoque, estampa e produção. O que o sistema ainda não reconhece entra como pendente e só vai para a Separação depois de vinculado.",
-      "steps": {
+      "body": "Cada <b>item de pedido</b> chega do marketplace com a variação do anúncio (cor/tamanho do título). Aqui você o vincula à <b>variação interna (SKU)</b> do <b>produto</b> certo — daí saem estoque, estampa e produção. O que o sistema ainda não reconhece entra como <b>pendente</b> e só vai para a Separação depois de vinculado.",
+      "flow": {
         "item": "Item do pedido",
         "itemSub": "variação do anúncio",
         "sku": "Produto · SKU",
@@ -2698,6 +2854,20 @@
     },
     "fallback": {
       "forbidden": "Você não tem acesso aos lotes."
+    },
+    "help": {
+      "title": "Lotes — agrupe peças idênticas para produzir juntas",
+      "body": "Um <b>lote</b> junta peças que pedem a mesma <b>estampa</b> e tecido para imprimir e prensar de uma vez só. O <b>Montador DTF</b> encaixa as artes na folha aproveitando o máximo de área. Pronto o lote, as peças voltam para a Separação já estampadas.",
+      "flow": {
+        "pieces": "Peças do dia",
+        "piecesSub": "mesma estampa",
+        "nest": "Montador DTF",
+        "nestSub": "encaixa a folha",
+        "print": "Imprimir",
+        "printSub": "& prensar",
+        "back": "Separação",
+        "backSub": "já estampada"
+      }
     }
   },
   "separation": {
@@ -2788,6 +2958,20 @@
       "printed": "{count, plural, one {# etiqueta} other {# etiquetas}} enviada(s) para impressão",
       "noPieces": "Este pedido não tem peças para etiquetar.",
       "generateError": "Não foi possível gerar as etiquetas."
+    },
+    "help": {
+      "title": "Separação — de pedido vinculado a peça com etiqueta",
+      "body": "Pedidos já vinculados viram uma <b>lista de separação</b>. Para cada peça o Orion gera uma <b>etiqueta</b> com a estampa, cor e tamanho certos — você imprime, separa na prateleira e <b>bipa</b>. Peças conferidas seguem para o <b>checkout</b> e podem virar um lote de expedição.",
+      "flow": {
+        "linked": "Vinculado",
+        "linkedSub": "pronto p/ separar",
+        "label": "Etiqueta",
+        "labelSub": "estampa · cor · tam",
+        "pick": "Separar",
+        "pickSub": "e bipar",
+        "checkout": "Checkout",
+        "checkoutSub": "pronto p/ expedir"
+      }
     }
   },
   "console": {
@@ -3088,6 +3272,18 @@
     "toasts": {
       "movementCreated": "Movimentação registrada",
       "error": "Falha na operação"
+    },
+    "help": {
+      "title": "Peças lisas — semiacabado, entre a costura e a estampa",
+      "body": "Quando uma <b>remessa</b> volta da banca, as peças entram aqui como <b>peças lisas</b> (sem estampa). Não são produto ainda — viram <b>produto acabado</b> na <b>Montagem</b>, quando recebem a estampa.",
+      "flow": {
+        "shipment": "Remessa recebida",
+        "shipmentSub": "volta da costura",
+        "blank": "Peça lisa",
+        "blankSub": "aguarda estampa",
+        "assembly": "Montagem",
+        "assemblySub": "+ estampa → produto"
+      }
     }
   },
   "paperRolls": {
@@ -3192,6 +3388,18 @@
       "deleted": "Bobina excluída",
       "deleteBlocked": "Esta bobina tem histórico de movimentação e não pode ser excluída.",
       "error": "Falha na operação"
+    },
+    "help": {
+      "title": "Bobinas de papel — o insumo da estamparia",
+      "body": "Espelho das bobinas de tecido, mas para a <b>impressão</b>. Cada bobina entra com sua <b>metragem</b>; a cada <b>lote impresso</b> o saldo é <b>abatido</b> — gerando os <b>impressos</b> prontos para prensar.",
+      "flow": {
+        "roll": "Bobina recebida",
+        "rollSub": "metragem",
+        "print": "Impressão",
+        "printSub": "abate o saldo",
+        "printed": "Impressos",
+        "printedSub": "prontos p/ prensar"
+      }
     }
   },
   "printedTransfers": {
@@ -3303,10 +3511,24 @@
     "toasts": {
       "movementCreated": "Movimentação registrada",
       "error": "Falha na operação"
+    },
+    "help": {
+      "title": "Impressos — componente impresso, antes da prensa",
+      "body": "Cada <b>impressão de lote</b> consome <b>bobina de papel</b> e produz <b>impressos</b> prontos. Eles ficam em estoque por <b>estampa</b> e <b>lado</b> até a <b>Montagem</b>, quando são prensados na peça lisa.",
+      "flow": {
+        "print": "Impressão",
+        "printSub": "consome bobina",
+        "printed": "Impresso",
+        "printedSub": "por estampa · lado",
+        "assembly": "Montagem",
+        "assemblySub": "prensa na peça"
+      }
     }
   },
   "printOrders": {
-    "page": { "eyebrow": "Produção" },
+    "page": {
+      "eyebrow": "Produção"
+    },
     "list": {
       "title": "Impressão",
       "titleEm": "de estampas",
@@ -3318,10 +3540,23 @@
         "body": "Planeje um lote contra uma bobina de papel para começar a imprimir."
       }
     },
-    "filters": { "searchPlaceholder": "Buscar ordens de impressão…" },
-    "view": { "kanban": "Kanban", "table": "Tabela" },
-    "status": { "pending": "Pendente", "printing": "Imprimindo", "done": "Concluído" },
-    "techniques": { "dtf": "DTF", "silkscreen": "Silkscreen", "sublimation": "Sublimação" },
+    "filters": {
+      "searchPlaceholder": "Buscar ordens de impressão…"
+    },
+    "view": {
+      "kanban": "Kanban",
+      "table": "Tabela"
+    },
+    "status": {
+      "pending": "Pendente",
+      "printing": "Imprimindo",
+      "done": "Concluído"
+    },
+    "techniques": {
+      "dtf": "DTF",
+      "silkscreen": "Silkscreen",
+      "sublimation": "Sublimação"
+    },
     "paperTypes": {
       "dtf_film": "Filme DTF",
       "sublimation_paper": "Papel sublimático",
@@ -3334,7 +3569,10 @@
       "save": "Salvar",
       "launch": "Lançar impressos"
     },
-    "card": { "printed": "impressos", "noPlan": "Sem planejamento" },
+    "card": {
+      "printed": "impressos",
+      "noPlan": "Sem planejamento"
+    },
     "table": {
       "code": "Código",
       "estampa": "Estampa",
@@ -3387,17 +3625,41 @@
         "error": "Falha na operação"
       }
     },
-    "fallback": { "forbidden": "Você não tem acesso às ordens de impressão." }
+    "fallback": {
+      "forbidden": "Você não tem acesso às ordens de impressão."
+    },
+    "help": {
+      "title": "Impressão — o espelho do Corte, no caminho do papel",
+      "body": "Você planeja uma <b>ordem de impressão</b> escolhendo a <b>estampa</b>, os <b>lados</b> (frente/costas) e as <b>variações</b> de cor; o Orion <b>abate a bobina de papel/filme</b> e gera os <b>impressos</b>. Eles seguem para a <b>Montagem</b>, onde são prensados na peça lisa.",
+      "flow": {
+        "roll": "Bobina",
+        "rollSub": "papel / filme",
+        "print": "Impressão",
+        "printSub": "abate o saldo",
+        "printed": "Impressos",
+        "printedSub": "por lado · variação",
+        "assembly": "Montagem",
+        "assemblySub": "+ peça lisa"
+      }
+    }
   },
   "assembly": {
-    "page": { "eyebrow": "Produção" },
+    "page": {
+      "eyebrow": "Produção"
+    },
     "list": {
       "title": "Montagem",
       "titleEm": "& acabamento",
       "sub": "Peça lisa + impresso, prensados em produto acabado."
     },
-    "filters": { "searchPlaceholder": "Buscar por estampa ou ficha…" },
-    "columns": { "waiting": "Aguardando", "todo": "A montar", "done": "Montado" },
+    "filters": {
+      "searchPlaceholder": "Buscar por estampa ou ficha…"
+    },
+    "columns": {
+      "waiting": "Aguardando",
+      "todo": "A montar",
+      "done": "Montado"
+    },
     "actions": {
       "manual": "Montagem avulsa",
       "build": "Montar {n}",
@@ -3434,10 +3696,28 @@
       "buildableBody": "Quando uma peça lisa e um impresso correspondente estiverem em estoque, o par aparece aqui.",
       "noStock": "Sem estoque disponível."
     },
-    "fallback": { "forbidden": "Você não tem acesso à montagem." }
+    "fallback": {
+      "forbidden": "Você não tem acesso à montagem."
+    },
+    "help": {
+      "title": "Montagem — onde os dois caminhos se encontram",
+      "body": "A Montagem sabe quais <b>SKUs</b> os pedidos esperam. Cada um precisa de uma <b>peça lisa</b> (do corte e da costura) e de um <b>impresso</b> (da impressão). Enquanto falta um componente, o SKU fica em <b>Aguardando</b>; quando os dois chegam, vai para <b>A montar</b>; ao prensar, vira produto em estoque e o pedido fica <b>pronto para separação</b>.",
+      "flow": {
+        "blank": "Peça lisa",
+        "blankSub": "costura",
+        "printed": "Impresso",
+        "printedSub": "impressão",
+        "assembly": "Montagem",
+        "assemblySub": "prensa",
+        "separation": "Separação",
+        "separationSub": "pronto p/ expedir"
+      }
+    }
   },
   "planning": {
-    "page": { "eyebrow": "planejamento" },
+    "page": {
+      "eyebrow": "planejamento"
+    },
     "list": {
       "title": "Planejamento",
       "titleEm": "de produção",
@@ -3491,7 +3771,25 @@
       "bodyAll": "A demanda dos pedidos está coberta e nenhum tier está abaixo do mínimo.",
       "bodyFiltered": "Nenhuma sugestão para este filtro."
     },
-    "created": { "banner": "Ordens abertas como pendentes no Corte e na Impressão." },
-    "fallback": { "forbidden": "Você não tem acesso ao planejamento." }
+    "created": {
+      "banner": "Ordens abertas como pendentes no Corte e na Impressão."
+    },
+    "fallback": {
+      "forbidden": "Você não tem acesso ao planejamento."
+    },
+    "help": {
+      "title": "Como o Orion sugere produção",
+      "body": "Cada sugestão tem um motivo. <sales>Demanda</sales>: um pedido pede um SKU que falta no estoque acabado. <warn>Estoque baixo</warn>: uma peça lisa ou impresso caiu abaixo do mínimo. A quantidade já desconta o que está em produção; ao criar, as ordens entram como <b>pendentes</b> no Corte e na Impressão.",
+      "flow": {
+        "demand": "Demanda",
+        "demandSub": "pedidos & mínimo",
+        "suggest": "Sugestões",
+        "suggestSub": "o Orion calcula",
+        "review": "Você revisa",
+        "reviewSub": "ajusta a seleção",
+        "orders": "Ordens",
+        "ordersSub": "corte & impressão"
+      }
+    }
   }
 }

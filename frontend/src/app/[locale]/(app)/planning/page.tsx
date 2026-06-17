@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Printer, Radar, RefreshCw, Scissors } from "lucide-react";
+import { CheckCircle2, Printer, Radar, RefreshCw, Scissors, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTagsPlanning } from "@/components/page/help-tags";
 import { CutSuggestionRow } from "@/components/planning/CutSuggestionRow";
 import { PlanningActionBar } from "@/components/planning/PlanningActionBar";
 import { PlanningEmptyState } from "@/components/planning/PlanningEmptyState";
@@ -133,6 +134,19 @@ export default function PlanningPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Radar,
+          tone: "var(--brand-prod)",
+          maxW: 780,
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTagsPlanning),
+          steps: [
+            { icon: ShoppingBag, label: t("help.flow.demand"), sub: t("help.flow.demandSub") },
+            { icon: Radar, label: t("help.flow.suggest"), sub: t("help.flow.suggestSub"), tone: "accent" },
+            { icon: CheckCircle2, label: t("help.flow.review"), sub: t("help.flow.reviewSub") },
+            { icon: Scissors, label: t("help.flow.orders"), sub: t("help.flow.ordersSub"), tone: "ok" },
+          ],
+        }}
         actions={
           <Button
             type="button"

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Package } from "lucide-react";
+import { CornerUpLeft, Layers, LayoutGrid, Package, Printer } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { BatchesTable } from "@/components/batches/BatchesTable";
 import { CreateBatchDialog } from "@/components/batches/CreateBatchDialog";
 import { useBatches } from "@/hooks/use-batches";
@@ -40,6 +41,19 @@ export default function BatchesPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Layers,
+          tone: "var(--brand-sales)",
+          maxW: 720,
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: Package, label: t("help.flow.pieces"), sub: t("help.flow.piecesSub") },
+            { icon: LayoutGrid, label: t("help.flow.nest"), sub: t("help.flow.nestSub"), tone: "accent" },
+            { icon: Printer, label: t("help.flow.print"), sub: t("help.flow.printSub") },
+            { icon: CornerUpLeft, label: t("help.flow.back"), sub: t("help.flow.backSub"), tone: "ok" },
+          ],
+        }}
         actions={
           canWrite ? (
             <Button

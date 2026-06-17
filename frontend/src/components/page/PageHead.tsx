@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { HelpCard, type HelpCardProps } from "@/components/page/HelpCard";
 
 /**
  * Page header — direct port of `.page-head` from /docs/design/source/styles.css.
@@ -23,6 +24,12 @@ export type PageHeadProps = {
   sub?: ReactNode;
   /** Optional action buttons block on the right (e.g. "Novo cliente"). */
   actions?: ReactNode;
+  /**
+   * Optional "Como funciona?" help pill + popover. When present it renders as
+   * the FIRST element in the right-hand actions row, so a page opts into help
+   * even when it has no other actions.
+   */
+  help?: HelpCardProps;
   /** CSS var or hex driving the eyebrow chip + emphasised title color. */
   subColor: string;
 };
@@ -34,6 +41,7 @@ export function PageHead({
   titleEm,
   sub,
   actions,
+  help,
   subColor,
 }: PageHeadProps) {
   // .page-head — design source: align-end, gap 24px, mb 22px, wrap.
@@ -77,8 +85,14 @@ export function PageHead({
           </div>
         ) : null}
       </div>
-      {/* .page-head-r — 8px gap, wraps. */}
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {/* .page-head-r — 8px gap, wraps. The help pill leads the row so it
+          appears even when the page has no other actions. */}
+      {help || actions ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {help ? <HelpCard {...help} /> : null}
+          {actions}
+        </div>
+      ) : null}
     </div>
   );
 }

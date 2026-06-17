@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, MinusCircle, PlusCircle, Search, Shirt } from "lucide-react";
+import { AlertTriangle, Combine, MinusCircle, PackageCheck, PlusCircle, Search, Shirt } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { Link } from "@/i18n/routing";
 import { ApiError } from "@/lib/api-client";
 import { ColorDot } from "@/components/inventory/ColorDot";
@@ -152,6 +153,17 @@ export default function BlankPiecesPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Shirt,
+          tone: "var(--brand-inv)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: PackageCheck, label: t("help.flow.shipment"), sub: t("help.flow.shipmentSub") },
+            { icon: Shirt, label: t("help.flow.blank"), sub: t("help.flow.blankSub"), tone: "accent" },
+            { icon: Combine, label: t("help.flow.assembly"), sub: t("help.flow.assemblySub"), tone: "ok" },
+          ],
+        }}
         actions={
           <Button
             type="button"

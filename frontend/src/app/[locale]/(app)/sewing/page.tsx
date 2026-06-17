@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Send } from "lucide-react";
+import { Factory, PackageCheck, Scissors, Search, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { ShipmentTable } from "@/components/sewing/ShipmentTable";
 import { SewingKanban } from "@/components/sewing/SewingKanban";
 import { SewingEmptyState } from "@/components/sewing/SewingEmptyState";
@@ -149,6 +150,19 @@ export default function SewingPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Send,
+          tone: "var(--brand-prod)",
+          maxW: 720,
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: Scissors, label: t("help.flow.cuts"), sub: t("help.flow.cutsSub") },
+            { icon: Send, label: t("help.flow.shipment"), sub: t("help.flow.shipmentSub"), tone: "accent" },
+            { icon: Factory, label: t("help.flow.sew"), sub: t("help.flow.sewSub") },
+            { icon: PackageCheck, label: t("help.flow.blanks"), sub: t("help.flow.blanksSub"), tone: "ok" },
+          ],
+        }}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Seg

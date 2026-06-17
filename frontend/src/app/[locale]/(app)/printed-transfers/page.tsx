@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, MinusCircle, PlusCircle, Search, Stamp } from "lucide-react";
+import { AlertTriangle, Combine, MinusCircle, PlusCircle, Printer, Search, Stamp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { Link } from "@/i18n/routing";
 import { ApiError } from "@/lib/api-client";
 import { InventoryKpis } from "@/components/inventory/InventoryKpis";
@@ -157,6 +158,17 @@ export default function PrintedTransfersPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Stamp,
+          tone: "var(--brand-inv)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: Printer, label: t("help.flow.print"), sub: t("help.flow.printSub") },
+            { icon: Stamp, label: t("help.flow.printed"), sub: t("help.flow.printedSub"), tone: "accent" },
+            { icon: Combine, label: t("help.flow.assembly"), sub: t("help.flow.assemblySub"), tone: "ok" },
+          ],
+        }}
         actions={
           <Button
             type="button"

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Megaphone, Search } from "lucide-react";
+import { Megaphone, Search, Shirt, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { AdsTable } from "@/components/ads/AdsTable";
 import { AdsEmptyState } from "@/components/ads/AdsEmptyState";
 import { AdFormSheet } from "@/components/ads/AdFormSheet";
@@ -61,6 +62,17 @@ export default function AdsPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Megaphone,
+          tone: "var(--brand-sales)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: Shirt, label: t("help.flow.products"), sub: t("help.flow.productsSub") },
+            { icon: Megaphone, label: t("help.flow.ad"), sub: t("help.flow.adSub"), tone: "accent" },
+            { icon: ShoppingBag, label: t("help.flow.order"), sub: t("help.flow.orderSub"), tone: "ok" },
+          ],
+        }}
         actions={
           canWrite ? (
             <Button

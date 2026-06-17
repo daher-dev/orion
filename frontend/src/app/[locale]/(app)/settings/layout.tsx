@@ -1,7 +1,5 @@
-import { getTranslations } from "next-intl/server";
-import { Settings as SettingsIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { PageHead } from "@/components/page/PageHead";
+import { SettingsPageHead } from "@/components/settings/SettingsPageHead";
 import { SettingsSidebar } from "@/components/settings/SettingsSidebar";
 
 /**
@@ -9,21 +7,14 @@ import { SettingsSidebar } from "@/components/settings/SettingsSidebar";
  * `/docs/design/source/pages/reports-settings.jsx`:
  *
  *   - `.page` 22 28 padding, max-width 1480.
- *   - PageHead with stone "Ajustes" eyebrow.
+ *   - PageHead with stone "Ajustes" eyebrow + "Como funciona?" help pill
+ *     (rendered by the client `SettingsPageHead`).
  *   - 220px sub-nav column + 1fr content, 18px gap.
  */
-export default async function SettingsLayout({ children }: { children: ReactNode }) {
-  const t = await getTranslations("settings");
-
+export default function SettingsLayout({ children }: { children: ReactNode }) {
   return (
     <div>
-      <PageHead
-        mark={<SettingsIcon size={11} strokeWidth={2.2} />}
-        eyebrow={t("page.eyebrow")}
-        title={t("list.title")}
-        sub={t("list.sub")}
-        subColor="var(--brand-settings)"
-      />
+      <SettingsPageHead />
       {/* .settings-grid from /docs/design/source/styles.css —
           232px sub-nav column, 22px gap, collapses to 200/18 at <1100px
           and to a single column at <900px. */}

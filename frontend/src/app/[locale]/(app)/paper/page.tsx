@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Scroll, Search } from "lucide-react";
+import { Printer, Scroll, Search, Stamp } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { Link } from "@/i18n/routing";
 import { InventoryKpis } from "@/components/inventory/InventoryKpis";
 import { PaperLedger } from "@/components/paper/PaperLedger";
@@ -63,6 +64,17 @@ export default function PaperRollsPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Scroll,
+          tone: "var(--brand-inv)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: Scroll, label: t("help.flow.roll"), sub: t("help.flow.rollSub"), tone: "accent" },
+            { icon: Printer, label: t("help.flow.print"), sub: t("help.flow.printSub") },
+            { icon: Stamp, label: t("help.flow.printed"), sub: t("help.flow.printedSub"), tone: "ok" },
+          ],
+        }}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button

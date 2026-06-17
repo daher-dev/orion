@@ -1,9 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { LayoutDashboard } from "lucide-react";
+import { ClipboardCheck, Download, Factory, LayoutDashboard, Truck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { useMe } from "@/hooks/use-me";
 
 function periodKey(hour: number): "morning" | "afternoon" | "evening" | "night" {
@@ -38,6 +39,18 @@ export function GreetingHeader({ actions }: Props) {
       title={firstName ? `${t(`greetings.${period}`)},` : t(`greetings.${period}`)}
       titleEm={firstName || undefined}
       sub={t("sub", { day, month })}
+      help={{
+        icon: ClipboardCheck,
+        maxW: 720,
+        title: t("help.title"),
+        body: t.rich("help.body", helpBodyTags),
+        steps: [
+          { icon: Download, label: t("help.flow.orders"), sub: t("help.flow.ordersSub") },
+          { icon: ClipboardCheck, label: t("help.flow.check"), sub: t("help.flow.checkSub"), tone: "accent" },
+          { icon: Factory, label: t("help.flow.production"), sub: t("help.flow.productionSub") },
+          { icon: Truck, label: t("help.flow.ship"), sub: t("help.flow.shipSub"), tone: "ok" },
+        ],
+      }}
       actions={actions}
     />
   );

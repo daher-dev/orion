@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Scissors, Search } from "lucide-react";
+import { Layers, Scissors, Search, Send, Shirt } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { CuttingTable } from "@/components/cutting/CuttingTable";
 import { CuttingKanban } from "@/components/cutting/CuttingKanban";
 import { CuttingEmptyState } from "@/components/cutting/CuttingEmptyState";
@@ -115,6 +116,19 @@ export default function CuttingPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Scissors,
+          tone: "var(--brand-prod)",
+          maxW: 720,
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: Layers, label: t("help.flow.roll"), sub: t("help.flow.rollSub") },
+            { icon: Scissors, label: t("help.flow.cut"), sub: t("help.flow.cutSub"), tone: "accent" },
+            { icon: Shirt, label: t("help.flow.cuts"), sub: t("help.flow.cutsSub") },
+            { icon: Send, label: t("help.flow.sew"), sub: t("help.flow.sewSub"), tone: "ok" },
+          ],
+        }}
         actions={
           <>
             <ViewToggle

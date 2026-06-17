@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHead } from "@/components/page/PageHead";
-import { HelpCard } from "@/components/page/HelpCard";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { MappingTable } from "@/components/mapping/MappingTable";
 import { MappingProgress } from "@/components/mapping/MappingProgress";
 import {
@@ -110,20 +110,18 @@ export default function MappingPage() {
         title={t("page.title")}
         titleEm={t("page.titleEm")}
         sub={t("page.sub")}
+        help={{
+          icon: GitMerge,
+          tone: "var(--brand-sales)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: ShoppingBag, label: t("help.flow.item"), sub: t("help.flow.itemSub") },
+            { icon: Hash, label: t("help.flow.sku"), sub: t("help.flow.skuSub"), tone: "accent" },
+            { icon: Package, label: t("help.flow.stock"), sub: t("help.flow.stockSub"), tone: "ok" },
+          ],
+        }}
       />
-
-      <HelpCard
-        icon={GitMerge}
-        tone="var(--brand-sales)"
-        title={t("help.title")}
-        steps={[
-          { icon: ShoppingBag, label: t("help.steps.item"), sub: t("help.steps.itemSub") },
-          { icon: Hash, label: t("help.steps.sku"), sub: t("help.steps.skuSub"), accent: true },
-          { icon: Package, label: t("help.steps.stock"), sub: t("help.steps.stockSub") },
-        ]}
-      >
-        {t("help.body")}
-      </HelpCard>
 
       <MappingProgress progress={progress} />
 

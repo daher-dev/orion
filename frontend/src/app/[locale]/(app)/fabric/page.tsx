@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Layers, Search } from "lucide-react";
+import { Gauge, Layers, Scissors, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { FabricRollsTable } from "@/components/fabric/FabricRollsTable";
 import { FabricRollsEmptyState } from "@/components/fabric/FabricRollsEmptyState";
 import { FabricRollFormSheet } from "@/components/fabric/FabricRollFormSheet";
@@ -130,6 +131,17 @@ export default function FabricPage() {
         title={t("list.title")}
         titleEm={t("list.titleEm")}
         sub={t("list.sub")}
+        help={{
+          icon: Layers,
+          tone: "var(--brand-inv)",
+          title: t("help.title"),
+          body: t.rich("help.body", helpBodyTags),
+          steps: [
+            { icon: Layers, label: t("help.flow.roll"), sub: t("help.flow.rollSub"), tone: "accent" },
+            { icon: Scissors, label: t("help.flow.cut"), sub: t("help.flow.cutSub") },
+            { icon: Gauge, label: t("help.flow.balance"), sub: t("help.flow.balanceSub"), tone: "ok" },
+          ],
+        }}
         actions={
           canWrite ? (
             <div className="flex flex-wrap items-center gap-2">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useDeferredValue } from "react";
-import { FileText, Search } from "lucide-react";
+import { FileText, Scissors, Search, Shirt } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { useSpecs } from "@/hooks/use-specs";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Can } from "@/components/Can";
 import { PageHead } from "@/components/page/PageHead";
+import { helpBodyTags } from "@/components/page/help-tags";
 import { SpecsTable } from "@/components/specs/SpecsTable";
 import { SpecsEmptyState } from "@/components/specs/SpecsEmptyState";
 import { FABRIC_TYPES, type FabricType } from "@/lib/schemas/spec";
@@ -46,6 +47,17 @@ export default function SpecsListPage() {
         eyebrow={t("specs.page.eyebrow")}
         title={t("specs.list.title")}
         sub={t("specs.list.sub")}
+        help={{
+          icon: FileText,
+          tone: "var(--brand-catalog)",
+          title: t("specs.help.title"),
+          body: t.rich("specs.help.body", helpBodyTags),
+          steps: [
+            { icon: FileText, label: t("specs.help.flow.spec"), sub: t("specs.help.flow.specSub"), tone: "accent" },
+            { icon: Shirt, label: t("specs.help.flow.base"), sub: t("specs.help.flow.baseSub") },
+            { icon: Scissors, label: t("specs.help.flow.cut"), sub: t("specs.help.flow.cutSub"), tone: "ok" },
+          ],
+        }}
         actions={
           <Can permission="specs.write">
             <Button

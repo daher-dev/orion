@@ -16,6 +16,19 @@ const eslintConfig = defineConfig([
       "react-hooks/refs": "off",
     },
   },
+  // TanStack Table (`useReactTable`, in *Table.tsx) and React Hook Form
+  // (`useForm`, in *Form.tsx) are not compatible with the React Compiler: it
+  // safely *skips* optimizing components that use them (a missed-memoization,
+  // not a correctness issue). That makes `incompatible-library` a permanent,
+  // non-actionable "Compilation Skipped" warning for every table/form. Silence
+  // it for those files only — the rule stays on elsewhere, so a genuinely new
+  // incompatible dependency still surfaces.
+  {
+    files: ["src/components/**/*Table.tsx", "src/components/**/*Form.tsx"],
+    rules: {
+      "react-hooks/incompatible-library": "off",
+    },
+  },
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 ]);
 

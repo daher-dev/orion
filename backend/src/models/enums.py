@@ -101,21 +101,6 @@ class StockExitReason(StrEnum):
     LOSS = "loss"
 
 
-class SupplyMovementKind(StrEnum):
-    """Direction of a consumable-supply (insumo) stock movement.
-
-    ENTRY: supplies flowing into stock (a purchase / receipt).
-    EXIT: supplies consumed (used in production, lost, discarded).
-    ADJUSTMENT: a signed-positive correction credited to stock — kept as its
-        own kind so manual reconciliations are distinguishable from operational
-        entries/exits in the ledger. Like ENTRY, it credits on-hand.
-    """
-
-    ENTRY = "entry"
-    EXIT = "exit"
-    ADJUSTMENT = "adjustment"
-
-
 class FabricMovementKind(StrEnum):
     """Direction of a fabric-roll (bobina) stock movement.
 

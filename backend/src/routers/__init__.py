@@ -33,7 +33,6 @@ from routers.roles import router as roles_router
 from routers.sewing import router as sewing_router
 from routers.specs import router as specs_router
 from routers.stock import router as stock_router
-from routers.supplies import router as supplies_router
 from routers.user import router as user_router
 
 # Aggregate for all /v1/* endpoints. New feature routers get included here.
@@ -70,7 +69,6 @@ api_router.include_router(roles_router)
 api_router.include_router(sewing_router)
 api_router.include_router(specs_router)
 api_router.include_router(stock_router)
-api_router.include_router(supplies_router)
 api_router.include_router(user_router)
 
 __all__ = [
@@ -108,6 +106,5 @@ __all__ = [
     "sewing_router",
     "specs_router",
     "stock_router",
-    "supplies_router",
     "user_router",
 ]

@@ -3,14 +3,13 @@
 Convention notes
 ----------------
 - A ``BlankPiece`` is a print-agnostic blank garment body keyed by
-  ``(spec_id, size, color_code)`` (clones the ``services.supply`` catalog +
-  append-only ledger pattern, but with integer counts like finished-piece
-  Stock).
+  ``(spec_id, size, color_code)`` (a tenant-scoped catalog + append-only
+  ledger, but with integer counts like finished-piece Stock).
 - On-hand is computed live from the append-only ``blank_piece_movements``
   ledger — there is NO materialised balance column. A single table carries a
   ``kind`` enum; ENTRY and ADJUSTMENT credit stock, EXIT debits it (every row
-  holds a strictly-positive ``quantity``). This mirrors ``services.supply``
-  ``_SIGNED_QTY``.
+  holds a strictly-positive ``quantity``) via the ``_SIGNED_QTY`` netting
+  expression.
 - ``list_levels`` surfaces ONE row per blank piece (a row with zero movements
   still appears, with on-hand 0) so the catalog stays the source of truth —
   unlike the old ``print_stock`` levels which only surfaced moved pairs.

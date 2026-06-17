@@ -42,7 +42,6 @@ from models.enums import (
     StockExitReason,
     StockSource,
     SubscriptionStatus,
-    SupplyMovementKind,
     TrimType,
 )
 from models.fabric_roll import FabricRoll, FabricRollMovement
@@ -63,7 +62,6 @@ from models.sewing_contractor import SewingContractor
 from models.sewing_shipment import SewingShipment, SewingShipmentItem
 from models.stock import StockEntry, StockExit
 from models.subscription import Subscription
-from models.supply import Supply, SupplyMovement
 from models.user import User
 
 __all__ = [
@@ -136,9 +134,6 @@ __all__ = [
     "StockSource",
     "Subscription",
     "SubscriptionStatus",
-    "Supply",
-    "SupplyMovement",
-    "SupplyMovementKind",
     "TrimType",
     "User",
 ]

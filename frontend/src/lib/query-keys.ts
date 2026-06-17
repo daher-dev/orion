@@ -140,14 +140,6 @@ export const qk = {
     movements: (filters: Readonly<Record<string, unknown>> = {}) =>
       tuple("printed-transfers", "movements", filters),
   },
-  supplies: {
-    all: () => tuple("supplies"),
-    lists: () => tuple("supplies", "list"),
-    list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("supplies", "list", filters),
-    detail: (id: string) => tuple("supplies", "detail", id),
-    levels: (filters: Readonly<Record<string, unknown>> = {}) => tuple("supplies", "levels", filters),
-    movements: (filters: Readonly<Record<string, unknown>> = {}) => tuple("supplies", "movements", filters),
-  },
   audit: {
     all: () => tuple("audit"),
     lists: () => tuple("audit", "list"),

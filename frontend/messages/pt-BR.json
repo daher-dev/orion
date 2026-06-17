@@ -67,7 +67,6 @@
     "paper": "Papel",
     "printedTransfers": "Impressos",
     "stock": "Estoque",
-    "supplies": "Insumos",
     "reports": "Relatórios",
     "settings": "Ajustes",
     "batches": "Lotes",
@@ -1844,123 +1843,6 @@
     },
     "fallback": {
       "forbidden": "Você não tem acesso ao estoque."
-    }
-  },
-  "supplies": {
-    "page": {
-      "eyebrow": "Estoque"
-    },
-    "list": {
-      "title": "Insumos",
-      "titleEm": "consumíveis",
-      "sub": "Insumos consumíveis e seu saldo em estoque.",
-      "empty": {
-        "title": "Nenhum insumo cadastrado",
-        "body": "Adicione um insumo ao catálogo e registre compras e consumos para acompanhar o saldo em estoque.",
-        "cta": "Novo insumo"
-      }
-    },
-    "tabs": {
-      "levels": "Posição atual",
-      "movements": "Movimentações"
-    },
-    "filters": {
-      "searchPlaceholder": "Buscar insumo, unidade…",
-      "lowStockOnly": "Somente estoque baixo"
-    },
-    "kinds": {
-      "entry": "Entrada",
-      "exit": "Saída",
-      "adjustment": "Ajuste"
-    },
-    "table": {
-      "columns": {
-        "name": "Insumo",
-        "onHand": "Em estoque",
-        "unitCost": "Custo unit.",
-        "lastMovement": "Últ. mov.",
-        "actions": "Ações"
-      }
-    },
-    "movements": {
-      "empty": "Nenhuma movimentação registrada.",
-      "columns": {
-        "when": "Quando",
-        "supply": "Insumo",
-        "kind": "Tipo",
-        "quantity": "Qtd",
-        "notes": "Observações"
-      }
-    },
-    "actions": {
-      "recordMovement": "Registrar movimento",
-      "delete": "Excluir",
-      "confirmDelete": "Este insumo será removido permanentemente. Insumos com movimentações de estoque não podem ser excluídos."
-    },
-    "form": {
-      "title": {
-        "new": "Novo insumo"
-      },
-      "labels": {
-        "name": "Nome",
-        "unit": "Unidade",
-        "unitCost": "Custo unitário",
-        "minStock": "Estoque mínimo",
-        "notes": "Observações"
-      },
-      "placeholders": {
-        "name": "ex.: Linha branca",
-        "unit": "m, kg, un…",
-        "unitCost": "0,00",
-        "minStock": "0",
-        "notes": "Observações opcionais…"
-      },
-      "hints": {
-        "minStock": "Saldo igual ou abaixo deste valor sinaliza estoque baixo. Deixe vazio para desativar."
-      },
-      "validation": {
-        "nameRequired": "Nome é obrigatório",
-        "unitRequired": "Unidade é obrigatória",
-        "required": "Obrigatório",
-        "numeric": "Informe um número válido"
-      },
-      "save": "Salvar",
-      "submitNew": "Criar insumo",
-      "cancel": "Cancelar"
-    },
-    "adjust": {
-      "title": "Registrar movimento",
-      "subtitle": "Escolha um insumo e o tipo de movimento.",
-      "labels": {
-        "moveType": "Tipo de movimento",
-        "supply": "Insumo",
-        "quantity": "Quantidade",
-        "notes": "Observações"
-      },
-      "placeholders": {
-        "search": "Buscar insumo…",
-        "notes": "Observações opcionais…"
-      },
-      "preview": {
-        "current": "Atual",
-        "entry": "Entrada",
-        "exit": "Saída",
-        "final": "Final",
-        "negativeWarning": "O saldo ficaria negativo."
-      },
-      "noSupplies": "Nenhum insumo encontrado.",
-      "save": "Salvar",
-      "cancel": "Cancelar",
-      "toasts": {
-        "created": "Movimento registrado",
-        "error": "Falha na operação"
-      }
-    },
-    "toast": {
-      "created": "Insumo criado",
-      "updated": "Insumo atualizado",
-      "deleted": "Insumo excluído",
-      "error": "Falha na operação"
     }
   },
   "reports": {

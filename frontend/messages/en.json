@@ -67,7 +67,6 @@
     "paper": "Paper",
     "printedTransfers": "Printed transfers",
     "stock": "Stock",
-    "supplies": "Supplies",
     "reports": "Reports",
     "settings": "Settings",
     "batches": "Batches",
@@ -1844,123 +1843,6 @@
     },
     "fallback": {
       "forbidden": "You don't have access to stock."
-    }
-  },
-  "supplies": {
-    "page": {
-      "eyebrow": "Inventory"
-    },
-    "list": {
-      "title": "Supplies",
-      "titleEm": "consumables",
-      "sub": "Consumable supplies (insumos) and their on-hand balance.",
-      "empty": {
-        "title": "No supplies registered yet",
-        "body": "Add a supply to the catalog, then record purchases and consumption to track its on-hand balance.",
-        "cta": "New supply"
-      }
-    },
-    "tabs": {
-      "levels": "Current position",
-      "movements": "Movements"
-    },
-    "filters": {
-      "searchPlaceholder": "Search supply, unit…",
-      "lowStockOnly": "Low stock only"
-    },
-    "kinds": {
-      "entry": "Entry",
-      "exit": "Exit",
-      "adjustment": "Adjustment"
-    },
-    "table": {
-      "columns": {
-        "name": "Supply",
-        "onHand": "On hand",
-        "unitCost": "Unit cost",
-        "lastMovement": "Last move",
-        "actions": "Actions"
-      }
-    },
-    "movements": {
-      "empty": "No movements recorded yet.",
-      "columns": {
-        "when": "When",
-        "supply": "Supply",
-        "kind": "Type",
-        "quantity": "Qty",
-        "notes": "Notes"
-      }
-    },
-    "actions": {
-      "recordMovement": "Record movement",
-      "delete": "Delete",
-      "confirmDelete": "This supply will be permanently removed. Supplies with stock movements cannot be deleted."
-    },
-    "form": {
-      "title": {
-        "new": "New supply"
-      },
-      "labels": {
-        "name": "Name",
-        "unit": "Unit",
-        "unitCost": "Unit cost",
-        "minStock": "Reorder threshold",
-        "notes": "Notes"
-      },
-      "placeholders": {
-        "name": "e.g. White thread",
-        "unit": "m, kg, un…",
-        "unitCost": "0,00",
-        "minStock": "0",
-        "notes": "Optional notes…"
-      },
-      "hints": {
-        "minStock": "On-hand at or below this flags low stock. Leave empty to disable."
-      },
-      "validation": {
-        "nameRequired": "Name is required",
-        "unitRequired": "Unit is required",
-        "required": "Required",
-        "numeric": "Enter a valid number"
-      },
-      "save": "Save",
-      "submitNew": "Create supply",
-      "cancel": "Cancel"
-    },
-    "adjust": {
-      "title": "Record movement",
-      "subtitle": "Pick a supply and a movement type.",
-      "labels": {
-        "moveType": "Movement type",
-        "supply": "Supply",
-        "quantity": "Quantity",
-        "notes": "Notes"
-      },
-      "placeholders": {
-        "search": "Search supply…",
-        "notes": "Optional notes…"
-      },
-      "preview": {
-        "current": "Current",
-        "entry": "Entry",
-        "exit": "Exit",
-        "final": "Final",
-        "negativeWarning": "On-hand would go negative."
-      },
-      "noSupplies": "No supplies found.",
-      "save": "Save",
-      "cancel": "Cancel",
-      "toasts": {
-        "created": "Movement recorded",
-        "error": "Operation failed"
-      }
-    },
-    "toast": {
-      "created": "Supply created",
-      "updated": "Supply updated",
-      "deleted": "Supply deleted",
-      "error": "Operation failed"
     }
   },
   "reports": {

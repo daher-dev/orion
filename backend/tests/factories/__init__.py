@@ -92,12 +92,6 @@ from tests.factories.stock import (
     create_stock_entry,
     create_stock_exit,
 )
-from tests.factories.supply import (
-    SupplyFactory,
-    SupplyMovementFactory,
-    create_supply,
-    create_supply_movement,
-)
 from tests.factories.user import UserFactory, create_user
 
 __all__ = [
@@ -137,8 +131,6 @@ __all__ = [
     "StockEntryFactory",
     "StockExitFactory",
     "SubscriptionFactory",
-    "SupplyFactory",
-    "SupplyMovementFactory",
     "UserFactory",
     "create_ad",
     "create_assembly_run",
@@ -174,8 +166,6 @@ __all__ = [
     "create_stock_entry",
     "create_stock_exit",
     "create_subscription",
-    "create_supply",
-    "create_supply_movement",
     "create_user",
     "get_admin_role",
     "get_role_by_code",

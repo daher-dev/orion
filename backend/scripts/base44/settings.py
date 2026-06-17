@@ -42,7 +42,6 @@ ENTITIES: list[str] = [
     "ItemPedido",
     # Sampled for reference but not imported as business data:
     "LoteProducao",
-    "InsumoEstoque",
     "EstampaEstoque",
     "AjusteEstampa",
     "StampaMemory",

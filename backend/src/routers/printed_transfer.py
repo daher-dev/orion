@@ -1,8 +1,8 @@
 """HTTP surface for the Printed Transfers (estampados) WIP inventory tier.
 
 Replaces the old ``print_stock`` router. The surface uses a single ``/movements``
-POST with a ``kind`` enum (matching supply), keyed by ``printed_transfer_id`` (a
-real FK), not the old free-text ``product_color`` + split entry/exit POSTs.
+POST with a ``kind`` enum, keyed by ``printed_transfer_id`` (a real FK), not the
+old free-text ``product_color`` + split entry/exit POSTs.
 
 Layout
 ------

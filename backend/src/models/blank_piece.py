@@ -14,7 +14,7 @@ class BlankPiece(CompanyModel, table=True):
     The catalog row keyed by ``(spec, size, color_code)``. The on-hand quantity
     is NOT stored here; it is derived live from the append-only
     ``blank_piece_movements`` ledger (see ``services.blank_stock``), mirroring
-    the finished-piece Stock and Supply features.
+    the finished-piece Stock feature.
     """
 
     __tablename__ = "blank_pieces"

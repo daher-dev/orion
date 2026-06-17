@@ -9,7 +9,7 @@ Convention notes
 - On-hand is computed live from the append-only ``printed_transfer_movements``
   ledger — there is NO materialised balance column. A single table carries a
   ``kind`` enum; ENTRY and ADJUSTMENT credit stock, EXIT debits it (every row
-  holds a strictly-positive ``quantity``). Mirrors ``services.supply``.
+  holds a strictly-positive ``quantity``).
 - ``list_levels`` surfaces ONE row per printed transfer (a row with zero
   movements still appears, with on-hand 0) so the catalog stays the source of
   truth — unlike the old ``print_stock`` levels which only surfaced moved pairs.

@@ -19,6 +19,7 @@ on transient ``_``-prefixed keys.
 
 from __future__ import annotations
 
+import hashlib
 import re
 import unicodedata
 import uuid
@@ -28,7 +29,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from config import config
-from models import FabricType, PrintTechnique, ProductVariation, Size
+from models import ArtworkStatus, FabricType, PrintTechnique, ProductVariation, Size
 from scripts.base44 import settings
 
 # Deterministic namespace from the app id, so re-runs are stable and references
@@ -42,6 +43,7 @@ TABLE_ORDER: list[str] = [
     "product_spec",
     "spec_trim",
     "print_design",
+    "print_design_variation",
     "product",
     "product_variation",
     "fabric_roll",
@@ -143,6 +145,43 @@ def clean_color(value: Any) -> str:
     raw = strip_accents(str(value or "")).strip()
     raw = re.sub(r"\s+", " ", raw)
     return raw.title()[:40] if raw else "Desconhecida"
+
+
+# Portuguese ink-color name → hex, ported from the frontend variant-color.ts
+# PALETTE. Keys are accent-stripped, lowercased; first key found inside the
+# (normalized) name wins, so multi-word labels like "Off White" still resolve.
+_INK_HEX_MAP: list[tuple[str, str]] = [
+    ("off white", "#efe6d3"),
+    ("offwhite", "#efe6d3"),
+    ("branco", "#f4f1ea"),
+    ("preto", "#1f1f1f"),
+    ("bege", "#c9b9a3"),
+    ("areia", "#cfb98e"),
+    ("vermelho", "#b03a2e"),
+    ("verde", "#3a4a3d"),
+    ("marrom", "#7a4b2a"),
+    ("azul", "#2e4a78"),
+    ("amarelo", "#e0c040"),
+    ("cinza", "#8a8a8a"),
+    ("rosa", "#d98aa8"),
+    ("laranja", "#d97a2e"),
+    ("roxo", "#6a4a8a"),
+]
+
+
+def ink_hex_for(name: str) -> str:
+    """Map an ink-color label to a ``#rrggbb`` hex (satisfies ink_hex_format).
+
+    Known Portuguese color names resolve to the shared palette; anything
+    unknown falls back to a deterministic hash of the name so the value is
+    stable across re-runs and always a valid 6-hex-digit color.
+    """
+    n = norm(name)
+    for keyword, hex_value in _INK_HEX_MAP:
+        if keyword in n:
+            return hex_value
+    digest = hashlib.md5(n.encode("utf-8")).hexdigest()  # non-crypto, deterministic color
+    return "#" + digest[:6]
 
 
 def keyword_match(text: Any, table: list[tuple[str, Any]], default: Any) -> tuple[Any, bool]:
@@ -755,6 +794,15 @@ def convert(
     # carries) with ``estampa_nome`` (the design); the order resolver uses it to
     # pick the (spec x design) product. First title→design wins.
     design_by_title: dict[tuple[uuid.UUID, str], uuid.UUID] = {}
+    # The real artwork lives in each record's ``combinacoes[]`` (the top-level
+    # ``foto_estampa_url`` is empty in practice). A design's combos are spread
+    # across every StampaMemory row sharing its name, so we (a) create the bare
+    # design row on first sight, (b) accumulate combos by design id, then (c)
+    # sweep the aggregates once to fill image fields and emit one variation per
+    # distinct ink color.
+    design_row_by_id: dict[uuid.UUID, dict] = {}
+    design_company_by_id: dict[uuid.UUID, uuid.UUID] = {}
+    combos_by_design: dict[uuid.UUID, list[dict]] = {}
     for sm in _records(raw, "StampaMemory"):
         scid = company_of(sm)
         if scid is None:
@@ -770,25 +818,91 @@ def convert(
         if did is None:
             did = derive_id("print_design", scid, norm(ename))
             design_code = codes.make(scid, ename)
-            data.rows["print_design"].append(
-                {
-                    "id": did,
-                    "company_id": scid,
-                    "code": design_code,
-                    "name": ename[:120],
-                    "image_url": (
-                        (str(sm.get("foto_estampa_url")).strip() or None) if sm.get("foto_estampa_url") else None
-                    ),
-                    "cost_per_unit": Decimal("0"),
-                    "technique": PrintTechnique.DTF,
-                }
-            )
+            row = {
+                "id": did,
+                "company_id": scid,
+                "code": design_code,
+                "name": ename[:120],
+                "image_url": None,
+                "cost_per_unit": Decimal("0"),
+                "technique": PrintTechnique.DTF,
+                "has_front": False,
+                "has_back": False,
+                "image_url_front": None,
+                "image_url_back": None,
+            }
+            data.rows["print_design"].append(row)
             print_design_index[dkey] = did
             design_code_by_id[did] = design_code
+            design_row_by_id[did] = row
+            design_company_by_id[did] = scid
             report.add("print_design")
+        combos = sm.get("combinacoes")
+        if isinstance(combos, list):
+            combos_by_design.setdefault(did, []).extend(c for c in combos if isinstance(c, dict))
         if stitle:
             design_by_title.setdefault((scid, stitle), did)
     report.fetched["print_design"] = len(_records(raw, "StampaMemory"))
+
+    # ── Second pass: artwork. Populate each design's image fields from its
+    # aggregated combos and emit one print_design_variation per distinct ink
+    # color (clean_color(cor_estampa)); the first combo carrying artwork wins.
+    def _combo_url(combo: dict, *keys: str) -> str | None:
+        for key in keys:
+            value = combo.get(key)
+            if value and str(value).strip():
+                return str(value).strip()
+        return None
+
+    for did, combos in combos_by_design.items():
+        row = design_row_by_id.get(did)
+        if row is None:
+            continue
+        scid = design_company_by_id[did]
+        thumb_front: str | None = None
+        thumb_back: str | None = None
+        # Per-ink artwork accumulated across ALL combos: the first non-null
+        # front/back url for each ink wins, so a later same-ink combo (possibly
+        # from another StampaMemory record that aggregated in) can supply artwork
+        # an earlier one lacked.
+        inks: dict[str, dict] = {}
+        for combo in combos:
+            front_url = _combo_url(combo, "arquivo_png_url_frente", "arquivo_png_url")
+            back_url = _combo_url(combo, "arquivo_png_url_costas")
+            if thumb_front is None and front_url:
+                thumb_front = front_url
+            if thumb_back is None and back_url:
+                thumb_back = back_url
+            color_raw = combo.get("cor_estampa")
+            ink_key = norm(color_raw)
+            if not ink_key or ink_key in {"n/a", "-"}:
+                continue
+            ink = inks.setdefault(ink_key, {"name": clean_color(color_raw), "front": None, "back": None})
+            if ink["front"] is None and front_url:
+                ink["front"] = front_url
+            if ink["back"] is None and back_url:
+                ink["back"] = back_url
+        for ink_key, ink in inks.items():
+            front_url, back_url = ink["front"], ink["back"]
+            data.rows["print_design_variation"].append(
+                {
+                    "id": derive_id("print_design_variation", did, ink_key),
+                    "company_id": scid,
+                    "print_design_id": did,
+                    "name": ink["name"],
+                    "ink_hex": ink_hex_for(ink["name"]),
+                    "front_file_url": front_url,
+                    "front_status": ArtworkStatus.OK if front_url else ArtworkStatus.PENDING,
+                    "back_file_url": back_url,
+                    "back_status": ArtworkStatus.OK if back_url else ArtworkStatus.PENDING,
+                }
+            )
+            report.add("print_design_variation")
+        row["image_url"] = thumb_front or thumb_back or None
+        row["image_url_front"] = thumb_front
+        row["image_url_back"] = thumb_back
+        row["has_front"] = thumb_front is not None
+        row["has_back"] = thumb_back is not None
 
     def _types_in(text) -> set:
         n = norm(text)

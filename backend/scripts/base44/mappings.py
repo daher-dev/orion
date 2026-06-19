@@ -358,14 +358,16 @@ def convert(
     product_by_b44: dict[str, dict] = {}
     variation_index: dict[tuple[uuid.UUID, uuid.UUID, str, str], uuid.UUID] = {}
 
-    def register_variation(company_id, product_id, spec_code, size: Size, color_raw) -> uuid.UUID:
+    def register_variation(company_id, product_id, spec_code, size: Size, color_raw, print_code=None) -> uuid.UUID:
         color = clean_color(color_raw)
         ckey = (company_id, product_id, size.value, norm(color))
         if ckey in variation_index:
             return variation_index[ckey]
         color_code = colors.code(company_id, color)
         vid = derive_id("product_variation", product_id, size.value, color_code)
-        sku = ProductVariation.make_sku(spec_code=spec_code, size=size, color_code=color_code, print_code=None)
+        # ``print_code`` keeps SKUs unique across the (spec x design) products that
+        # share a spec — the variation id is already disambiguated by product_id.
+        sku = ProductVariation.make_sku(spec_code=spec_code, size=size, color_code=color_code, print_code=print_code)
         data.rows["product_variation"].append(
             {
                 "id": vid,
@@ -747,7 +749,12 @@ def convert(
 
     stampa_title_type: dict[tuple[uuid.UUID, str], str] = {}
     print_design_index: dict[tuple[uuid.UUID, str], uuid.UUID] = {}
-    _seen_designs: set[tuple[uuid.UUID, str]] = set()
+    design_code_by_id: dict[uuid.UUID, str] = {}
+    # ad title → design: the bridge that lets an order recover its estampa. A
+    # legacy ``StampaMemory`` row pairs ``titulo_anuncio`` (the listing an order
+    # carries) with ``estampa_nome`` (the design); the order resolver uses it to
+    # pick the (spec x design) product. First title→design wins.
+    design_by_title: dict[tuple[uuid.UUID, str], uuid.UUID] = {}
     for sm in _records(raw, "StampaMemory"):
         scid = company_of(sm)
         if scid is None:
@@ -759,42 +766,52 @@ def convert(
         if not ename or norm(ename) in {"n/a", "-"}:
             continue
         dkey = (scid, norm(ename))
-        if dkey in _seen_designs:
-            continue
-        _seen_designs.add(dkey)
-        did = derive_id("print_design", scid, norm(ename))
-        data.rows["print_design"].append(
-            {
-                "id": did,
-                "company_id": scid,
-                "code": codes.make(scid, ename),
-                "name": ename[:120],
-                "image_url": (str(sm.get("foto_estampa_url")).strip() or None) if sm.get("foto_estampa_url") else None,
-                "cost_per_unit": Decimal("0"),
-                "technique": PrintTechnique.DTF,
-            }
-        )
-        print_design_index[dkey] = did
-        report.add("print_design")
+        did = print_design_index.get(dkey)
+        if did is None:
+            did = derive_id("print_design", scid, norm(ename))
+            design_code = codes.make(scid, ename)
+            data.rows["print_design"].append(
+                {
+                    "id": did,
+                    "company_id": scid,
+                    "code": design_code,
+                    "name": ename[:120],
+                    "image_url": (
+                        (str(sm.get("foto_estampa_url")).strip() or None) if sm.get("foto_estampa_url") else None
+                    ),
+                    "cost_per_unit": Decimal("0"),
+                    "technique": PrintTechnique.DTF,
+                }
+            )
+            print_design_index[dkey] = did
+            design_code_by_id[did] = design_code
+            report.add("print_design")
+        if stitle:
+            design_by_title.setdefault((scid, stitle), did)
     report.fetched["print_design"] = len(_records(raw, "StampaMemory"))
 
     def _types_in(text) -> set:
         n = norm(text)
         return {pt for kw, pt in settings.PRODUCT_TYPE_KEYWORDS if strip_accents(kw) in n}
 
-    # 10) PedidoImportado → order + imported_order. Each order resolves to a REAL
-    # product within its Ad's product set (an Ad lists many products via
-    # ad_products); when no real product matches it falls back to a synthetic
-    # "Pedidos importados" product. client_id/sale_price stay NULL.
+    # 10) PedidoImportado → order + imported_order. Each order resolves to ONE
+    # (spec x design) product: the garment spec by type keyword, the design via
+    # the StampaMemory ad-title bridge — and the Ad is bound to that single
+    # product. No design → the spec's base no-print product (cut-only); no garment
+    # match → a synthetic "Pedidos importados" product. client_id/sale_price stay NULL.
     synth: dict[uuid.UUID, dict] = {}
     ad_index: dict[tuple, uuid.UUID] = {}
     ad_products_index: dict[uuid.UUID, list[dict]] = {}
+    # (company, spec, design) → the resolved (spec x design) product info, created once.
+    design_product_index: dict[tuple[uuid.UUID, uuid.UUID, uuid.UUID], dict] = {}
     order_keys: set[tuple] = set()
     import_keys: set[tuple] = set()
     order_row_by_pi: dict[str, dict] = {}
     order_by_natkey: dict[tuple, uuid.UUID] = {}
     real_matches = 0
     synth_matches = 0
+    design_orders = 0
+    nodesign_orders = 0
 
     def _synth_product(company_id: uuid.UUID) -> dict:
         info = synth.get(company_id)
@@ -831,8 +848,59 @@ def convert(
         )
         report.add("product_spec")
         report.add("product")
-        info = {"product_id": product_id, "spec_code": spec_code}
+        info = {
+            "company_id": company_id,
+            "product_id": product_id,
+            "spec_id": spec_id,
+            "spec_code": spec_code,
+            "product_type": settings.DEFAULT_PRODUCT_TYPE,
+            "name": "Pedidos importados",
+        }
         synth[company_id] = info
+        return info
+
+    def _get_or_make_product(company_id: uuid.UUID, spec_info: dict, design_id: uuid.UUID | None) -> dict:
+        """Resolve the (spec x design) product an order/ad maps to.
+
+        ``design_id is None`` → the spec's base (no-print) product, which doubles
+        as the blank-garment SKU family + the home for design-agnostic legacy
+        stock. Otherwise a product keyed by ``(spec, design)`` is created once (the
+        ``uq_products_spec_id_print_id`` constraint allows exactly one) carrying the
+        design as ``print_id``, so the whole demand → cut/print engine can resolve
+        what to print.
+        """
+
+        design_code = design_code_by_id.get(design_id) if design_id is not None else None
+        if design_id is None or design_code is None:
+            # No design (or a design with no code) → the base no-print product; its
+            # SKU has no print segment, so it must never masquerade as a design.
+            return spec_info
+        pkey = (company_id, spec_info["spec_id"], design_id)
+        existing = design_product_index.get(pkey)
+        if existing is not None:
+            return existing
+        product_id = derive_id("product", "design", spec_info["spec_id"], design_id)
+        data.rows["product"].append(
+            {
+                "id": product_id,
+                "company_id": company_id,
+                "name": (f"{spec_info['name']} · {design_code}"[:120] if design_code else spec_info["name"]),
+                "product_type": spec_info["product_type"],
+                "spec_id": spec_info["spec_id"],
+                "print_id": design_id,
+            }
+        )
+        report.add("product")
+        info = {
+            "company_id": company_id,
+            "product_id": product_id,
+            "spec_id": spec_info["spec_id"],
+            "spec_code": spec_info["spec_code"],
+            "product_type": spec_info["product_type"],
+            "name": spec_info["name"],
+            "print_code": design_code,
+        }
+        design_product_index[pkey] = info
         return info
 
     def _get_or_build_ad(company_id: uuid.UUID, marketplace: str, title_raw) -> uuid.UUID:
@@ -843,11 +911,21 @@ def convert(
         if key in ad_index:
             return ad_index[key]
         ad_id = derive_id("ad", company_id, eco.value, tnorm or "untitled")
+        # Resolve the garment spec (by type keyword), then the design (by ad
+        # title), and bind the ad to that single (spec x design) product.
         types = _types_in(f"{title} {stampa_title_type.get((company_id, tnorm), '')}")
         candidates = [i for i in products_by_company.get(company_id, []) if i["product_type"] in types] if types else []
-        if not candidates:
-            candidates = [_synth_product(company_id)]
+        if candidates:
+            spec_info = candidates[0]
+        else:
+            spec_info = _synth_product(company_id)
             report.skip("ad:no_real_product_match", title[:60] or "(untitled)")
+        design_id = design_by_title.get((company_id, tnorm))
+        if design_id is not None:
+            report.default("ad.design_linked")
+        else:
+            report.skip("ad:no_design_match", title[:60] or "(untitled)")
+        product_info = _get_or_make_product(company_id, spec_info, design_id)
         data.rows["ad"].append(
             {
                 "id": ad_id,
@@ -858,23 +936,17 @@ def convert(
             }
         )
         report.add("ad")
-        seen_p: set[uuid.UUID] = set()
-        for info in candidates:
-            pid = info["product_id"]
-            if pid in seen_p:
-                continue
-            seen_p.add(pid)
-            data.rows["ad_products"].append(
-                {
-                    "id": derive_id("ad_product", ad_id, pid),
-                    "company_id": company_id,
-                    "ad_id": ad_id,
-                    "product_id": pid,
-                }
-            )
-            report.add("ad_products")
+        data.rows["ad_products"].append(
+            {
+                "id": derive_id("ad_product", ad_id, product_info["product_id"]),
+                "company_id": company_id,
+                "ad_id": ad_id,
+                "product_id": product_info["product_id"],
+            }
+        )
+        report.add("ad_products")
         ad_index[key] = ad_id
-        ad_products_index[ad_id] = candidates
+        ad_products_index[ad_id] = [product_info]
         return ad_id
 
     for po in _records(raw, "PedidoImportado"):
@@ -893,11 +965,17 @@ def convert(
         marketplace = str(po.get("marketplace") or "Não informado").strip() or "Não informado"
         ad_id = _get_or_build_ad(cid, marketplace, po.get("titulo_anuncio"))
         chosen = (ad_products_index.get(ad_id) or [_synth_product(cid)])[0]
-        vid = register_variation(cid, chosen["product_id"], chosen["spec_code"], size, po.get("cor"))
+        vid = register_variation(
+            cid, chosen["product_id"], chosen["spec_code"], size, po.get("cor"), print_code=chosen.get("print_code")
+        )
         if chosen["product_id"] == synth.get(cid, {}).get("product_id"):
             synth_matches += 1
         else:
             real_matches += 1
+        if chosen.get("print_code"):
+            design_orders += 1
+        else:
+            nodesign_orders += 1
         external = str(po.get("numero_pedido") or "").strip() or None
         sku = str(po.get("sku") or "").strip()
         platform_order_id = external or str(po.get("id"))
@@ -951,6 +1029,7 @@ def convert(
     report.fetched["order"] = len(_records(raw, "PedidoImportado"))
     report.fetched["imported_order"] = len(_records(raw, "PedidoImportado"))
     report.notes.append(f"order→product match: {real_matches} real, {synth_matches} synthetic")
+    report.notes.append(f"order→design match: {design_orders} with design, {nodesign_orders} no-design (cut-only)")
 
     # 11) LoteProducao → batch (+ Order.batch_id backfill + print adjustments)
     order_id_by_pi = {pi: row["id"] for pi, row in order_row_by_pi.items()}

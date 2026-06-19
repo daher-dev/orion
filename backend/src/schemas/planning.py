@@ -51,9 +51,10 @@ class PlanningSpecRef(BaseModel):
 class PlanningSku(BaseModel):
     """One open-demand SKU ``(design, spec, color_code, size)`` with component availability.
 
-    ``needed`` counts open ``OrderItem`` rows; ``net = max(0, needed - finished)``
-    is the quantity that still has to be assembled. ``blank_short`` / ``printed_short``
-    say which component is missing; ``buildable = min(net, blank_have, printed_have)``.
+    ``needed`` = open-order ``Σ Order.quantity`` for the SKU (minus already-separated
+    ``CHECKED`` pieces); ``net = max(0, needed - finished)`` is the quantity that
+    still has to be assembled. ``blank_short`` / ``printed_short`` say which
+    component is missing; ``buildable = min(net, blank_have, printed_have)``.
     """
 
     key: str

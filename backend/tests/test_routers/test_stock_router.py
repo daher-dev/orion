@@ -52,11 +52,18 @@ async def _make_variation(db_session, *, company_id: uuid.UUID, **overrides):
     # unique constraint on `products` doesn't collide when a test creates
     # multiple variations in the same tenant.
     spec = await create_product_spec(db_session, company_id=company_id, code=f"FT{uuid.uuid4().hex[:6].upper()}")
-    product = await create_product(db_session, company_id=company_id, spec_id=spec.id)
+    # Pin the product name to the variation's SKU. ProductFactory leaves
+    # Product.name random, and /stock/levels search matches Product.name — a
+    # random name can contain a test's search needle and flip an exact-count
+    # assertion under --random-order. Naming the product after the SKU keeps
+    # search deterministic.
+    sku = overrides.pop("sku", None) or f"SKU-{uuid.uuid4().hex[:8].upper()}"
+    product = await create_product(db_session, company_id=company_id, spec_id=spec.id, name=sku)
     variation = await create_product_variation(
         db_session,
         company_id=company_id,
         product_id=product.id,
+        sku=sku,
         **overrides,
     )
     return product, variation

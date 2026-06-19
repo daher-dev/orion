@@ -479,8 +479,9 @@ async def _pieces_cut_today(db: AsyncSession, *, company_id: uuid.UUID) -> int:
         CuttingOrder,
         company_id,
     ).where(
-        CuttingOrder.cut_at >= start,  # type: ignore[operator]
-        CuttingOrder.cut_at < end,  # type: ignore[operator]
+        CuttingOrder.cut_at.is_not(None),  # type: ignore[attr-defined]
+        CuttingOrder.cut_at >= start,  # ty: ignore[unsupported-operator]
+        CuttingOrder.cut_at < end,  # ty: ignore[unsupported-operator]
     )
     return int((await db.exec(stmt)).first() or 0)
 

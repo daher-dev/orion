@@ -23,6 +23,7 @@ export type MeCompany = {
 
 export type MeRole = {
   id: string;
+  code: string;
   name: string;
 };
 

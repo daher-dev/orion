@@ -18,49 +18,46 @@ const MOCK_ME = {
   companies: [{ id: "22222222-2222-2222-2222-222222222222", name: "QA Co", role_code: "admin" }],
 };
 
+const MOCK_ME_OPERATOR = {
+  ...MOCK_ME,
+  role: { id: "44444444-4444-4444-4444-444444444444", code: "operator", name: "Operator" },
+  permissions: ["orders.read", "cutting.read", "cutting.write", "stock.read", "stock.write"],
+  companies: [{ id: "22222222-2222-2222-2222-222222222222", name: "QA Co", role_code: "operator" }],
+};
+
+// Mirrors backend/src/schemas/dashboard.py DashboardSummary.
 const MOCK_DASHBOARD = {
-  kpis: {
-    orders_pending: { label: "Pedidos", value: 0, delta_pct: null, sparkline: null },
-    orders_revenue_30d: { label: "Receita", value: 0, delta_pct: null, sparkline: null },
-    cutting_pending: { label: "Corte", value: 0, delta_pct: null, sparkline: null },
-    stock_low: { label: "Estoque", value: 0, delta_pct: null, sparkline: null },
-    banca_active: { label: "Bancas", value: 0, delta_pct: null, sparkline: null },
-  },
-  pipeline: {
-    total_pending_orders: 0,
-    in_cutting: 0,
-    in_sewing: 0,
-    in_stock: 0,
-    shipped_30d: 0,
-  },
-  needs_action: [],
-  activity: [],
-  revenue_by_channel: [],
-  // Phase 6 added the Conferência section; the dashboard renders it from
-  // `summary.conference`, so the mock must carry the full shape or the page
-  // crashes on the missing field (taking the greeting <h1> down with it).
   conference: {
     totals: {
-      orders: 0,
-      pieces: 0,
-      mapped: 0,
-      pending: 0,
-      checked: 0,
-      to_check: 0,
-      in_lote: 0,
-      mapped_pct: 100,
+      orders: 12,
+      pieces: 30,
+      mapped: 25,
+      pending: 5,
+      mapped_pct: 83,
+      in_lote: 4,
+      orders_checked: 6,
+      orders_partial: 2,
+      orders_untouched: 4,
+      pieces_checked: 18,
     },
-    pipeline: { mapeamento: 0, producao: 0, separacao: 0, envio: 0 },
-    batches: { open: 0, in_production: 0, dispatched: 0 },
+  },
+  top_products: [{ product_id: "p1", code: "2055", name: "Camiseta 2055", pieces: 18, orders: 12 }],
+  needs_action: [],
+  activity: [],
+  operator: {
+    cuts_in_queue: 3,
+    shipments_incoming: 2,
+    pieces_today: 12,
+    cutting_queue: [{ id: "c1", code: "CAM01", color: "Preto", status: "pending" }],
   },
 };
 
-async function mockApis(page: Page) {
+async function mockApis(page: Page, me: object = MOCK_ME) {
   await page.route(`**/v1/auth/me`, (route: Route) =>
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MOCK_ME) }),
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(me) }),
   );
   await page.route(`**/v1/auth/session`, (route: Route) =>
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MOCK_ME) }),
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(me) }),
   );
   await page.route(`**/v1/dashboard/summary`, (route: Route) =>
     route.fulfill({
@@ -71,10 +68,14 @@ async function mockApis(page: Page) {
   );
 }
 
-test("home page loads and renders in the default locale", async ({ page }) => {
+test("home page loads and renders the manager conference layout", async ({ page }) => {
   await mockApis(page);
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  // New conference-centred layout: KPI strip + top products, no operator view.
+  await expect(page.getByTestId("conference-kpis")).toBeVisible();
+  await expect(page.getByTestId("top-products")).toBeVisible();
+  await expect(page.getByTestId("operator-kpis")).toHaveCount(0);
 });
 
 test("home page loads in English", async ({ page }) => {
@@ -97,4 +98,16 @@ test("greeting shows user's first name, not their email", async ({ page }) => {
   await expect(heading).toBeVisible();
   await expect(heading).toContainText("QA");
   await expect(heading).not.toContainText("qa-dev@orion.local");
+});
+
+test("operator role sees the factory-floor dashboard, not the manager view", async ({ page }) => {
+  await mockApis(page, MOCK_ME_OPERATOR);
+  await page.goto("/en");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  // Operator variant renders its KPIs + cutting queue, and none of the
+  // manager-only conference sections.
+  await expect(page.getByTestId("operator-kpis")).toBeVisible();
+  await expect(page.getByTestId("operator-queue")).toBeVisible();
+  await expect(page.getByTestId("conference-kpis")).toHaveCount(0);
+  await expect(page.getByTestId("top-products")).toHaveCount(0);
 });

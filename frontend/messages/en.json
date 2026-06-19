@@ -165,34 +165,6 @@
       "eveningWithName": "Good evening, {name}",
       "nightWithName": "Good night, {name}"
     },
-    "kpis": {
-      "ordersPending": "Pending orders",
-      "ordersRevenue": "30d revenue",
-      "cuttingPending": "Cuts in progress",
-      "stockLow": "SKUs out of stock",
-      "bancaActive": "With contractors"
-    },
-    "pipeline": {
-      "title": "Production pipeline",
-      "stages": {
-        "pendingOrders": "Orders",
-        "inCutting": "Cutting",
-        "inSewing": "Sewing",
-        "inStock": "Stock",
-        "shipped30d": "Shipped"
-      },
-      "stageSubs": {
-        "pendingOrders": "Awaiting production",
-        "inCutting": "Cutting or queued",
-        "inSewing": "With contractors",
-        "inStock": "Ready to ship",
-        "shipped30d": "Last 7 days"
-      },
-      "sub": "Where your pieces are right now",
-      "footer": "On average a piece takes <b>7.2 days</b> from order to delivery.",
-      "updated": "Updated {minutes} min ago",
-      "viewDetails": "View details"
-    },
     "conference": {
       "title": "Today's check",
       "sub": "From order to finished piece",
@@ -214,16 +186,64 @@
         "piecesDone": "Items checked"
       },
       "subtiles": {
-        "toCheck": "To check",
-        "inLote": "In batch",
-        "pending": "Pending"
+        "partial": "Partial",
+        "problems": "Problems",
+        "toCheck": "To check"
+      }
+    },
+    "topProducts": {
+      "title": "Top 5 products",
+      "sub": "By pieces in the order book",
+      "viewAll": "View all",
+      "pieces": "pcs",
+      "orders": "{count} ord.",
+      "empty": "No products yet."
+    },
+    "report": {
+      "title": "Order report",
+      "sub": "Today's order book",
+      "tiles": {
+        "orders": "Orders",
+        "pieces": "Pieces",
+        "mapped": "Mapped",
+        "pending": "Pending",
+        "done": "Checked",
+        "tocheck": "To check",
+        "inbatch": "In batch",
+        "nobatch": "No batch"
+      }
+    },
+    "operator": {
+      "sub": "Your tasks for today on the floor.",
+      "help": {
+        "title": "Your day on the floor, in order",
+        "body": "This screen gathers only what's <b>yours today</b>: cuts in your queue, shipments arriving, and what's left to sew. Tap a card to jump straight to the task.",
+        "flow": {
+          "cut": "Cut",
+          "cutSub": "your queue",
+          "sew": "Sew",
+          "sewSub": "shipments",
+          "deliver": "Deliver",
+          "deliverSub": "to stock"
+        }
       },
-      "pipeline": {
-        "title": "Order pipeline",
-        "mapeamento": "Mapping",
-        "producao": "Production",
-        "separacao": "Separation",
-        "envio": "Dispatch"
+      "kpis": {
+        "queue": "Cuts in your queue",
+        "queueSub": "Pending + in progress",
+        "incoming": "Shipments arriving",
+        "incomingSub": "Out at contractors",
+        "today": "Pieces produced today",
+        "todaySub": "Cut today"
+      },
+      "queueTitle": "Cuts waiting for you",
+      "queueAll": "View all",
+      "queueEmpty": "Nothing in the queue.",
+      "open": "Open",
+      "quickActions": {
+        "title": "Quick actions",
+        "registerCut": "Register cut output",
+        "receiveShipment": "Receive shipment",
+        "adjustStock": "Adjust stock"
       }
     },
     "needsAction": {
@@ -252,11 +272,6 @@
     "actions": {
       "newOrder": "New order",
       "period": "Period"
-    },
-    "revenueByChannel": {
-      "title": "Revenue by channel",
-      "sub": "Last 30 days",
-      "empty": "No revenue data yet."
     },
     "help": {
       "title": "Day check — from order to finished piece",

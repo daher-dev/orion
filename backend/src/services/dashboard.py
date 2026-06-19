@@ -4,13 +4,16 @@ Read-only — every query aggregates over existing tenant-scoped tables.
 The single public entry point is :func:`get_summary`, which returns a
 fully populated :class:`DashboardSummary` ready to be sent on the wire.
 
+The dashboard is centred on the daily *conferência*. It surfaces: the
+conference totals (with the order-level checked classification), the Top-5
+products ranking, the operational follow-up lists (needs-action + activity),
+and the operator (factory-floor) section.
+
 Aggregation conventions
 -----------------------
 - All ``SELECT`` calls are tenant-scoped through ``scoped()``.
 - We avoid an N+1 by computing the activity feed via a single joined
   ``select(AuditLog, User)`` (same pattern as the audit-log viewer).
-- Sparkline data: 7-day buckets going back from "today". Empty buckets
-  return 0 — the frontend draws those as a flat baseline.
 - Threshold for "stock_low": variations with on-hand ≤ the configured
   threshold (per-variation override, else the company-wide
   ``Company.low_stock_threshold``, else ``DEFAULT_LOW_STOCK_THRESHOLD``)
@@ -21,7 +24,7 @@ Aggregation conventions
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import case, func
@@ -29,17 +32,17 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from models import (
-    Ad,
     AuditLog,
-    Batch,
-    BatchStatus,
     Company,
     CuttingOrder,
+    CuttingOrderOutput,
     CuttingStatus,
     FabricRoll,
     Order,
     OrderItem,
     OrderStatus,
+    Product,
+    ProductSpec,
     ProductVariation,
     SeparationStatus,
     SewingShipment,
@@ -50,16 +53,13 @@ from models import (
 )
 from schemas.dashboard import (
     ActivityItem,
-    ChannelRevenue,
-    ConferenceBatchCounts,
-    ConferencePipeline,
     ConferenceSummary,
     ConferenceTotals,
-    DashboardKpis,
     DashboardSummary,
-    Kpi,
     NeedsActionItem,
-    PipelineCounts,
+    OperatorCut,
+    OperatorSummary,
+    TopProduct,
 )
 from services._base import scoped
 
@@ -68,17 +68,17 @@ from services._base import scoped
 #: overrides). Mirrors ``Company.low_stock_threshold``'s server_default.
 DEFAULT_LOW_STOCK_THRESHOLD = 10
 
-#: Days for the revenue window + the comparison delta.
-REVENUE_WINDOW_DAYS = 30
-
-#: How many days back the sparkline covers.
-SPARK_DAYS = 7
-
 #: Maximum number of audit rows surfaced in the activity feed.
 ACTIVITY_LIMIT = 20
 
 #: How many top items to surface in the needs-action list.
 NEEDS_ACTION_LIMIT = 5
+
+#: How many products to surface in the Top-5 ranking.
+TOP_PRODUCTS_LIMIT = 5
+
+#: How many cutting orders to surface in the operator queue.
+OPERATOR_QUEUE_LIMIT = 5
 
 
 # --------------------------------------------------------------------------- utilities
@@ -88,10 +88,11 @@ def _utc_now() -> datetime:
     return datetime.now(UTC)
 
 
-def _start_of_window(days: int) -> datetime:
-    """Return midnight UTC for ``days`` ago — keeps the day-buckets stable."""
+def _utc_today_bounds() -> tuple[datetime, datetime]:
+    """Return ``[start_of_today, start_of_tomorrow)`` in UTC."""
     today = _utc_now().date()
-    return datetime.combine(today - timedelta(days=days), datetime.min.time(), tzinfo=UTC)
+    start = datetime.combine(today, datetime.min.time(), tzinfo=UTC)
+    return start, start + timedelta(days=1)
 
 
 # --------------------------------------------------------------------------- KPI helpers
@@ -104,21 +105,6 @@ async def _count_orders_with_status(db: AsyncSession, *, company_id: uuid.UUID, 
         company_id,
     ).where(Order.status == status)
     return int((await db.exec(stmt)).first() or 0)
-
-
-async def _sum_revenue_since(
-    db: AsyncSession, *, company_id: uuid.UUID, since: datetime, until: datetime | None = None
-) -> Decimal:
-    stmt = scoped(
-        select(func.coalesce(func.sum(func.coalesce(Order.sale_price, 0) * Order.quantity), 0)),
-        Order,
-        company_id,
-    ).where(Order.ordered_at >= since)
-    if until is not None:
-        stmt = stmt.where(Order.ordered_at < until)
-    raw = (await db.exec(stmt)).first() or 0
-    # SQLAlchemy may return Decimal | int | float depending on the dialect.
-    return Decimal(str(raw))
 
 
 async def _count_cutting_in_progress(db: AsyncSession, *, company_id: uuid.UUID) -> int:
@@ -210,107 +196,50 @@ def _count_low_stock(
     return sum(1 for variation_id, value in levels.items() if value <= overrides.get(variation_id, company_threshold))
 
 
-def _count_in_stock(levels: dict[uuid.UUID, int]) -> int:
-    return sum(1 for value in levels.values() if value > 0)
+# --------------------------------------------------------------------------- top products
 
 
-# --------------------------------------------------------------------------- pipeline
+async def _top_products(
+    db: AsyncSession, *, company_id: uuid.UUID, limit: int = TOP_PRODUCTS_LIMIT
+) -> list[TopProduct]:
+    """Top products by pieces in the order book (``status != cancelled``).
 
+    Aggregates over ``Order`` (not ``OrderItem`` — items carry no quantity, and
+    ``conference.totals.pieces`` already uses ``Order.quantity``), joining
+    ``Order → ProductVariation → Product → ProductSpec``.
+    """
 
-async def _shipped_in_last(db: AsyncSession, *, company_id: uuid.UUID, days: int) -> int:
-    bound = _utc_now() - timedelta(days=days)
-    stmt = scoped(
-        select(func.count()).select_from(Order),
-        Order,
-        company_id,
-    ).where(
-        Order.status == OrderStatus.SHIPPED,
-        Order.updated_at >= bound,  # type: ignore[attr-defined]
-    )
-    return int((await db.exec(stmt)).first() or 0)
-
-
-# --------------------------------------------------------------------------- sparkline
-
-
-async def _orders_revenue_sparkline(
-    db: AsyncSession,
-    *,
-    company_id: uuid.UUID,
-    days: int = SPARK_DAYS,
-) -> list[int]:
-    """7-day daily revenue series ending today (rounded to the nearest BRL)."""
-
-    # asyncpg requires the GROUP BY expression to be the *same* expression
-    # tree as the SELECT one — repeating the date_trunc() call produces
-    # different SQL nodes. Bind it to a name and reuse.
-    day_expr = func.date_trunc("day", Order.ordered_at)
-    rows = await db.exec(
+    stmt = (
         scoped(
             select(
-                day_expr.label("day"),
-                func.coalesce(func.sum(func.coalesce(Order.sale_price, 0) * Order.quantity), 0).label("revenue"),
-            ),
+                Product.id.label("product_id"),
+                ProductSpec.code.label("code"),
+                Product.name.label("name"),
+                func.coalesce(func.sum(Order.quantity), 0).label("pieces"),
+                func.count(func.distinct(Order.id)).label("orders"),
+            )
+            .join(ProductVariation, ProductVariation.id == Order.variation_id)
+            .join(Product, Product.id == ProductVariation.product_id)
+            .join(ProductSpec, ProductSpec.id == Product.spec_id),
             Order,
             company_id,
         )
-        .where(Order.ordered_at >= _start_of_window(days - 1))
-        .group_by(day_expr)
+        .where(Order.status != OrderStatus.CANCELLED)
+        .group_by(Product.id, ProductSpec.code, Product.name)
+        .order_by(func.sum(Order.quantity).desc())
+        .limit(limit)
     )
-    by_day: dict[date, int] = {}
-    for day, revenue in rows.all():
-        # ``day`` is a datetime at midnight UTC — collapse to a date.
-        actual_day = day.date() if isinstance(day, datetime) else day
-        by_day[actual_day] = int(Decimal(str(revenue or 0)))
-    today = _utc_now().date()
-    return [by_day.get(today - timedelta(days=i), 0) for i in reversed(range(days))]
-
-
-async def _created_per_day_sparkline(
-    db: AsyncSession,
-    *,
-    model: type,
-    company_id: uuid.UUID,
-    days: int = SPARK_DAYS,
-) -> list[int]:
-    """Generic daily-creation sparkline for any CompanyModel."""
-    day_expr = func.date_trunc("day", model.created_at)
-    rows = await db.exec(
-        scoped(
-            select(
-                day_expr.label("day"),
-                func.count().label("cnt"),
-            ),
-            model,
-            company_id,
+    rows = (await db.exec(stmt)).all()
+    return [
+        TopProduct(
+            product_id=row.product_id,
+            code=row.code,
+            name=row.name,
+            pieces=int(row.pieces or 0),
+            orders=int(row.orders or 0),
         )
-        .where(model.created_at >= _start_of_window(days - 1))
-        .group_by(day_expr)
-    )
-    by_day: dict[date, int] = {}
-    for day, cnt in rows.all():
-        actual_day = day.date() if isinstance(day, datetime) else day
-        by_day[actual_day] = int(cnt or 0)
-    today = _utc_now().date()
-    return [by_day.get(today - timedelta(days=i), 0) for i in reversed(range(days))]
-
-
-async def _count_created_in_range(
-    db: AsyncSession,
-    *,
-    model: type,
-    company_id: uuid.UUID,
-    since: datetime,
-    until: datetime | None = None,
-) -> int:
-    stmt = scoped(
-        select(func.count()).select_from(model),
-        model,
-        company_id,
-    ).where(model.created_at >= since)
-    if until is not None:
-        stmt = stmt.where(model.created_at < until)
-    return int((await db.exec(stmt)).first() or 0)
+        for row in rows
+    ]
 
 
 # --------------------------------------------------------------------------- needs action
@@ -417,68 +346,37 @@ async def _activity(db: AsyncSession, *, company_id: uuid.UUID) -> list[Activity
     return items
 
 
-# --------------------------------------------------------------------------- revenue by channel
-
-
-async def _revenue_by_channel(
-    db: AsyncSession,
-    *,
-    company_id: uuid.UUID,
-    days: int = REVENUE_WINDOW_DAYS,
-) -> list[ChannelRevenue]:
-    """Revenue grouped by ecommerce channel for the last ``days`` days."""
-    since = _start_of_window(days)
-    stmt = (
-        scoped(
-            select(
-                Ad.ecommerce.label("channel"),
-                func.coalesce(func.sum(func.coalesce(Order.sale_price, 0) * Order.quantity), 0).label("revenue"),
-            ).join(Ad, Order.ad_id == Ad.id),
-            Order,
-            company_id,
-        )
-        .where(Order.ordered_at >= since)
-        .group_by(Ad.ecommerce)
-        .order_by(func.sum(func.coalesce(Order.sale_price, 0) * Order.quantity).desc())
-    )
-    rows = (await db.exec(stmt)).all()
-    return [ChannelRevenue(channel=str(row.channel), revenue=float(row.revenue)) for row in rows]
-
-
 # --------------------------------------------------------------------------- conference
 
 
 async def _order_piece_counts(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str, int]:
-    """``{mapped, pending, checked, to_check}`` over ``order_items`` (≤2 grouped queries)."""
+    """``{mapped, pending, pieces_checked}`` over the items of non-cancelled
+    orders (single aggregate query).
 
-    # mapped / pending split by (variation_id IS NULL).
-    null_flag = case((OrderItem.variation_id.is_(None), 1), else_=0)  # type: ignore[union-attr]
-    map_stmt = scoped(
-        select(null_flag.label("is_pending"), func.count()),
+    Joins ``Order`` and excludes ``CANCELLED`` so these piece counters stay
+    consistent with ``orders``/``pieces`` and the order-level classification —
+    otherwise a cancelled order's items would inflate ``mapped``/``pending`` and
+    skew ``mapped_pct`` against an order count that excludes them.
+    """
+
+    mapped_flag = case((OrderItem.variation_id.is_not(None), 1), else_=0)  # type: ignore[union-attr]
+    pending_flag = case((OrderItem.variation_id.is_(None), 1), else_=0)  # type: ignore[union-attr]
+    checked_flag = case((OrderItem.status == SeparationStatus.CHECKED, 1), else_=0)
+    stmt = scoped(
+        select(
+            func.coalesce(func.sum(mapped_flag), 0),
+            func.coalesce(func.sum(pending_flag), 0),
+            func.coalesce(func.sum(checked_flag), 0),
+        ).join(Order, Order.id == OrderItem.order_id),
         OrderItem,
         company_id,
-    ).group_by(null_flag)
-    mapped = pending = 0
-    for is_pending, count in (await db.exec(map_stmt)).all():
-        if int(is_pending or 0) == 1:
-            pending = int(count or 0)
-        else:
-            mapped = int(count or 0)
-
-    # checked / to_check by separation status.
-    status_stmt = scoped(
-        select(OrderItem.status, func.count()),
-        OrderItem,
-        company_id,
-    ).group_by(OrderItem.status)
-    checked = to_check = 0
-    for status, count in (await db.exec(status_stmt)).all():
-        if status == SeparationStatus.CHECKED:
-            checked = int(count or 0)
-        elif status == SeparationStatus.LABEL_PRINTED:
-            to_check = int(count or 0)
-
-    return {"mapped": mapped, "pending": pending, "checked": checked, "to_check": to_check}
+    ).where(Order.status != OrderStatus.CANCELLED)
+    mapped, pending, pieces_checked = (await db.exec(stmt)).one()
+    return {
+        "mapped": int(mapped or 0),
+        "pending": int(pending or 0),
+        "pieces_checked": int(pieces_checked or 0),
+    }
 
 
 async def _order_totals(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str, int]:
@@ -504,53 +402,52 @@ async def _order_totals(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str,
     return {"orders": int(orders_count or 0), "pieces": int(pieces or 0), "in_lote": in_lote}
 
 
-async def _order_pipeline(db: AsyncSession, *, company_id: uuid.UUID) -> ConferencePipeline:
-    """Bucket non-cancelled orders into the board's four columns (mirrors §3.3).
+async def _order_checked_classification(
+    db: AsyncSession, *, company_id: uuid.UUID, total_orders: int
+) -> dict[str, int]:
+    """Bucket every non-cancelled order by how many of its items are checked.
 
-    Reuses the readiness machinery: finished on-hand over the order variation set
-    + unmapped-order set + batched flag, bucketed in Python.
+    Returns ``{orders_checked, orders_partial, orders_untouched}`` where the
+    three sum to ``total_orders`` (orders with no items yet count as untouched).
     """
 
-    from services import order as order_service
-
-    orders = list(
-        (await db.exec(scoped(select(Order), Order, company_id).where(Order.status != OrderStatus.CANCELLED))).all()
+    checked_flag = case((OrderItem.status == SeparationStatus.CHECKED, 1), else_=0)
+    stmt = (
+        scoped(
+            select(
+                func.count().label("total"),
+                func.coalesce(func.sum(checked_flag), 0).label("checked"),
+            ).join(Order, Order.id == OrderItem.order_id),
+            OrderItem,
+            company_id,
+        )
+        .where(Order.status != OrderStatus.CANCELLED)
+        .group_by(OrderItem.order_id)
     )
-    variation_ids = {o.variation_id for o in orders}
-    order_ids = {o.id for o in orders}
-    finished_map = await order_service._finished_on_hand_map(db, company_id=company_id, variation_ids=variation_ids)
-    unmapped_ids = await order_service._unmapped_order_ids(db, company_id=company_id, order_ids=order_ids)
-
-    mapeamento = producao = separacao = envio = 0
-    for o in orders:
-        if o.id in unmapped_ids:
-            mapeamento += 1
-        elif o.batch_id is not None:
-            envio += 1
-        elif max(0, finished_map.get(o.variation_id, 0)) >= o.quantity:
-            separacao += 1
+    rows = (await db.exec(stmt)).all()
+    orders_checked = orders_partial = with_items_untouched = 0
+    for total, checked in rows:
+        total = int(total or 0)
+        checked = int(checked or 0)
+        if total > 0 and checked >= total:
+            orders_checked += 1
+        elif checked > 0:
+            orders_partial += 1
         else:
-            producao += 1
-    return ConferencePipeline(mapeamento=mapeamento, producao=producao, separacao=separacao, envio=envio)
-
-
-async def _batch_status_counts(db: AsyncSession, *, company_id: uuid.UUID) -> ConferenceBatchCounts:
-    stmt = scoped(select(Batch.status, func.count()), Batch, company_id).group_by(Batch.status)
-    counts: dict[BatchStatus, int] = {}
-    for status, count in (await db.exec(stmt)).all():
-        counts[status] = int(count or 0)
-    return ConferenceBatchCounts(
-        open=counts.get(BatchStatus.OPEN, 0),
-        in_production=counts.get(BatchStatus.IN_PRODUCTION, 0),
-        dispatched=counts.get(BatchStatus.DISPATCHED, 0),
-    )
+            with_items_untouched += 1
+    # Orders that have no items yet are not in ``rows`` — treat them as untouched.
+    orders_untouched = with_items_untouched + max(0, total_orders - len(rows))
+    return {
+        "orders_checked": orders_checked,
+        "orders_partial": orders_partial,
+        "orders_untouched": orders_untouched,
+    }
 
 
 async def _conference(db: AsyncSession, *, company_id: uuid.UUID) -> ConferenceSummary:
     pieces = await _order_piece_counts(db, company_id=company_id)
     totals = await _order_totals(db, company_id=company_id)
-    pipeline = await _order_pipeline(db, company_id=company_id)
-    batches = await _batch_status_counts(db, company_id=company_id)
+    classification = await _order_checked_classification(db, company_id=company_id, total_orders=totals["orders"])
 
     map_denom = pieces["mapped"] + pieces["pending"]
     mapped_pct = round(100 * pieces["mapped"] / map_denom) if map_denom else 100
@@ -561,27 +458,74 @@ async def _conference(db: AsyncSession, *, company_id: uuid.UUID) -> ConferenceS
             pieces=totals["pieces"],
             mapped=pieces["mapped"],
             pending=pieces["pending"],
-            checked=pieces["checked"],
-            to_check=pieces["to_check"],
-            in_lote=totals["in_lote"],
             mapped_pct=mapped_pct,
+            in_lote=totals["in_lote"],
+            orders_checked=classification["orders_checked"],
+            orders_partial=classification["orders_partial"],
+            orders_untouched=classification["orders_untouched"],
+            pieces_checked=pieces["pieces_checked"],
         ),
-        pipeline=pipeline,
-        batches=batches,
+    )
+
+
+# --------------------------------------------------------------------------- operator
+
+
+async def _pieces_cut_today(db: AsyncSession, *, company_id: uuid.UUID) -> int:
+    """Sum of cutting outputs whose order was cut today (a real "produced today").
+
+    ``CuttingOrderOutput`` is not company-scoped itself — we scope through the
+    joined ``CuttingOrder``.
+    """
+
+    start, end = _utc_today_bounds()
+    stmt = scoped(
+        select(func.coalesce(func.sum(CuttingOrderOutput.quantity), 0)).join(
+            CuttingOrder, CuttingOrder.id == CuttingOrderOutput.cutting_order_id
+        ),
+        CuttingOrder,
+        company_id,
+    ).where(
+        CuttingOrder.cut_at.is_not(None),  # type: ignore[attr-defined]
+        CuttingOrder.cut_at >= start,  # ty: ignore[unsupported-operator]
+        CuttingOrder.cut_at < end,  # ty: ignore[unsupported-operator]
+    )
+    return int((await db.exec(stmt)).first() or 0)
+
+
+async def _cutting_queue(
+    db: AsyncSession, *, company_id: uuid.UUID, limit: int = OPERATOR_QUEUE_LIMIT
+) -> list[OperatorCut]:
+    """Cutting orders still in queue (company-wide), newest first."""
+
+    stmt = (
+        scoped(
+            select(CuttingOrder.id, ProductSpec.code, CuttingOrder.color, CuttingOrder.status).join(
+                ProductSpec, ProductSpec.id == CuttingOrder.spec_id
+            ),
+            CuttingOrder,
+            company_id,
+        )
+        .where(CuttingOrder.status.in_((CuttingStatus.PENDING, CuttingStatus.CUTTING)))  # type: ignore[attr-defined]
+        .order_by(CuttingOrder.created_at.desc())  # type: ignore[attr-defined]
+        .limit(limit)
+    )
+    rows = (await db.exec(stmt)).all()
+    # ``status`` is a StrEnum — str() yields the wire value ("pending"/"cutting")
+    # whether the row returns the enum instance or a plain string.
+    return [OperatorCut(id=row[0], code=row[1], color=row[2], status=str(row[3])) for row in rows]
+
+
+async def _operator(db: AsyncSession, *, company_id: uuid.UUID) -> OperatorSummary:
+    return OperatorSummary(
+        cuts_in_queue=await _count_cutting_in_progress(db, company_id=company_id),
+        shipments_incoming=await _count_sewing_active(db, company_id=company_id),
+        pieces_today=await _pieces_cut_today(db, company_id=company_id),
+        cutting_queue=await _cutting_queue(db, company_id=company_id),
     )
 
 
 # --------------------------------------------------------------------------- public
-
-
-def _delta_pct(current: float, previous: float) -> float | None:
-    """Symmetric delta in percent. Returns ``None`` if previous is zero so
-    the frontend can hide the chip rather than printing ``inf``.
-    """
-
-    if previous == 0:
-        return None
-    return round(((current - previous) / previous) * 100, 1)
 
 
 async def get_summary(
@@ -591,99 +535,13 @@ async def get_summary(
 ) -> DashboardSummary:
     """Return the fully aggregated dashboard payload for ``company_id``."""
 
-    # ----- KPIs -----
-    orders_pending = await _count_orders_with_status(db, company_id=company_id, status=OrderStatus.PENDING)
-
-    now = _utc_now()
-    revenue_since = now - timedelta(days=REVENUE_WINDOW_DAYS)
-    previous_since = now - timedelta(days=REVENUE_WINDOW_DAYS * 2)
-    revenue_30d = await _sum_revenue_since(db, company_id=company_id, since=revenue_since)
-    revenue_prev = await _sum_revenue_since(
-        db,
-        company_id=company_id,
-        since=previous_since,
-        until=revenue_since,
-    )
-    revenue_30d_value = float(revenue_30d)
-    revenue_delta = _delta_pct(revenue_30d_value, float(revenue_prev))
-
-    cutting_pending = await _count_cutting_in_progress(db, company_id=company_id)
-    banca_active = await _count_sewing_active(db, company_id=company_id)
-
     # Resolve the configured low-stock threshold once per request, plus any
-    # per-variation overrides, and thread them into the low-stock counters.
+    # per-variation overrides, and thread them into the needs-action list.
     company_threshold = await _company_threshold(db, company_id=company_id)
     threshold_overrides = await _variation_threshold_overrides(db, company_id=company_id)
 
-    levels = await _on_hand_per_variation(db, company_id=company_id)
-    stock_low = _count_low_stock(levels, company_threshold=company_threshold, overrides=threshold_overrides)
-    in_stock = _count_in_stock(levels)
-
-    revenue_sparkline = await _orders_revenue_sparkline(db, company_id=company_id)
-
-    # Sparklines — daily creation count over last 7 days.
-    orders_spark = await _created_per_day_sparkline(db, model=Order, company_id=company_id)
-    cutting_spark = await _created_per_day_sparkline(db, model=CuttingOrder, company_id=company_id)
-    sewing_spark = await _created_per_day_sparkline(db, model=SewingShipment, company_id=company_id)
-
-    # Deltas — count of entities created in last 30d vs previous 30d.
-    orders_30d = await _count_created_in_range(db, model=Order, company_id=company_id, since=revenue_since)
-    orders_prev = await _count_created_in_range(
-        db, model=Order, company_id=company_id, since=previous_since, until=revenue_since
-    )
-    orders_pending_delta = _delta_pct(float(orders_30d), float(orders_prev))
-
-    cutting_30d = await _count_created_in_range(db, model=CuttingOrder, company_id=company_id, since=revenue_since)
-    cutting_prev = await _count_created_in_range(
-        db, model=CuttingOrder, company_id=company_id, since=previous_since, until=revenue_since
-    )
-    cutting_delta = _delta_pct(float(cutting_30d), float(cutting_prev))
-
-    sewing_30d = await _count_created_in_range(db, model=SewingShipment, company_id=company_id, since=revenue_since)
-    sewing_prev = await _count_created_in_range(
-        db, model=SewingShipment, company_id=company_id, since=previous_since, until=revenue_since
-    )
-    sewing_delta = _delta_pct(float(sewing_30d), float(sewing_prev))
-
-    kpis = DashboardKpis(
-        orders_pending=Kpi(
-            label="orders_pending",
-            value=float(orders_pending),
-            delta_pct=orders_pending_delta,
-            sparkline=orders_spark,
-        ),
-        orders_revenue_30d=Kpi(
-            label="orders_revenue_30d",
-            value=revenue_30d_value,
-            delta_pct=revenue_delta,
-            sparkline=revenue_sparkline,
-        ),
-        cutting_pending=Kpi(
-            label="cutting_pending",
-            value=float(cutting_pending),
-            delta_pct=cutting_delta,
-            sparkline=cutting_spark,
-        ),
-        stock_low=Kpi(label="stock_low", value=float(stock_low)),
-        banca_active=Kpi(
-            label="banca_active",
-            value=float(banca_active),
-            delta_pct=sewing_delta,
-            sparkline=sewing_spark,
-        ),
-    )
-
-    # ----- Pipeline -----
-    shipped_30d = await _shipped_in_last(db, company_id=company_id, days=30)
-    pipeline = PipelineCounts(
-        total_pending_orders=orders_pending,
-        in_cutting=cutting_pending,
-        in_sewing=banca_active,
-        in_stock=in_stock,
-        shipped_30d=shipped_30d,
-    )
-
-    # ----- Lists -----
+    conference = await _conference(db, company_id=company_id)
+    top_products = await _top_products(db, company_id=company_id)
     needs = await _needs_action(
         db,
         company_id=company_id,
@@ -691,16 +549,14 @@ async def get_summary(
         threshold_overrides=threshold_overrides,
     )
     activity = await _activity(db, company_id=company_id)
-    revenue_by_channel = await _revenue_by_channel(db, company_id=company_id)
-    conference = await _conference(db, company_id=company_id)
+    operator = await _operator(db, company_id=company_id)
 
     return DashboardSummary(
-        kpis=kpis,
-        pipeline=pipeline,
+        conference=conference,
+        top_products=top_products,
         needs_action=needs,
         activity=activity,
-        revenue_by_channel=revenue_by_channel,
-        conference=conference,
+        operator=operator,
     )
 
 

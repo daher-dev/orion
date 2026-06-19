@@ -1,9 +1,13 @@
 """Pydantic schemas for the Dashboard summary endpoint (FEATURE-015).
 
-The dashboard is a read-only "panorama" that aggregates over existing
-domain tables (orders, cutting orders, sewing shipments, stock movements,
-audit log). No mutation schemas — the only endpoint is
-``GET /v1/dashboard/summary``.
+The dashboard is a read-only "panorama" centred on the daily *conferência*
+(order checking). It aggregates over existing domain tables (orders, order
+items, cutting orders, sewing shipments, audit log). No mutation schemas — the
+only endpoint is ``GET /v1/dashboard/summary``.
+
+The payload mirrors ``docs/design/pages/dashboard.jsx``: four conference KPIs,
+the conference summary, a top-products ranking, the order report grid, the
+operational follow-up lists, plus the operator (factory-floor) section.
 """
 
 from __future__ import annotations
@@ -12,45 +16,6 @@ import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
-
-
-class Kpi(BaseModel):
-    """A single KPI card: label + value + optional delta + optional sparkline."""
-
-    label: str
-    value: float
-    delta_pct: float | None = None
-    sparkline: list[int] | None = None
-
-
-class DashboardKpis(BaseModel):
-    """All five KPI cards rendered on the dashboard strip."""
-
-    orders_pending: Kpi
-    orders_revenue_30d: Kpi
-    cutting_pending: Kpi
-    stock_low: Kpi
-    banca_active: Kpi
-
-
-class PipelineCounts(BaseModel):
-    """Five-stage production pipeline counters.
-
-    - ``total_pending_orders`` — orders with status=pending.
-    - ``in_cutting`` — cutting orders with status in {pending, cutting}.
-    - ``in_sewing`` — sewing shipments with status in {sent, partial}.
-    - ``in_stock`` — variations with on-hand > 0 (only those with any
-      ledger history are counted).
-    - ``shipped_30d`` — orders that transitioned to shipped in the last
-      30 days (approximated via orders.updated_at since we don't keep a
-      transition history table).
-    """
-
-    total_pending_orders: int
-    in_cutting: int
-    in_sewing: int
-    in_stock: int
-    shipped_30d: int
 
 
 class NeedsActionItem(BaseModel):
@@ -82,83 +47,92 @@ class ActivityItem(BaseModel):
     resource_id: uuid.UUID
 
 
-class ChannelRevenue(BaseModel):
-    """Revenue figure for a single ecommerce channel."""
+class TopProduct(BaseModel):
+    """A product in the "Top 5 produtos" ranking (by pieces in the order book).
 
-    channel: str
-    revenue: float
+    ``code`` is the ``ProductSpec.code`` (e.g. "CAM01"); ``name`` is the
+    ``Product.name``. The swatch *tone* is derived on the frontend from
+    ``product_id`` — there is no fabric colour on a product.
+    """
+
+    product_id: uuid.UUID
+    code: str
+    name: str
+    pieces: int
+    orders: int
 
 
 class ConferenceTotals(BaseModel):
     """Headline conference counters (the prototype's ``conference.totals``).
 
     Scope: ``orders``/``pieces`` count all orders with ``status != cancelled``;
-    the item counters are over ``order_items``.
+    the item counters (``mapped``/``pending``/``pieces_checked``) are over the
+    ``order_items`` of those same non-cancelled orders. The order-level
+    ``orders_*`` classification buckets every non-cancelled order by how many of
+    its items are checked (conferido).
     """
 
     orders: int
     pieces: int
     mapped: int  # order_items with variation_id NOT NULL
     pending: int  # order_items with variation_id NULL (await De/Para)
-    checked: int  # order_items status == checked (conferido)
-    to_check: int  # order_items status == label_printed (printed, not scanned)
-    in_lote: int  # orders with batch_id NOT NULL
     mapped_pct: int  # round(100 * mapped / (mapped+pending)); 100 when denom 0
-
-
-class ConferencePipeline(BaseModel):
-    """Order-pipeline counts (distinct from the production ``PipelineCounts``).
-
-    Mirrors the board's four columns, derived from the readiness flags:
-    - ``mapeamento`` — orders with ≥1 unmapped piece.
-    - ``producao`` — mapped, unbatched, NOT ready.
-    - ``separacao`` — mapped, unbatched, ready.
-    - ``envio`` — orders with a batch.
-    """
-
-    mapeamento: int
-    producao: int
-    separacao: int
-    envio: int
-
-
-class ConferenceBatchCounts(BaseModel):
-    """Batch lifecycle counts for the conference strip."""
-
-    open: int
-    in_production: int
-    dispatched: int
+    in_lote: int  # orders with batch_id NOT NULL
+    orders_checked: int  # orders with ALL items checked
+    orders_partial: int  # orders with SOME (not all) items checked
+    orders_untouched: int  # orders with ZERO items checked (or no items yet)
+    pieces_checked: int  # order_items with status == checked (conferido)
 
 
 class ConferenceSummary(BaseModel):
     """The Conferência section of the dashboard (orders→pieces pipeline)."""
 
     totals: ConferenceTotals
-    pipeline: ConferencePipeline
-    batches: ConferenceBatchCounts
+
+
+class OperatorCut(BaseModel):
+    """A cutting order in the operator's queue (production-floor dashboard)."""
+
+    id: uuid.UUID
+    code: str  # ProductSpec.code of the garment base
+    color: str  # free-text colorway
+    status: str  # CuttingStatus value ("pending" | "cutting")
+
+
+class OperatorSummary(BaseModel):
+    """The operator (factory-floor) dashboard section.
+
+    Honest mappings, noted because the data model has no per-operator
+    assignment nor shipment ETA today:
+    - ``cuts_in_queue`` — company-wide cutting orders still in queue.
+    - ``shipments_incoming`` — sewing shipments still out at contractors.
+    - ``pieces_today`` — pieces cut today (cutting outputs whose order's
+      ``cut_at`` is today).
+    """
+
+    cuts_in_queue: int
+    shipments_incoming: int
+    pieces_today: int
+    cutting_queue: list[OperatorCut]
 
 
 class DashboardSummary(BaseModel):
     """Composite payload returned by ``GET /v1/dashboard/summary``."""
 
-    kpis: DashboardKpis
-    pipeline: PipelineCounts
+    conference: ConferenceSummary
+    top_products: list[TopProduct]
     needs_action: list[NeedsActionItem]
     activity: list[ActivityItem]
-    revenue_by_channel: list[ChannelRevenue]
-    conference: ConferenceSummary
+    operator: OperatorSummary
 
 
 __all__ = [
     "ActivityItem",
-    "ChannelRevenue",
-    "ConferenceBatchCounts",
-    "ConferencePipeline",
     "ConferenceSummary",
     "ConferenceTotals",
-    "DashboardKpis",
     "DashboardSummary",
-    "Kpi",
     "NeedsActionItem",
-    "PipelineCounts",
+    "OperatorCut",
+    "OperatorSummary",
+    "TopProduct",
 ]

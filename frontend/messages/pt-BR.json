@@ -165,34 +165,6 @@
       "eveningWithName": "Boa noite, {name}",
       "nightWithName": "Boa madrugada, {name}"
     },
-    "kpis": {
-      "ordersPending": "Pedidos pendentes",
-      "ordersRevenue": "Receita 30d",
-      "cuttingPending": "Cortes em andamento",
-      "stockLow": "SKUs em ruptura",
-      "bancaActive": "Em bancas"
-    },
-    "pipeline": {
-      "title": "Pipeline de produção",
-      "stages": {
-        "pendingOrders": "Pedidos",
-        "inCutting": "Corte",
-        "inSewing": "Costura",
-        "inStock": "Estoque",
-        "shipped30d": "Enviadas"
-      },
-      "stageSubs": {
-        "pendingOrders": "Aguardando produção",
-        "inCutting": "Em corte ou aguardando",
-        "inSewing": "Em bancas",
-        "inStock": "Prontas p/ envio",
-        "shipped30d": "Últimos 7 dias"
-      },
-      "sub": "Onde estão suas peças neste momento",
-      "footer": "Em média uma peça leva <b>7,2 dias</b> para sair como pedido entregue.",
-      "updated": "Atualizado há {minutes} min",
-      "viewDetails": "Ver detalhes"
-    },
     "conference": {
       "title": "Conferência do dia",
       "sub": "Do pedido à peça pronta",
@@ -214,16 +186,64 @@
         "piecesDone": "Peças conferidas"
       },
       "subtiles": {
-        "toCheck": "A conferir",
-        "inLote": "Em lote",
-        "pending": "Pendentes"
+        "partial": "Parciais",
+        "problems": "Problemas",
+        "toCheck": "A conferir"
+      }
+    },
+    "topProducts": {
+      "title": "Top 5 produtos",
+      "sub": "Por peças na carteira",
+      "viewAll": "Ver todos",
+      "pieces": "pç",
+      "orders": "{count} ped.",
+      "empty": "Nenhum produto ainda."
+    },
+    "report": {
+      "title": "Relatório de pedidos",
+      "sub": "Carteira de pedidos de hoje",
+      "tiles": {
+        "orders": "Pedidos",
+        "pieces": "Peças",
+        "mapped": "Mapeadas",
+        "pending": "Pendentes",
+        "done": "Conferidos",
+        "tocheck": "A conferir",
+        "inbatch": "Em lote",
+        "nobatch": "Sem lote"
+      }
+    },
+    "operator": {
+      "sub": "Suas tarefas para hoje na fábrica.",
+      "help": {
+        "title": "Seu dia na fábrica, em ordem",
+        "body": "Esta tela reúne só o que é <b>seu hoje</b>: cortes na sua fila, remessas que chegam e o que falta costurar. Toque num card para ir direto à tarefa.",
+        "flow": {
+          "cut": "Cortar",
+          "cutSub": "sua fila",
+          "sew": "Costurar",
+          "sewSub": "remessas",
+          "deliver": "Entregar",
+          "deliverSub": "ao estoque"
+        }
       },
-      "pipeline": {
-        "title": "Pipeline de pedidos",
-        "mapeamento": "Mapeamento",
-        "producao": "Produção",
-        "separacao": "Separação",
-        "envio": "Envio"
+      "kpis": {
+        "queue": "Cortes na sua fila",
+        "queueSub": "Pendentes + em andamento",
+        "incoming": "Remessas chegando",
+        "incomingSub": "Em bancas",
+        "today": "Peças produzidas hoje",
+        "todaySub": "Cortadas hoje"
+      },
+      "queueTitle": "Cortes esperando você",
+      "queueAll": "Ver todos",
+      "queueEmpty": "Nada na fila.",
+      "open": "Abrir",
+      "quickActions": {
+        "title": "Ações rápidas",
+        "registerCut": "Registrar saída de corte",
+        "receiveShipment": "Receber remessa",
+        "adjustStock": "Ajustar estoque"
       }
     },
     "needsAction": {
@@ -252,11 +272,6 @@
     "actions": {
       "newOrder": "Novo pedido",
       "period": "Período"
-    },
-    "revenueByChannel": {
-      "title": "Receita por canal",
-      "sub": "Últimos 30 dias",
-      "empty": "Nenhum dado de receita ainda."
     },
     "help": {
       "title": "Conferência do dia — do pedido à peça pronta",

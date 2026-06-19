@@ -365,7 +365,7 @@ def convert(
             return variation_index[ckey]
         color_code = colors.code(company_id, color)
         vid = derive_id("product_variation", product_id, size.value, color_code)
-        # ``print_code`` keeps SKUs unique across the (spec × design) products that
+        # ``print_code`` keeps SKUs unique across the (spec x design) products that
         # share a spec — the variation id is already disambiguated by product_id.
         sku = ProductVariation.make_sku(spec_code=spec_code, size=size, color_code=color_code, print_code=print_code)
         data.rows["product_variation"].append(
@@ -753,7 +753,7 @@ def convert(
     # ad title → design: the bridge that lets an order recover its estampa. A
     # legacy ``StampaMemory`` row pairs ``titulo_anuncio`` (the listing an order
     # carries) with ``estampa_nome`` (the design); the order resolver uses it to
-    # pick the (spec × design) product. First title→design wins.
+    # pick the (spec x design) product. First title→design wins.
     design_by_title: dict[tuple[uuid.UUID, str], uuid.UUID] = {}
     for sm in _records(raw, "StampaMemory"):
         scid = company_of(sm)
@@ -794,14 +794,15 @@ def convert(
         n = norm(text)
         return {pt for kw, pt in settings.PRODUCT_TYPE_KEYWORDS if strip_accents(kw) in n}
 
-    # 10) PedidoImportado → order + imported_order. Each order resolves to a REAL
-    # product within its Ad's product set (an Ad lists many products via
-    # ad_products); when no real product matches it falls back to a synthetic
-    # "Pedidos importados" product. client_id/sale_price stay NULL.
+    # 10) PedidoImportado → order + imported_order. Each order resolves to ONE
+    # (spec x design) product: the garment spec by type keyword, the design via
+    # the StampaMemory ad-title bridge — and the Ad is bound to that single
+    # product. No design → the spec's base no-print product (cut-only); no garment
+    # match → a synthetic "Pedidos importados" product. client_id/sale_price stay NULL.
     synth: dict[uuid.UUID, dict] = {}
     ad_index: dict[tuple, uuid.UUID] = {}
     ad_products_index: dict[uuid.UUID, list[dict]] = {}
-    # (company, spec, design) → the resolved (spec × design) product info, created once.
+    # (company, spec, design) → the resolved (spec x design) product info, created once.
     design_product_index: dict[tuple[uuid.UUID, uuid.UUID, uuid.UUID], dict] = {}
     order_keys: set[tuple] = set()
     import_keys: set[tuple] = set()
@@ -859,7 +860,7 @@ def convert(
         return info
 
     def _get_or_make_product(company_id: uuid.UUID, spec_info: dict, design_id: uuid.UUID | None) -> dict:
-        """Resolve the (spec × design) product an order/ad maps to.
+        """Resolve the (spec x design) product an order/ad maps to.
 
         ``design_id is None`` → the spec's base (no-print) product, which doubles
         as the blank-garment SKU family + the home for design-agnostic legacy
@@ -911,7 +912,7 @@ def convert(
             return ad_index[key]
         ad_id = derive_id("ad", company_id, eco.value, tnorm or "untitled")
         # Resolve the garment spec (by type keyword), then the design (by ad
-        # title), and bind the ad to that single (spec × design) product.
+        # title), and bind the ad to that single (spec x design) product.
         types = _types_in(f"{title} {stampa_title_type.get((company_id, tnorm), '')}")
         candidates = [i for i in products_by_company.get(company_id, []) if i["product_type"] in types] if types else []
         if candidates:

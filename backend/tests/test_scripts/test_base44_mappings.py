@@ -2,12 +2,13 @@
 
 The contract under test is the Phase 2 fix: an imported order recovers its
 *design* (estampa) via the ``StampaMemory`` ad-title bridge and resolves to a
-per-``(spec × design)`` product carrying the design as ``print_id`` — so the
+per-``(spec x design)`` product carrying the design as ``print_id`` — so the
 Planning engine can suggest both cutting (spec+color) and printing (design).
 Orders whose title has no design fall back to the spec's base no-print product
 (cut-only). The converter is pure (no DB), so these tests need no fixtures.
 """
 
+from models import ProductVariation
 from scripts.base44.mappings import ConversionReport, convert
 
 
@@ -72,7 +73,7 @@ def test_order_with_matching_title_resolves_to_design_product():
     design = next(d for d in _rows(data, "print_design") if d["name"] == "Punisher")
     spec = next(s for s in _rows(data, "product_spec") if s["name"] == "Camiseta Basica")
 
-    # A (spec × design) product exists, carrying the design as print_id.
+    # A (spec x design) product exists, carrying the design as print_id.
     design_product = next(
         (p for p in _rows(data, "product") if p["spec_id"] == spec["id"] and p["print_id"] == design["id"]),
         None,
@@ -105,8 +106,11 @@ def test_order_without_design_falls_back_to_base_no_print_product():
     # No design matched → the spec's base product (print_id is None), cut-only.
     assert product["spec_id"] == spec["id"]
     assert product["print_id"] is None
-    # Base-product SKU has no print segment.
-    assert not variation["sku"].count("-") > 2
+    # Base-product SKU equals the no-print make_sku (no print segment) — robust
+    # against spec codes that themselves carry a "-<n>" dedup suffix.
+    assert variation["sku"] == ProductVariation.make_sku(
+        spec_code=spec["code"], size=variation["size"], color_code=variation["color_code"], print_code=None
+    )
 
 
 def test_same_design_across_orders_reuses_one_product():

@@ -135,6 +135,7 @@ async def _checked_pieces_by_variation(db: AsyncSession, *, company_id: uuid.UUI
         .join(Order, Order.id == OrderItem.order_id)
         .where(
             Order.company_id == company_id,
+            OrderItem.company_id == company_id,  # tenant-scope the ledger side too (own column, FK-unenforced)
             OrderItem.status == SeparationStatus.CHECKED,
             Order.status.in_((OrderStatus.PENDING, OrderStatus.PAID)),  # type: ignore[union-attr]
         )

@@ -8,12 +8,19 @@ the Phase 1-4 readers (``blank_stock``, ``printed_transfer``, ``stock`` ledgers)
 
 Vocabulary bridge (prototype → real model)
 ------------------------------------------
-- ``fulfillment.orders[].status != 'conferido'`` → **open piece** =
-  ``OrderItem.status != CHECKED`` AND parent ``Order.status in {PENDING, PAID}``.
-  Each ``OrderItem`` is ONE physical piece, so demand counts *rows* (never
-  ``Order.quantity``). Unmapped items (``variation_id IS NULL``) and items whose
-  product has no print are skipped — they can't resolve a (design, spec, color,
-  size) SKU.
+- **open demand** = open ``orders`` (``Order.status in {PENDING, PAID}``),
+  weighted by ``Order.quantity``, minus pieces already separated
+  (``OrderItem.status == CHECKED``). Demand is the orders themselves — NOT the
+  ``order_items`` separation pieces, which are materialized lazily (only when
+  labels are printed; see ``services.order_item.generate_labels``) and so don't
+  exist for orders that haven't reached separation — i.e. exactly the orders
+  Planning exists to plan for. Counting ``order_items`` made Planning blind to
+  every un-separated order.
+- a product with **no print** (``Product.print_id IS NULL``) still produces cut
+  demand (a blank garment is cut, just not printed): the design is a LEFT JOIN,
+  so such rows carry ``design_id = None`` and are folded into *cortes* only —
+  they resolve no (design, spec, color, size) SKU, so they're absent from the
+  per-SKU breakdown and the *impressões*.
 - demand SKU key = ``(print_design_id, spec_id, color_code, size)``.
 - blank tier = ``(spec_id, color_code, size)`` (``BlankPiece``).
 - impresso tier = ``(print_design_id, side=FRONT)`` (``PrintedTransfer``).
@@ -113,17 +120,46 @@ def _threshold_value(config: dict, key: str) -> int:
 # ------------------------------------------------------------ open-demand rows
 
 
-async def _open_demand_rows(db: AsyncSession, *, company_id: uuid.UUID) -> list[dict]:
-    """The §1 join, grouped by ``(print_design_id, spec_id, color_code, size)``.
+async def _checked_pieces_by_variation(db: AsyncSession, *, company_id: uuid.UUID) -> dict[uuid.UUID, int]:
+    """``{variation_id: checked_count}`` — pieces of open orders already separated.
 
-    One row per demand SKU with ``needed`` (count of open ``OrderItem`` rows),
-    the distinct ``order_ids`` set, the representative ``variation_id`` (the key
-    resolves to exactly one variation), and carried display fields.
-
-    Open piece = ``OrderItem.status != CHECKED`` AND parent ``Order.status in
-    {PENDING, PAID}`` AND ``variation_id IS NOT NULL`` AND the product has a
-    print (INNER join on ``PrintDesign`` via ``Product.print_id``).
+    A piece is "separated" once its ``OrderItem`` is ``CHECKED`` (scan-to-check).
+    Those pieces are picked and shouldn't be re-produced, so they're subtracted
+    from the order-quantity demand. Keyed by the parent ``Order.variation_id``
+    (the SKU the order resolves to), scoped to open parent orders.
     """
+
+    stmt = (
+        select(Order.variation_id, func.count(OrderItem.id))
+        .select_from(OrderItem)
+        .join(Order, Order.id == OrderItem.order_id)
+        .where(
+            Order.company_id == company_id,
+            OrderItem.status == SeparationStatus.CHECKED,
+            Order.status.in_((OrderStatus.PENDING, OrderStatus.PAID)),  # type: ignore[union-attr]
+        )
+        .group_by(Order.variation_id)
+    )
+    return {variation_id: int(total or 0) for variation_id, total in (await db.exec(stmt)).all()}
+
+
+async def _open_demand_rows(db: AsyncSession, *, company_id: uuid.UUID) -> list[dict]:
+    """Open-order demand, grouped by ``(print_design_id, spec_id, color_code, size)``.
+
+    One row per demand SKU with ``needed`` (``Σ Order.quantity`` over open orders
+    for the SKU, minus already-separated ``CHECKED`` pieces), the distinct
+    ``order_ids`` set, the resolving ``variation_id`` (the key ⇄ variation is
+    1:1), and carried display fields. Rows that net to zero (fully separated) are
+    dropped.
+
+    Demand is the open ``orders`` (``Order.status in {PENDING, PAID}``), each
+    carrying ``quantity`` units of one ``ProductVariation`` — NOT the lazily
+    materialized ``order_items``. The print design is a **LEFT JOIN** on
+    ``Product.print_id``: a product with no print still produces cut demand and
+    carries ``design_id = None``.
+    """
+
+    checked_by_variation = await _checked_pieces_by_variation(db, company_id=company_id)
 
     stmt = (
         select(
@@ -139,19 +175,16 @@ async def _open_demand_rows(db: AsyncSession, *, company_id: uuid.UUID) -> list[
             PrintDesign.name,
             PrintDesign.technique,
             PrintDesign.image_url,
-            func.count(OrderItem.id).label("needed"),
-            func.array_agg(func.distinct(OrderItem.order_id)).label("order_ids"),
+            func.coalesce(func.sum(Order.quantity), 0).label("needed"),
+            func.array_agg(func.distinct(Order.id)).label("order_ids"),
         )
-        .select_from(OrderItem)
-        .join(Order, Order.id == OrderItem.order_id)
-        .join(ProductVariation, ProductVariation.id == OrderItem.variation_id)
+        .select_from(Order)
+        .join(ProductVariation, ProductVariation.id == Order.variation_id)
         .join(Product, Product.id == ProductVariation.product_id)
         .join(ProductSpec, ProductSpec.id == Product.spec_id)
-        .join(PrintDesign, PrintDesign.id == Product.print_id)
+        .outerjoin(PrintDesign, PrintDesign.id == Product.print_id)
         .where(
-            OrderItem.company_id == company_id,
-            OrderItem.variation_id.is_not(None),  # type: ignore[union-attr]
-            OrderItem.status != SeparationStatus.CHECKED,
+            Order.company_id == company_id,
             Order.status.in_((OrderStatus.PENDING, OrderStatus.PAID)),  # type: ignore[union-attr]
         )
         .group_by(
@@ -188,6 +221,9 @@ async def _open_demand_rows(db: AsyncSession, *, company_id: uuid.UUID) -> list[
             needed,
             order_ids,
         ) = record
+        net_needed = max(0, int(needed or 0) - checked_by_variation.get(variation_id, 0))
+        if net_needed <= 0:
+            continue
         rows.append(
             {
                 "design_id": design_id,
@@ -202,7 +238,7 @@ async def _open_demand_rows(db: AsyncSession, *, company_id: uuid.UUID) -> list[
                 "design_name": design_name,
                 "design_technique": design_technique,
                 "design_image_url": design_image_url,
-                "needed": int(needed or 0),
+                "needed": net_needed,
                 "order_ids": {oid for oid in (order_ids or []) if oid is not None},
             }
         )
@@ -372,10 +408,13 @@ async def build_suggestions(db: AsyncSession, *, company_id: uuid.UUID) -> Plann
     # ── per-demand-SKU enrichment (prototype lines 114-132) ──
     skus: list[PlanningSku] = []
     for r in demand_rows:
+        design_id = r["design_id"]
+        if design_id is None:
+            # No-print demand is cut-only — it resolves no (design, …) SKU.
+            continue
         spec_id = r["spec_id"]
         color_code = r["color_code"]
         size = r["size"]
-        design_id = r["design_id"]
 
         finished = max(0, finished_map.get(r["variation_id"], 0))
         net = max(0, r["needed"] - finished)
@@ -632,7 +671,9 @@ async def _build_impressoes(
 
     # Load the design rows we may touch (catalog FRONT designs + demand designs).
     catalog_design_ids = set(front_printed_by_design.keys())
-    demand_design_ids = {r["design_id"] for r in demand_rows if _net_for_row(r, finished_map) > 0}
+    demand_design_ids = {
+        r["design_id"] for r in demand_rows if r["design_id"] is not None and _net_for_row(r, finished_map) > 0
+    }
     design_ids = catalog_design_ids | demand_design_ids
     designs: dict[uuid.UUID, PrintDesign] = {}
     if design_ids:
@@ -669,6 +710,8 @@ async def _build_impressoes(
         if net <= 0:
             continue
         design_id = r["design_id"]
+        if design_id is None:
+            continue  # no-print demand → cut-only, never an impressão
         if r["design_technique"] == PrintTechnique.SILKSCREEN:
             continue
         entry: dict[str, Any] | None = impr_need.get(design_id)

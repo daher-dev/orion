@@ -135,6 +135,67 @@ async def _demand(
     return variation, order
 
 
+async def _order_no_items(
+    db_session,
+    *,
+    company_id,
+    spec,
+    design,  # PrintDesign | None — None builds a no-print (blank) product
+    size=Size.M,
+    color="Preto",
+    color_code="PRT",
+    quantity=1,
+    order_status=OrderStatus.PENDING,
+):
+    """Create one open order of ``quantity`` units with **no** OrderItem rows.
+
+    This mirrors production reality: live / Upseller / base44 orders don't
+    materialize separation pieces until labels are printed, so Planning must read
+    demand from ``Order.quantity``. ``design=None`` builds a no-print product
+    (the order should then surface as cut-only).
+    """
+
+    from models import Product
+
+    print_id = design.id if design is not None else None
+    product = (
+        await db_session.exec(
+            select(Product).where(
+                Product.company_id == company_id,
+                Product.spec_id == spec.id,
+                Product.print_id == print_id,
+            )
+        )
+    ).first()
+    if product is None:
+        suffix = design.code if design is not None else "LISA"
+        product = await create_product(
+            db_session, company_id=company_id, spec_id=spec.id, print_id=print_id, name=f"{spec.code}-{suffix}"
+        )
+    sku = f"{spec.code}-{size.value.upper()}-{color_code}" + (f"-{design.code}" if design is not None else "")
+    variation = await create_product_variation(
+        db_session,
+        company_id=company_id,
+        product_id=product.id,
+        size=size,
+        color=color,
+        color_code=color_code,
+        sku=sku,
+    )
+    client = await create_client(db_session, company_id=company_id)
+    ad = await create_ad(db_session, company_id=company_id, product_id=product.id)
+    order = await create_order(
+        db_session,
+        company_id=company_id,
+        ad_id=ad.id,
+        variation_id=variation.id,
+        client_id=client.id,
+        quantity=quantity,
+        status=order_status,
+    )
+    return variation, order
+
+
 def _corte(suggestions, *, spec_id, color_code):
     return next((c for c in suggestions.cortes if c.key == f"{spec_id}|{color_code}"), None)
 
@@ -230,6 +291,98 @@ async def test_partial_finished_reduces_net(db_session):
     assert sku.finished == 3 and sku.net == 7
     assert _corte(s, spec_id=spec.id, color_code="PRT").total == 7
     assert _impressao(s, design_id=design.id).total == 7
+
+
+# ------------------------------------------- demand is order-driven (not items)
+
+
+async def test_demand_from_open_order_without_items(db_session):
+    """Regression: an open order with NO OrderItem rows still drives full demand.
+
+    The production bug — orders are imported without separation pieces (those are
+    materialized lazily at label printing), so demand must come from
+    ``Order.quantity``. Counting ``order_items`` made Planning show "nothing to
+    do" while real orders waited.
+    """
+
+    company, _user = await _company(db_session)
+    spec = await create_product_spec(db_session, company_id=company.id, code="CAM01")
+    design = await create_print_design(db_session, company_id=company.id, code="FLR03")
+    await _order_no_items(
+        db_session, company_id=company.id, spec=spec, design=design, color_code="PRT", quantity=5
+    )
+
+    s = await service.build_suggestions(db_session, company_id=company.id)
+    sku = _sku(s, design_id=design.id, spec_id=spec.id, color_code="PRT", size=Size.M)
+    assert sku is not None and sku.needed == 5 and sku.net == 5 and sku.order_count == 1
+    assert _corte(s, spec_id=spec.id, color_code="PRT").total == 5
+    assert _impressao(s, design_id=design.id).total == 5
+    assert s.totals.toCut == 5 and s.totals.toPrint == 5
+
+
+async def test_demand_is_quantity_weighted(db_session):
+    """One order of quantity N counts as N pieces (not one row)."""
+
+    company, _user = await _company(db_session)
+    spec = await create_product_spec(db_session, company_id=company.id, code="CAM01")
+    design = await create_print_design(db_session, company_id=company.id, code="FLR03")
+    await _order_no_items(
+        db_session, company_id=company.id, spec=spec, design=design, color_code="PRT", quantity=12
+    )
+
+    s = await service.build_suggestions(db_session, company_id=company.id)
+    assert _corte(s, spec_id=spec.id, color_code="PRT").total == 12
+
+
+async def test_no_print_order_is_cut_only(db_session):
+    """An open order whose product has no print → cut demand, no SKU / impressão.
+
+    A blank garment is cut, never printed. The design is a LEFT JOIN, so the
+    demand stays visible as a corte instead of being silently dropped.
+    """
+
+    company, _user = await _company(db_session)
+    spec = await create_product_spec(db_session, company_id=company.id, code="CAM01")
+    await _order_no_items(
+        db_session, company_id=company.id, spec=spec, design=None, size=Size.G, color_code="ARE", quantity=4
+    )
+
+    s = await service.build_suggestions(db_session, company_id=company.id)
+    corte = _corte(s, spec_id=spec.id, color_code="ARE")
+    assert corte is not None and corte.total == 4 and corte.demand == 4 and corte.stock == 0
+    assert [(g.size, g.qty) for g in corte.grade_rows] == [(Size.G, 4)]
+    # No design resolved → absent from the per-SKU breakdown and the impressões.
+    assert s.skus == []
+    assert s.impressoes == []
+    assert s.totals.toCut == 4 and s.totals.toPrint == 0
+
+
+async def test_partial_checked_reduces_order_demand(db_session):
+    """Already-separated (CHECKED) pieces are subtracted from quantity demand."""
+
+    company, _user = await _company(db_session)
+    spec = await create_product_spec(db_session, company_id=company.id, code="CAM01")
+    design = await create_print_design(db_session, company_id=company.id, code="FLR03")
+    variation, order = await _order_no_items(
+        db_session, company_id=company.id, spec=spec, design=design, color_code="PRT", quantity=5
+    )
+    # 2 of the 5 pieces already separated → demand 3 (the rest aren't materialized).
+    for index in range(2):
+        await create_order_item(
+            db_session,
+            company_id=company.id,
+            order_id=order.id,
+            variation_id=variation.id,
+            status=SeparationStatus.CHECKED,
+            item_index=index,
+            total_items=5,
+        )
+
+    s = await service.build_suggestions(db_session, company_id=company.id)
+    sku = _sku(s, design_id=design.id, spec_id=spec.id, color_code="PRT", size=Size.M)
+    assert sku.needed == 3
+    assert _corte(s, spec_id=spec.id, color_code="PRT").total == 3
+    assert _impressao(s, design_id=design.id).total == 3
 
 
 # -------------------------------------------------- component on-hand reduces
@@ -559,8 +712,9 @@ async def test_open_print_wip_reduces_impressao(db_session):
 # ------------------------------------------------------ exclusions + grouping
 
 
-async def test_unmapped_and_no_print_items_excluded(db_session):
-    """Items with no variation, and items whose product has no print, are excluded."""
+async def test_unmapped_items_ignored_and_no_print_is_cut_only(db_session):
+    """Demand is order-driven: a stray unmapped item never changes it, and a
+    no-print order surfaces as cut-only (a corte, but no design SKU / impressão)."""
 
     company, _user = await _company(db_session)
     spec = await create_product_spec(db_session, company_id=company.id, code="CAM01")
@@ -568,25 +722,23 @@ async def test_unmapped_and_no_print_items_excluded(db_session):
     _variation, order = await _demand(
         db_session, company_id=company.id, spec=spec, design=design, color_code="PRT", pieces=2
     )
-    # Add an unmapped item to the same order (variation_id NULL).
+    # A stray, unmapped order_item (variation_id NULL) must not change demand.
     await create_order_item(db_session, company_id=company.id, order_id=order.id, variation_id=None)
 
-    # A separate order whose product has NO print (print_id None) → no SKU.
-    noprint_product = await create_product(db_session, company_id=company.id, spec_id=spec.id, print_id=None)
-    noprint_var = await create_product_variation(
-        db_session, company_id=company.id, product_id=noprint_product.id, size=Size.G, color="Areia", color_code="ARE"
+    # A separate order whose product has NO print (print_id None).
+    await _order_no_items(
+        db_session, company_id=company.id, spec=spec, design=None, size=Size.G, color_code="ARE", quantity=3
     )
-    client = await create_client(db_session, company_id=company.id)
-    ad = await create_ad(db_session, company_id=company.id, product_id=noprint_product.id)
-    noprint_order = await create_order(
-        db_session, company_id=company.id, ad_id=ad.id, variation_id=noprint_var.id, client_id=client.id
-    )
-    await create_order_item(db_session, company_id=company.id, order_id=noprint_order.id, variation_id=noprint_var.id)
 
     s = await service.build_suggestions(db_session, company_id=company.id)
+    # Printed SKU keeps its order-driven demand of 2, unaffected by the stray item.
     sku = _sku(s, design_id=design.id, spec_id=spec.id, color_code="PRT", size=Size.M)
-    assert sku.needed == 2  # only the 2 mapped, printed items
+    assert sku.needed == 2
     assert _corte(s, spec_id=spec.id, color_code="PRT").total == 2
+    # No-print order → a cut corte, but resolves no design SKU and no impressão.
+    assert _corte(s, spec_id=spec.id, color_code="ARE").total == 3
+    assert _sku(s, design_id=design.id, spec_id=spec.id, color_code="ARE", size=Size.G) is None
+    assert len(s.impressoes) == 1 and s.impressoes[0].design.id == design.id
 
 
 async def test_checked_items_and_shipped_orders_excluded(db_session):

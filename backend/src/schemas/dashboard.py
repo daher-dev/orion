@@ -66,9 +66,10 @@ class ConferenceTotals(BaseModel):
     """Headline conference counters (the prototype's ``conference.totals``).
 
     Scope: ``orders``/``pieces`` count all orders with ``status != cancelled``;
-    the item counters are over ``order_items``. The order-level ``orders_*``
-    classification buckets every non-cancelled order by how many of its items
-    are checked (conferido).
+    the item counters (``mapped``/``pending``/``pieces_checked``) are over the
+    ``order_items`` of those same non-cancelled orders. The order-level
+    ``orders_*`` classification buckets every non-cancelled order by how many of
+    its items are checked (conferido).
     """
 
     orders: int

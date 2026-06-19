@@ -350,7 +350,14 @@ async def _activity(db: AsyncSession, *, company_id: uuid.UUID) -> list[Activity
 
 
 async def _order_piece_counts(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str, int]:
-    """``{mapped, pending, pieces_checked}`` over ``order_items`` (single query)."""
+    """``{mapped, pending, pieces_checked}`` over the items of non-cancelled
+    orders (single aggregate query).
+
+    Joins ``Order`` and excludes ``CANCELLED`` so these piece counters stay
+    consistent with ``orders``/``pieces`` and the order-level classification —
+    otherwise a cancelled order's items would inflate ``mapped``/``pending`` and
+    skew ``mapped_pct`` against an order count that excludes them.
+    """
 
     mapped_flag = case((OrderItem.variation_id.is_not(None), 1), else_=0)  # type: ignore[union-attr]
     pending_flag = case((OrderItem.variation_id.is_(None), 1), else_=0)  # type: ignore[union-attr]
@@ -360,10 +367,10 @@ async def _order_piece_counts(db: AsyncSession, *, company_id: uuid.UUID) -> dic
             func.coalesce(func.sum(mapped_flag), 0),
             func.coalesce(func.sum(pending_flag), 0),
             func.coalesce(func.sum(checked_flag), 0),
-        ),
+        ).join(Order, Order.id == OrderItem.order_id),
         OrderItem,
         company_id,
-    )
+    ).where(Order.status != OrderStatus.CANCELLED)
     mapped, pending, pieces_checked = (await db.exec(stmt)).one()
     return {
         "mapped": int(mapped or 0),

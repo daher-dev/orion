@@ -77,12 +77,15 @@ async def test_conference_totals_and_item_counts(db_session):
     # Two active orders (3 + 2 pieces) and one cancelled (excluded from totals).
     o1 = await _order(db_session, scene, quantity=3, status=OrderStatus.PAID, external_order_id="A1")
     await _order(db_session, scene, quantity=2, status=OrderStatus.PENDING, external_order_id="A2")
-    await _order(db_session, scene, quantity=9, status=OrderStatus.CANCELLED, external_order_id="A3")
+    o_cancelled = await _order(db_session, scene, quantity=9, status=OrderStatus.CANCELLED, external_order_id="A3")
 
     # o1's items: 2 mapped (1 checked, 1 label_printed) + 1 pending (unmapped).
     await _item(db_session, scene, o1, SeparationStatus.CHECKED)
     await _item(db_session, scene, o1, SeparationStatus.LABEL_PRINTED)
     await _item(db_session, scene, o1, SeparationStatus.PENDING, mapped=False)
+    # A cancelled order's items must NOT count toward mapped/pending/pieces_checked
+    # (keeps the piece counters consistent with orders/pieces).
+    await _item(db_session, scene, o_cancelled, SeparationStatus.CHECKED)
 
     summary = await get_summary(db_session, company_id=scene.company.id)
     c = summary.conference

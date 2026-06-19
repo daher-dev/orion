@@ -1,8 +1,9 @@
-"""Service-layer tests for the dashboard summary, focused on the configurable
-low-stock threshold (stock_low KPI + the stock_low needs-action item).
+"""Service-layer tests for the dashboard low-stock path.
 
-There was previously no dashboard test, so this also backfills basic coverage of
-the low-stock counting path.
+The KPI strip was retired when the dashboard moved to the conference-centred
+design, so the low-stock count is now only surfaced through the needs-action
+list. These tests assert against that item (its leading count) instead of the
+removed ``kpis.stock_low`` value.
 """
 
 import uuid
@@ -15,6 +16,18 @@ from tests.factories import (
     create_product_variation,
     create_stock_entry,
 )
+
+
+def _stock_low_count(summary) -> int:
+    """The number of low-stock SKUs, parsed from the needs-action item.
+
+    The item is only present when at least one SKU is low; absence means zero.
+    """
+
+    for item in summary.needs_action:
+        if item.kind == "stock_low":
+            return int(item.message.split()[0])
+    return 0
 
 
 async def _make_variation(db_session, *, company_id: uuid.UUID, **overrides):
@@ -38,22 +51,19 @@ async def test_low_stock_uses_default_threshold(db_session):
     await create_stock_entry(db_session, company_id=company.id, variation_id=ok.id, quantity=50)
 
     summary = await get_summary(db_session, company_id=company.id)
-    assert summary.kpis.stock_low.value == 1.0
+    assert _stock_low_count(summary) == 1
 
 
 async def test_custom_company_threshold_makes_sku_low(db_session):
-    """With on_hand 8: default 10 already flags it; raise threshold to 30 so a
-    previously-OK 25 also becomes low, proving the company value is honored."""
+    """With on_hand 25 and a company threshold of 30, the SKU is low and shows
+    up as a needs-action item."""
     company = await create_company(db_session, low_stock_threshold=30)
     v = await _make_variation(db_session, company_id=company.id)
     await create_stock_entry(db_session, company_id=company.id, variation_id=v.id, quantity=25)
 
     summary = await get_summary(db_session, company_id=company.id)
-    assert summary.kpis.stock_low.value == 1.0
-
-    # And surfaced as a needs-action item.
-    kinds = [item.kind for item in summary.needs_action]
-    assert "stock_low" in kinds
+    assert _stock_low_count(summary) == 1
+    assert "stock_low" in [item.kind for item in summary.needs_action]
 
 
 async def test_company_threshold_excludes_above_value(db_session):
@@ -63,7 +73,8 @@ async def test_company_threshold_excludes_above_value(db_session):
     await create_stock_entry(db_session, company_id=company.id, variation_id=v.id, quantity=25)
 
     summary = await get_summary(db_session, company_id=company.id)
-    assert summary.kpis.stock_low.value == 0.0
+    assert _stock_low_count(summary) == 0
+    assert "stock_low" not in [item.kind for item in summary.needs_action]
 
 
 async def test_variation_override_takes_precedence(db_session):
@@ -77,7 +88,7 @@ async def test_variation_override_takes_precedence(db_session):
 
     summary = await get_summary(db_session, company_id=company.id)
     # Only the overridden variation (25 <= 30) is low; the inheriting one (25 > 10) is not.
-    assert summary.kpis.stock_low.value == 1.0
+    assert _stock_low_count(summary) == 1
 
 
 async def test_variation_override_can_exclude_otherwise_low_sku(db_session):
@@ -88,4 +99,4 @@ async def test_variation_override_can_exclude_otherwise_low_sku(db_session):
     await create_stock_entry(db_session, company_id=company.id, variation_id=v.id, quantity=8)
 
     summary = await get_summary(db_session, company_id=company.id)
-    assert summary.kpis.stock_low.value == 0.0
+    assert _stock_low_count(summary) == 0

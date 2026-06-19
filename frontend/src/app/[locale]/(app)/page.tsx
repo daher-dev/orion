@@ -12,14 +12,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GreetingHeader } from "@/components/dashboard/GreetingHeader";
-import { KpiStrip } from "@/components/dashboard/KpiStrip";
-import { ConferenciaSection } from "@/components/dashboard/ConferenciaSection";
-import { ProductionPipeline } from "@/components/dashboard/ProductionPipeline";
+import { ConferenceKpis } from "@/components/dashboard/ConferenceKpis";
+import { ConferenceSummaryCard } from "@/components/dashboard/ConferenceSummaryCard";
+import { TopProductsCard } from "@/components/dashboard/TopProductsCard";
+import { OrderReportGrid } from "@/components/dashboard/OrderReportGrid";
 import { NeedsActionList } from "@/components/dashboard/NeedsActionList";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
-import { RevenueByChannelChart } from "@/components/dashboard/RevenueByChannelChart";
+import { OperatorDashboard } from "@/components/dashboard/OperatorDashboard";
 import { OrderFormSheet } from "@/components/orders/OrderFormSheet";
 import { useDashboardSummary } from "@/hooks/use-dashboard";
+import { useMe } from "@/hooks/use-me";
 import { useCanAccess } from "@/hooks/use-permissions";
 
 const PERIOD_OPTIONS = ["last7d", "last30d", "last90d"] as const;
@@ -38,14 +40,28 @@ const SECONDARY_BUTTON_CLASS =
 
 export default function HomePage() {
   const t = useTranslations("dashboard");
+  const { data: me } = useMe();
+  const isOperator = me?.role?.code === "operator";
   const canWrite = useCanAccess("orders.write");
   const [period, setPeriod] = useState<Period>("last30d");
   const [creating, setCreating] = useState(false);
   const { data, isPending, isError, error } = useDashboardSummary();
 
+  // Operators get the factory-floor variant (cuts queue + quick actions).
+  if (isOperator) {
+    return (
+      <OperatorDashboard
+        operator={data?.operator}
+        isPending={isPending}
+        isError={isError}
+        errorMessage={error?.detail ?? t("loadError")}
+      />
+    );
+  }
+
   return (
     // Vertical stack — 18px gap between major blocks mirrors the design source
-    // (`marginBottom: 18`, `marginTop: 18` between cards in dashboard.jsx).
+    // (`marginBottom: 18` between cards in docs/design/pages/dashboard.jsx).
     <div className="flex flex-col gap-[18px]">
       <GreetingHeader
         actions={
@@ -98,37 +114,42 @@ export default function HomePage() {
 
       {isPending ? (
         <div className="flex flex-col gap-[18px]">
-          <div className="grid gap-[14px] sm:grid-cols-2 lg:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-[120px] rounded-[14px]" />
+          <div className="grid gap-[14px] sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-[118px] rounded-[14px]" />
             ))}
           </div>
-          <Skeleton className="h-[220px] rounded-[14px]" />
+          <div className="grid gap-[18px] lg:grid-cols-[1.45fr_1fr]">
+            <Skeleton className="h-[260px] rounded-[14px]" />
+            <Skeleton className="h-[260px] rounded-[14px]" />
+          </div>
+          <Skeleton className="h-[190px] rounded-[14px]" />
           <div className="grid gap-[18px] lg:grid-cols-2">
             <Skeleton className="h-[260px] rounded-[14px]" />
             <Skeleton className="h-[260px] rounded-[14px]" />
           </div>
-          <Skeleton className="h-[280px] rounded-[14px]" />
         </div>
       ) : isError ? (
         <div className="rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] p-6 text-[13px] text-[color:var(--orion-ink-3)]">
           {error?.detail ?? t("loadError")}
         </div>
       ) : data ? (
-        // Order mirrors /docs/design/source/pages/dashboard.jsx exactly:
-        //   1. 5-KPI strip
-        //   2. Production pipeline (distinctive moment)
-        //   3. [Needs your attention | Recent activity] 2-column row
-        //   4. Revenue by channel (full width footer)
+        // Order mirrors docs/design/pages/dashboard.jsx exactly:
+        //   1. Conference KPIs (4, full width)
+        //   2. [Resumo da conferência | Top 5 produtos] (2-col)
+        //   3. Relatório de pedidos (full width)
+        //   4. [Precisa da sua atenção | Atividade recente] (2-col)
         <>
-          <KpiStrip kpis={data.kpis} />
-          <ConferenciaSection conference={data.conference} />
-          <ProductionPipeline pipeline={data.pipeline} />
+          <ConferenceKpis totals={data.conference.totals} />
+          <div className="grid gap-[18px] lg:grid-cols-[1.45fr_1fr]">
+            <ConferenceSummaryCard totals={data.conference.totals} />
+            <TopProductsCard items={data.top_products} />
+          </div>
+          <OrderReportGrid totals={data.conference.totals} />
           <div className="grid gap-[18px] lg:grid-cols-2">
             <NeedsActionList items={data.needs_action} />
             <ActivityFeed items={data.activity} />
           </div>
-          <RevenueByChannelChart items={data.revenue_by_channel} />
         </>
       ) : null}
 

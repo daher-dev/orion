@@ -308,9 +308,7 @@ async def test_demand_from_open_order_without_items(db_session):
     company, _user = await _company(db_session)
     spec = await create_product_spec(db_session, company_id=company.id, code="CAM01")
     design = await create_print_design(db_session, company_id=company.id, code="FLR03")
-    await _order_no_items(
-        db_session, company_id=company.id, spec=spec, design=design, color_code="PRT", quantity=5
-    )
+    await _order_no_items(db_session, company_id=company.id, spec=spec, design=design, color_code="PRT", quantity=5)
 
     s = await service.build_suggestions(db_session, company_id=company.id)
     sku = _sku(s, design_id=design.id, spec_id=spec.id, color_code="PRT", size=Size.M)
@@ -326,9 +324,7 @@ async def test_demand_is_quantity_weighted(db_session):
     company, _user = await _company(db_session)
     spec = await create_product_spec(db_session, company_id=company.id, code="CAM01")
     design = await create_print_design(db_session, company_id=company.id, code="FLR03")
-    await _order_no_items(
-        db_session, company_id=company.id, spec=spec, design=design, color_code="PRT", quantity=12
-    )
+    await _order_no_items(db_session, company_id=company.id, spec=spec, design=design, color_code="PRT", quantity=12)
 
     s = await service.build_suggestions(db_session, company_id=company.id)
     assert _corte(s, spec_id=spec.id, color_code="PRT").total == 12

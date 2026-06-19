@@ -8,9 +8,8 @@ matched variation's product (``Product.print_id`` → :class:`PrintDesign`).
 
 Heuristic
 ---------
-Token-overlap only (no LLM). It mirrors the proven scorer in
-``services.orders_import`` (``_score_variation``) and the ``suggestMapping``
-logic in ``docs/design/pages/lotes.jsx``:
+Token-overlap only (no LLM), mirroring the ``suggestMapping`` logic in
+``docs/design/pages/lotes.jsx``:
 
 - Candidate variations are restricted to the products the order's Ad sells
   (the union across ``ad_products`` — an ad may list several products),
@@ -155,8 +154,7 @@ def _score(
 ) -> int:
     """Token-overlap score for one candidate variation.
 
-    Boosts exact colour + size hits from the marketplace variation text, the
-    same way ``_score_variation`` does in ``services.orders_import``.
+    Boosts exact colour + size hits from the marketplace variation text.
     """
 
     product = candidate.product

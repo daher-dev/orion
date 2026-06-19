@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { ArrowLeft, FileUp, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
@@ -8,35 +8,27 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PageHead } from "@/components/page/PageHead";
 import { ImportDropZone } from "@/components/orders-import/ImportDropZone";
-import { ImportPreviewTable } from "@/components/orders-import/ImportPreviewTable";
-import { ImportCommitDialog } from "@/components/orders-import/ImportCommitDialog";
+import { ImportSummaryPanel } from "@/components/orders-import/ImportSummaryPanel";
 import { ImportErrorList } from "@/components/orders-import/ImportErrorList";
-import {
-  useCommitOrders,
-  useParseOrders,
-} from "@/hooks/use-orders-import";
+import { ImportCommitDialog } from "@/components/orders-import/ImportCommitDialog";
+import { useImportUpseller } from "@/hooks/use-orders-import";
 import { useCanAccess } from "@/hooks/use-permissions";
 import { ApiError } from "@/lib/api-client";
-import type {
-  CommitOrderError,
-  EditableField,
-  ParsedOrderRow,
-} from "@/lib/schemas/orders-import";
+import type { UpsellerImportSummary } from "@/lib/schemas/orders-import";
 
 type Step = "drop" | "review";
 
 /**
- * Three-step Orders Import wizard.
+ * Two-step Upseller import wizard over a single backend endpoint.
  *
- *  drop    — `ImportDropZone` accepts a .pdf / .csv up to 5 MB. The
- *            spinner state lives on the dropzone itself while /parse
- *            is in flight.
- *  review  — `ImportPreviewTable` renders the editable parsed rows
- *            with confidence pills. The footer offers Back + Commit.
- *  commit  — `ImportCommitDialog` is the modal that confirms the
- *            persistence. On success we toast and bounce back to
- *            /orders. On partial failure we render the per-row error
- *            list above the table and let the user retry after fixing.
+ *  drop    — `ImportDropZone` accepts the .csv export (up to 5 MB). On
+ *            analyze we POST it with `dry_run: true` to preview the
+ *            strict-match result without writing anything.
+ *  review  — `ImportSummaryPanel` shows the counts and `ImportErrorList`
+ *            lists the unmatched lines (skipped). The footer commits.
+ *  commit  — `ImportCommitDialog` confirms, then we POST the same file
+ *            with `dry_run: false`. On success we toast and bounce back
+ *            to /orders; re-imports return duplicates, not errors.
  */
 export default function OrdersImportPage() {
   const t = useTranslations("ordersImport");
@@ -44,38 +36,26 @@ export default function OrdersImportPage() {
   const canWrite = useCanAccess("orders.write");
 
   const [step, setStep] = useState<Step>("drop");
-  const [rows, setRows] = useState<ParsedOrderRow[]>([]);
-  const [parserNotes, setParserNotes] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [summary, setSummary] = useState<UpsellerImportSummary | null>(null);
   const [confirming, setConfirming] = useState(false);
-  const [commitErrors, setCommitErrors] = useState<CommitOrderError[]>([]);
-  const [parseError, setParseError] = useState<string | null>(null);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
 
-  const parse = useParseOrders();
-  const commit = useCommitOrders();
-
-  const errorsByIndex = useMemo<Record<number, string>>(() => {
-    return Object.fromEntries(
-      commitErrors.map((error) => [error.row_index, error.message]),
-    );
-  }, [commitErrors]);
+  const importer = useImportUpseller();
 
   const handleAnalyze = useCallback(
-    async (file: File) => {
-      setParseError(null);
+    async (picked: File) => {
+      setAnalyzeError(null);
       try {
-        const response = await parse.mutateAsync(file);
-        setRows(response.rows);
-        setParserNotes(response.notes ?? null);
-        setCommitErrors([]);
-        if (response.rows.length === 0) {
-          setParseError(t("errors.parseEmpty"));
-          toast.error(t("toasts.parseError"));
+        const result = await importer.mutateAsync({ file: picked, dryRun: true });
+        if (result.total === 0) {
+          setAnalyzeError(t("errors.empty"));
+          toast.error(t("toasts.analyzeError"));
           return;
         }
+        setFile(picked);
+        setSummary(result);
         setStep("review");
-        toast.success(
-          t("toasts.parseSuccess", { count: response.rows.length }),
-        );
       } catch (err) {
         const detail =
           err instanceof ApiError
@@ -83,88 +63,37 @@ export default function OrdersImportPage() {
             : err instanceof Error
               ? err.message
               : "";
-        setParseError(detail || t("errors.parseFailed"));
-        toast.error(t("toasts.parseError"), detail ? { description: detail } : undefined);
+        setAnalyzeError(detail || t("errors.parseFailed"));
+        toast.error(
+          t("toasts.analyzeError"),
+          detail ? { description: detail } : undefined,
+        );
       }
     },
-    [parse, t],
+    [importer, t],
   );
-
-  const handleUpdateRow = useCallback(
-    (rowIndex: number, field: EditableField, value: string) => {
-      setRows((current) =>
-        current.map((row) => {
-          if (row.row_index !== rowIndex) return row;
-          if (field === "quantity") {
-            const parsed = value === "" ? null : Number.parseInt(value, 10);
-            return {
-              ...row,
-              quantity:
-                parsed != null && !Number.isNaN(parsed) ? parsed : null,
-            };
-          }
-          if (field === "sale_price") {
-            return { ...row, sale_price: value === "" ? null : value };
-          }
-          if (field === "ordered_at") {
-            // <input type="datetime-local"> emits "YYYY-MM-DDTHH:mm".
-            return {
-              ...row,
-              ordered_at: value === "" ? null : new Date(value).toISOString(),
-            };
-          }
-          return { ...row, [field]: value === "" ? null : value };
-        }),
-      );
-    },
-    [],
-  );
-
-  const handleRemoveRow = useCallback((rowIndex: number) => {
-    setRows((current) => current.filter((row) => row.row_index !== rowIndex));
-    setCommitErrors((current) =>
-      current.filter((error) => error.row_index !== rowIndex),
-    );
-  }, []);
 
   const handleBack = useCallback(() => {
     setStep("drop");
-    setRows([]);
-    setParserNotes(null);
-    setCommitErrors([]);
-    setParseError(null);
+    setFile(null);
+    setSummary(null);
+    setAnalyzeError(null);
   }, []);
 
   const handleConfirmCommit = useCallback(async () => {
-    if (rows.length === 0) return;
+    if (!file) return;
     try {
-      const response = await commit.mutateAsync({ rows });
-      if (response.errors.length === 0) {
-        toast.success(t("toasts.commitSuccess", { count: response.created }));
-        setConfirming(false);
+      const result = await importer.mutateAsync({ file, dryRun: false });
+      setConfirming(false);
+      if (result.created > 0) {
+        toast.success(t("toasts.commitSuccess", { count: result.created }));
         router.push("/orders");
         return;
       }
-      // Partial failure — keep the user on the page, surface the errors,
-      // remove the rows that did persist so they can retry the rest.
-      setConfirming(false);
-      setCommitErrors(response.errors);
-      const failingIndexes = new Set(
-        response.errors.map((error) => error.row_index),
-      );
-      setRows((current) =>
-        current.filter((row) => failingIndexes.has(row.row_index)),
-      );
-      if (response.created > 0) {
-        toast.warning(
-          t("toasts.commitPartial", {
-            created: response.created,
-            failed: response.errors.length,
-          }),
-        );
-      } else {
-        toast.error(t("toasts.commitError"));
-      }
+      // Nothing new persisted (all duplicates / unmatched). Stay on the
+      // page with the refreshed counts so the user can see why.
+      setSummary(result);
+      toast.message(t("toasts.commitNothing"));
     } catch (err) {
       setConfirming(false);
       const detail =
@@ -178,7 +107,7 @@ export default function OrdersImportPage() {
         detail ? { description: detail } : undefined,
       );
     }
-  }, [commit, rows, router, t]);
+  }, [file, importer, router, t]);
 
   if (!canWrite) {
     return (
@@ -187,6 +116,8 @@ export default function OrdersImportPage() {
       </p>
     );
   }
+
+  const willCreate = summary?.created ?? 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -217,90 +148,62 @@ export default function OrdersImportPage() {
         <div className="mx-auto w-full max-w-[640px]">
           <ImportDropZone
             onAnalyze={handleAnalyze}
-            busy={parse.isPending}
-            errorMessage={parseError}
+            busy={importer.isPending}
+            errorMessage={analyzeError}
           />
         </div>
-      ) : (
+      ) : summary ? (
         <div className="flex flex-col gap-4">
-          {parserNotes ? (
-            <div
-              className="rounded-[14px] border px-4 py-3 text-[12.5px] leading-[1.5]"
-              style={{
-                background:
-                  "color-mix(in oklab, var(--status-info) 8%, var(--orion-surface))",
-                borderColor:
-                  "color-mix(in oklab, var(--status-info) 25%, var(--orion-surface))",
-                color: "var(--status-info)",
-              }}
-            >
-              <strong className="mr-1.5 font-semibold">
-                {t("preview.notes")}
-              </strong>
-              {parserNotes}
-            </div>
-          ) : null}
+          <div className="flex flex-col gap-0.5">
+            <span className="font-serif text-[16px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
+              {t("review.title")}
+            </span>
+            <span className="text-[12px] text-[color:var(--orion-ink-3)]">
+              {t("review.sub")}
+            </span>
+          </div>
 
-          {commitErrors.length > 0 ? (
-            <ImportErrorList errors={commitErrors} />
-          ) : null}
+          <ImportSummaryPanel summary={summary} />
 
-          {rows.length === 0 ? (
-            <div className="rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-6 py-12 text-center text-[13px] text-[color:var(--orion-ink-3)]">
-              {t("preview.empty")}
-            </div>
+          {summary.errors.length > 0 ? (
+            <ImportErrorList errors={summary.errors} />
           ) : (
-            <div className="overflow-hidden rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)]">
-              <div className="flex items-center justify-between border-b border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface)] px-4 py-3">
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-serif text-[15px] font-medium tracking-[-0.01em] text-[color:var(--orion-ink)]">
-                    {t("preview.title")}
-                  </span>
-                  <span className="text-[11.5px] text-[color:var(--orion-ink-3)]">
-                    {t("preview.editHint")}
-                  </span>
-                </div>
-                <span className="text-[12px] text-[color:var(--orion-ink-3)]">
-                  {t("preview.totalRows", { count: rows.length })}
-                </span>
-              </div>
-              <ImportPreviewTable
-                rows={rows}
-                errorsByIndex={errorsByIndex}
-                onUpdate={handleUpdateRow}
-                onRemove={handleRemoveRow}
-              />
-              <div className="flex items-center justify-between border-t border-[color:var(--orion-line-soft)] bg-[color:var(--orion-surface)] px-4 py-3">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleBack}
-                  className="h-auto gap-2 rounded-[6px] px-[13px] py-[7px] text-[13px] text-[color:var(--orion-ink-2)] hover:bg-[color:var(--orion-surface-2)]"
-                >
-                  <ArrowLeft size={13} strokeWidth={1.8} />
-                  {t("preview.back")}
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setConfirming(true)}
-                  disabled={rows.length === 0 || commit.isPending}
-                  className="h-auto gap-2 rounded-[6px] border bg-[color:var(--brand-sales)] px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95 disabled:opacity-70"
-                  style={{ borderColor: "color-mix(in oklab, var(--brand-sales) 70%, black)" }}
-                >
-                  <FileUp size={13} strokeWidth={1.8} />
-                  {t("preview.commit")}
-                </Button>
-              </div>
-            </div>
+            <p className="rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-4 py-3 text-[12.5px] text-[color:var(--orion-ink-2)]">
+              {t("review.allGood")}
+            </p>
           )}
+
+          <div className="flex items-center justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleBack}
+              className="h-auto gap-2 rounded-[6px] px-[13px] py-[7px] text-[13px] text-[color:var(--orion-ink-2)] hover:bg-[color:var(--orion-surface-2)]"
+            >
+              <ArrowLeft size={13} strokeWidth={1.8} />
+              {t("review.back")}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setConfirming(true)}
+              disabled={willCreate === 0 || importer.isPending}
+              className="h-auto gap-2 rounded-[6px] border bg-[color:var(--brand-sales)] px-[13px] py-[7px] text-[13px] font-medium text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_1px_2px_rgba(31,27,21,0.08)] hover:brightness-95 disabled:opacity-60"
+              style={{ borderColor: "color-mix(in oklab, var(--brand-sales) 70%, black)" }}
+            >
+              <FileUp size={13} strokeWidth={1.8} />
+              {willCreate > 0
+                ? t("review.commit", { count: willCreate })
+                : t("review.nothingToImport")}
+            </Button>
+          </div>
         </div>
-      )}
+      ) : null}
 
       <ImportCommitDialog
         open={confirming}
         onOpenChange={setConfirming}
-        rowCount={rows.length}
-        isPending={commit.isPending}
+        rowCount={willCreate}
+        isPending={importer.isPending}
         onConfirm={handleConfirmCommit}
       />
     </div>
@@ -316,8 +219,6 @@ function StepIndicator({ step }: { step: Step }) {
     { id: "review", label: t("review") },
     { id: "commit", label: t("commit") },
   ];
-  // "commit" is a virtual step — the dialog. The indicator highlights
-  // up through the current real step.
   const activeOrder = step === "drop" ? 0 : 1;
   return (
     <ol className="flex flex-wrap items-center gap-2 text-[12px] text-[color:var(--orion-ink-3)]">

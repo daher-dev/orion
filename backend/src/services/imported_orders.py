@@ -42,11 +42,26 @@ from models import Ad, AdProduct, Ecommerce, ImportedOrder, Order, OrderStatus, 
 from schemas.imported_orders import UpsellerImportError, UpsellerImportSummary
 from services._audit import write_audit
 from services._base import scoped
-from services.orders_import import _decode_bytes
 from shared.exceptions import ValidationError
 
 _RESOURCE = "orders"
 _MAX_CSV_BYTES = 5 * 1024 * 1024
+
+
+def _decode_bytes(data: bytes) -> str:
+    """Decode CSV bytes, trying UTF-8 variants before falling back to latin-1.
+
+    The Upseller export is Windows-1252; ``latin-1`` never raises and maps the
+    accented bytes the file actually uses, so it is the safe final fallback.
+    """
+
+    for encoding in ("utf-8-sig", "utf-8", "latin-1"):
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    # Last resort — replace errors so we don't blow up.
+    return data.decode("utf-8", errors="replace")
 
 
 # --------------------------------------------------------------- header mapping

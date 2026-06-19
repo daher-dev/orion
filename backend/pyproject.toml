@@ -17,8 +17,6 @@ dependencies = [
     "alembic>=1.16.0",
     "python-dateutil>=2.9.0",
     "python-dotenv>=1.2.1",
-    "anthropic>=0.55.0",
-    "pypdf>=5.1.0",
 ]
 
 [dependency-groups]
@@ -30,7 +28,6 @@ dev = [
     "pytest-sugar>=1.0.0",
     "pytest-timeout>=2.3.1",
     "httpx>=0.28.0",
-    "respx>=0.22.0",
     "ruff>=0.11.0",
     "ty>=0.0.1a16",
     "polyfactory>=2.22.1",

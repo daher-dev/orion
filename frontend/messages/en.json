@@ -383,6 +383,7 @@
     },
     "actions": {
       "create": "New order",
+      "import": "Import",
       "edit": "Edit",
       "delete": "Delete",
       "confirmDelete": "Delete this order? This cannot be undone.",
@@ -497,7 +498,7 @@
     "list": {
       "title": "Import",
       "titleEm": "orders",
-      "sub": "Drop a PDF or CSV and let the AI extract orders. You confirm every field before they hit the catalog."
+      "sub": "Drop the CSV exported from UpSeller. We match every line against your catalog and show what will be created before anything is saved."
     },
     "actions": {
       "backToOrders": "Back to orders"
@@ -508,65 +509,53 @@
       "commit": "Confirm"
     },
     "dropzone": {
-      "title": "Drop the file here",
-      "body": "Drag a payment receipt or a sales CSV. We will parse it and let you review the rows before saving.",
-      "acceptedTypes": "PDF or CSV — up to 5 MB",
+      "title": "Drop the UpSeller CSV here",
+      "body": "Drag the orders export from UpSeller. We read it and show a preview before saving anything.",
+      "acceptedTypes": "CSV — up to 5 MB",
       "pickFile": "Choose file",
       "ctaParse": "Analyze",
       "removeFile": "Remove file",
       "parsing": "Analyzing…",
-      "errorType": "Only PDF and CSV files are accepted.",
+      "errorType": "Only CSV files are accepted.",
       "errorSize": "File exceeds 5 MB limit."
     },
-    "preview": {
-      "title": "Parsed orders",
-      "notes": "Parser notes:",
-      "editHint": "Click any cell to edit before saving.",
-      "totalRows": "{count, plural, one {# row} other {# rows}}",
-      "removeRow": "Remove row",
-      "empty": "No rows left to import. Go back and pick another file.",
+    "review": {
+      "title": "Import preview",
+      "sub": "Dry run — nothing has been saved yet.",
+      "total": "Lines read",
+      "willCreate": "Will be created",
+      "duplicates": "Already imported",
+      "unmatched": "Unmatched",
+      "allGood": "Every line matched your catalog.",
       "back": "Back",
-      "commit": "Save orders",
-      "columns": {
-        "rowIdx": "#",
-        "confidence": "Confidence",
-        "clientName": "Client",
-        "clientEmail": "Email",
-        "clientPhone": "Phone",
-        "productHint": "Product",
-        "quantity": "Qty",
-        "salePrice": "Price",
-        "orderedAt": "Date",
-        "rawExcerpt": "Source",
-        "actions": "Actions"
-      }
+      "commit": "Import {count, plural, one {# order} other {# orders}}",
+      "nothingToImport": "Nothing to import"
     },
-    "confidence": {
-      "high": "High confidence",
-      "medium": "Medium confidence",
-      "low": "Low confidence",
-      "none": "Unknown"
+    "unmatched": {
+      "title": "Unmatched lines",
+      "sub": "These lines didn't match a single product in your catalog and will be skipped. Fix the catalog and re-import — orders already created are kept.",
+      "more": "+{count} more",
+      "columns": {
+        "row": "Line",
+        "order": "Order",
+        "sku": "SKU",
+        "reason": "Reason"
+      }
     },
     "commit": {
       "title": "Confirm import",
-      "body": "Save {count, plural, one {# order} other {# orders}}? Each row will become a real order in the catalog.",
-      "save": "Save orders",
-      "cancel": "Cancel",
-      "success": "Orders imported.",
-      "errorSomeFailed": "Some rows could not be saved.",
-      "errorAll": "No row could be saved."
+      "body": "Import {count, plural, one {# order} other {# orders}}? Each matched line becomes an order in your catalog.",
+      "save": "Import orders",
+      "cancel": "Cancel"
     },
     "errors": {
-      "rowFailed": "Row #{index}: {message}",
-      "generic": "Some rows could not be imported.",
-      "parseFailed": "We could not parse this file. Try another one.",
-      "parseEmpty": "The parser did not find any orders in this file."
+      "parseFailed": "We could not read this file. Make sure it's the CSV exported from UpSeller.",
+      "empty": "We didn't find any orders in this file."
     },
     "toasts": {
-      "parseSuccess": "Found {count, plural, one {# order} other {# orders}} to review.",
-      "parseError": "Could not parse the file.",
+      "analyzeError": "Could not read the file.",
       "commitSuccess": "{count, plural, one {# order imported} other {# orders imported}}.",
-      "commitPartial": "{created} imported · {failed} failed.",
+      "commitNothing": "No new orders to import — everything was already imported or unmatched.",
       "commitError": "Could not import the orders."
     },
     "fallback": {

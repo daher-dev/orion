@@ -383,6 +383,7 @@
     },
     "actions": {
       "create": "Novo pedido",
+      "import": "Importar",
       "edit": "Editar",
       "delete": "Excluir",
       "confirmDelete": "Excluir este pedido? Não pode ser desfeito.",
@@ -497,7 +498,7 @@
     "list": {
       "title": "Importar",
       "titleEm": "pedidos",
-      "sub": "Solte um PDF ou CSV e deixe a IA extrair os pedidos. Você confirma cada campo antes de salvar."
+      "sub": "Solte o CSV exportado do UpSeller. Conferimos cada linha com o seu catálogo e mostramos o que será criado antes de salvar."
     },
     "actions": {
       "backToOrders": "Voltar para pedidos"
@@ -508,65 +509,53 @@
       "commit": "Confirmar"
     },
     "dropzone": {
-      "title": "Soltar arquivo aqui",
-      "body": "Arraste um comprovante em PDF ou um CSV de vendas. Vamos extrair as linhas e você revisa antes de salvar.",
-      "acceptedTypes": "PDF ou CSV — até 5 MB",
+      "title": "Solte o CSV do UpSeller aqui",
+      "body": "Arraste a exportação de pedidos do UpSeller. Vamos ler o arquivo e mostrar uma prévia antes de salvar.",
+      "acceptedTypes": "CSV — até 5 MB",
       "pickFile": "Escolher arquivo",
       "ctaParse": "Analisar",
       "removeFile": "Remover arquivo",
       "parsing": "Analisando…",
-      "errorType": "Somente arquivos PDF e CSV são aceitos.",
+      "errorType": "Somente arquivos CSV são aceitos.",
       "errorSize": "Arquivo excede o limite de 5 MB."
     },
-    "preview": {
-      "title": "Pedidos identificados",
-      "notes": "Observações do parser:",
-      "editHint": "Clique em qualquer célula para editar antes de salvar.",
-      "totalRows": "{count, plural, one {# linha} other {# linhas}}",
-      "removeRow": "Remover linha",
-      "empty": "Nenhuma linha para importar. Volte e escolha outro arquivo.",
+    "review": {
+      "title": "Prévia da importação",
+      "sub": "Simulação — nada foi salvo ainda.",
+      "total": "Linhas lidas",
+      "willCreate": "Serão criados",
+      "duplicates": "Já importados",
+      "unmatched": "Sem correspondência",
+      "allGood": "Todas as linhas corresponderam ao seu catálogo.",
       "back": "Voltar",
-      "commit": "Salvar pedidos",
-      "columns": {
-        "rowIdx": "#",
-        "confidence": "Confiança",
-        "clientName": "Cliente",
-        "clientEmail": "E-mail",
-        "clientPhone": "Telefone",
-        "productHint": "Produto",
-        "quantity": "Qtd",
-        "salePrice": "Preço",
-        "orderedAt": "Data",
-        "rawExcerpt": "Trecho",
-        "actions": "Ações"
-      }
+      "commit": "Importar {count, plural, one {# pedido} other {# pedidos}}",
+      "nothingToImport": "Nada para importar"
     },
-    "confidence": {
-      "high": "Confiança alta",
-      "medium": "Confiança média",
-      "low": "Confiança baixa",
-      "none": "Sem dados"
+    "unmatched": {
+      "title": "Linhas sem correspondência",
+      "sub": "Estas linhas não corresponderam a um único produto do seu catálogo e serão ignoradas. Ajuste o catálogo e importe de novo — os pedidos já criados são mantidos.",
+      "more": "+{count} restantes",
+      "columns": {
+        "row": "Linha",
+        "order": "Pedido",
+        "sku": "SKU",
+        "reason": "Motivo"
+      }
     },
     "commit": {
       "title": "Confirmar importação",
-      "body": "Salvar {count, plural, one {# pedido} other {# pedidos}}? Cada linha vira um pedido no catálogo.",
-      "save": "Salvar pedidos",
-      "cancel": "Cancelar",
-      "success": "Pedidos importados.",
-      "errorSomeFailed": "Algumas linhas não puderam ser salvas.",
-      "errorAll": "Nenhuma linha pôde ser salva."
+      "body": "Importar {count, plural, one {# pedido} other {# pedidos}}? Cada linha correspondida vira um pedido no seu catálogo.",
+      "save": "Importar pedidos",
+      "cancel": "Cancelar"
     },
     "errors": {
-      "rowFailed": "Linha #{index}: {message}",
-      "generic": "Algumas linhas não puderam ser importadas.",
-      "parseFailed": "Não conseguimos interpretar este arquivo. Tente outro.",
-      "parseEmpty": "O parser não encontrou pedidos neste arquivo."
+      "parseFailed": "Não conseguimos ler este arquivo. Confira se é o CSV exportado do UpSeller.",
+      "empty": "Não encontramos pedidos neste arquivo."
     },
     "toasts": {
-      "parseSuccess": "{count, plural, one {# pedido encontrado} other {# pedidos encontrados}} para revisão.",
-      "parseError": "Não foi possível interpretar o arquivo.",
+      "analyzeError": "Não foi possível ler o arquivo.",
       "commitSuccess": "{count, plural, one {# pedido importado} other {# pedidos importados}}.",
-      "commitPartial": "{created} importados · {failed} falharam.",
+      "commitNothing": "Nenhum pedido novo para importar — tudo já havia sido importado ou ficou sem correspondência.",
       "commitError": "Não foi possível importar os pedidos."
     },
     "fallback": {

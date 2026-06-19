@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Factory, GitMerge, LayoutGrid, PackageCheck, Search, ShoppingBag, Truck } from "lucide-react";
+import { Factory, FileUp, GitMerge, LayoutGrid, PackageCheck, Search, ShoppingBag, Truck } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -159,6 +160,18 @@ export default function OrdersPage() {
               onChange={setView}
               labels={{ board: t("view.board"), table: t("view.table") }}
             />
+            {canWrite ? (
+              <Button
+                asChild
+                variant="outline"
+                className="h-auto gap-[7px] rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-[13px] py-[7px] text-[13px] font-medium text-[color:var(--orion-ink)] hover:bg-[color:var(--orion-surface-2)]"
+              >
+                <Link href="/orders/import">
+                  <FileUp size={14} strokeWidth={1.8} />
+                  {t("actions.import")}
+                </Link>
+              </Button>
+            ) : null}
             {canWrite ? (
               <Button
                 type="button"

@@ -21,16 +21,6 @@ class Settings(BaseSettings):
 
     ALLOWED_ORIGINS: str = Field(default="", description="Comma-separated list of allowed CORS origins")
 
-    # FEATURE-014 — Anthropic Claude API used by the LLM-powered orders
-    # import. Tests never call the real API (mocked via respx). In dev,
-    # leave ANTHROPIC_API_KEY blank and the import service surfaces a
-    # clear error instead of attempting a request.
-    ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key (LLM order import)")
-    ANTHROPIC_MODEL: str = Field(
-        default="claude-haiku-4-5",
-        description="Default Anthropic model id (override per-tenant later if needed)",
-    )
-
     # Marketplace channel integrations (FEATURE — channel integration).
     # Real OAuth + order-feed calls to external marketplaces are GUARDED behind
     # these flags. They default to disabled/blank so the running app — and every

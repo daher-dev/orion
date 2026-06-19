@@ -4,51 +4,37 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApi } from "@/hooks/use-api";
 import { qk } from "@/lib/query-keys";
 import type { ApiError } from "@/lib/api-client";
-import type {
-  CommitOrdersBody,
-  CommitOrdersResponse,
-  ParseResponse,
-} from "@/lib/schemas/orders-import";
+import type { UpsellerImportSummary } from "@/lib/schemas/orders-import";
 
-const PARSE_PATH = "/v1/orders/import/parse";
-const COMMIT_PATH = "/v1/orders/import/commit";
+const UPSELLER_PATH = "/v1/orders/import/upseller";
 
-/**
- * Upload a PDF or CSV to the backend parser and receive a list of
- * `ParsedOrderRow`s with their confidence scores. Mutation returns the
- * raw `ParseResponse` so the caller can also surface the optional
- * `notes` field (parser commentary).
- */
-export function useParseOrders() {
-  const api = useApi();
-  return useMutation<ParseResponse, ApiError, File>({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("file", file, file.name);
-      // The endpoint also accepts an optional `format` override; we leave
-      // it to the backend's `auto` sniffer in the UI flow.
-      return api.post<ParseResponse>(PARSE_PATH, formData);
-    },
-  });
-}
+export type UpsellerImportInput = {
+  file: File;
+  /** `true` previews (strict-match without writing); `false` persists. */
+  dryRun: boolean;
+};
 
 /**
- * Persist the reviewed rows. Returns `{ created, errors }` so the UI
- * can show partial failures inline without losing the user's edits.
+ * Import the Upseller CSV into orders. The wizard calls this twice with
+ * the same file: first with `dryRun: true` to preview the strict-match
+ * summary (counts + unmatched rows), then with `dryRun: false` to persist.
  *
- * On any non-zero `created` count we invalidate the orders cache so the
- * /orders list reflects the new rows when the user navigates back.
+ * On a real (non-dry) run that created at least one order we invalidate
+ * the orders cache so /orders reflects the new rows.
  */
-export function useCommitOrders() {
+export function useImportUpseller() {
   const api = useApi();
   const qc = useQueryClient();
-  return useMutation<CommitOrdersResponse, ApiError, CommitOrdersBody>({
-    mutationFn: (body: CommitOrdersBody) =>
-      api.post<CommitOrdersResponse>(COMMIT_PATH, body),
-    onSuccess: (result) => {
-      if (result.created > 0) {
+  return useMutation<UpsellerImportSummary, ApiError, UpsellerImportInput>({
+    mutationFn: ({ file, dryRun }: UpsellerImportInput) => {
+      const formData = new FormData();
+      formData.append("file", file, file.name);
+      formData.append("dry_run", dryRun ? "true" : "false");
+      return api.post<UpsellerImportSummary>(UPSELLER_PATH, formData);
+    },
+    onSuccess: (summary) => {
+      if (!summary.dry_run && summary.created > 0) {
         void qc.invalidateQueries({ queryKey: qk.orders.all() });
-        void qc.invalidateQueries({ queryKey: qk.clients.all() });
       }
     },
   });

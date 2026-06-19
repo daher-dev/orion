@@ -1,124 +1,50 @@
 /**
- * Zod schemas for FEATURE-014 — Sales Orders Import.
+ * Zod schemas for the Upseller order import.
  *
- * Mirrors `backend/src/schemas/orders_import.py`. The two-step contract:
+ * Mirrors `backend/src/schemas/imported_orders.py`. One-shot contract:
  *
- *  1. POST /v1/orders/import/parse — multipart upload (.pdf or .csv).
- *     Returns a `ParseResponse` carrying a list of `ParsedOrderRow`
- *     (one per detected order) plus an optional `notes` string with
- *     the parser's own commentary (e.g. "the receipt is dated in BRT").
- *  2. POST /v1/orders/import/commit — JSON body with the (potentially
- *     user-edited) rows. Returns a `CommitOrdersResponse` with the
- *     `created` count and a per-row `errors` array keyed by
- *     `row_index` so the UI can surface partial failures inline.
- *
- * `confidence` is a float in [0, 1]. Decimal fields come down the wire
- * as strings (FastAPI serialises Decimals that way); we accept either
- * a string or a number on input to be lenient.
+ *   POST /v1/orders/import/upseller — multipart upload (the .csv exported
+ *   from Upseller) plus a `dry_run` flag. Returns an
+ *   `UpsellerImportSummary`: the line counts plus a per-row `errors` list
+ *   for lines that could not be strict-matched against the tenant catalog
+ *   (with the reason, platform order id and SKU). `dry_run=true` previews
+ *   without writing — the UI runs a dry-run first, then commits the same file.
  */
 
 import { z } from "zod";
 
-/** Confidence buckets used by the UI pill. */
-export const CONFIDENCE_BUCKETS = ["high", "medium", "low", "none"] as const;
-export type ConfidenceBucket = (typeof CONFIDENCE_BUCKETS)[number];
-
-/** Map a 0..1 score to a UI bucket. Mirrors the design pill tones. */
-export function confidenceBucket(score: number | null | undefined): ConfidenceBucket {
-  if (score == null || Number.isNaN(score)) return "none";
-  if (score >= 0.8) return "high";
-  if (score >= 0.5) return "medium";
-  if (score >= 0.01) return "low";
-  return "none";
-}
-
-/** Format a 0..1 score as a percentage (rounded to nearest integer). */
-export function formatConfidence(score: number | null | undefined): string {
-  if (score == null || Number.isNaN(score)) return "—";
-  const pct = Math.round(score * 100);
-  return `${pct}%`;
-}
-
-/**
- * One review row as returned by /parse and fed back to /commit.
- *
- * Mirrors `ParsedOrderRow` on the backend. Decimal serialises as a
- * string in JSON; we accept either to make the parser forgiving.
- */
-export const parsedOrderRowSchema = z.object({
-  row_index: z.number().int().min(0),
-  confidence: z.number().min(0).max(1),
-  client_name: z.string().max(120).nullable().optional(),
-  client_email: z.string().max(255).nullable().optional(),
-  client_phone: z.string().max(40).nullable().optional(),
-  ad_external_id: z.string().max(120).nullable().optional(),
-  product_hint: z.string().max(200).nullable().optional(),
-  quantity: z.number().int().min(1).nullable().optional(),
-  // The backend uses Decimal — FastAPI emits it as a string.
-  sale_price: z
-    .union([z.string(), z.number()])
-    .transform((v) => (typeof v === "number" ? v.toFixed(2) : v))
-    .nullable()
-    .optional(),
-  ordered_at: z.string().nullable().optional(),
-  raw_excerpt: z.string().max(500).nullable().optional(),
-});
-
-export type ParsedOrderRow = z.infer<typeof parsedOrderRowSchema>;
-
-export const parseResponseSchema = z.object({
-  rows: z.array(parsedOrderRowSchema),
-  notes: z.string().nullable().optional(),
-});
-
-export type ParseResponse = z.infer<typeof parseResponseSchema>;
-
-export const commitOrdersBodySchema = z.object({
-  rows: z.array(parsedOrderRowSchema).min(1),
-});
-
-export type CommitOrdersBody = z.infer<typeof commitOrdersBodySchema>;
-
-export const commitOrderErrorSchema = z.object({
+/** One source line that could not be matched + persisted, with the reason. */
+export const upsellerImportErrorSchema = z.object({
   row_index: z.number().int().min(0),
   message: z.string(),
+  platform_order_id: z.string().nullable().optional(),
+  sku: z.string().nullable().optional(),
 });
 
-export type CommitOrderError = z.infer<typeof commitOrderErrorSchema>;
+export type UpsellerImportError = z.infer<typeof upsellerImportErrorSchema>;
 
-export const commitOrdersResponseSchema = z.object({
+/** Outcome of an import run (or a dry-run preview). */
+export const upsellerImportSummarySchema = z.object({
+  total: z.number().int().min(0),
   created: z.number().int().min(0),
-  errors: z.array(commitOrderErrorSchema),
+  skipped_duplicates: z.number().int().min(0),
+  errors: z.array(upsellerImportErrorSchema),
+  dry_run: z.boolean(),
 });
 
-export type CommitOrdersResponse = z.infer<typeof commitOrdersResponseSchema>;
+export type UpsellerImportSummary = z.infer<typeof upsellerImportSummarySchema>;
 
-/** Editable columns in the preview table. */
-export const EDITABLE_FIELDS = [
-  "client_name",
-  "client_email",
-  "client_phone",
-  "ad_external_id",
-  "product_hint",
-  "quantity",
-  "sale_price",
-  "ordered_at",
-] as const;
-
-export type EditableField = (typeof EDITABLE_FIELDS)[number];
-
-/** Max upload size honored by the backend parse endpoint (5 MB). */
+/** Max upload size honored by the backend import endpoint (5 MB). */
 export const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
 
-/** Accepted upload extensions / MIME types. */
-export const ACCEPTED_UPLOAD_EXTENSIONS = [".pdf", ".csv"] as const;
+/** Accepted upload extensions / MIME types — the Upseller export is a CSV. */
+export const ACCEPTED_UPLOAD_EXTENSIONS = [".csv"] as const;
 export const ACCEPTED_UPLOAD_MIMES = [
-  "application/pdf",
   "text/csv",
   "application/vnd.ms-excel", // some browsers tag .csv as this
 ] as const;
 
-/** True if the File matches one of the accepted PDF / CSV signatures. */
+/** True if the File looks like an accepted CSV (by extension or MIME). */
 export function isAcceptedUpload(file: File): boolean {
   const name = file.name.toLowerCase();
   if (ACCEPTED_UPLOAD_EXTENSIONS.some((ext) => name.endsWith(ext))) return true;

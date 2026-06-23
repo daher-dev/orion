@@ -252,6 +252,29 @@ def test_same_estampa_name_aggregates_combos_across_records():
     assert {v["name"] for v in variations} == {"Branco", "Vermelho"}
 
 
+def test_company_settings_palette_covers_every_variation_code():
+    """The importer emits a company_settings row whose productColors palette
+    registers every color code used by the company's product variations — so the
+    product-service palette enforcement accepts the imported data."""
+
+    data, _ = _convert(RAW)
+
+    settings_rows = _rows(data, "company_settings")
+    assert len(settings_rows) == 1
+    palette = settings_rows[0]["config"]["productColors"]
+
+    palette_codes = {c["code"] for c in palette}
+    variation_codes = {v["color_code"] for v in _rows(data, "product_variation")}
+    assert variation_codes, "expected at least one variation"
+    assert variation_codes <= palette_codes
+
+    # Every palette entry is well-formed (unique 3-letter code + valid hex).
+    assert len(palette_codes) == len(palette)
+    for entry in palette:
+        assert re.match(r"^[A-Z]{3}$", entry["code"]), entry
+        assert _HEX_RE.match(entry["hex"]), entry
+
+
 def test_ink_hex_for_known_and_unknown_names():
     # Known palette name resolves to its ported hex.
     assert ink_hex_for("Preto") == "#1f1f1f"

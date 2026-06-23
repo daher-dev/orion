@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 _HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 _SKU_PREFIX_RE = re.compile(r"^[A-Z0-9]{1,4}$")
+_COLOR_CODE_RE = re.compile(r"^[A-Z]{3}$")
 
 # Allowed measurement units per stock tier. fabric is weight (kg) or a percent
 # of the initial balance; paper is meters (m) or percent; the counted tiers
@@ -30,12 +31,22 @@ _ALLOWED_UNITS: dict[str, frozenset[str]] = {
 class ColorEntry(BaseModel):
     hex: str
     name: str = Field(min_length=1, max_length=60)
+    # 3-uppercase-letter SKU token. Required for productColors (the fabric palette
+    # that drives variation SKUs); unused/optional for printColors (keyed by hex).
+    code: str | None = None
 
     @field_validator("hex")
     @classmethod
     def _validate_hex(cls, value: str) -> str:
         if not _HEX_COLOR_RE.match(value):
             raise ValueError("hex must be a 6-digit hex color like #1f1f1f")
+        return value
+
+    @field_validator("code")
+    @classmethod
+    def _validate_code(cls, value: str | None) -> str | None:
+        if value is not None and not _COLOR_CODE_RE.match(value):
+            raise ValueError("code must be three uppercase letters")
         return value
 
 
@@ -100,6 +111,25 @@ class CompanySettingsConfig(BaseModel):
     @classmethod
     def _validate_string_lists(cls, value: list[str]) -> list[str]:
         return _non_empty_strings(value)
+
+    @model_validator(mode="after")
+    def _validate_product_colors(self) -> CompanySettingsConfig:
+        # The fabric palette is the source of truth for product variation colors:
+        # every entry must carry a unique 3-letter code (it drives the SKU) and a
+        # unique name. printColors (keyed by hex) are exempt.
+        seen_codes: set[str] = set()
+        seen_names: set[str] = set()
+        for entry in self.productColors:
+            if not entry.code:
+                raise ValueError(f"productColors entry {entry.name!r} is missing a code")
+            if entry.code in seen_codes:
+                raise ValueError(f"duplicate productColors code {entry.code!r}")
+            name_key = entry.name.strip().casefold()
+            if name_key in seen_names:
+                raise ValueError(f"duplicate productColors name {entry.name!r}")
+            seen_codes.add(entry.code)
+            seen_names.add(name_key)
+        return self
 
 
 class CompanySettingsRead(BaseModel):

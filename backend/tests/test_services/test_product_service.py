@@ -351,6 +351,61 @@ async def test_create_product_validation_when_print_belongs_to_other_company(db_
         )
 
 
+async def test_create_product_rejects_color_not_in_palette(db_session):
+    """A variation whose color_code isn't a registered palette entry is rejected."""
+
+    company = await create_company(db_session)
+    user = await create_user(db_session, company_id=company.id)
+    spec = await create_product_spec(db_session, company_id=company.id)
+
+    with pytest.raises(ValidationError):
+        await product_service.create_product(
+            db_session,
+            company_id=company.id,
+            user_id=user.id,
+            payload=_payload(
+                spec_id=spec.id,
+                variations=[_variation(Size.M, "Roxo Neon", "ZZZ")],  # not in default palette
+            ),
+        )
+
+
+async def test_create_product_canonicalizes_color_name_from_palette(db_session):
+    """The stored color name comes from the palette (by code), not the wire."""
+
+    company = await create_company(db_session)
+    user = await create_user(db_session, company_id=company.id)
+    spec = await create_product_spec(db_session, company_id=company.id, code="CAM09")
+
+    _, variations = await product_service.create_product(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        payload=_payload(
+            spec_id=spec.id,
+            # Wrong name, valid palette code (PRT = Preto) → name is canonicalized.
+            variations=[_variation(Size.M, "whatever-the-client-sent", "PRT")],
+        ),
+    )
+    assert variations[0].color == "Preto"
+
+
+async def test_update_product_rejects_color_not_in_palette(db_session):
+    company = await create_company(db_session)
+    user = await create_user(db_session, company_id=company.id)
+    spec = await create_product_spec(db_session, company_id=company.id)
+    product = await create_product(db_session, company_id=company.id, spec_id=spec.id)
+
+    with pytest.raises(ValidationError):
+        await product_service.update_product(
+            db_session,
+            company_id=company.id,
+            user_id=user.id,
+            product_id=product.id,
+            payload=ProductUpdate(variations=[_variation(Size.M, "Roxo Neon", "ZZZ")]),
+        )
+
+
 async def test_create_product_rejects_duplicate_variation(db_session):
     """Two cells with identical (size, color_code) trip the unique index."""
 

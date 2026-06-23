@@ -1,7 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestProviders } from "@/__tests__/test-utils";
+import { DEFAULT_CATALOG_CONFIG } from "@/lib/schemas/company-settings";
 import { ProductForm } from "@/components/products/ProductForm";
+
+vi.mock("@/hooks/use-catalog-config", () => ({
+  useCatalogConfig: () => ({ data: { config: DEFAULT_CATALOG_CONFIG } }),
+  useUpdateCatalogConfig: () => ({ mutateAsync: vi.fn().mockResolvedValue({}), isPending: false }),
+}));
+
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 vi.mock("@/hooks/use-specs", () => ({
   useSpecs: () => ({

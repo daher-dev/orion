@@ -821,7 +821,11 @@
       "cells": "cells",
       "noPreview": "Pick at least one size and one color to preview SKUs.",
       "noVariations": "No variations yet.",
-      "sku": "SKU"
+      "sku": "SKU",
+      "addColorConfirm": "Add",
+      "addColorSaving": "Saving…",
+      "addColorError": "Couldn't add the color",
+      "addColorCodeTaken": "That code is already used by another color."
     },
     "actions": {
       "create": "New product",
@@ -2340,8 +2344,11 @@
       "skuPrefix": "1–4 letters/digits",
       "needName": "Give every color a name.",
       "needLabel": "Give every garment type a name.",
-      "needSku": "Each garment type needs a valid SKU prefix."
-    }
+      "needSku": "Each garment type needs a valid SKU prefix.",
+      "colorCode": "Give every fabric color a 3-letter code.",
+      "colorCodeDuplicate": "Two fabric colors share the same code."
+    },
+    "colorCodePlaceholder": "Code"
   },
   "thresholds": {
     "title": "Low-stock alerts",

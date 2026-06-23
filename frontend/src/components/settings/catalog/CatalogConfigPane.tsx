@@ -127,6 +127,8 @@ export function CatalogConfigPane() {
       const path0 = String(issue?.path[0] ?? "");
       let msg = t("saveError");
       if (code === "validation.hex") msg = t("validation.hex");
+      else if (code === "validation.colorCode") msg = t("validation.colorCode");
+      else if (code === "validation.colorCodeDuplicate") msg = t("validation.colorCodeDuplicate");
       else if (path0 === "garmentTypes") msg = t("validation.needSku");
       else if (known.includes(code ?? "")) msg = t("validation.required");
       toast.error(msg);
@@ -167,6 +169,8 @@ export function CatalogConfigPane() {
           removeLabel={t("remove")}
           disabled={!canWrite}
           testIdPrefix="product-colors"
+          withCode
+          codePlaceholder={t("colorCodePlaceholder")}
         />
       </SettingsCard>
 

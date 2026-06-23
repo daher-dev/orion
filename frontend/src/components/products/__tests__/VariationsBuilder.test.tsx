@@ -1,11 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { TestProviders } from "@/__tests__/test-utils";
+import { DEFAULT_CATALOG_CONFIG } from "@/lib/schemas/company-settings";
 import {
   VariationsBuilder,
   buildVariationItems,
   type VariationsBuilderValue,
 } from "@/components/products/VariationsBuilder";
+
+vi.mock("@/hooks/use-catalog-config", () => ({
+  useCatalogConfig: () => ({ data: { config: DEFAULT_CATALOG_CONFIG } }),
+  useUpdateCatalogConfig: () => ({ mutateAsync: vi.fn().mockResolvedValue({}), isPending: false }),
+}));
+
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 function setup(initial: VariationsBuilderValue, specCode = "CAM01", printCode: string | null = null) {
   const onChange = vi.fn<(next: VariationsBuilderValue) => void>();
@@ -34,10 +42,10 @@ describe("VariationsBuilder", () => {
     expect(onChange).toHaveBeenCalledWith({ sizes: ["m"], colors: [] });
   });
 
-  it("adds a preset color from the palette", () => {
+  it("selects a color from the company palette", () => {
     const { onChange } = setup({ sizes: [], colors: [] });
-    // The first preset chip is the default "Preto".
-    fireEvent.click(screen.getByText("Preto"));
+    // The palette chip for the default "Preto" (code PRT).
+    fireEvent.click(screen.getByTestId("palette-chip-PRT"));
     expect(onChange).toHaveBeenCalledWith({
       sizes: [],
       colors: [{ name: "Preto", hex: "#1f1f1f", color_code: "PRT" }],

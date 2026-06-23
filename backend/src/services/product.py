@@ -30,6 +30,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from models import AdProduct, PrintDesign, Product, ProductSpec, ProductVariation
 from schemas._common import PageParams
 from schemas.product import ProductCreate, ProductFilters, ProductUpdate, VariationItem
+from services import company_settings as company_settings_service
 from services._audit import write_audit
 from services._base import scoped
 from shared.exceptions import ConflictError, NotFoundError, ValidationError
@@ -77,16 +78,32 @@ def _build_variation(
     item: VariationItem,
     spec_code: str,
     print_code: str | None,
+    color_index: dict[str, dict],
 ) -> ProductVariation:
+    # The palette is the source of truth: the variation references an entry by
+    # code and the canonical name is taken from the palette, never the wire.
+    color_name = color_index[item.color_code]["name"]
     sku = ProductVariation.make_sku(spec_code, item.size, item.color_code, print_code)
     return ProductVariation(
         company_id=company_id,
         product_id=product_id,
         size=item.size,
-        color=item.color,
+        color=color_name,
         color_code=item.color_code,
         sku=sku,
     )
+
+
+async def _palette_for(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str, dict]:
+    return await company_settings_service.product_color_index(db, company_id=company_id)
+
+
+def _ensure_colors_in_palette(items: list[VariationItem], color_index: dict[str, dict]) -> None:
+    for item in items:
+        if item.color_code not in color_index:
+            raise ValidationError(
+                detail=f"Color {item.color_code} is not in the company palette",
+            )
 
 
 def _apply_filters(stmt, filters: ProductFilters):
@@ -171,6 +188,8 @@ async def create_product(
 ) -> ProductWithVariations:
     spec = await _load_spec(db, company_id=company_id, spec_id=payload.spec_id)
     print_design = await _load_print(db, company_id=company_id, print_id=payload.print_id)
+    color_index = await _palette_for(db, company_id=company_id)
+    _ensure_colors_in_palette(payload.variations, color_index)
 
     product = Product(
         company_id=company_id,
@@ -197,6 +216,7 @@ async def create_product(
                 item=item,
                 spec_code=spec.code,
                 print_code=print_code,
+                color_index=color_index,
             )
         )
     try:
@@ -256,6 +276,8 @@ async def update_product(
         ) from exc
 
     if payload.variations is not None:
+        color_index = await _palette_for(db, company_id=company_id)
+        _ensure_colors_in_palette(payload.variations, color_index)
         await db.exec(delete(ProductVariation).where(ProductVariation.product_id == product.id))  # type: ignore[arg-type]
         await db.flush()
         print_code = print_design.code if print_design else None
@@ -267,6 +289,7 @@ async def update_product(
                     item=item,
                     spec_code=spec.code,
                     print_code=print_code,
+                    color_index=color_index,
                 )
             )
         try:

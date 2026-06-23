@@ -28,6 +28,7 @@ from models import (
     Batch,
     Client,
     Company,
+    CompanySettings,
     CuttingOrder,
     CuttingOrderOutput,
     FabricRoll,
@@ -77,6 +78,7 @@ TABLE_MODELS: dict[str, type] = {
     "imported_order": ImportedOrder,
     "stock_entry": StockEntry,
     "stock_exit": StockExit,
+    "company_settings": CompanySettings,
 }
 
 # Business tables to clear per company each run (children before parents).

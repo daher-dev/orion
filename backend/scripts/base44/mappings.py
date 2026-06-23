@@ -31,6 +31,7 @@ from typing import Any
 from config import config
 from models import ArtworkStatus, FabricType, PrintTechnique, ProductVariation, Size
 from scripts.base44 import settings
+from services.company_settings import default_config
 
 # Deterministic namespace from the app id, so re-runs are stable and references
 # resolve to the same uuid every time (BaseModel.id's server_default is
@@ -61,6 +62,7 @@ TABLE_ORDER: list[str] = [
     "imported_order",
     "stock_entry",
     "stock_exit",
+    "company_settings",
 ]
 
 
@@ -215,11 +217,18 @@ class CodeRegistry:
 
 
 class ColorCoder:
-    """Maps a color to a unique 3-uppercase-letter code per company (^[A-Z]{3}$)."""
+    """Maps a color to a unique 3-uppercase-letter code per company (^[A-Z]{3}$).
+
+    Also records the canonical display name per code so the importer can emit the
+    company's fabric palette (``company_settings.config.productColors``) — the
+    source of truth product variations are validated against.
+    """
 
     def __init__(self) -> None:
         self._by_company: dict[uuid.UUID, dict[str, str]] = {}
         self._used: dict[uuid.UUID, set[str]] = {}
+        # company → {code: display name} (first name seen for a code wins).
+        self._entries: dict[uuid.UUID, dict[str, str]] = {}
 
     @staticmethod
     def _candidate(color: str) -> str:
@@ -243,7 +252,17 @@ class ColorCoder:
             code = self._increment(code)
         used.add(code)
         table[key] = code
+        self._entries.setdefault(company_id, {}).setdefault(code, color)
         return code
+
+    def palette(self, company_id: uuid.UUID) -> list[dict[str, str]]:
+        """The company's fabric palette as ``[{hex, name, code}]`` (code-sorted)."""
+
+        entries = self._entries.get(company_id, {})
+        return [
+            {"hex": ink_hex_for(name), "name": name, "code": code}
+            for code, name in sorted(entries.items())
+        ]
 
 
 # ── reporting ─────────────────────────────────────────────────────────────────
@@ -1218,5 +1237,23 @@ def convert(
         )
         report.add("order_item")
     report.fetched["order_item"] = len(_records(raw, "ItemPedido"))
+
+    # Company settings: seed the catalog config and make the fabric palette the
+    # source of truth for the colors the import just coded onto variations. Every
+    # variation/cutting color the ColorCoder assigned a code lands in
+    # productColors, so the new product-service enforcement accepts them.
+    for company_id in data.company_ids:
+        cfg = default_config()
+        palette = colors.palette(company_id)
+        if palette:
+            cfg["productColors"] = palette
+        data.rows["company_settings"].append(
+            {
+                "id": derive_id("company_settings", company_id),
+                "company_id": company_id,
+                "config": cfg,
+            }
+        )
+        report.add("company_settings")
 
     return data

@@ -173,7 +173,7 @@ test.describe("F-005 Products — delete blocked when linked Ad", () => {
         name: `Deletable ${stamp}`,
         product_type: "camiseta",
         spec_id: spec.id,
-        variations: [{ size: "m", color: "Preto", color_code: "BLK" }],
+        variations: [{ size: "m", color: "Preto", color_code: "PRT" }],
       },
     });
 

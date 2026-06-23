@@ -259,10 +259,7 @@ class ColorCoder:
         """The company's fabric palette as ``[{hex, name, code}]`` (code-sorted)."""
 
         entries = self._entries.get(company_id, {})
-        return [
-            {"hex": ink_hex_for(name), "name": name, "code": code}
-            for code, name in sorted(entries.items())
-        ]
+        return [{"hex": ink_hex_for(name), "name": name, "code": code} for code, name in sorted(entries.items())]
 
 
 # ── reporting ─────────────────────────────────────────────────────────────────

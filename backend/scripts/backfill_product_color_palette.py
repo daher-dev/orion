@@ -69,9 +69,7 @@ def _hex_for(name: str) -> str:
 
 
 def _candidate_code(name: str) -> str:
-    letters = "".join(
-        c for c in unicodedata.normalize("NFKD", name) if not unicodedata.combining(c)
-    ).upper()
+    letters = "".join(c for c in unicodedata.normalize("NFKD", name) if not unicodedata.combining(c)).upper()
     letters = "".join(c for c in letters if "A" <= c <= "Z")
     return (letters + "XXX")[:3]
 
@@ -152,9 +150,7 @@ async def _backfill(dry_run: bool) -> None:
             print(f"  {company.subdomain}: {len(palette)} → {len(new_palette)} colors (+{max(added, 0)})")
             if not dry_run:
                 new_config = {**settings.config, "productColors": new_palette}
-                await settings_service.update_settings(
-                    db, company_id=company.id, user_id=None, config=new_config
-                )
+                await settings_service.update_settings(db, company_id=company.id, user_id=None, config=new_config)
 
         print("Done.")
 

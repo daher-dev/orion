@@ -138,16 +138,12 @@ class _Rehoster:
                 current = getattr(design, column)
                 new_value = await self._migrate_value(
                     value=current,
-                    object_path=_design_object_path(
-                        company_id=design.company_id, print_id=design.id, slot=slot
-                    ),
+                    object_path=_design_object_path(company_id=design.company_id, print_id=design.id, slot=slot),
                 )
                 if new_value != current:
                     updates[column] = new_value
             if updates:
-                await self._db.exec(
-                    update(PrintDesign).where(PrintDesign.id == design.id).values(**updates)
-                )
+                await self._db.exec(update(PrintDesign).where(PrintDesign.id == design.id).values(**updates))
 
     async def process_variations(self, company_ids: list[uuid.UUID] | None) -> None:
         stmt = select(PrintDesignVariation)
@@ -172,9 +168,7 @@ class _Rehoster:
                     updates[column] = new_value
             if updates:
                 await self._db.exec(
-                    update(PrintDesignVariation)
-                    .where(PrintDesignVariation.id == variation.id)
-                    .values(**updates)
+                    update(PrintDesignVariation).where(PrintDesignVariation.id == variation.id).values(**updates)
                 )
 
 
@@ -213,16 +207,11 @@ async def _run(company_ids: list[uuid.UUID] | None) -> None:
     async with factory() as db:
         counts = await rehost_images(db, company_ids=company_ids)
         await db.commit()
-    print(
-        f"Rehosted: rehosted={counts['rehosted']} "
-        f"skipped={counts['skipped']} failed={counts['failed']}"
-    )
+    print(f"Rehosted: rehosted={counts['rehosted']} skipped={counts['skipped']} failed={counts['failed']}")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Re-host base44-hosted artwork images onto Firebase Storage."
-    )
+    parser = argparse.ArgumentParser(description="Re-host base44-hosted artwork images onto Firebase Storage.")
     parser.add_argument(
         "--company",
         metavar="UUID",

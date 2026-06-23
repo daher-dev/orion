@@ -92,7 +92,7 @@ async function seedRefs(request: APIRequestContext): Promise<SeedRefs> {
     name: "Cropped Oversized",
     product_type: "cropped",
     spec_id: spec.id,
-    variations: [{ size: "m", color: "Preto", color_code: "BLK" }],
+    variations: [{ size: "m", color: "Preto", color_code: "PRT" }],
   });
   const variation = product.variations[0];
 

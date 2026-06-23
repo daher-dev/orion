@@ -75,10 +75,7 @@ async def run(
             async with factory() as db:
                 counts = await rehost_images(db, company_ids=data.company_ids)
                 await db.commit()
-            print(
-                f"  rehosted={counts['rehosted']} "
-                f"skipped={counts['skipped']} failed={counts['failed']}"
-            )
+            print(f"  rehosted={counts['rehosted']} skipped={counts['skipped']} failed={counts['failed']}")
 
     _REPORT_PATH.write_text(report.render_markdown(), encoding="utf-8")
     print(f"\nReport: {_REPORT_PATH}")

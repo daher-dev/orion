@@ -46,7 +46,7 @@ async function seedVariationAndEntry(page: Page, sku: string, quantity: number) 
     name: `Stock Test ${specCode}`,
     product_type: "camiseta",
     spec_id: spec.id,
-    variations: [{ size: "m", color: "Preto", color_code: "BLK" }],
+    variations: [{ size: "m", color: "Preto", color_code: "PRT" }],
   });
   expect(productRes.status()).toBe(201);
   const product = await productRes.json();

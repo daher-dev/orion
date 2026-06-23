@@ -230,6 +230,20 @@ async def test_create_product_422_on_bad_color_code(authed_client: AsyncClient, 
     assert response.status_code == 422
 
 
+async def test_create_product_422_when_color_not_in_palette(authed_client: AsyncClient, db_session):
+    company, _ = await _provision_manager(db_session)
+    spec = await create_product_spec(db_session, company_id=company.id)
+    response = await authed_client.post(
+        "/v1/products",
+        json=_create_payload(
+            spec_id=str(spec.id),
+            variations=[_variation_payload(color="Roxo Neon", color_code="ZZZ")],  # off-palette
+        ),
+    )
+    assert response.status_code == 422
+    assert "palette" in response.text.lower()
+
+
 async def test_create_product_422_when_spec_id_missing(authed_client: AsyncClient, db_session):
     await _provision_manager(db_session)
     response = await authed_client.post(

@@ -25,16 +25,16 @@ from services._base import scoped
 # Canonical default config, ported from docs/design/data.js CATALOG_CONFIG_DEFAULTS.
 DEFAULT_CONFIG: dict[str, Any] = {
     "productColors": [
-        {"hex": "#1f1f1f", "name": "Preto"},
-        {"hex": "#f4f1ea", "name": "Off-white"},
-        {"hex": "#7a4b2a", "name": "Marrom"},
-        {"hex": "#c9b9a3", "name": "Areia"},
-        {"hex": "#cfb98e", "name": "Bege"},
-        {"hex": "#7a8a76", "name": "Verde-musgo"},
-        {"hex": "#3a4a3d", "name": "Verde escuro"},
-        {"hex": "#6b4a2e", "name": "Caramelo"},
-        {"hex": "#b03a2e", "name": "Vermelho"},
-        {"hex": "#2a3b5a", "name": "Azul-marinho"},
+        {"hex": "#1f1f1f", "name": "Preto", "code": "PRT"},
+        {"hex": "#f4f1ea", "name": "Off-white", "code": "OFF"},
+        {"hex": "#7a4b2a", "name": "Marrom", "code": "MAR"},
+        {"hex": "#c9b9a3", "name": "Areia", "code": "ARE"},
+        {"hex": "#cfb98e", "name": "Bege", "code": "BEG"},
+        {"hex": "#7a8a76", "name": "Verde-musgo", "code": "MUS"},
+        {"hex": "#3a4a3d", "name": "Verde escuro", "code": "VES"},
+        {"hex": "#6b4a2e", "name": "Caramelo", "code": "CAR"},
+        {"hex": "#b03a2e", "name": "Vermelho", "code": "VRM"},
+        {"hex": "#2a3b5a", "name": "Azul-marinho", "code": "AZM"},
     ],
     "printColors": [
         {"hex": "#f4f1ea", "name": "Branco"},
@@ -164,9 +164,23 @@ async def update_settings(
     return settings
 
 
+async def product_color_index(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str, dict[str, Any]]:
+    """Return the tenant's fabric palette keyed by 3-letter ``code``.
+
+    Used by the product service to enforce that a variation's ``color_code``
+    references a registered palette entry (the source of truth) and to take the
+    canonical color name from it. Falls back to defaults via :func:`get_settings`.
+    """
+
+    settings = await get_settings(db, company_id=company_id)
+    palette = settings.config.get("productColors") or []
+    return {entry["code"]: entry for entry in palette if entry.get("code")}
+
+
 __all__ = [
     "DEFAULT_CONFIG",
     "default_config",
     "get_settings",
+    "product_color_index",
     "update_settings",
 ]

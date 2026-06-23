@@ -821,7 +821,11 @@
       "cells": "células",
       "noPreview": "Selecione ao menos um tamanho e uma cor para gerar os SKUs.",
       "noVariations": "Nenhuma variação ainda.",
-      "sku": "SKU"
+      "sku": "SKU",
+      "addColorConfirm": "Adicionar",
+      "addColorSaving": "Salvando…",
+      "addColorError": "Não foi possível adicionar a cor",
+      "addColorCodeTaken": "Esse código já é usado por outra cor."
     },
     "actions": {
       "create": "Novo produto",
@@ -2340,8 +2344,11 @@
       "skuPrefix": "1–4 letras/dígitos",
       "needName": "Dê um nome a cada cor.",
       "needLabel": "Dê um nome a cada tipo de peça.",
-      "needSku": "Cada tipo de peça precisa de um prefixo de SKU válido."
-    }
+      "needSku": "Cada tipo de peça precisa de um prefixo de SKU válido.",
+      "colorCode": "Dê um código de 3 letras a cada cor de tecido.",
+      "colorCodeDuplicate": "Duas cores de tecido têm o mesmo código."
+    },
+    "colorCodePlaceholder": "Código"
   },
   "thresholds": {
     "title": "Avisos de estoque baixo",

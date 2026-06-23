@@ -3,6 +3,7 @@
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { deriveColorCode } from "@/lib/color-code";
 import type { ColorEntry } from "@/lib/schemas/company-settings";
 
 type Props = {
@@ -14,6 +15,13 @@ type Props = {
   disabled?: boolean;
   /** Stable prefix for data-testid hooks, e.g. "product-colors". */
   testIdPrefix: string;
+  /**
+   * When true, render an editable 3-letter SKU code per row (the fabric palette
+   * is the source of truth for variation codes). A code is auto-derived from the
+   * name until the user edits it. Print colors leave this off.
+   */
+  withCode?: boolean;
+  codePlaceholder?: string;
 };
 
 /**
@@ -29,11 +37,29 @@ export function PaletteEditor({
   removeLabel,
   disabled,
   testIdPrefix,
+  withCode,
+  codePlaceholder = "COR",
 }: Props) {
+  const normalizeCode = (raw: string) =>
+    raw.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+
   const update = (i: number, patch: Partial<ColorEntry>) =>
-    onChange(colors.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+    onChange(
+      colors.map((c, j) => {
+        if (j !== i) return c;
+        const next = { ...c, ...patch };
+        if (patch.code !== undefined) next.code = normalizeCode(patch.code);
+        // Auto-derive a code from the name while the code is still blank.
+        if (withCode && patch.name !== undefined && !c.code) {
+          const taken = colors.flatMap((x, k) => (k === i ? [] : x.code ? [x.code] : []));
+          next.code = deriveColorCode(patch.name, taken);
+        }
+        return next;
+      }),
+    );
   const remove = (i: number) => onChange(colors.filter((_, j) => j !== i));
-  const add = () => onChange([...colors, { hex: "#cccccc", name: "" }]);
+  const add = () =>
+    onChange([...colors, withCode ? { hex: "#cccccc", name: "", code: "" } : { hex: "#cccccc", name: "" }]);
 
   return (
     <div>
@@ -67,9 +93,21 @@ export function PaletteEditor({
               data-testid={`${testIdPrefix}-name-${i}`}
               className="h-auto min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] text-[color:var(--orion-ink)] shadow-none focus-visible:ring-0"
             />
-            <span className="shrink-0 font-mono text-[10.5px] text-[color:var(--orion-ink-3)]">
-              {c.hex}
-            </span>
+            {withCode ? (
+              <Input
+                value={c.code ?? ""}
+                placeholder={codePlaceholder}
+                maxLength={3}
+                disabled={disabled}
+                onChange={(e) => update(i, { code: e.target.value })}
+                data-testid={`${testIdPrefix}-code-${i}`}
+                className="h-7 w-[58px] shrink-0 rounded-[6px] border border-[color:var(--orion-line)] bg-[color:var(--orion-bg)] px-1 text-center font-mono text-[11px] uppercase"
+              />
+            ) : (
+              <span className="shrink-0 font-mono text-[10.5px] text-[color:var(--orion-ink-3)]">
+                {c.hex}
+              </span>
+            )}
             <Button
               type="button"
               variant="ghost"

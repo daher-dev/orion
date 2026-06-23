@@ -8,11 +8,17 @@ import { z } from "zod";
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const SKU_PREFIX_RE = /^[A-Z0-9]{1,4}$/;
+const COLOR_CODE_RE = /^[A-Z]{3}$/;
 
-/** A material/ink color — `{ hex, name }`. */
+/**
+ * A material/ink color — `{ hex, name, code? }`. `code` is the 3-letter SKU
+ * token; it is required for `productColors` (the fabric palette that drives
+ * variation SKUs) and unused/optional for `printColors` (keyed by hex).
+ */
 export const colorEntrySchema = z.object({
   hex: z.string().regex(HEX_RE, { message: "validation.hex" }),
   name: z.string().min(1, { message: "validation.required" }).max(60),
+  code: z.string().regex(COLOR_CODE_RE, { message: "validation.colorCode" }).optional(),
 });
 export type ColorEntry = z.infer<typeof colorEntrySchema>;
 
@@ -50,16 +56,40 @@ export const stockThresholdsSchema = z.object({
 });
 export type StockThresholds = z.infer<typeof stockThresholdsSchema>;
 
-export const companySettingsConfigSchema = z.object({
-  productColors: z.array(colorEntrySchema),
-  printColors: z.array(colorEntrySchema),
-  sizes: z.array(z.string().min(1)),
-  fabricTypes: z.array(z.string().min(1)),
-  garmentTypes: z.array(garmentTypeEntrySchema),
-  aviamentos: z.array(z.string().min(1)),
-  techniques: z.array(z.string().min(1)),
-  stockThresholds: stockThresholdsSchema,
-});
+export const companySettingsConfigSchema = z
+  .object({
+    productColors: z.array(colorEntrySchema),
+    printColors: z.array(colorEntrySchema),
+    sizes: z.array(z.string().min(1)),
+    fabricTypes: z.array(z.string().min(1)),
+    garmentTypes: z.array(garmentTypeEntrySchema),
+    aviamentos: z.array(z.string().min(1)),
+    techniques: z.array(z.string().min(1)),
+    stockThresholds: stockThresholdsSchema,
+  })
+  .superRefine((cfg, ctx) => {
+    // The fabric palette is the source of truth for variation colors: every
+    // entry needs a unique 3-letter code (printColors are exempt).
+    const codes = new Set<string>();
+    cfg.productColors.forEach((c, i) => {
+      if (!c.code) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "validation.colorCode",
+          path: ["productColors", i, "code"],
+        });
+        return;
+      }
+      if (codes.has(c.code)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "validation.colorCodeDuplicate",
+          path: ["productColors", i, "code"],
+        });
+      }
+      codes.add(c.code);
+    });
+  });
 export type CompanySettingsConfig = z.infer<typeof companySettingsConfigSchema>;
 
 export const companySettingsReadSchema = z.object({
@@ -80,16 +110,16 @@ export type CompanySettingsUpdate = z.infer<typeof companySettingsUpdateSchema>;
  */
 export const DEFAULT_CATALOG_CONFIG: CompanySettingsConfig = {
   productColors: [
-    { hex: "#1f1f1f", name: "Preto" },
-    { hex: "#f4f1ea", name: "Off-white" },
-    { hex: "#7a4b2a", name: "Marrom" },
-    { hex: "#c9b9a3", name: "Areia" },
-    { hex: "#cfb98e", name: "Bege" },
-    { hex: "#7a8a76", name: "Verde-musgo" },
-    { hex: "#3a4a3d", name: "Verde escuro" },
-    { hex: "#6b4a2e", name: "Caramelo" },
-    { hex: "#b03a2e", name: "Vermelho" },
-    { hex: "#2a3b5a", name: "Azul-marinho" },
+    { hex: "#1f1f1f", name: "Preto", code: "PRT" },
+    { hex: "#f4f1ea", name: "Off-white", code: "OFF" },
+    { hex: "#7a4b2a", name: "Marrom", code: "MAR" },
+    { hex: "#c9b9a3", name: "Areia", code: "ARE" },
+    { hex: "#cfb98e", name: "Bege", code: "BEG" },
+    { hex: "#7a8a76", name: "Verde-musgo", code: "MUS" },
+    { hex: "#3a4a3d", name: "Verde escuro", code: "VES" },
+    { hex: "#6b4a2e", name: "Caramelo", code: "CAR" },
+    { hex: "#b03a2e", name: "Vermelho", code: "VRM" },
+    { hex: "#2a3b5a", name: "Azul-marinho", code: "AZM" },
   ],
   printColors: [
     { hex: "#f4f1ea", name: "Branco" },

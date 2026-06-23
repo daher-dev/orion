@@ -21,7 +21,7 @@ async def _provision_operator(db_session, firebase_uid: str = "qa-dev-user"):
 
 def _valid_config() -> dict:
     return {
-        "productColors": [{"hex": "#1f1f1f", "name": "Preto"}],
+        "productColors": [{"hex": "#1f1f1f", "name": "Preto", "code": "PRT"}],
         "printColors": [{"hex": "#f4f1ea", "name": "Branco"}],
         "sizes": ["P", "M", "G"],
         "fabricTypes": ["Algodão 30.1"],
@@ -68,6 +68,25 @@ async def test_put_settings_rejects_bad_hex(authed_client: AsyncClient, db_sessi
     await _provision_admin(db_session)
     config = _valid_config()
     config["productColors"] = [{"hex": "not-a-hex", "name": "Bad"}]
+    resp = await authed_client.put("/v1/company/settings", json={"config": config})
+    assert resp.status_code == 422
+
+
+async def test_put_settings_rejects_product_color_without_code(authed_client: AsyncClient, db_session):
+    await _provision_admin(db_session)
+    config = _valid_config()
+    config["productColors"] = [{"hex": "#1f1f1f", "name": "Preto"}]  # no code
+    resp = await authed_client.put("/v1/company/settings", json={"config": config})
+    assert resp.status_code == 422
+
+
+async def test_put_settings_rejects_duplicate_product_color_code(authed_client: AsyncClient, db_session):
+    await _provision_admin(db_session)
+    config = _valid_config()
+    config["productColors"] = [
+        {"hex": "#1f1f1f", "name": "Preto", "code": "PRT"},
+        {"hex": "#222222", "name": "Carvão", "code": "PRT"},  # duplicate code
+    ]
     resp = await authed_client.put("/v1/company/settings", json={"config": config})
     assert resp.status_code == 422
 

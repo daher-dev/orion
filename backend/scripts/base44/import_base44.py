@@ -28,6 +28,7 @@ from scripts.base44.client import Base44Client  # noqa: E402
 from scripts.base44.extract import extract_all, read_raw, write_raw  # noqa: E402
 from scripts.base44.load import load  # noqa: E402
 from scripts.base44.mappings import ConversionReport, convert  # noqa: E402
+from scripts.base44.rehost_images import rehost_images  # noqa: E402
 
 _REPORT_PATH = Path(__file__).resolve().parent / "last_run_report.md"
 
@@ -47,7 +48,12 @@ async def _extract() -> dict[str, list[dict]]:
 
 
 async def run(
-    *, from_files: bool, dry_run: bool, link_users: str | None = None, exclude_companies: list[str] | None = None
+    *,
+    from_files: bool,
+    dry_run: bool,
+    link_users: str | None = None,
+    exclude_companies: list[str] | None = None,
+    rehost: bool = False,
 ) -> None:
     raw = read_raw() if from_files else await _extract()
 
@@ -63,6 +69,13 @@ async def run(
             await load(db, data=data, report=report, link_users_subdomain=link_users)
             await db.commit()
         print("Loaded into the database.")
+
+        if rehost:
+            print("Re-hosting base44 images onto Firebase Storage…")
+            async with factory() as db:
+                counts = await rehost_images(db, company_ids=data.company_ids)
+                await db.commit()
+            print(f"  rehosted={counts['rehosted']} skipped={counts['skipped']} failed={counts['failed']}")
 
     _REPORT_PATH.write_text(report.render_markdown(), encoding="utf-8")
     print(f"\nReport: {_REPORT_PATH}")
@@ -90,6 +103,11 @@ def main() -> None:
         default=None,
         help="base44 company name to skip entirely (repeatable), e.g. --exclude-company 'Empresa Teste'",
     )
+    parser.add_argument(
+        "--rehost-images",
+        action="store_true",
+        help="after load, download base44-hosted artwork and re-upload it to Firebase Storage",
+    )
     args = parser.parse_args()
     asyncio.run(
         run(
@@ -97,6 +115,7 @@ def main() -> None:
             dry_run=args.dry_run,
             link_users=args.link_existing_users,
             exclude_companies=args.exclude_company,
+            rehost=args.rehost_images,
         )
     )
 

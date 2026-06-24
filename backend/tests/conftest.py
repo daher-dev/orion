@@ -1,12 +1,20 @@
+import asyncio
+import contextlib
 import os
 import ssl
-from collections.abc import AsyncGenerator
+import tempfile
+from collections.abc import AsyncGenerator, Iterator
 from pathlib import Path
 
+import asyncpg
+
+with contextlib.suppress(ImportError):  # POSIX only; CI + dev are Linux/macOS
+    import fcntl
 import httpx
 import pytest
 from dotenv import load_dotenv
 from sqlalchemy import text
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -21,19 +29,96 @@ from database import _normalize_database_url  # noqa: E402
 from main import app  # noqa: E402
 
 
+def _xdist_worker() -> str | None:
+    """The pytest-xdist worker id (``gw0``…), or None when running serially.
+
+    ``PYTEST_XDIST_WORKER`` is set only in worker subprocesses; the controller
+    and plain (``-n0``) runs leave it unset.
+    """
+    worker = os.environ.get("PYTEST_XDIST_WORKER")
+    return worker if worker and worker != "master" else None
+
+
+@contextlib.contextmanager
+def _clone_serialized(template_db: str) -> Iterator[None]:
+    """Serialize ``CREATE DATABASE ... TEMPLATE`` across workers on this machine.
+
+    Postgres refuses to clone a template that another session is mid-copy on, so
+    a machine-wide file lock keyed by the template ensures workers clone one at a
+    time. The clone is ~200ms, so the added serialization is negligible. Degrades
+    to a no-op where ``fcntl`` is unavailable (non-POSIX).
+    """
+    if "fcntl" not in globals():
+        yield
+        return
+    lock_path = Path(tempfile.gettempdir()) / f"orion-test-clone-{template_db}.lock"
+    with open(lock_path, "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+async def _clone_database(admin_url: str, *, template_db: str, target_db: str) -> None:
+    """Recreate ``target_db`` as a fresh copy of the migrated ``template_db``.
+
+    ``CREATE DATABASE ... TEMPLATE`` is a near-instant file-level copy, so each
+    xdist worker gets its own fully-migrated, seeded database without re-running
+    Alembic. Requires no open connections to the template — true during pytest,
+    since workers only ever connect to their own per-worker databases.
+    """
+    url = make_url(admin_url)
+    conn = await asyncpg.connect(
+        host=url.host,
+        port=url.port,
+        user=url.username,
+        password=url.password,
+        database="postgres",  # maintenance DB — can't drop/create while connected to the target
+    )
+    try:
+        await conn.execute(f'DROP DATABASE IF EXISTS "{target_db}" WITH (FORCE)')
+        await conn.execute(f'CREATE DATABASE "{target_db}" TEMPLATE "{template_db}"')
+    finally:
+        await conn.close()
+
+
+@pytest.fixture(scope="session")
+def database_url() -> str:
+    """The DATABASE_URL this worker should use.
+
+    Serial runs use the base DATABASE_URL untouched (backwards-compatible). Under
+    pytest-xdist each worker gets its own database cloned from the base one, so
+    the truncate-after-each-test isolation can't clobber sibling workers.
+    """
+    base = os.environ.get("DATABASE_URL", "")
+    worker = _xdist_worker()
+    if not base or worker is None:
+        return base
+
+    normalized = _normalize_database_url(base)
+    url = make_url(normalized)
+    template_db = url.database
+    worker_db = f"{template_db}_{worker}"
+    with _clone_serialized(template_db):
+        asyncio.run(_clone_database(normalized, template_db=template_db, target_db=worker_db))
+    # NB: str(URL) masks the password as "***"; render explicitly to keep it.
+    return url.set(database=worker_db).render_as_string(hide_password=False)
+
+
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
 
 
 @pytest.fixture
-async def test_engine():
-    database_url = os.environ.get("DATABASE_URL", "")
+async def test_engine(database_url: str):
     if not database_url:
         pytest.skip("DATABASE_URL not set")
     normalized_url = _normalize_database_url(database_url)
     connect_args: dict = {}
-    if "sslmode=require" in database_url or "sslmode=verify" in database_url:
+    base = os.environ.get("DATABASE_URL", "")
+    if "sslmode=require" in base or "sslmode=verify" in base:
         connect_args["ssl"] = ssl.create_default_context()
     engine = create_async_engine(
         url=normalized_url,

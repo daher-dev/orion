@@ -29,7 +29,16 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from config import config
-from models import ArtworkStatus, FabricType, OrderStatus, PrintTechnique, ProductVariation, SeparationStatus, Size
+from models import (
+    ArtworkStatus,
+    BlankMovementKind,
+    FabricType,
+    OrderStatus,
+    PrintTechnique,
+    ProductVariation,
+    SeparationStatus,
+    Size,
+)
 from scripts.base44 import settings
 from services.company_settings import default_config
 
@@ -60,8 +69,8 @@ TABLE_ORDER: list[str] = [
     "order",
     "order_item",
     "imported_order",
-    "stock_entry",
-    "stock_exit",
+    "blank_piece",
+    "blank_piece_movement",
     "company_settings",
 ]
 
@@ -788,41 +797,67 @@ def convert(
             report.add("sewing_shipment_item")
     report.fetched["sewing_shipment"] = len(_records(raw, "RemessaCostura"))
 
-    # 8) EntradaEstoque → stock_entry (one per size in itens_tamanho)
+    # 8) EntradaEstoque → blank_piece + blank_piece_movement (ENTRY).
+    # All EntradaEstoque records reference base (non-printed) products — they are
+    # peça lisa inventory, not finished goods. We map them to the WIP blank-piece
+    # tier so the planner can subtract available blank stock from cut demand.
+    blank_piece_seen: set[uuid.UUID] = set()
     for e in _records(raw, "EntradaEstoque"):
         cid = company_of(e)
         if cid is None:
-            report.skip("stock_entry:unknown_company")
+            report.skip("blank_piece:unknown_company")
             continue
+        info = product_by_b44.get(str(e.get("produto_id")))
+        if info is None:
+            report.skip("blank_piece:no_product", str(e.get("produto_id")))
+            continue
+        spec_id = info["spec_id"]
+        color = clean_color(e.get("cor"))
+        color_code = colors.code(cid, color)
         for t in e.get("itens_tamanho") or []:
             if not isinstance(t, dict):
                 continue
             size = settings.SIZE_MAP.get(norm(t.get("tamanho")))
             qty = to_int(t.get("quantidade")) or 0
             if size is None or qty <= 0:
-                report.skip("stock_entry:size_or_qty", f"{t.get('tamanho')}={t.get('quantidade')}")
+                report.skip("blank_piece:size_or_qty", f"{t.get('tamanho')}={t.get('quantidade')}")
                 continue
-            vid = resolve_variation(e.get("produto_id"), e.get("cor"), size)
-            if vid is None:
-                report.skip("stock_entry:no_product", str(e.get("produto_id")))
-                continue
-            data.rows["stock_entry"].append(
+            bp_id = derive_id("blank_piece", cid, spec_id, size.value, color_code)
+            if bp_id not in blank_piece_seen:
+                blank_piece_seen.add(bp_id)
+                data.rows["blank_piece"].append(
+                    {
+                        "id": bp_id,
+                        "company_id": cid,
+                        "spec_id": spec_id,
+                        "size": size,
+                        "color": color,
+                        "color_code": color_code,
+                        "min_stock": None,
+                    }
+                )
+            data.rows["blank_piece_movement"].append(
                 {
-                    "id": derive_id("stock_entry", str(e.get("id")), size.value),
+                    "id": derive_id("blank_piece_movement", str(e.get("id")), size.value),
                     "company_id": cid,
-                    "variation_id": vid,
+                    "blank_piece_id": bp_id,
+                    "kind": BlankMovementKind.ENTRY,
                     "quantity": qty,
-                    "source": settings.DEFAULT_STOCK_SOURCE,
+                    "sewing_shipment_id": None,
+                    "assembly_run_id": None,
                     "notes": e.get("observacoes") or None,
                 }
             )
-            report.add("stock_entry")
-    report.fetched["stock_entry"] = len(_records(raw, "EntradaEstoque"))
+            report.add("blank_piece_movement")
+    report.fetched["blank_piece"] = len(_records(raw, "EntradaEstoque"))
 
-    # 9) SaidaEstoque → stock_exit (flat: one row each).
-    # ``separacao_counter`` tracks how many units of each
-    # (product_type, canonical_color, size) were already separated in the legacy
-    # system.  Two design choices:
+    # 9) SaidaEstoque → blank_piece_movement (EXIT) + separacao_counter.
+    # All SaidaEstoque records reference base (non-printed) products — they are
+    # blank-piece stock exits, not finished-goods exits. We map them to
+    # BlankPieceMovement so the planner sees the correct net blank on-hand.
+    # For separação rows we additionally build ``separacao_counter``, consumed in
+    # section 10b to mark the oldest matching orders SHIPPED so they drop out of
+    # planning demand. Two design choices for that counter's key:
     # 1. Key by *product_type* (BERMUDA, CAMISETA, …) rather than spec_id: a
     #    company can have multiple specs per garment family (e.g. "Short Compressão"
     #    and "Short de Linho" are both BERMUDA), and orders get keyword-matched to
@@ -830,48 +865,62 @@ def convert(
     # 2. No company_id in the key: the 7 imported companies represent one business;
     #    some are sales-channel sub-companies with 0 products and 0 separações —
     #    their orders must be matched against the manufacturing company's exits.
-    # After section 10 we consume these counters to mark the oldest matching
-    # orders as SHIPPED so they drop out of planning demand.
     separacao_counter: dict[tuple[str, str, Size], int] = {}
     for s in _records(raw, "SaidaEstoque"):
         cid = company_of(s)
         if cid is None:
-            report.skip("stock_exit:unknown_company")
+            report.skip("blank_exit:unknown_company")
             continue
         size = settings.SIZE_MAP.get(norm(s.get("tamanho")))
         qty = to_int(s.get("quantidade")) or 0
         if size is None:
-            report.skip("stock_exit:size", str(s.get("tamanho")))
+            report.skip("blank_exit:size", str(s.get("tamanho")))
             continue
         if qty <= 0:
-            report.skip("stock_exit:qty", str(s.get("quantidade")))
+            report.skip("blank_exit:qty", str(s.get("quantidade")))
             continue
-        vid = resolve_variation(s.get("produto_id"), s.get("cor"), size)
-        if vid is None:
-            report.skip("stock_exit:no_product", str(s.get("produto_id")))
+        info = product_by_b44.get(str(s.get("produto_id")))
+        if info is None:
+            report.skip("blank_exit:no_product", str(s.get("produto_id")))
             continue
-        data.rows["stock_exit"].append(
+        spec_id = info["spec_id"]
+        color = clean_color(s.get("cor"))
+        color_code = colors.code(cid, color)
+        bp_id = derive_id("blank_piece", cid, spec_id, size.value, color_code)
+        if bp_id not in blank_piece_seen:
+            blank_piece_seen.add(bp_id)
+            data.rows["blank_piece"].append(
+                {
+                    "id": bp_id,
+                    "company_id": cid,
+                    "spec_id": spec_id,
+                    "size": size,
+                    "color": color,
+                    "color_code": color_code,
+                    "min_stock": None,
+                }
+            )
+        data.rows["blank_piece_movement"].append(
             {
-                "id": derive_id("stock_exit", str(s.get("id"))),
+                "id": derive_id("blank_piece_movement_exit", str(s.get("id"))),
                 "company_id": cid,
-                "variation_id": vid,
-                "order_id": None,
+                "blank_piece_id": bp_id,
+                "kind": BlankMovementKind.EXIT,
                 "quantity": qty,
-                "reason": settings.STOCK_EXIT_REASON_MAP.get(norm(s.get("motivo")), settings.DEFAULT_STOCK_EXIT_REASON),
+                "sewing_shipment_id": None,
+                "assembly_run_id": None,
                 "notes": s.get("observacoes") or None,
             }
         )
-        report.add("stock_exit")
+        report.add("blank_exit")
         if norm(s.get("motivo")) == "separacao":
-            info = product_by_b44.get(str(s.get("produto_id")))
-            if info is not None:
-                nk: tuple[str, str, Size] = (
-                    info["product_type"],
-                    _canonical_sep_color(s.get("cor")),
-                    size,
-                )
-                separacao_counter[nk] = separacao_counter.get(nk, 0) + qty
-    report.fetched["stock_exit"] = len(_records(raw, "SaidaEstoque"))
+            nk: tuple[str, str, Size] = (
+                info["product_type"],
+                _canonical_sep_color(s.get("cor")),
+                size,
+            )
+            separacao_counter[nk] = separacao_counter.get(nk, 0) + qty
+    report.fetched["blank_exit"] = len(_records(raw, "SaidaEstoque"))
 
     # ── Mapeamento: print catalog (StampaMemory → PrintDesign) + indexes ──
     products_by_company: dict[uuid.UUID, list[dict]] = {}

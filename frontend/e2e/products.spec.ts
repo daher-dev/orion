@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { BYPASS_UID, test, expect, type Page } from "./_support";
 
 /**
  * E2E coverage for F-005 (Catalog → Products + Variations).
@@ -21,7 +21,7 @@ async function seedSpec(page: Page, code: string, name: string) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   const res = await page.request.post(`${apiBase}/v1/specs`, {
     headers: {
-      "X-Dev-Bypass-Uid": "qa-dev-user",
+      "X-Dev-Bypass-Uid": BYPASS_UID,
       "X-Dev-Bypass-Name": "QA Dev User",
       "X-Dev-Bypass-Email": "qa-dev@orion.local",
     },
@@ -165,7 +165,7 @@ test.describe("F-005 Products — delete blocked when linked Ad", () => {
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
     await page.request.post(`${apiBase}/v1/products`, {
       headers: {
-        "X-Dev-Bypass-Uid": "qa-dev-user",
+        "X-Dev-Bypass-Uid": BYPASS_UID,
         "X-Dev-Bypass-Name": "QA Dev User",
         "X-Dev-Bypass-Email": "qa-dev@orion.local",
       },

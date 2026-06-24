@@ -1,3 +1,4 @@
+import { resolveDevBypassUid } from "@/lib/dev-bypass";
 import { isDevBypassEnabled } from "@/lib/firebase";
 
 /**
@@ -83,7 +84,7 @@ async function buildHeaders(
     // Prefer the explicit devBypass option (carries name + email for the
     // synthesized user), but fall back to the env-baked uid so requests
     // fired before the AuthProvider has populated `user` still authenticate.
-    const uid = options.devBypass?.uid ?? process.env.NEXT_PUBLIC_DEV_BYPASS_UID;
+    const uid = options.devBypass?.uid ?? resolveDevBypassUid();
     if (uid) {
       headers.set("X-Dev-Bypass-Uid", uid);
       if (options.devBypass?.name) headers.set("X-Dev-Bypass-Name", options.devBypass.name);

@@ -1,4 +1,4 @@
-import { expect, test, type Page, type Route } from "@playwright/test";
+import { BYPASS_UID, expect, test, type Page, type Route } from "./_support";
 
 const baseClaims = {
   user: {
@@ -142,7 +142,7 @@ async function gotoContractors(page: Page) {
   await page.addInitScript(() => {
     window.localStorage.setItem(
       "__orion_dev_bypass",
-      JSON.stringify({ uid: "qa-dev-user", name: "QA Manager", email: "qa-dev@orion.local" }),
+      JSON.stringify({ uid: BYPASS_UID, name: "QA Manager", email: "qa-dev@orion.local" }),
     );
   });
   await page.goto("/pt-BR/contractors");

@@ -13,6 +13,7 @@ import {
   Layers,
   Boxes,
   Stamp,
+  Printer,
   Combine,
   Scroll,
   BarChart3,
@@ -119,7 +120,7 @@ export const navSections: NavSection[] = [
       },
       {
         href: "/printing",
-        icon: Stamp,
+        icon: Printer,
         labelKey: "nav.printing",
         permission: "print_orders.read",
         subColor: "var(--brand-prod)",

@@ -1,4 +1,4 @@
-import { test, expect, type Page, type Route } from "@playwright/test";
+import { test, expect, type Page, type Route } from "./_support";
 
 /**
  * E2E coverage for FEATURE-001 — Auth (invite-only login).

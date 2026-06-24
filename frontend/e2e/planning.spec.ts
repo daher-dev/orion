@@ -1,4 +1,4 @@
-import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
+import { BYPASS_UID, test, expect, type APIRequestContext, type Page } from "./_support";
 
 /**
  * E2E coverage for Phase 5 — Planejamento (the demand→production engine).
@@ -15,7 +15,7 @@ import { test, expect, type APIRequestContext, type Page } from "@playwright/tes
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const HEADERS = {
-  "X-Dev-Bypass-Uid": "qa-dev-user",
+  "X-Dev-Bypass-Uid": BYPASS_UID,
   "X-Dev-Bypass-Name": "QA Dev User",
   "X-Dev-Bypass-Email": "qa-dev@orion.local",
 };

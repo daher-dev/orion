@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { BYPASS_UID, test, expect, type Page } from "./_support";
 
 /**
  * E2E coverage for FEATURE-002 — Settings: Members & Roles (members tab).
@@ -10,7 +10,7 @@ import { test, expect, type Page } from "@playwright/test";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const QA_HEADERS = {
-  "X-Dev-Bypass-Uid": "qa-dev-user",
+  "X-Dev-Bypass-Uid": BYPASS_UID,
   "X-Dev-Bypass-Name": "QA Dev User",
   "X-Dev-Bypass-Email": "qa-dev@orion.local",
 };

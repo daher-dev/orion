@@ -31,6 +31,26 @@ async def test_reset_truncates_data_but_keeps_auth_scaffold(authed_client: Async
     assert any(u.firebase_uid == "qa-dev-user" for u in users_after)
 
 
+async def test_reset_only_wipes_callers_tenant(authed_client: AsyncClient, db_session):
+    """Tenant-scoped: a reset clears the caller's company but leaves others intact.
+
+    This is what lets parallel E2E workers (each in its own tenant) reset between
+    tests without clobbering one another.
+    """
+    mine = await create_company(db_session)
+    await create_user(db_session, company_id=mine.id, firebase_uid="qa-dev-user")
+    await create_client(db_session, company_id=mine.id, name="Mine")
+
+    other = await create_company(db_session)
+    await create_client(db_session, company_id=other.id, name="Theirs")
+
+    response = await authed_client.post("/v1/test-support/reset")
+    assert response.status_code == 204
+
+    remaining = (await db_session.exec(select(Client))).all()
+    assert {c.name for c in remaining} == {"Theirs"}  # only the caller's tenant was wiped
+
+
 async def test_reset_is_idempotent(authed_client: AsyncClient, db_session):
     company = await create_company(db_session)
     await create_user(db_session, company_id=company.id, firebase_uid="qa-dev-user")

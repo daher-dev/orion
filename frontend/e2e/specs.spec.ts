@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./_support";
 
 /**
  * E2E coverage for F-003 (Catalog → Specs).

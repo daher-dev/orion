@@ -21,6 +21,7 @@ import {
   signOut as firebaseSignOut,
   type User as FirebaseUser,
 } from "firebase/auth";
+import { resolveDevBypassUid } from "@/lib/dev-bypass";
 import { getFirebaseAuth, isDevBypassEnabled } from "@/lib/firebase";
 
 /**
@@ -73,7 +74,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 function devBypassUser(): AuthUser {
   return {
-    uid: process.env.NEXT_PUBLIC_DEV_BYPASS_UID ?? "dev-user",
+    uid: resolveDevBypassUid() ?? "dev-user",
     displayName: process.env.NEXT_PUBLIC_DEV_BYPASS_NAME ?? "Dev User",
     email: process.env.NEXT_PUBLIC_DEV_BYPASS_EMAIL ?? "dev@orion.local",
     photoURL: null,

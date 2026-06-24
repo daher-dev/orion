@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { BYPASS_UID, test, expect, type Page } from "./_support";
 
 /**
  * E2E coverage for FEATURE-010 — Inventory: Stock.
@@ -16,7 +16,7 @@ async function api(page: Page, method: string, path: string, body?: unknown) {
     method,
     headers: {
       "Content-Type": "application/json",
-      "X-Dev-Bypass-Uid": "qa-dev-user",
+      "X-Dev-Bypass-Uid": BYPASS_UID,
       "X-Dev-Bypass-Name": "QA Dev User",
       "X-Dev-Bypass-Email": "qa-dev@orion.local",
     },

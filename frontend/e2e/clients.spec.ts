@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { BYPASS_UID, test, expect, type Page } from "./_support";
 
 /**
  * E2E coverage for FEATURE-011 — Sales: Clients.
@@ -24,7 +24,7 @@ async function apiCreate(page: Page, payload: Record<string, unknown>) {
   // resolves the same User row.
   const response = await page.request.post(`${API_URL}/v1/clients`, {
     headers: {
-      "X-Dev-Bypass-Uid": "qa-dev-user",
+      "X-Dev-Bypass-Uid": BYPASS_UID,
       "X-Dev-Bypass-Name": "QA Dev User",
       "X-Dev-Bypass-Email": "qa-dev@orion.local",
     },
@@ -37,14 +37,14 @@ async function apiCreate(page: Page, payload: Record<string, unknown>) {
 async function apiDeleteAll(page: Page) {
   const list = await page.request.get(`${API_URL}/v1/clients?page_size=100`, {
     headers: {
-      "X-Dev-Bypass-Uid": "qa-dev-user",
+      "X-Dev-Bypass-Uid": BYPASS_UID,
     },
   });
   if (!list.ok()) return;
   const body = await list.json();
   for (const item of body.items ?? []) {
     await page.request.delete(`${API_URL}/v1/clients/${item.id}`, {
-      headers: { "X-Dev-Bypass-Uid": "qa-dev-user" },
+      headers: { "X-Dev-Bypass-Uid": BYPASS_UID },
     });
   }
 }

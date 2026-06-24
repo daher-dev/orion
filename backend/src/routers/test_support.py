@@ -28,53 +28,78 @@ from sqlalchemy import text
 from sqlmodel import select
 
 from config import config
-from dependencies import CurrentClaims, CurrentDbUser, DbSession
+from dependencies import CurrentDbUser, DbSession
 from models import User
 from shared.exceptions import AuthorizationError
 
 router = APIRouter(prefix="/test-support", tags=["test-support"])
 
-# Tenant-scoped data tables wiped on reset, in no particular order (a single
-# TRUNCATE ... CASCADE handles FK ordering). The auth/identity scaffold —
-# companies, users, roles, permissions, role_permissions, invites — is
-# deliberately preserved so the bootstrapped dev-bypass user survives a reset.
-_DATA_TABLES: tuple[str, ...] = (
-    "ads",
+# Child tables that lack a direct company_id — scoped via their parent. Deleted
+# before the company_id-scoped tables below so FK references resolve.
+_CHILD_DELETES: tuple[tuple[str, str], ...] = (
+    ("sewing_shipment_items", "shipment_id IN (SELECT id FROM sewing_shipments WHERE company_id = :cid)"),
+    ("cutting_order_outputs", "cutting_order_id IN (SELECT id FROM cutting_orders WHERE company_id = :cid)"),
+    ("print_order_outputs", "print_order_id IN (SELECT id FROM print_orders WHERE company_id = :cid)"),
+    ("spec_trims", "spec_id IN (SELECT id FROM product_specs WHERE company_id = :cid)"),
+)
+
+# Tenant data tables in FK-safe (children-before-parents) order, all carrying a
+# company_id. Mirrors the importer's per-company wipe (scripts/base44/load.py) so
+# the ordering stays correct against every RESTRICT FK. The auth/identity scaffold
+# (companies, users, roles, permissions, invites) and `company_settings` (the
+# tenant's catalog config) are deliberately preserved across a reset.
+_TENANT_TABLES: tuple[str, ...] = (
     "audit_logs",
-    "clients",
-    "cutting_order_outputs",
+    "stock_exits",
+    "stock_entries",
+    "assembly_runs",
+    "print_orders",
+    "blank_piece_movements",
+    "blank_pieces",
+    "printed_transfer_movements",
+    "printed_transfers",
+    "print_design_variations",
+    "paper_roll_movements",
+    "paper_rolls",
+    "fabric_roll_movements",
+    "sewing_shipments",
     "cutting_orders",
-    "fabric_rolls",
+    "order_items",
+    "imported_orders",
     "orders",
-    "print_designs",
-    "product_specs",
+    "batches",
+    "ad_products",
+    "ads",
     "product_variations",
     "products",
+    "product_specs",
+    "print_designs",
+    "fabric_rolls",
     "sewing_contractors",
-    "sewing_shipment_items",
-    "sewing_shipments",
-    "spec_trims",
-    "stock_entries",
-    "stock_exits",
+    "clients",
 )
 
 
 @router.post("/reset", status_code=status.HTTP_204_NO_CONTENT)
-async def reset_data(claims: CurrentClaims, db: DbSession) -> None:
-    """Truncate all tenant data tables. Non-prod only, authenticated.
+async def reset_data(user: CurrentDbUser, db: DbSession) -> None:
+    """Wipe the *caller's tenant* data. Non-prod only, authenticated.
 
-    Requires a valid identity (Firebase token or dev-bypass) so it can't be
-    triggered anonymously even outside prod. Preserves
-    companies/users/roles/permissions/invites so a previously bootstrapped
-    identity keeps resolving after the reset.
+    Scoped to the caller's ``company_id`` (not a global truncate) so parallel
+    E2E workers — each in its own tenant — can reset between tests without
+    clobbering one another. Preserves companies/users/roles/permissions/invites
+    and the tenant's ``company_settings`` so the identity + catalog config keep
+    resolving after the reset.
     """
     if config.ENV == "prd":
         # Defence in depth — the router isn't mounted in prod, but never allow it.
         raise AuthorizationError(detail="Not available in production")
 
-    quoted = ", ".join(f'"{t}"' for t in _DATA_TABLES)
+    cid = user.company_id
     conn = await db.connection()
-    await conn.execute(text(f"TRUNCATE {quoted} RESTART IDENTITY CASCADE"))
+    for table, predicate in _CHILD_DELETES:
+        await conn.execute(text(f"DELETE FROM {table} WHERE {predicate}"), {"cid": cid})
+    for table in _TENANT_TABLES:
+        await conn.execute(text(f"DELETE FROM {table} WHERE company_id = :cid"), {"cid": cid})
     await db.commit()
 
 

@@ -27,6 +27,7 @@ dev = [
     "pytest-random-order>=1.1.1",
     "pytest-sugar>=1.0.0",
     "pytest-timeout>=2.3.1",
+    "pytest-xdist>=3.6.1",
     "httpx>=0.28.0",
     "ruff>=0.11.0",
     "ty>=0.0.1a16",
@@ -38,7 +39,11 @@ dev = [
 asyncio_mode = "auto"
 pythonpath = ["src"]
 testpaths = ["tests"]
-addopts = "-p no:anyio --random-order --timeout 30 --cov=src --cov-report=term-missing --cov-fail-under=85 -q"
+# `-n auto` runs tests across one worker per CPU (pytest-xdist). Each worker gets
+# its OWN database (cloned from the migrated base DB) — see conftest's
+# `_database_url` — so the truncate-after-each-test isolation stays correct in
+# parallel. Use `-n0` to force a single serial process (e.g. for `--pdb`).
+addopts = "-p no:anyio -n auto --random-order --timeout 30 --cov=src --cov-report=term-missing --cov-fail-under=85 -q"
 markers = ["anyio: compatibility marker treated as asyncio test"]
 
 [tool.ruff]

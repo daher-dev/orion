@@ -420,10 +420,12 @@ async def build_suggestions(db: AsyncSession, *, company_id: uuid.UUID) -> Plann
         finished = max(0, finished_map.get(r["variation_id"], 0))
         net = max(0, r["needed"] - finished)
 
+        # Floor at 0 — a negative ledger balance is a data artifact, not stock we
+        # can build from (and would otherwise inflate the shortfall).
         blank = blank_by_key.get((spec_id, color_code, size))
-        blank_have = blank_on_hand.get(blank.id, 0) if blank is not None else 0
+        blank_have = max(0, blank_on_hand.get(blank.id, 0)) if blank is not None else 0
         printed_id = front_printed_by_design.get(design_id)
-        printed_have = printed_on_hand.get(printed_id, 0) if printed_id is not None else 0
+        printed_have = max(0, printed_on_hand.get(printed_id, 0)) if printed_id is not None else 0
 
         blank_short = max(0, net - blank_have)
         printed_short = max(0, net - printed_have)
@@ -583,8 +585,13 @@ async def _build_cortes(
         )
 
     for entry in blank_need.values():
-        demand_short = max(0, entry["demand"] - entry["count"] - entry["wip"])
-        after_demand = max(0, entry["count"] + entry["wip"] - entry["demand"])
+        # Floor on-hand + WIP at 0: a negative ledger balance (an import/data
+        # artifact — you can't physically hold < 0 blanks) must NOT be read as
+        # extra demand to produce, or it inflates the cut suggestion by |deficit|.
+        count = max(0, entry["count"])
+        wip = max(0, entry["wip"])
+        demand_short = max(0, entry["demand"] - count - wip)
+        after_demand = max(0, count + wip - entry["demand"])
         stock_short = max(0, entry["min"] - after_demand)
         total = demand_short + stock_short
         if total <= 0:
@@ -737,8 +744,11 @@ async def _build_impressoes(
 
     impressoes: list[PlanningImpressao] = []
     for design_id, entry in impr_need.items():
-        demand_short = max(0, entry["demand"] - entry["count"] - entry["wip"])
-        after_demand = max(0, entry["count"] + entry["wip"] - entry["demand"])
+        # Floor on-hand + WIP at 0 (negative = ledger artifact, not buildable stock).
+        count = max(0, entry["count"])
+        wip = max(0, entry["wip"])
+        demand_short = max(0, entry["demand"] - count - wip)
+        after_demand = max(0, count + wip - entry["demand"])
         stock_short = max(0, entry["min"] - after_demand)
         total = demand_short + stock_short
         if total <= 0:

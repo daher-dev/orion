@@ -1033,3 +1033,33 @@ async def test_create_print_orders_skips_stale(db_session):
     )
     assert result.created_count == 0
     assert result.skipped[0].reason == "stale"
+
+
+async def test_cortes_ignore_negative_blank_on_hand(db_session):
+    """A negative blank ledger (an import/data artifact — physically impossible)
+    must NOT inflate cut suggestions. On-hand is floored at 0, so with no open
+    demand and min_stock 0 there is nothing to cut — not |deficit| pieces.
+    """
+    company, _ = await _company(db_session)
+    spec = await create_product_spec(db_session, company_id=company.id, code="SHC01")
+    blank = await create_blank_piece(
+        db_session,
+        company_id=company.id,
+        spec_id=spec.id,
+        size=Size.M,
+        color="Preto",
+        color_code="PRT",
+        min_stock=0,
+    )
+    # Ledger goes deeply negative: 5 in, 5000 out → on-hand = -4995.
+    await create_blank_piece_movement(
+        db_session, company_id=company.id, blank_piece_id=blank.id, kind=BlankMovementKind.ENTRY, quantity=5
+    )
+    await create_blank_piece_movement(
+        db_session, company_id=company.id, blank_piece_id=blank.id, kind=BlankMovementKind.EXIT, quantity=5000
+    )
+
+    s = await service.build_suggestions(db_session, company_id=company.id)
+    # Pre-fix this returned ~4995 (the deficit read as demand). Now: nothing.
+    assert s.totals.toCut == 0
+    assert all(c.total >= 0 for c in s.cortes)

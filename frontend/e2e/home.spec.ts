@@ -41,7 +41,7 @@ const MOCK_DASHBOARD = {
       pieces_checked: 18,
     },
   },
-  top_products: [{ product_id: "p1", code: "2055", name: "Camiseta 2055", pieces: 18, orders: 12 }],
+  top_products: [{ name: "2055", image_url: null, pieces: 18, orders: 12 }],
   needs_action: [],
   activity: [],
   operator: {

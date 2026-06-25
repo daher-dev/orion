@@ -48,16 +48,18 @@ class ActivityItem(BaseModel):
 
 
 class TopProduct(BaseModel):
-    """A product in the "Top 5 produtos" ranking (by pieces in the order book).
+    """A design in the "Top 5 produtos" ranking (by pieces in the order book).
 
-    ``code`` is the ``ProductSpec.code`` (e.g. "CAM01"); ``name`` is the
-    ``Product.name``. The swatch *tone* is derived on the frontend from
-    ``product_id`` — there is no fabric colour on a product.
+    Mirrors the legacy Base44 homepage: ``name`` is the mapped *estampa* (print
+    design) name, falling back to the ad title for orders with no print.
+    ``image_url`` is the design artwork (or a representative imported-order
+    photo), ``None`` when neither exists — the frontend then renders a
+    deterministic swatch seeded by ``name``. ``orders`` counts distinct
+    marketplace orders; ``pieces`` sums quantities.
     """
 
-    product_id: uuid.UUID
-    code: str
     name: str
+    image_url: str | None = None
     pieces: int
     orders: int
 

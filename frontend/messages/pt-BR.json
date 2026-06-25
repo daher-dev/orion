@@ -281,6 +281,7 @@
       "auditLink": "Auditoria"
     },
     "filters": {
+      "last1d": "Hoje",
       "last7d": "Últimos 7 dias",
       "last30d": "Últimos 30 dias",
       "last90d": "Últimos 90 dias"

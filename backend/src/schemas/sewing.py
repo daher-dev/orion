@@ -91,7 +91,8 @@ class ShipmentRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    cutting_order: ShipmentCuttingOrderRead
+    # None for legacy standalone remessas whose source cutting order is gone.
+    cutting_order: ShipmentCuttingOrderRead | None
     contractor: ShipmentContractorRead
     status: ShipmentStatus
     sent_at: date

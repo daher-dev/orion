@@ -10,7 +10,7 @@ Orders whose title has no design fall back to the spec's base no-print product
 
 import re
 
-from models import ArtworkStatus, ProductVariation
+from models import ArtworkStatus, ProductVariation, SeparationStatus
 from scripts.base44.mappings import ConversionReport, convert, ink_hex_for
 
 _HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
@@ -273,6 +273,60 @@ def test_company_settings_palette_covers_every_variation_code():
     for entry in palette:
         assert re.match(r"^[A-Z]{3}$", entry["code"]), entry
         assert _HEX_RE.match(entry["hex"]), entry
+
+
+def test_order_items_synthesized_one_per_unit():
+    """Each order materializes one separation piece per unit (item_index 1..N)."""
+
+    data, _ = _convert(RAW)
+    o1 = next(o for o in _rows(data, "order") if o["external_order_id"] == "N1")  # qty 3
+    o2 = next(o for o in _rows(data, "order") if o["external_order_id"] == "N2")  # qty 2
+    items1 = [it for it in _rows(data, "order_item") if it["order_id"] == o1["id"]]
+    items2 = [it for it in _rows(data, "order_item") if it["order_id"] == o2["id"]]
+
+    assert len(items1) == 3
+    assert len(items2) == 2
+    assert sorted(it["item_index"] for it in items1) == [1, 2, 3]
+    assert all(it["total_items"] == 3 for it in items1)
+    assert all(it["variation_id"] == o1["variation_id"] for it in items1)
+    # Unique, well-formed tracking codes (so the live label flow stays idempotent).
+    codes = {it["tracking_code"] for it in items1}
+    assert len(codes) == 3
+    assert all(c.startswith("ORD-") for c in codes)
+    # No conference on the source row → pending pieces, no check audit.
+    assert all(it["status"] == SeparationStatus.PENDING for it in items1)
+    assert all(it["checked_at"] is None for it in items1)
+
+
+def test_order_items_reflect_order_level_conference():
+    """``PedidoImportado.status_conferencia`` drives the pieces' checked state —
+    the signal the Base44 homepage uses (not per-piece ItemPedido)."""
+
+    raw = {
+        **RAW,
+        "PedidoImportado": [
+            {
+                **RAW["PedidoImportado"][0],
+                "status_conferencia": "conferido",
+                "conferido_em": "2026-06-24T12:00:00",
+                "conferido_por": "qa@x.com",
+            },
+            RAW["PedidoImportado"][1],  # untouched
+        ],
+    }
+    data, _ = _convert(raw)
+    o1 = next(o for o in _rows(data, "order") if o["external_order_id"] == "N1")
+    o2 = next(o for o in _rows(data, "order") if o["external_order_id"] == "N2")
+    items1 = [it for it in _rows(data, "order_item") if it["order_id"] == o1["id"]]
+    items2 = [it for it in _rows(data, "order_item") if it["order_id"] == o2["id"]]
+
+    # Conferido order → every piece CHECKED, with the check audit copied over.
+    assert items1 and all(it["status"] == SeparationStatus.CHECKED for it in items1)
+    assert all(it["checked_at"] is not None for it in items1)
+    assert all(it["checked_by"] == "qa@x.com" for it in items1)
+    # Untouched order → pending, no check audit.
+    assert items2 and all(it["status"] == SeparationStatus.PENDING for it in items2)
+    assert all(it["checked_by"] is None for it in items2)
 
 
 def test_ink_hex_for_known_and_unknown_names():

@@ -14,9 +14,10 @@ follow-up migration should add a proper ``dashboard.read`` code.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, time, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from dependencies import DbSession, RequirePermission
 from models import User
@@ -34,7 +35,20 @@ router = APIRouter(
 async def get_summary_endpoint(
     db: DbSession,
     user: Annotated[User, Depends(RequirePermission("orders.read"))],
+    days: Annotated[
+        int | None,
+        Query(ge=1, le=3650, description="Order-book window in days (e.g. 1, 7, 30). Omit for all history."),
+    ] = None,
 ) -> DashboardSummary:
-    """Return the panorama for the current tenant."""
+    """Return the panorama for the current tenant.
 
-    return await dashboard_service.get_summary(db, company_id=user.company_id)
+    ``days`` selects the date-range filter: the order-book panorama (conference
+    totals + top products) is scoped to the last ``days`` days, counting from
+    the start of today (UTC). Omitting it returns all history.
+    """
+
+    since: datetime | None = None
+    if days is not None:
+        start_today = datetime.combine(datetime.now(UTC).date(), time.min, tzinfo=UTC)
+        since = start_today - timedelta(days=days - 1)
+    return await dashboard_service.get_summary(db, company_id=user.company_id, since=since)

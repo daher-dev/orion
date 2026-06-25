@@ -1,14 +1,41 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import type { TopProduct } from "@/lib/schemas/dashboard";
 import { FabricThumb } from "./FabricThumb";
 
 /**
- * "Top 5 produtos" — products ranked by pieces in the order book. Port of the
- * `<Card title="Top 5 produtos">` block (the `.tp-row` grid) in dashboard.jsx.
- * The fabric swatch tone is derived from the product id (decorative).
+ * The 40px design thumbnail: the estampa artwork when we have one, otherwise a
+ * deterministic fabric swatch seeded by the design name. Falls back to the
+ * swatch if the remote image 404s (legacy artwork can be missing).
+ */
+function TopThumb({ name, imageUrl }: { name: string; imageUrl: string | null }) {
+  const [broken, setBroken] = useState(false);
+  if (!imageUrl || broken) {
+    return <FabricThumb seed={name} size={40} />;
+  }
+  return (
+    // Remote artwork (Firebase / legacy host) — plain <img> avoids next/image
+    // remote-domain config; it's a tiny decorative thumbnail.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={imageUrl}
+      alt=""
+      width={40}
+      height={40}
+      loading="lazy"
+      onError={() => setBroken(true)}
+      className="h-10 w-10 shrink-0 rounded-[8px] object-cover"
+    />
+  );
+}
+
+/**
+ * "Top 5 produtos" — *designs* ranked by pieces in the order book. Mirrors the
+ * legacy Base44 homepage: each row is a mapped estampa (or ad title) with its
+ * artwork thumbnail, piece total, and distinct-order count.
  */
 export function TopProductsCard({ items }: { items: TopProduct[] }) {
   const t = useTranslations("dashboard.topProducts");
@@ -45,7 +72,7 @@ export function TopProductsCard({ items }: { items: TopProduct[] }) {
           {items.map((p, idx) => {
             const lead = idx === 0;
             return (
-              <li key={p.product_id}>
+              <li key={p.name}>
                 <Link
                   href="/products"
                   className="grid items-center gap-3 rounded-[8px] px-2 py-2 transition-colors hover:bg-[color:var(--orion-bg)]"
@@ -63,10 +90,10 @@ export function TopProductsCard({ items }: { items: TopProduct[] }) {
                   >
                     {idx + 1}
                   </span>
-                  <FabricThumb seed={p.product_id} size={40} />
+                  <TopThumb name={p.name} imageUrl={p.image_url} />
                   <div className="min-w-0">
                     <div className="truncate text-[13.5px] font-medium text-[color:var(--orion-ink)]">
-                      {p.code}
+                      {p.name}
                     </div>
                     <div className="mt-1.5 h-[6px] overflow-hidden rounded-full bg-[color:var(--orion-line-soft)]">
                       <div

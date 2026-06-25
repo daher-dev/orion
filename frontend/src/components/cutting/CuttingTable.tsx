@@ -67,7 +67,7 @@ export function CuttingTable({ rows, onView }: Props) {
         header: () => t("table.columns.bodyRoll"),
         cell: ({ row }) => (
           <span className="font-mono text-[12px] text-[color:var(--orion-ink-2)]">
-            {row.original.body_roll.code}
+            {row.original.body_roll?.code ?? "—"}
           </span>
         ),
       },

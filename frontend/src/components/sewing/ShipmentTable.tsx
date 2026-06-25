@@ -66,7 +66,7 @@ export function ShipmentTable({ rows, onView }: Props) {
         header: () => t("table.columns.cuttingOrder"),
         cell: ({ row }) => (
           <span className="font-mono text-[12px] text-[color:var(--orion-ink-2)]">
-            {row.original.cutting_order.code}
+            {row.original.cutting_order?.code ?? "—"}
           </span>
         ),
       },

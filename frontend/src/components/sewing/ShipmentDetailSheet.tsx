@@ -332,7 +332,7 @@ export function ShipmentDetailSheet({ shipment, open, onOpenChange }: Props) {
                   <dl className="flex flex-col gap-3">
                     <StatLine icon={Scissors} label={t("table.columns.cuttingOrder")}>
                       <span className="font-mono text-[12px]">
-                        {shipment.cutting_order.code}
+                        {shipment.cutting_order?.code ?? "—"}
                       </span>
                     </StatLine>
                     <StatLine icon={Send} label={t("table.columns.sentAt")}>

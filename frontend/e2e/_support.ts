@@ -17,6 +17,13 @@ import { test as base, expect } from "@playwright/test";
 // the e2e tsconfig needn't resolve into src/).
 const DEV_BYPASS_UID_KEY = "orion-dev-bypass-uid";
 
+// Pre-mark the newest release "seen" (mirrors the latest id in
+// src/data/releases.ts) so the post-login Novidades popup + top-bar dot never
+// render in E2E — the fixed overlay would otherwise sit over the home screen.
+// Bump this when a newer release is added.
+const SEEN_RELEASE_KEY = "orion.seenRelease";
+const LATEST_RELEASE_ID = "conferencia-tempo-real";
+
 /** Playwright worker slot, bounded to [0, workers-1]. */
 export const PARALLEL_INDEX = Number(process.env.TEST_PARALLEL_INDEX ?? "0");
 
@@ -39,8 +46,11 @@ export const test = base.extend({
   // `use*` call in a non-component as a React hook).
   context: async ({ context }, provide) => {
     await context.addInitScript(
-      ([key, uid]) => window.localStorage.setItem(key, uid),
-      [DEV_BYPASS_UID_KEY, BYPASS_UID] as const,
+      ([uidKey, uid, seenKey, seenId]) => {
+        window.localStorage.setItem(uidKey, uid);
+        window.localStorage.setItem(seenKey, seenId);
+      },
+      [DEV_BYPASS_UID_KEY, BYPASS_UID, SEEN_RELEASE_KEY, LATEST_RELEASE_ID] as const,
     );
     await provide(context);
   },

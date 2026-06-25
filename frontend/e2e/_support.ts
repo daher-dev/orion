@@ -22,7 +22,7 @@ const DEV_BYPASS_UID_KEY = "orion-dev-bypass-uid";
 // render in E2E — the fixed overlay would otherwise sit over the home screen.
 // Bump this when a newer release is added.
 const SEEN_RELEASE_KEY = "orion.seenRelease";
-const LATEST_RELEASE_ID = "conferencia-tempo-real";
+const LATEST_RELEASE_ID = "identidade-orion";
 
 /** Playwright worker slot, bounded to [0, workers-1]. */
 export const PARALLEL_INDEX = Number(process.env.TEST_PARALLEL_INDEX ?? "0");

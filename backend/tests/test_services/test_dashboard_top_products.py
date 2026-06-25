@@ -33,7 +33,9 @@ async def _design_product(db_session, company_id, *, design_name, image_url=None
     return variation, ad
 
 
-async def _order(db_session, company_id, client_id, variation, ad, *, quantity, ext, status=OrderStatus.PAID, ordered_at=None):
+async def _order(
+    db_session, company_id, client_id, variation, ad, *, quantity, ext, status=OrderStatus.PAID, ordered_at=None
+):
     overrides = {"ordered_at": ordered_at} if ordered_at is not None else {}
     return await factory_create_order(
         db_session,

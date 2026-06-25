@@ -47,7 +47,8 @@ export const shipmentContractorRefSchema = z.object({
 
 export const shipmentReadSchema = z.object({
   id: z.string(),
-  cutting_order: shipmentCuttingOrderRefSchema,
+  // Null for legacy standalone remessas whose source cutting order is gone.
+  cutting_order: shipmentCuttingOrderRefSchema.nullable(),
   contractor: shipmentContractorRefSchema,
   status: shipmentStatusSchema,
   sent_at: z.string(),

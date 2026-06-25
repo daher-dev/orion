@@ -27,20 +27,23 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import case, func
+from sqlalchemy import String, case, cast, func
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from models import (
+    Ad,
     AuditLog,
     Company,
     CuttingOrder,
     CuttingOrderOutput,
     CuttingStatus,
     FabricRoll,
+    ImportedOrder,
     Order,
     OrderItem,
     OrderStatus,
+    PrintDesign,
     Product,
     ProductSpec,
     ProductVariation,
@@ -200,41 +203,49 @@ def _count_low_stock(
 
 
 async def _top_products(
-    db: AsyncSession, *, company_id: uuid.UUID, limit: int = TOP_PRODUCTS_LIMIT
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    since: datetime | None = None,
+    limit: int = TOP_PRODUCTS_LIMIT,
 ) -> list[TopProduct]:
-    """Top products by pieces in the order book (``status != cancelled``).
+    """Top *designs* by pieces in the order book (``status != cancelled``).
 
-    Aggregates over ``Order`` (not ``OrderItem`` — items carry no quantity, and
-    ``conference.totals.pieces`` already uses ``Order.quantity``), joining
-    ``Order → ProductVariation → Product → ProductSpec``.
+    Mirrors the legacy Base44 homepage ranking: orders group by the mapped
+    *estampa* (print design name), falling back to the ad title when an order
+    carries no print — the same ``estampa_mapeada || titulo_anuncio`` grouping.
+    The thumbnail is the design artwork, falling back to a representative
+    imported-order photo. ``orders`` counts distinct marketplace orders (one
+    external order number can span several line items); ``pieces`` sums
+    ``Order.quantity``.
     """
 
-    stmt = (
-        scoped(
-            select(
-                Product.id.label("product_id"),
-                ProductSpec.code.label("code"),
-                Product.name.label("name"),
-                func.coalesce(func.sum(Order.quantity), 0).label("pieces"),
-                func.count(func.distinct(Order.id)).label("orders"),
-            )
-            .join(ProductVariation, ProductVariation.id == Order.variation_id)
-            .join(Product, Product.id == ProductVariation.product_id)
-            .join(ProductSpec, ProductSpec.id == Product.spec_id),
-            Order,
-            company_id,
+    label = func.coalesce(PrintDesign.name, Ad.title)
+    image = func.max(func.coalesce(func.nullif(PrintDesign.image_url, ""), func.nullif(ImportedOrder.image_url, "")))
+    order_no = func.coalesce(Order.external_order_id, cast(Order.id, String))
+    stmt = scoped(
+        select(
+            label.label("name"),
+            image.label("image_url"),
+            func.coalesce(func.sum(Order.quantity), 0).label("pieces"),
+            func.count(func.distinct(order_no)).label("orders"),
         )
-        .where(Order.status != OrderStatus.CANCELLED)
-        .group_by(Product.id, ProductSpec.code, Product.name)
-        .order_by(func.sum(Order.quantity).desc())
-        .limit(limit)
-    )
+        .join(ProductVariation, ProductVariation.id == Order.variation_id)
+        .join(Product, Product.id == ProductVariation.product_id)
+        .join(Ad, Ad.id == Order.ad_id)
+        .outerjoin(PrintDesign, PrintDesign.id == Product.print_id)
+        .outerjoin(ImportedOrder, ImportedOrder.order_id == Order.id),
+        Order,
+        company_id,
+    ).where(Order.status != OrderStatus.CANCELLED)
+    if since is not None:
+        stmt = stmt.where(Order.ordered_at >= since)
+    stmt = stmt.group_by(label).order_by(func.sum(Order.quantity).desc()).limit(limit)
     rows = (await db.exec(stmt)).all()
     return [
         TopProduct(
-            product_id=row.product_id,
-            code=row.code,
-            name=row.name,
+            name=row.name or "—",
+            image_url=row.image_url or None,
             pieces=int(row.pieces or 0),
             orders=int(row.orders or 0),
         )
@@ -349,7 +360,9 @@ async def _activity(db: AsyncSession, *, company_id: uuid.UUID) -> list[Activity
 # --------------------------------------------------------------------------- conference
 
 
-async def _order_piece_counts(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str, int]:
+async def _order_piece_counts(
+    db: AsyncSession, *, company_id: uuid.UUID, since: datetime | None = None
+) -> dict[str, int]:
     """``{mapped, pending, pieces_checked}`` over the items of non-cancelled
     orders (single aggregate query).
 
@@ -371,6 +384,8 @@ async def _order_piece_counts(db: AsyncSession, *, company_id: uuid.UUID) -> dic
         OrderItem,
         company_id,
     ).where(Order.status != OrderStatus.CANCELLED)
+    if since is not None:
+        stmt = stmt.where(Order.ordered_at >= since)
     mapped, pending, pieces_checked = (await db.exec(stmt)).one()
     return {
         "mapped": int(mapped or 0),
@@ -379,7 +394,7 @@ async def _order_piece_counts(db: AsyncSession, *, company_id: uuid.UUID) -> dic
     }
 
 
-async def _order_totals(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str, int]:
+async def _order_totals(db: AsyncSession, *, company_id: uuid.UUID, since: datetime | None = None) -> dict[str, int]:
     """``{orders, pieces, in_lote}`` — scope = orders with ``status != cancelled``."""
 
     totals_stmt = scoped(
@@ -387,6 +402,8 @@ async def _order_totals(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str,
         Order,
         company_id,
     ).where(Order.status != OrderStatus.CANCELLED)
+    if since is not None:
+        totals_stmt = totals_stmt.where(Order.ordered_at >= since)
     orders_count, pieces = (await db.exec(totals_stmt)).one()
 
     in_lote_stmt = scoped(
@@ -397,13 +414,15 @@ async def _order_totals(db: AsyncSession, *, company_id: uuid.UUID) -> dict[str,
         Order.status != OrderStatus.CANCELLED,
         Order.batch_id.is_not(None),  # type: ignore[union-attr]
     )
+    if since is not None:
+        in_lote_stmt = in_lote_stmt.where(Order.ordered_at >= since)
     in_lote = int((await db.exec(in_lote_stmt)).first() or 0)
 
     return {"orders": int(orders_count or 0), "pieces": int(pieces or 0), "in_lote": in_lote}
 
 
 async def _order_checked_classification(
-    db: AsyncSession, *, company_id: uuid.UUID, total_orders: int
+    db: AsyncSession, *, company_id: uuid.UUID, total_orders: int, since: datetime | None = None
 ) -> dict[str, int]:
     """Bucket every non-cancelled order by how many of its items are checked.
 
@@ -424,6 +443,8 @@ async def _order_checked_classification(
         .where(Order.status != OrderStatus.CANCELLED)
         .group_by(OrderItem.order_id)
     )
+    if since is not None:
+        stmt = stmt.where(Order.ordered_at >= since)
     rows = (await db.exec(stmt)).all()
     orders_checked = orders_partial = with_items_untouched = 0
     for total, checked in rows:
@@ -444,10 +465,12 @@ async def _order_checked_classification(
     }
 
 
-async def _conference(db: AsyncSession, *, company_id: uuid.UUID) -> ConferenceSummary:
-    pieces = await _order_piece_counts(db, company_id=company_id)
-    totals = await _order_totals(db, company_id=company_id)
-    classification = await _order_checked_classification(db, company_id=company_id, total_orders=totals["orders"])
+async def _conference(db: AsyncSession, *, company_id: uuid.UUID, since: datetime | None = None) -> ConferenceSummary:
+    pieces = await _order_piece_counts(db, company_id=company_id, since=since)
+    totals = await _order_totals(db, company_id=company_id, since=since)
+    classification = await _order_checked_classification(
+        db, company_id=company_id, total_orders=totals["orders"], since=since
+    )
 
     map_denom = pieces["mapped"] + pieces["pending"]
     mapped_pct = round(100 * pieces["mapped"] / map_denom) if map_denom else 100
@@ -532,16 +555,23 @@ async def get_summary(
     db: AsyncSession,
     *,
     company_id: uuid.UUID,
+    since: datetime | None = None,
 ) -> DashboardSummary:
-    """Return the fully aggregated dashboard payload for ``company_id``."""
+    """Return the fully aggregated dashboard payload for ``company_id``.
+
+    ``since`` scopes the order-book panorama (conference totals + top products)
+    to orders with ``ordered_at >= since`` — the dashboard's date-range filter.
+    ``None`` means all history. The operational lists (needs-action, activity,
+    operator queue) are always current and ignore the window.
+    """
 
     # Resolve the configured low-stock threshold once per request, plus any
     # per-variation overrides, and thread them into the needs-action list.
     company_threshold = await _company_threshold(db, company_id=company_id)
     threshold_overrides = await _variation_threshold_overrides(db, company_id=company_id)
 
-    conference = await _conference(db, company_id=company_id)
-    top_products = await _top_products(db, company_id=company_id)
+    conference = await _conference(db, company_id=company_id, since=since)
+    top_products = await _top_products(db, company_id=company_id, since=since)
     needs = await _needs_action(
         db,
         company_id=company_id,

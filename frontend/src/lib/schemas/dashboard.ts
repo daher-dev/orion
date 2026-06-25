@@ -22,12 +22,13 @@ export const activityItemSchema = z.object({
 
 export type ActivityItem = z.infer<typeof activityItemSchema>;
 
-// ---------- Top 5 produtos (by pieces in the order book) ----------
+// ---------- Top 5 produtos (designs, by pieces in the order book) ----------
 
 export const topProductSchema = z.object({
-  product_id: z.string(),
-  code: z.string(),
+  // Mapped estampa (print design) name, or the ad title for no-print orders.
   name: z.string(),
+  // Design artwork / representative order photo; null → frontend swatch.
+  image_url: z.string().nullable(),
   pieces: z.number().int(),
   orders: z.number().int(),
 });

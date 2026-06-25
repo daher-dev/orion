@@ -14,11 +14,17 @@ class SewingShipment(CompanyModel, table=True):
 
     __tablename__ = "sewing_shipments"
 
-    cutting_order_id: uuid.UUID = Field(
+    # Nullable: a manually-created remessa always links its source cutting order,
+    # but legacy (base44) imports often reference a cutting order that was deleted
+    # or never exported — the shipment (contractor + product + sizes) is still
+    # real, so it's imported standalone. Such shipments can't be *received* into
+    # blank stock (no spec/color to credit); receive_shipment rejects them.
+    cutting_order_id: uuid.UUID | None = Field(
+        default=None,
         sa_column=Column(
             Uuid,
             ForeignKey("cutting_orders.id", ondelete="RESTRICT"),
-            nullable=False,
+            nullable=True,
             index=True,
         ),
     )

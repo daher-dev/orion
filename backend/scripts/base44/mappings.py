@@ -29,7 +29,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from config import config
-from models import ArtworkStatus, FabricType, PrintTechnique, ProductVariation, Size
+from models import ArtworkStatus, FabricType, PrintTechnique, ProductVariation, SeparationStatus, Size
 from scripts.base44 import settings
 from services.company_settings import default_config
 
@@ -68,6 +68,26 @@ TABLE_ORDER: list[str] = [
 
 def derive_id(table_key: str, *parts: Any) -> uuid.UUID:
     return uuid.uuid5(_NAMESPACE, table_key + ":" + ":".join(str(p) for p in parts))
+
+
+_PIECE_BASE36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def _piece_tracking_code(order_id: uuid.UUID, item_index: int) -> str:
+    """Deterministic per-piece separation code.
+
+    Mirrors ``services.order_item._piece_tracking_code`` so that pieces created
+    here are indistinguishable from ones the live label flow would mint — a
+    later ``generate_labels`` call sees them as existing and re-prints
+    idempotently (never resetting an already-``checked`` piece).
+    """
+
+    acc = int.from_bytes(hashlib.sha256(f"{order_id.hex}:{item_index}".encode()).digest()[:8], "big")
+    suffix = ""
+    for _ in range(6):
+        acc, rem = divmod(acc, 36)
+        suffix += _PIECE_BASE36[rem]
+    return f"ORD-{order_id.hex[:8].upper()}-{item_index}-{suffix}"
 
 
 # ── coercion ────────────────────────────────────────────────────────────────
@@ -596,6 +616,15 @@ def convert(
     report.fetched["fabric_roll"] = len(_records(raw, "BobinaTecido"))
 
     # 5) OrdemCorte → cutting_order + outputs
+    # base44 frequently references a deleted/un-exported body roll, and sometimes
+    # only a product *name* (no produto_id). The Orion model already allows a
+    # roll-less cutting order (planning creates them before a roll is assigned),
+    # so we require only a resolvable spec — recovered by produto_id, else by
+    # matching nome_produto to a spec already built for the company — and import
+    # the order without a body roll when base44's roll is missing.
+    spec_id_by_name: dict[tuple[uuid.UUID, str], uuid.UUID] = {}
+    for s in data.rows["product_spec"]:
+        spec_id_by_name.setdefault((s["company_id"], norm(s["name"])), s["id"])
     cutting_by_b44: dict[str, uuid.UUID] = {}
     for o in _records(raw, "OrdemCorte"):
         cid = company_of(o)
@@ -603,17 +632,21 @@ def convert(
             report.skip("cutting:unknown_company")
             continue
         info = product_by_b44.get(str(o.get("produto_id")))
-        body = fabric_by_b44.get(str(o.get("bobina_id")))
-        if info is None or body is None:
-            report.skip("cutting:missing_product_or_roll", str(o.get("id")))
+        spec_id = info["spec_id"] if info else spec_id_by_name.get((cid, norm(o.get("nome_produto"))))
+        if spec_id is None:
+            report.skip("cutting:missing_product", str(o.get("id")))
             continue
+        body = fabric_by_b44.get(str(o.get("bobina_id")))  # may be None: base44 roll deleted/un-exported
+        if body is None:
+            report.default("cutting_order.no_body_roll")
         b44 = str(o.get("id"))
         oid = derive_id("cutting_order", b44)
         rib = fabric_by_b44.get(str(o.get("bobina_ribana_id"))) if o.get("bobina_ribana_id") else None
-        if rib == body:
+        # rib_requires_body CHECK: a rib roll can't be kept without a body roll.
+        if body is None or rib == body:
             rib = None
-        # Cutting is now print-agnostic: keyed by spec + colorway. Prefer the
-        # order's own color, falling back to the body roll's color when absent.
+        # Cutting is print-agnostic: keyed by spec + colorway. Prefer the order's
+        # own color, falling back to the body roll's color when absent.
         body_color = fabric_color_by_b44.get(str(o.get("bobina_id")))
         color = clean_color(o.get("cor") or body_color or "Único")
         color_code = colors.code(cid, color)
@@ -621,7 +654,7 @@ def convert(
             {
                 "id": oid,
                 "company_id": cid,
-                "spec_id": info["spec_id"],
+                "spec_id": spec_id,
                 "color": color[:40],
                 "color_code": color_code,
                 "body_roll_id": body,
@@ -685,11 +718,17 @@ def convert(
         if cid is None:
             report.skip("shipment:unknown_company")
             continue
+        # base44 shipments often reference a cutting order that was deleted or
+        # never exported; the cutting link is an optional upstream pointer, not
+        # the substance of the remessa (which is contractor + product + sizes).
+        # Import the shipment standalone when the cutting order can't be resolved.
         cutting = cutting_by_b44.get(str(r.get("ordem_corte_id")))
         contractor = contractor_by_b44.get(str(r.get("banca_id")))
-        if cutting is None or contractor is None:
-            report.skip("shipment:missing_cutting_or_contractor", str(r.get("id")))
+        if contractor is None:
+            report.skip("shipment:missing_contractor", str(r.get("id")))
             continue
+        if cutting is None:
+            report.default("sewing_shipment.no_cutting_link")
         sent = to_date(r.get("data_envio")) or to_date(r.get("created_date"))
         if sent is None:
             report.skip("shipment:no_sent_date", str(r.get("id")))
@@ -937,7 +976,6 @@ def convert(
     order_keys: set[tuple] = set()
     import_keys: set[tuple] = set()
     order_row_by_pi: dict[str, dict] = {}
-    order_by_natkey: dict[tuple, uuid.UUID] = {}
     real_matches = 0
     synth_matches = 0
     design_orders = 0
@@ -1135,7 +1173,6 @@ def convert(
         data.rows["order"].append(order_row)
         report.add("order")
         order_row_by_pi[str(po.get("id"))] = order_row
-        order_by_natkey[(cid, norm(po.get("numero_pedido")), norm(po.get("cor")), norm(po.get("tamanho")))] = oid
         data.rows["imported_order"].append(
             {
                 "id": derive_id("imported_order", str(po.get("id"))),
@@ -1154,6 +1191,42 @@ def convert(
             }
         )
         report.add("imported_order")
+
+        # Separation pieces (order_items) — synthesized one-per-unit so the
+        # dashboard *conferência* reflects the legacy ORDER-level conference, the
+        # exact signal the Base44 homepage reads (``PedidoImportado.status_conferencia``).
+        # The per-piece ``ItemPedido`` entity is NOT a faithful source: it carries
+        # the picking-scan state (almost all "pendente"), not the order conference.
+        # ``item_index`` 1..N + the deterministic tracking code match
+        # ``generate_labels`` so a later live re-print stays idempotent.
+        conf = norm(po.get("status_conferencia"))
+        checked = conf == "conferido"
+        checked_at = to_datetime(po.get("conferido_em")) if checked else None
+        checked_by = (
+            str(po.get("conferido_por")).strip()[:255] if checked and po.get("conferido_por") else None
+        )
+        piece_status = SeparationStatus.CHECKED if checked else SeparationStatus.PENDING
+        estampa_print = str(po.get("estampa_mapeada") or "").strip()
+        if norm(estampa_print) in {"n/a", "-"}:
+            estampa_print = ""
+        for idx in range(1, qty + 1):
+            data.rows["order_item"].append(
+                {
+                    "id": derive_id("order_item", str(po.get("id")), idx),
+                    "company_id": cid,
+                    "order_id": oid,
+                    "variation_id": vid,
+                    "tracking_code": _piece_tracking_code(oid, idx),
+                    "status": piece_status,
+                    "checked_at": checked_at,
+                    "checked_by": checked_by,
+                    "mapped_print": estampa_print[:120] if estampa_print else None,
+                    "item_index": idx,
+                    "total_items": qty,
+                }
+            )
+            report.add("order_item")
+
         order_keys.add(order_key)
         import_keys.add(import_key)
     report.fetched["order"] = len(_records(raw, "PedidoImportado"))
@@ -1162,7 +1235,6 @@ def convert(
     report.notes.append(f"order→design match: {design_orders} with design, {nodesign_orders} no-design (cut-only)")
 
     # 11) LoteProducao → batch (+ Order.batch_id backfill + print adjustments)
-    order_id_by_pi = {pi: row["id"] for pi, row in order_row_by_pi.items()}
     for lote in _records(raw, "LoteProducao"):
         cid = company_of(lote)
         if cid is None:
@@ -1194,46 +1266,13 @@ def convert(
                 report.skip("batch:pedido_unresolved", str(pi))
     report.fetched["batch"] = len(_records(raw, "LoteProducao"))
 
-    # 12) ItemPedido → order_items (Separação). Many reference superseded order
-    # generations and are skipped + reported.
-    for ip in _records(raw, "ItemPedido"):
-        cid = company_of(ip)
-        if cid is None:
-            report.skip("order_item:unknown_company")
-            continue
-        pi = str(ip.get("pedido_importado_id") or "")
-        oid = order_id_by_pi.get(pi) or order_by_natkey.get(
-            (cid, norm(ip.get("numero_pedido")), norm(ip.get("cor")), norm(ip.get("tamanho")))
-        )
-        if oid is None:
-            report.skip("order_item:no_order", f"{ip.get('numero_pedido')}/{ip.get('cor')}/{ip.get('tamanho')}")
-            continue
-        rastreio = str(ip.get("codigo_rastreio_unico") or "").strip()
-        if not rastreio:
-            report.skip("order_item:no_tracking")
-            continue
-        estampa = str(ip.get("estampa_mapeada") or "").strip()
-        if norm(estampa) in {"n/a", "-"}:
-            estampa = ""
-        data.rows["order_item"].append(
-            {
-                "id": derive_id("order_item", cid, rastreio),
-                "company_id": cid,
-                "order_id": oid,
-                "variation_id": order_row_by_pi.get(pi, {}).get("variation_id"),
-                "tracking_code": rastreio[:120],
-                "status": settings.SEPARATION_STATUS_MAP.get(
-                    norm(ip.get("status_separacao")), settings.DEFAULT_SEPARATION_STATUS
-                ),
-                "checked_at": to_datetime(ip.get("conferido_em")),
-                "checked_by": str(ip.get("conferido_por")).strip()[:255] if ip.get("conferido_por") else None,
-                "mapped_print": estampa[:120] if estampa else None,
-                "item_index": to_int(ip.get("indice_item")) or 0,
-                "total_items": to_int(ip.get("total_itens_pedido")) or 0,
-            }
-        )
-        report.add("order_item")
-    report.fetched["order_item"] = len(_records(raw, "ItemPedido"))
+    # 12) Separation pieces (order_items) are synthesized per order in step 10
+    # from the legacy ORDER-level conference (PedidoImportado.status_conferencia).
+    # The per-piece ItemPedido entity is intentionally NOT imported: its
+    # status_separacao is almost entirely "pendente" (the picking scan, not the
+    # conference), so importing it would zero out the conferência the Base44
+    # homepage actually shows.
+    report.fetched["order_item"] = len(data.rows["order_item"])
 
     # Company settings: seed the catalog config and make the fabric palette the
     # source of truth for the colors the import just coded onto variations. Every

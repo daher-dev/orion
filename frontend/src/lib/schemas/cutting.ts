@@ -43,7 +43,8 @@ export const cuttingReadSchema = z.object({
   spec: cuttingSpecRefSchema,
   color: z.string(),
   color_code: z.string(),
-  body_roll: cuttingRollRefSchema,
+  // Null for imported cutting orders whose base44 body roll was deleted.
+  body_roll: cuttingRollRefSchema.nullable().optional(),
   rib_roll: cuttingRollRefSchema.nullable().optional(),
   status: cuttingStatusSchema,
   planned_outputs: z.array(cuttingOutputSchema).default([]),

@@ -149,7 +149,7 @@ export function CuttingKanban({ rows, onView, onCreate }: Props) {
                 }}
               />
               <span className="font-mono" style={{ fontSize: 11.5 }}>
-                {c.body_roll.code}
+                {c.body_roll?.code ?? "—"}
               </span>
               <span style={{ marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>
                 {actual}/{planned} {t("kanban.pieces")}

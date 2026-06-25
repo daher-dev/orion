@@ -182,7 +182,7 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
                     <span className="font-mono">{order.spec.code}</span>
                     {" · "}
                     {t("detail.bodyRollLabel")}{" "}
-                    <span className="font-mono">{order.body_roll.code}</span>
+                    <span className="font-mono">{order.body_roll?.code ?? "—"}</span>
                     {totalPlanned > 0
                       ? ` · ${totalPlanned} ${t("kanban.pieces")}`
                       : ""}
@@ -247,7 +247,7 @@ export function CuttingDetailSheet({ order, open, onOpenChange }: Props) {
                     {t("detail.bodyRoll")}
                   </div>
                   <div className="mt-1 font-mono text-[12.5px] text-[color:var(--orion-ink)]">
-                    {order.body_roll.code}
+                    {order.body_roll?.code ?? "—"}
                   </div>
                 </div>
                 {order.rib_roll ? (

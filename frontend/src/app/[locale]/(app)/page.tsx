@@ -24,8 +24,15 @@ import { useDashboardSummary } from "@/hooks/use-dashboard";
 import { useMe } from "@/hooks/use-me";
 import { useCanAccess } from "@/hooks/use-permissions";
 
-const PERIOD_OPTIONS = ["last7d", "last30d", "last90d"] as const;
+const PERIOD_OPTIONS = ["last1d", "last7d", "last30d"] as const;
 type Period = (typeof PERIOD_OPTIONS)[number];
+
+// Maps a period option to the `days` window sent to the backend.
+const PERIOD_DAYS: Record<Period, number> = {
+  last1d: 1,
+  last7d: 7,
+  last30d: 30,
+};
 
 // .btn.btn-primary — Ember accent bg, white ink, 7 13 padding, radius
 // var(--radius-sm) (6px), 13px font weight 500. Uses --sidebar-primary
@@ -43,9 +50,9 @@ export default function HomePage() {
   const { data: me } = useMe();
   const isOperator = me?.role?.code === "operator";
   const canWrite = useCanAccess("orders.write");
-  const [period, setPeriod] = useState<Period>("last30d");
+  const [period, setPeriod] = useState<Period>("last7d");
   const [creating, setCreating] = useState(false);
-  const { data, isPending, isError, error } = useDashboardSummary();
+  const { data, isPending, isError, error } = useDashboardSummary(PERIOD_DAYS[period]);
 
   // Operators get the factory-floor variant (cuts queue + quick actions).
   if (isOperator) {

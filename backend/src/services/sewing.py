@@ -75,14 +75,15 @@ def _to_read(
     shipment: SewingShipment,
     *,
     contractor: SewingContractor,
-    cutting_order: CuttingOrder,
+    cutting_order: CuttingOrder | None,
     items: Sequence[SewingShipmentItem],
 ) -> ShipmentRead:
     return ShipmentRead(
         id=shipment.id,
-        cutting_order=ShipmentCuttingOrderRead(
-            id=cutting_order.id,
-            code=_cutting_code(cutting_order.id),
+        cutting_order=(
+            ShipmentCuttingOrderRead(id=cutting_order.id, code=_cutting_code(cutting_order.id))
+            if cutting_order is not None
+            else None
         ),
         contractor=ShipmentContractorRead(id=contractor.id, name=contractor.name),
         status=shipment.status,
@@ -159,7 +160,9 @@ async def list_shipments(
     base = (
         scoped(select(SewingShipment), SewingShipment, company_id)
         .join(SewingContractor, SewingContractor.id == SewingShipment.contractor_id)  # type: ignore[arg-type]
-        .join(CuttingOrder, CuttingOrder.id == SewingShipment.cutting_order_id)  # type: ignore[arg-type]
+        # Outer join: legacy standalone remessas have no cutting order and must
+        # still appear in the list (and the cutting-id search just won't match).
+        .join(CuttingOrder, CuttingOrder.id == SewingShipment.cutting_order_id, isouter=True)  # type: ignore[arg-type]
     )
 
     if filters.status is not None:
@@ -193,7 +196,7 @@ async def list_shipments(
         return [], total
 
     contractor_ids = {s.contractor_id for s in shipments}
-    cutting_ids = {s.cutting_order_id for s in shipments}
+    cutting_ids = {s.cutting_order_id for s in shipments if s.cutting_order_id is not None}
     shipment_ids = [s.id for s in shipments]
 
     contractors = {
@@ -229,7 +232,7 @@ async def list_shipments(
         _to_read(
             s,
             contractor=contractors[s.contractor_id],
-            cutting_order=cutting_orders[s.cutting_order_id],
+            cutting_order=cutting_orders.get(s.cutting_order_id) if s.cutting_order_id else None,
             items=items_by_shipment.get(s.id, []),
         )
         for s in shipments
@@ -253,10 +256,10 @@ async def get_shipment(
         company_id=company_id,
         contractor_id=shipment.contractor_id,
     )
-    cutting_order = await _load_cutting_order(
-        db,
-        company_id=company_id,
-        cutting_order_id=shipment.cutting_order_id,
+    cutting_order = (
+        await _load_cutting_order(db, company_id=company_id, cutting_order_id=shipment.cutting_order_id)
+        if shipment.cutting_order_id is not None
+        else None
     )
     items = await _load_items(db, shipment.id)
     return _to_read(
@@ -380,6 +383,11 @@ async def receive_shipment(
 
     if shipment.status not in (ShipmentStatus.SENT, ShipmentStatus.PARTIAL):
         raise ConflictError(detail="Shipment cannot be received in its current state")
+
+    # A standalone (legacy-imported) shipment has no cutting order, so there is
+    # no spec/color to credit blank stock against — it can't be received.
+    if shipment.cutting_order_id is None:
+        raise ConflictError(detail="Shipment has no linked cutting order and cannot be received")
 
     items = await _load_items(db, shipment.id)
     items_by_size = {item.size: item for item in items}

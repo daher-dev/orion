@@ -77,7 +77,7 @@ const RELEASES: ReleaseBase[] = [
   {
     id: "identidade-orion",
     date: "2026-06-22",
-    version: "v3.0",
+    version: "v2.5.0",
     kind: "novo",
     areaIcon: "sparkles",
     areaColor: "#a83227",
@@ -127,7 +127,7 @@ const RELEASES: ReleaseBase[] = [
   {
     id: "inicio-conferencia",
     date: "2026-06-10",
-    version: "v2.7",
+    version: "v2.4.1",
     kind: "melhoria",
     areaIcon: "layout-dashboard",
     areaColor: "#a83227",
@@ -177,7 +177,7 @@ const RELEASES: ReleaseBase[] = [
   {
     id: "estampas-paleta",
     date: "2026-05-28",
-    version: "v2.6",
+    version: "v2.4.0",
     kind: "novo",
     areaIcon: "palette",
     areaColor: "#7e5bef",
@@ -227,7 +227,7 @@ const RELEASES: ReleaseBase[] = [
   {
     id: "importar-pedidos",
     date: "2026-05-15",
-    version: "v2.4",
+    version: "v2.3.0",
     kind: "novo",
     areaIcon: "shopping-bag",
     areaColor: "#c2410c",
@@ -275,7 +275,7 @@ const RELEASES: ReleaseBase[] = [
   {
     id: "producao-tecido-despacho",
     date: "2026-05-02",
-    version: "v2.2",
+    version: "v2.2.0",
     kind: "novo",
     areaIcon: "radar",
     areaColor: "#0f766e",
@@ -327,7 +327,7 @@ const RELEASES: ReleaseBase[] = [
   {
     id: "lotes-etiquetas",
     date: "2026-04-25",
-    version: "v2.0",
+    version: "v2.1.1",
     kind: "melhoria",
     areaIcon: "shopping-bag",
     areaColor: "#c2410c",
@@ -379,7 +379,7 @@ const RELEASES: ReleaseBase[] = [
   {
     id: "catalogo-producao-no-ar",
     date: "2026-04-18",
-    version: "v1.4",
+    version: "v2.1.0",
     kind: "novo",
     areaIcon: "file-text",
     areaColor: "#7e5bef",
@@ -431,7 +431,7 @@ const RELEASES: ReleaseBase[] = [
   {
     id: "acesso-equipe",
     date: "2026-04-12",
-    version: "v1.0",
+    version: "v2.0.0",
     kind: "novo",
     areaIcon: "users",
     areaColor: "#0f766e",

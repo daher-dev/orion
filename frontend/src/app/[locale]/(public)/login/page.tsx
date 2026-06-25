@@ -17,15 +17,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ProviderRow } from "@/components/auth/ProviderButtons";
-import { BeltLoader, OrionMark, Wordmark } from "@/components/brand";
+import { OrbitLoader, OrionMark, Wordmark } from "@/components/brand";
 import { Link, useRouter } from "@/i18n/routing";
 import { EMAIL_FOR_SIGN_IN_KEY, useAuth } from "@/providers/auth-provider";
 import { isDevBypassEnabled } from "@/lib/firebase";
 
 /**
- * Login screen — the floating-card constellation design.
+ * Login screen — the floating-card design.
  *
- * A single card floats over a faint Ember Orion-constellation watermark + a
+ * A single card floats over a faint Ember Orion orbit watermark + a
  * soft accent glow, with the brand chip pinned top-left and a thin footer
  * below. It carries two modes:
  *
@@ -230,8 +230,8 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* Background: faint Ember accent glow + the Orion constellation traced as
-          a t-shirt, sprawled behind the card. Clipped so it never scrolls. */}
+      {/* Background: faint Ember accent glow + the Orion orbit mark, sprawled
+          behind the card. Clipped so it never scrolls. */}
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div
           className="absolute left-1/2 top-1/2 size-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full"
@@ -241,8 +241,7 @@ export default function LoginPage() {
           }}
         />
         <OrionMark
-          variant="constellation"
-          mono
+          variant="mono"
           size={820}
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[color:var(--ember)] opacity-[0.12]"
         />
@@ -251,8 +250,7 @@ export default function LoginPage() {
       {/* Brand chip — top-left. Product wordmark only; never a tenant name. */}
       <div className="fixed left-8 top-7 z-[2] inline-flex items-center gap-2.5 max-[540px]:left-5 max-[540px]:top-5">
         <OrionMark
-          variant="constellation"
-          mono
+          variant="mono"
           size={30}
           className="text-[color:var(--ember)]"
         />
@@ -282,7 +280,7 @@ export default function LoginPage() {
             {completing ? (
               // ── Finishing an email-link sign-in ──
               <div className="flex flex-col items-center gap-4 py-4 text-center">
-                <BeltLoader
+                <OrbitLoader
                   size={48}
                   label={t("magic.completing")}
                   className="text-[color:var(--ember)]"

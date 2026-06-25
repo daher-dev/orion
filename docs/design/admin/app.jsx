@@ -3,7 +3,7 @@
 // Users, Plans, Integrations, TweaksPanel + helpers.
 
 const CONSOLE_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "accent": "#4f46e5",
+  "accent": "#a83227",
   "density": "regular"
 }/*EDITMODE-END*/;
 
@@ -47,13 +47,13 @@ function ConsoleApp() {
       <TweaksPanel title="Tweaks">
         <TweakSection label="Console"/>
         <TweakColor label="Cor do console" value={tweaks.accent}
-          options={['#4f46e5', '#6d28d9', '#0e7490', '#1e40af']}
+          options={['#a83227', '#c2410c', '#b45309', '#7e5bef']}
           onChange={v => setTweak('accent', v)}/>
         <TweakRadio label="Densidade" value={tweaks.density}
           options={[{ value: 'compact', label: 'Compacta' }, { value: 'regular', label: 'Padrão' }]}
           onChange={v => setTweak('density', v)}/>
         <div style={{ fontSize: 10.5, color: 'rgba(41,38,27,.55)', marginTop: 8, lineHeight: 1.4 }}>
-          O console usa um tom distinto de propósito — assim você sempre sabe que está na administração da plataforma, não na sua conta.
+          O console é a administração da plataforma — a barra lateral escura e a etiqueta "Console" deixam claro que você não está na sua conta.
         </div>
       </TweaksPanel>
     </div>

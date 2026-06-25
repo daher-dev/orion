@@ -44,7 +44,23 @@
     "search": "Buscar",
     "searchPlaceholder": "O que vamos fazer agora?",
     "toggleSidebar": "Alternar barra lateral",
-    "console": "Console"
+    "console": "Console",
+    "news": "Novidades"
+  },
+  "news": {
+    "heroEyebrow": "O que há de novo",
+    "heroTitle": "Tudo que mudou,",
+    "heroTitleEm": "do jeito que importa",
+    "heroLede": "Cada lançamento do Orion, contado de um jeito humano: o que mudou, por que ajuda a sua confecção e o impacto real no dia a dia da fábrica.",
+    "kindNovo": "Novo",
+    "kindMelhoria": "Melhoria",
+    "kindCorrecao": "Correção",
+    "viewAll": "Ver novidades",
+    "viewInHistory": "Ver no histórico de novidades",
+    "popupEyebrow": "Novidade",
+    "close": "Fechar",
+    "footer": "Orion · Plataforma para confecção",
+    "footerNote": "Tem uma ideia? Fale com a gente dentro do app."
   },
   "nav": {
     "sections": {

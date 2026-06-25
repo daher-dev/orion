@@ -19,6 +19,7 @@ import { OrderReportGrid } from "@/components/dashboard/OrderReportGrid";
 import { NeedsActionList } from "@/components/dashboard/NeedsActionList";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { OperatorDashboard } from "@/components/dashboard/OperatorDashboard";
+import { ReleaseAnnouncement } from "@/components/dashboard/ReleaseAnnouncement";
 import { OrderFormSheet } from "@/components/orders/OrderFormSheet";
 import { useDashboardSummary } from "@/hooks/use-dashboard";
 import { useMe } from "@/hooks/use-me";
@@ -50,12 +51,15 @@ export default function HomePage() {
   // Operators get the factory-floor variant (cuts queue + quick actions).
   if (isOperator) {
     return (
-      <OperatorDashboard
-        operator={data?.operator}
-        isPending={isPending}
-        isError={isError}
-        errorMessage={error?.detail ?? t("loadError")}
-      />
+      <>
+        <ReleaseAnnouncement />
+        <OperatorDashboard
+          operator={data?.operator}
+          isPending={isPending}
+          isError={isError}
+          errorMessage={error?.detail ?? t("loadError")}
+        />
+      </>
     );
   }
 
@@ -63,6 +67,7 @@ export default function HomePage() {
     // Vertical stack — 18px gap between major blocks mirrors the design source
     // (`marginBottom: 18` between cards in docs/design/pages/dashboard.jsx).
     <div className="flex flex-col gap-[18px]">
+      <ReleaseAnnouncement />
       <GreetingHeader
         actions={
           <div className="flex flex-wrap items-center gap-2">

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { orionAppIconSvg, svgToDataUri } from "@/lib/brand-mark";
 
-// Apple touch icon — 180×180, the canonical Ink tile + Star silhouette. iOS
+// Apple touch icon — 180×180, the canonical Ink tile + Star orbit mark. iOS
 // applies its own rounded mask, so the tile fills the square edge to edge.
 // Lives under [locale] so the next-intl middleware (which locale-routes
 // extensionless paths) doesn't 404 it.

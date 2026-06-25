@@ -64,7 +64,7 @@ const AppSwitcher = ({ onClose }) => {
     <div className="sw-pop" style={{ left: 12, top: 56 }} onClick={e => e.stopPropagation()}>
       <div className="sw-sect">Você está em</div>
       <div className="sw-item" style={{ cursor: 'default' }}>
-        <span className="sb-brand-mark" style={{ width: 30, height: 30, fontSize: 15, background: 'linear-gradient(150deg,#6d5cff,#4f46e5)' }}>
+        <span className="sb-brand-mark" style={{ width: 30, height: 30, fontSize: 15, background: 'linear-gradient(150deg,#c2473b,#a83227)' }}>
           <Icon name="orbit" size={15} strokeWidth={2} style={{ color: '#fff' }}/>
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -155,7 +155,7 @@ const ConsoleSidebar = ({ route, setRoute, onPicker }) => {
         })}
       </div>
       <div className="sb-foot">
-        <Av name="Orion Staff" color="#4f46e5"/>
+        <Av name="Orion Staff" color="#a83227"/>
         <div style={{ minWidth: 0, flex: 1 }} className="sb-foot-meta">
           <div className="sb-foot-name">Você · Orion</div>
           <div className="sb-foot-role">Equipe da plataforma</div>

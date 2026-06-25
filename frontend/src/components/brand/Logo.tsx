@@ -4,7 +4,7 @@ import { Wordmark } from "./Wordmark";
 
 /**
  * Orion app-icon tile — the canonical small-format mark: an Ink rounded square
- * holding the Star silhouette. This is the favicon / app icon / sidebar / auth
+ * holding the Star orbit. This is the favicon / app icon / sidebar / auth
  * treatment ("Star sobre Carvão" from the brand sheet). Fixed colours: the
  * mark identity does not take the UI accent.
  */
@@ -30,7 +30,7 @@ export function OrionTile({
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,.08)",
       }}
     >
-      <OrionMark variant="solid" size={Math.round(size * 0.64)} />
+      <OrionMark variant="mono" size={Math.round(size * 0.64)} />
     </span>
   );
 }

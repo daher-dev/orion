@@ -2,10 +2,12 @@ import type { ReactNode } from "react";
 
 /**
  * The Orion wordmark — "Orion" in Fraunces 400 with tight tracking. Styling
- * lives in globals.css (.orion-wordmark); this component only sets the font
- * size. Exposed as role="img" named "Orion".
+ * lives in globals.css (.orion-wordmark); this component sets the font size and
+ * draws the i-dot's orbit ring (.wm-i / .wm-orbit) — a thin tilted ring that
+ * echoes the symbol inside the word (brand sheet §03 "O i em órbita"). Exposed
+ * as role="img" named "Orion".
  *
- * Direct port of the wordmark + lockup from /docs/design/branding.html.
+ * Direct port of the wordmark + lockup from /docs/design/Orion Brand.html.
  */
 const NAMED_SIZES = { xl: 128, lg: 64, md: 36, sm: 22, xs: 16 } as const;
 
@@ -27,7 +29,7 @@ export function Wordmark({ size = "md", tagline, className }: WordmarkProps) {
       role="img"
       aria-label="Orion"
     >
-      Orion
+      Or<span className="wm-i">i<span className="wm-orbit" aria-hidden="true" /></span>on
     </span>
   );
 

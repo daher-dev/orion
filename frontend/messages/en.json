@@ -44,7 +44,23 @@
     "search": "Search",
     "searchPlaceholder": "What are we doing now?",
     "toggleSidebar": "Toggle sidebar",
-    "console": "Console"
+    "console": "Console",
+    "news": "What's new"
+  },
+  "news": {
+    "heroEyebrow": "What's new",
+    "heroTitle": "Everything that changed,",
+    "heroTitleEm": "the way it matters",
+    "heroLede": "Every Orion release, told in plain language: what changed, why it helps your shop, and the real impact on the factory floor.",
+    "kindNovo": "New",
+    "kindMelhoria": "Improvement",
+    "kindCorrecao": "Fix",
+    "viewAll": "See what's new",
+    "viewInHistory": "See it in the changelog",
+    "popupEyebrow": "What's new",
+    "close": "Close",
+    "footer": "Orion · Platform for apparel manufacturing",
+    "footerNote": "Have an idea? Talk to us inside the app."
   },
   "nav": {
     "sections": {

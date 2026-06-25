@@ -561,3 +561,135 @@ window.CatalogConfig = (function () {
     reset: () => { state = clone(CATALOG_CONFIG_DEFAULTS); persist(); subs.forEach(f => f(state)); },
   };
 })();
+
+// ───────────────────────── Releases / Novidades ─────────────────────────
+// Single source of truth for the changelog page (Novidades.html), the
+// top-bar "Novidades" link, and the post-login feature popup.
+// Newest first. The first entry is the "brand new" release that the
+// home popup announces and the top-bar dot points to.
+window.ORION_RELEASES = [
+  {
+    id: "conferencia-tempo-real",
+    date: "2026-06-12",
+    dateLabel: "12 de junho, 2026",
+    version: "v3.4",
+    kind: "novo",                 // novo · melhoria · correcao
+    area: "Início",
+    areaIcon: "layout-dashboard",
+    areaColor: "#a83227",
+    title: "Conferência em tempo real,",
+    titleEm: "do pedido à expedição",
+    teaser: "A tela inicial agora mostra a conferência do lote acontecendo ao vivo — sem planilha, sem recarregar.",
+    intro: "Toda manhã o Orion importa os pedidos dos seus canais e monta o lote do dia. Agora a tela inicial mostra a conferência acontecendo ao vivo: cada peça conferida, cada parcial resolvida e cada problema sinalizado aparece na hora. Você abre o Orion e já enxerga onde o lote está.",
+    stats: [
+      { value: "−42%", label: "tempo de conferência", up: true },
+      { value: "859",  label: "pedidos no lote de hoje" },
+      { value: "ao vivo", label: "progresso atualiza sozinho" },
+    ],
+    flow: [
+      { icon: "download",        label: "Importar", sub: "dos canais" },
+      { icon: "clipboard-check", label: "Conferir", sub: "peça a peça", tone: "accent" },
+      { icon: "wrench",          label: "Resolver", sub: "parciais e problemas", tone: "warn" },
+      { icon: "truck",           label: "Expedir",  sub: "sai hoje", tone: "ok" },
+    ],
+    points: [
+      "Os números da tela inicial são clicáveis — levam direto à tela que resolve.",
+      "Parciais e problemas ganham destaque, então você ataca primeiro o que trava a produção.",
+      "O progresso do lote atualiza sozinho conforme a equipe confere.",
+    ],
+    image: "Tela inicial · Resumo da conferência ao vivo",
+  },
+  {
+    id: "mapeamento-estampas",
+    date: "2026-05-28",
+    dateLabel: "28 de maio, 2026",
+    version: "v3.3",
+    kind: "novo",
+    area: "Catálogo",
+    areaIcon: "palette",
+    areaColor: "#7e5bef",
+    title: "Estampas mapeadas",
+    titleEm: "sem trabalho manual",
+    teaser: "O Orion reconhece o produto e vincula a estampa sozinho. Você só revisa as exceções.",
+    intro: "Antes, cada item importado precisava ser vinculado à sua estampa na mão — um por um, todo dia. Agora o Orion reconhece o produto pelo código do anúncio e faz o vínculo sozinho. Você entra apenas para revisar o que ficou em dúvida.",
+    stats: [
+      { value: "1.077", label: "itens mapeados hoje" },
+      { value: "100%",  label: "do lote vinculado", up: true },
+      { value: "~3 s",  label: "por lote, antes ~40 min", up: true },
+    ],
+    points: [
+      "Itens sem correspondência ficam separados para revisão rápida.",
+      "Cada vínculo que você confirma ensina o Orion para a próxima vez.",
+      "A conferência começa com tudo já vinculado.",
+    ],
+  },
+  {
+    id: "lotes-separacao",
+    date: "2026-05-10",
+    dateLabel: "10 de maio, 2026",
+    version: "v3.2",
+    kind: "melhoria",
+    area: "Vendas",
+    areaIcon: "shopping-bag",
+    areaColor: "#c2410c",
+    title: "Lotes e separação,",
+    titleEm: "lado a lado",
+    teaser: "Agrupe pedidos em lotes e acompanhe a separação na mesma tela.",
+    intro: "Quem trabalha por lote agora tem um fluxo só: agrupe os pedidos do dia, mande para separação e acompanhe cada caixa fechar — tudo no mesmo lugar, com o status sempre à vista.",
+    flow: [
+      { icon: "shopping-bag", label: "Pedidos",    sub: "do dia" },
+      { icon: "layers",       label: "Lote",       sub: "agrupado", tone: "accent" },
+      { icon: "scan-line",    label: "Separação",  sub: "caixa a caixa" },
+      { icon: "package-check",label: "Despacho",   sub: "conferido", tone: "ok" },
+    ],
+    points: [
+      "Cada lote mostra quantas peças faltam separar em tempo real.",
+      "Divergências na separação voltam para a conferência automaticamente.",
+    ],
+  },
+  {
+    id: "fichas-miniatura",
+    date: "2026-04-22",
+    dateLabel: "22 de abril, 2026",
+    version: "v3.1",
+    kind: "melhoria",
+    area: "Catálogo",
+    areaIcon: "file-text",
+    areaColor: "#7e5bef",
+    title: "Fichas técnicas",
+    titleEm: "com a peça à vista",
+    teaser: "Agora dá para anexar a imagem da peça na ficha técnica — corte não erra mais o modelo.",
+    intro: "Uma ficha técnica sem foto deixa margem para erro no corte e na costura. Agora você anexa a imagem da peça direto na ficha, arrastando o arquivo, e todo mundo na produção vê exatamente o que está fazendo.",
+    stats: [
+      { value: "arraste", label: "e solte a imagem" },
+      { value: "1 fonte", label: "de verdade para a fábrica", up: true },
+    ],
+    points: [
+      "A miniatura aparece em todo lugar que cita a peça.",
+      "Menos ida e volta entre o corte e o escritório.",
+    ],
+  },
+  {
+    id: "planejamento-radar",
+    date: "2026-04-03",
+    dateLabel: "3 de abril, 2026",
+    version: "v3.0",
+    kind: "novo",
+    area: "Produção",
+    areaIcon: "radar",
+    areaColor: "#0f766e",
+    title: "Planejamento",
+    titleEm: "que enxerga a fábrica",
+    teaser: "Uma visão de radar do que está em corte, em costura e nas bancas — antes de virar atraso.",
+    intro: "O novo Planejamento mostra a fábrica inteira numa tela: o que está em corte, o que saiu para costura e o que voltou das bancas. Os gargalos aparecem antes de virarem atraso, então dá para remanejar a tempo.",
+    stats: [
+      { value: "1 tela", label: "para a produção inteira" },
+      { value: "antes",  label: "do atraso acontecer", up: true },
+    ],
+    points: [
+      "Cada etapa mostra a fila e quem está responsável.",
+      "Gargalos ficam sinalizados para você agir primeiro.",
+    ],
+  },
+];
+window.ORION_LATEST_RELEASE = window.ORION_RELEASES[0];

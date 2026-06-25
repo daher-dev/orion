@@ -147,7 +147,7 @@ const Sidebar = ({ route, setRoute, role, accent, companyName }) => {
               <div className="sw-div"/>
               <div className="sw-sect">Plataforma</div>
               <div className="sw-app" onClick={() => { window.location.href = 'Orion Backoffice.html'; }}>
-                <span className="sb-brand-mark" style={{ width: 30, height: 30, fontSize: 14, background: 'linear-gradient(150deg,#6d5cff,#4f46e5)' }}>
+                <span className="sb-brand-mark" style={{ width: 30, height: 30, fontSize: 14, background: 'linear-gradient(150deg,#c2473b,#a83227)' }}>
                   <Icon name="orbit" size={15} strokeWidth={2} style={{ color: '#fff' }}/>
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -167,6 +167,12 @@ const Sidebar = ({ route, setRoute, role, accent, companyName }) => {
 
 const Topbar = ({ onBurger, companyName, role, setRoute }) => {
   const u = ORION_DATA.users[role];
+  const latest = window.ORION_LATEST_RELEASE;
+  const [unseen, setUnseen] = React.useState(false);
+  React.useEffect(() => {
+    if (!latest) return;
+    try { setUnseen(localStorage.getItem('orion.seenRelease') !== latest.id); } catch (e) { setUnseen(true); }
+  }, [latest]);
   return (
     <header className="topbar">
       <button className="tb-burger" onClick={onBurger}><Icon name="menu" size={18}/></button>
@@ -176,6 +182,12 @@ const Topbar = ({ onBurger, companyName, role, setRoute }) => {
         <kbd>⌘K</kbd>
       </div>
       <div className="tb-spacer"/>
+      <a className="tb-news" href="Novidades.html" title="Novidades do Orion"
+         onClick={() => { try { latest && localStorage.setItem('orion.seenRelease', latest.id); } catch (e) {} }}>
+        <Icon name="sparkles" size={15}/>
+        <span>Novidades</span>
+        {unseen && <span className="tb-news-dot"/>}
+      </a>
     </header>
   );
 };

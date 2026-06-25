@@ -46,7 +46,7 @@ export default function ConsoleOrganizationsPage() {
     <div>
       <ConsoleHead
         icon={Building2}
-        color="#2563eb"
+        color="var(--console-accent)"
         eyebrow={t("nav.platform")}
         title={t("organizations.title")}
         desc={t("organizations.desc")}

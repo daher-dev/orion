@@ -1202,9 +1202,7 @@ def convert(
         conf = norm(po.get("status_conferencia"))
         checked = conf == "conferido"
         checked_at = to_datetime(po.get("conferido_em")) if checked else None
-        checked_by = (
-            str(po.get("conferido_por")).strip()[:255] if checked and po.get("conferido_por") else None
-        )
+        checked_by = str(po.get("conferido_por")).strip()[:255] if checked and po.get("conferido_por") else None
         piece_status = SeparationStatus.CHECKED if checked else SeparationStatus.PENDING
         estampa_print = str(po.get("estampa_mapeada") or "").strip()
         if norm(estampa_print) in {"n/a", "-"}:

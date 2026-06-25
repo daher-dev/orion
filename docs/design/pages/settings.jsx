@@ -255,7 +255,7 @@ const CompanyPane = ({ tweaks, setTweak }) => (
       <div className="field" style={{ marginTop: 4 }}>
         <label>Cor de destaque</label>
         <div style={{ display: 'flex', gap: 8 }}>
-          {['#2563eb','#c2410c','#0f766e','#7e5bef','#b45309','#1f1b15'].map(c => (
+          {['#a83227','#c2410c','#0f766e','#7e5bef','#b45309','#1f1b15'].map(c => (
             <button key={c} onClick={() => setTweak('accent', c)} aria-label={c} style={{
               width: 36, height: 36, borderRadius: 8, background: c, border: 0, cursor: 'pointer',
               boxShadow: tweaks.accent === c

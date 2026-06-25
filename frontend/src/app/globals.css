@@ -105,19 +105,19 @@
   --shadow-lg: 0 4px 8px rgba(31, 27, 21, 0.06), 0 24px 48px -12px rgba(31, 27, 21, 0.18);
 
   /*
-   * Platform Console (super-admin backoffice) — a distinct indigo identity so
-   * operators always know they're in platform administration, not a tenant.
-   * Scoped under `.console-scope` (see below) for the accent; these raw tokens
-   * are the source values. Plan colors back the (illustrative) Plans page.
+   * Platform Console (super-admin backoffice) — shares the tenant's Ember
+   * accent; operators know they're in platform admin from the warm-charcoal
+   * sidebar + "Console" tag, not a different hue. Scoped under `.console-scope`
+   * (see below). Plan colors back the (illustrative) Plans page.
    */
-  --console-accent: #4f46e5;                      /* indigo — console CTA/active */
-  --console-accent-soft: #eef2ff;
-  --console-night: #1c1830;                       /* sidebar top */
-  --console-night-2: #251f3f;                     /* sidebar bottom */
+  --console-accent: var(--ember);                 /* Ember — console CTA/active */
+  --console-accent-soft: color-mix(in oklab, var(--ember) 14%, var(--orion-surface));
+  --console-night: #1c1812;                       /* sidebar top — warm charcoal */
+  --console-night-2: #221d15;                     /* sidebar bottom */
   --plan-gratis: #78716c;
   --plan-atelie: #0f766e;
   --plan-pro: #4f46e5;
-  --plan-fabrica: #b45309;
+  --plan-fabrica: #7e5bef;
 
   /*
    * Typography is wired by next/font (src/app/layout.tsx) which exposes
@@ -359,26 +359,47 @@
 }
 
 /*
- * Orion belt loader — the three belt stars (Mintaka · Alnilam · Alnitak)
- * pulse left→right as the app's canonical loading indicator (brand variant
- * C). Direct port of .belt-loader from /docs/design/branding.html. The pulse
- * is disabled under prefers-reduced-motion.
+ * Wordmark i-dot orbit ring — a thin tilted ring around the natural dot of the
+ * "i", echoing the symbol inside the word (brand sheet §03 "O i em órbita").
+ * Sizes are in `em` so the ring tracks the wordmark font-size; below ~14px it
+ * effectively vanishes. Direct port of .wm-i / .wm-orbit from the brand sheet.
  */
-.belt-loader circle {
-  transform-origin: center;
-  transform-box: fill-box;
-  animation: belt-pulse 1.4s ease-in-out infinite;
-  will-change: transform, opacity;
+.wm-i {
+  position: relative;
+  display: inline-block;
 }
-.belt-loader circle:nth-child(1) { animation-delay: 0s; }
-.belt-loader circle:nth-child(2) { animation-delay: 0.18s; }
-.belt-loader circle:nth-child(3) { animation-delay: 0.36s; }
-@keyframes belt-pulse {
-  0%, 70%, 100% { opacity: 0.28; transform: scale(0.7); }
-  35%           { opacity: 1;    transform: scale(1.05); }
+.wm-i .wm-orbit {
+  position: absolute;
+  left: 50%;
+  top: 0.205em;
+  width: 0.42em;
+  height: 0.30em;
+  margin-left: -0.21em;
+  margin-top: -0.15em;
+  border: 0.028em solid currentColor;
+  border-radius: 50%;
+  transform: rotate(-32deg);
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+/*
+ * Orion orbit loader — the mark's two moons orbit the fixed core, the app's
+ * canonical loading indicator (brand variant D). Direct port of .orbit-spin
+ * from /docs/design/Orion Brand.html. Only the moon/orbit group rotates (the
+ * core stays put); the rotation stops under prefers-reduced-motion.
+ */
+.orbit-spin-group {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+  animation: orbit-rotate 3.4s linear infinite;
+  will-change: transform;
+}
+@keyframes orbit-rotate {
+  to { transform: rotate(360deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .belt-loader circle { animation: none; opacity: 1; transform: none; }
+  .orbit-spin-group { animation: none; }
 }
 
 /*
@@ -497,4 +518,180 @@
   .help-pop { animation: none; }
   .flow-ar-dot { animation: none; opacity: .85; }
   .flow-nd, .flow-nd-ic, .flow-ar-line, .flow-ar-head { transition: none; }
+}
+
+/*
+ * ───────── Novidades (What's New) ─────────
+ * Ported from /docs/design/styles.css (.tb-news, .fa-*) and
+ * /docs/design/Novidades.html (.nv-*, .rel-*). Prototype vars map onto Orion
+ * tokens (--surface → --orion-surface, --accent → --ember, …); the per-release
+ * tone is passed inline as --c. Release flows reuse the .flow* styles above.
+ * Entrance / pulse animations stop under prefers-reduced-motion.
+ */
+
+/* Top-bar "Novidades" link + unseen dot */
+.tb-news {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 11px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 500;
+  color: var(--orion-ink-3); position: relative;
+  border: 1px solid transparent;
+  transition: color .15s, background .15s, border-color .15s;
+}
+.tb-news:hover { color: var(--orion-ink); background: var(--orion-surface-2); border-color: var(--orion-line); }
+.tb-news svg { color: var(--orion-ink-3); transition: color .15s; }
+.tb-news:hover svg { color: var(--ember); }
+.tb-news-dot {
+  width: 6px; height: 6px; border-radius: 999px; background: var(--ember);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ember) 22%, transparent);
+  animation: newsDot 2.4s ease-in-out infinite;
+}
+@keyframes newsDot {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in oklab, var(--ember) 22%, transparent); }
+  50%      { box-shadow: 0 0 0 5px transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .tb-news-dot { animation: none; } }
+
+/* Feature-announcement popup (post-login, on Início) */
+.fa-veil {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(31, 27, 21, 0.40); backdrop-filter: blur(3px);
+  display: grid; place-items: center; padding: 24px;
+  animation: faVeil 0.2s ease;
+}
+@keyframes faVeil { from { opacity: 0; } to { opacity: 1; } }
+.fa-card {
+  position: relative; width: 100%; max-width: 412px;
+  background: var(--orion-surface); border: 1px solid var(--orion-line);
+  border-radius: 16px; box-shadow: var(--shadow-lg);
+  padding: 26px 26px 22px; overflow: hidden;
+  animation: faPop 0.26s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@keyframes faPop { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: none; } }
+.fa-accentbar { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c, var(--ember)); }
+.fa-x {
+  position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
+  display: grid; place-items: center; border: 0; border-radius: 8px;
+  background: transparent; color: var(--orion-ink-3); cursor: pointer; transition: background 0.12s, color 0.12s;
+}
+.fa-x:hover { background: var(--orion-surface-2); color: var(--orion-ink); }
+.fa-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
+  color: var(--c, var(--ember)); margin-bottom: 13px;
+}
+.fa-title {
+  font-family: var(--font-display); font-weight: 400; letter-spacing: -0.02em; line-height: 1.08;
+  font-size: 30px; color: var(--orion-ink); margin: 0 0 12px; max-width: 18ch;
+}
+.fa-title em { font-style: italic; color: var(--c, var(--ember)); }
+.fa-intro { font-size: 14.5px; line-height: 1.62; color: var(--orion-ink-2); margin: 0; max-width: 56ch; text-wrap: pretty; }
+.fa-flow { margin: 22px 0 2px; }
+.fa-stats { display: flex; gap: 0; margin: 22px 0 0; border-top: 1px solid var(--orion-line-soft); }
+.fa-stat { flex: 1; padding: 16px 16px 2px 0; }
+.fa-stat + .fa-stat { padding-left: 18px; }
+.fa-stat-v { font-family: var(--font-display); font-size: 26px; letter-spacing: -0.02em; line-height: 1; color: var(--orion-ink); }
+.fa-stat-v.pos { color: var(--ok); }
+.fa-stat-l { font-size: 11.5px; color: var(--orion-ink-3); margin-top: 8px; line-height: 1.35; }
+.fa-link {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 24px;
+  font-size: 13px; font-weight: 600; color: var(--c, var(--ember)); transition: gap 0.15s;
+}
+.fa-link:hover { gap: 9px; }
+@media (prefers-reduced-motion: reduce) { .fa-veil, .fa-card { animation: none; } }
+
+/* /novidades page — hero + timeline */
+.nv-hero { margin-bottom: 60px; }
+.nv-eyebrow {
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ember);
+  font-weight: 600; display: inline-flex; align-items: center; gap: 7px; margin-bottom: 14px;
+}
+.nv-h1 {
+  font-family: var(--font-display); font-weight: 400; letter-spacing: -0.03em; line-height: 1;
+  font-size: clamp(40px, 7vw, 68px); color: var(--orion-ink); margin: 0;
+}
+.nv-h1 em { font-style: italic; color: var(--ember); }
+.nv-lede { font-size: 16px; line-height: 1.6; color: var(--orion-ink-2); max-width: 54ch; margin: 20px 0 0; text-wrap: pretty; }
+
+.nv-timeline { display: grid; grid-template-columns: 60px 1fr; }
+.rel { display: contents; }
+.rel-rail { position: relative; }
+.rel-rail::before {
+  content: ''; position: absolute; left: 17px; top: 0; bottom: 0; width: 2px;
+  background: linear-gradient(180deg, var(--orion-line) 0 92%, transparent);
+}
+.rel:first-child .rel-rail::before { top: 6px; }
+.rel-node {
+  position: absolute; left: 5px; top: 2px; width: 26px; height: 26px; border-radius: 999px;
+  display: grid; place-items: center; color: #fff; background: var(--c, var(--ember));
+  box-shadow: 0 0 0 4px var(--orion-bg), 0 4px 10px -3px var(--c, var(--ember));
+}
+.rel-main { padding-bottom: 64px; min-width: 0; }
+.rel:last-child .rel-main { padding-bottom: 12px; }
+.rel-meta { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 13px; }
+.rel-date { font-size: 12.5px; color: var(--orion-ink-3); font-weight: 500; }
+.rel-ver {
+  font-family: var(--font-mono); font-size: 11px; color: var(--orion-ink-3);
+  border: 1px solid var(--orion-line); border-radius: 5px; padding: 1px 7px; background: var(--orion-surface);
+}
+.rel-kind {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 999px; line-height: 1.6;
+}
+.rel-kind.k-novo { background: var(--orion-ink); color: var(--orion-ink-inv); }
+.rel-kind.k-melhoria {
+  background: color-mix(in oklab, var(--status-info) 12%, var(--orion-surface));
+  color: var(--status-info);
+  border: 1px solid color-mix(in oklab, var(--status-info) 24%, var(--orion-surface));
+}
+.rel-kind.k-correcao { background: var(--orion-surface-2); color: var(--orion-ink-3); border: 1px solid var(--orion-line); }
+.rel-area {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
+  font-family: var(--font-display); font-size: 11.5px; font-weight: 500; letter-spacing: 0.02em;
+  color: var(--c, var(--ember));
+  background: color-mix(in oklab, var(--c, var(--ember)) 10%, var(--orion-surface));
+  border: 1px solid color-mix(in oklab, var(--c, var(--ember)) 22%, var(--orion-surface));
+  padding: 2px 9px 2px 6px; border-radius: 999px;
+}
+.rel-title {
+  font-family: var(--font-display); font-weight: 400; letter-spacing: -0.02em; line-height: 1.06;
+  font-size: clamp(26px, 3.6vw, 34px); color: var(--orion-ink); margin: 0 0 12px;
+}
+.rel-title em { font-style: italic; color: var(--c, var(--ember)); }
+.rel-intro { font-size: 14.5px; line-height: 1.62; color: var(--orion-ink-2); max-width: 62ch; margin: 0; text-wrap: pretty; }
+.rel-stats {
+  display: flex; flex-wrap: wrap; gap: 0; margin: 22px 0 4px;
+  border: 1px solid var(--orion-line); border-radius: var(--radius); overflow: hidden;
+  background: var(--orion-surface);
+}
+.rel-stat { flex: 1 1 0; min-width: 130px; padding: 15px 18px; border-right: 1px solid var(--orion-line-soft); }
+.rel-stat:last-child { border-right: 0; }
+.rel-stat-v {
+  font-family: var(--font-display); font-size: 30px; font-weight: 400; letter-spacing: -0.02em;
+  line-height: 1; color: var(--orion-ink); display: inline-flex; align-items: baseline; gap: 6px;
+}
+.rel-stat-v.pos { color: var(--ok); }
+.rel-stat-l { font-size: 11.5px; color: var(--orion-ink-3); margin-top: 8px; line-height: 1.35; }
+.rel-flow-wrap { margin: 22px 0 4px; }
+.rel-points { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 10px; }
+.rel-points li { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: var(--orion-ink-2); line-height: 1.5; }
+.rel-points .ck {
+  flex-shrink: 0; margin-top: 1px; width: 19px; height: 19px; border-radius: 999px;
+  display: grid; place-items: center; color: var(--c, var(--ember));
+  background: color-mix(in oklab, var(--c, var(--ember)) 13%, var(--orion-surface));
+}
+.rel-shot {
+  margin: 22px 0 4px; border: 1px solid var(--orion-line); border-radius: var(--radius);
+  aspect-ratio: 16 / 7; display: grid; place-items: center; gap: 10px; overflow: hidden;
+  background: repeating-linear-gradient(135deg, var(--orion-surface) 0 11px, var(--orion-surface-2) 11px 22px);
+  color: var(--orion-ink-3); text-align: center; padding: 16px;
+}
+.rel-shot-cap { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.04em; }
+.rel-shot .ic { opacity: 0.55; }
+
+@media (max-width: 640px) {
+  .nv-timeline { grid-template-columns: 44px 1fr; }
+  .rel-rail::before { left: 13px; }
+  .rel-node { left: 1px; }
+  .rel-area { margin-left: 0; }
 }

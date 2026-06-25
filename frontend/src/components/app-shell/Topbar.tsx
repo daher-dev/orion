@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { Menu, Search, Shield } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { Menu, Search, Shield, Sparkles } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Link } from "@/i18n/routing";
 import { useMe } from "@/hooks/use-me";
+import { useSeenRelease } from "@/hooks/use-seen-release";
 import { CommandPalette } from "./CommandPalette";
 
 /**
@@ -25,6 +26,8 @@ export function Topbar() {
   const { toggleSidebar } = useSidebar();
   const { data: me } = useMe();
   const isOperator = me?.user?.is_operator === true;
+  const locale = useLocale();
+  const { hasUnseen } = useSeenRelease(locale);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -82,6 +85,12 @@ export function Topbar() {
 
       {/* .tb-spacer — flex 1 — fills the gap between search and the right side */}
       <div className="flex-1" />
+      {/* .tb-news — "Novidades" link with a pulsing dot until the latest release is seen */}
+      <Link href="/novidades" title={t("news")} className="tb-news">
+        <Sparkles size={14} strokeWidth={2} />
+        <span>{t("news")}</span>
+        {hasUnseen ? <span className="tb-news-dot" aria-hidden /> : null}
+      </Link>
       {isOperator ? (
         <Link
           href="/console"

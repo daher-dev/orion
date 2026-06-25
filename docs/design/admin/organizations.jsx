@@ -51,7 +51,7 @@ const OrgsList = ({ openOrg }) => {
 
   return (
     <div className="page">
-      <ConsoleHead icon="building-2" color="#2563eb" eyebrow="Plataforma" title="Organizações"
+      <ConsoleHead icon="building-2" color="#a83227" eyebrow="Plataforma" title="Organizações"
         desc="Cada cliente Orion é uma organização. Gerencie plano, equipe, uso e cobrança."
         actions={<>
           <button className="btn"><Icon name="download" size={13}/> Exportar</button>
@@ -137,11 +137,11 @@ const NewOrgSheet = ({ open, onClose }) => {
   const [ownerEmail, setOwnerEmail] = React.useState('');
   const [plan, setPlan] = React.useState('atelie');
   const [trial, setTrial] = React.useState(true);
-  const [accent, setAccent] = React.useState('#2563eb');
+  const [accent, setAccent] = React.useState('#a83227');
 
-  React.useEffect(() => { if (open) { setName(''); setCity(''); setOwnerName(''); setOwnerEmail(''); setPlan('atelie'); setTrial(true); setAccent('#2563eb'); } }, [open]);
+  React.useEffect(() => { if (open) { setName(''); setCity(''); setOwnerName(''); setOwnerEmail(''); setPlan('atelie'); setTrial(true); setAccent('#a83227'); } }, [open]);
 
-  const ACCENTS = ['#2563eb', '#0f766e', '#c2410c', '#7e5bef', '#be123c', '#15803d', '#9333ea', '#ca8a04'];
+  const ACCENTS = ['#a83227', '#0f766e', '#c2410c', '#7e5bef', '#be123c', '#15803d', '#9333ea', '#ca8a04'];
   const ini = (name || 'Nv').split(/\s+/).filter(w => w.length > 1 || /\d/.test(w)).map(s => s[0]).slice(0, 2).join('').toUpperCase() || 'NV';
   const p = CONSOLE.planById(plan);
   const valid = name.trim() && ownerEmail.trim();

@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BeltLoader } from "@/components/brand";
+import { OrbitLoader } from "@/components/brand";
 import { useMe } from "@/hooks/use-me";
 import { useCompany } from "@/providers/company-provider";
 
@@ -82,8 +82,8 @@ export function CompanySwitcher() {
               {activeName}
             </span>
             <span className="mt-1 inline-flex items-center gap-[5px] font-serif text-[10.5px] italic leading-none tracking-[0.06em] text-[#f5efe0]/60">
-              {/* Orion's belt — the three-star attribution glyph (static). */}
-              <BeltLoader animated={false} size={14} style={{ color: brandColor }} />
+              {/* Orion orbit — the static attribution glyph. */}
+              <OrbitLoader animated={false} size={14} style={{ color: brandColor }} />
               <span>{t("poweredBy")}</span>
             </span>
           </div>

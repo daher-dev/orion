@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Novidades — Orion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..600,30..100,0..1&family=Inter+Tight:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js"></script>
+<script src="data.js"></script>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#2563eb"/>
+    <circle cx="50" cy="42" r="20" fill="none" stroke="#f5efe0" stroke-width="3"/>
+    <circle cx="50" cy="42" r="3.5" fill="#f5efe0"/>
+    <text x="50" y="82" font-family="Georgia, serif" font-size="15" fill="#f5efe0" text-anchor="middle">Novidades</text>
+  </svg>
+</template>
+
+<style>
+html, body { background: var(--bg); margin: 0; }
+body { font-family: var(--font-body); color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+.nv-shell { max-width: 960px; margin: 0 auto; padding: 30px 32px 120px; position: relative; }
+.nv-shell::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: radial-gradient(rgba(31,27,21,.022) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+.nv-shell > * { position: relative; z-index: 1; }
+
+/* ── top bar ── */
+.nv-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 54px;
+}
+.nv-brand { display: flex; align-items: center; gap: 11px; }
+.nv-brand-mark {
+  width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+  background: var(--accent); color: #fff; display: grid; place-items: center;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset, 0 6px 16px -6px var(--accent);
+}
+.nv-brand-name { font-family: var(--font-display); font-size: 16px; font-weight: 500; line-height: 1; letter-spacing: -.01em; }
+.nv-brand-sub {
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3);
+  margin-top: 4px; display: inline-flex; align-items: center; gap: 6px;
+}
+.nv-brand-sub::before { content:''; width: 4px; height: 4px; border-radius: 999px; background: var(--accent); }
+.nv-back {
+  display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 500;
+  color: var(--ink-3); padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--surface); transition: color .15s, border-color .15s, background .15s;
+}
+.nv-back:hover { color: var(--ink); border-color: var(--ink-3); background: var(--surface-2); }
+
+/* ── hero ── */
+.nv-hero { margin-bottom: 60px; }
+.nv-eyebrow {
+  font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent);
+  font-weight: 600; display: inline-flex; align-items: center; gap: 7px; margin-bottom: 14px;
+}
+.nv-h1 {
+  font-family: var(--font-display); font-weight: 400; letter-spacing: -.03em; line-height: 1.0;
+  font-size: clamp(40px, 7vw, 68px); color: var(--ink); margin: 0;
+}
+.nv-h1 em { font-style: italic; color: var(--accent); }
+.nv-lede { font-size: 16px; line-height: 1.6; color: var(--ink-2); max-width: 54ch; margin: 20px 0 0; text-wrap: pretty; }
+
+/* ── timeline ── */
+.nv-timeline { display: grid; grid-template-columns: 60px 1fr; }
+.rel { display: contents; }
+.rel-rail { position: relative; }
+.rel-rail::before {
+  content: ''; position: absolute; left: 17px; top: 0; bottom: 0; width: 2px;
+  background: linear-gradient(180deg, var(--line) 0 92%, transparent);
+}
+.rel:first-child .rel-rail::before { top: 6px; }
+.rel-node {
+  position: absolute; left: 5px; top: 2px; width: 26px; height: 26px; border-radius: 999px;
+  display: grid; place-items: center; color: #fff; background: var(--c, var(--accent));
+  box-shadow: 0 0 0 4px var(--bg), 0 4px 10px -3px var(--c, var(--accent));
+}
+.rel-main { padding-bottom: 64px; min-width: 0; }
+.rel:last-child .rel-main { padding-bottom: 12px; }
+
+.rel-meta { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 13px; }
+.rel-date { font-size: 12.5px; color: var(--ink-3); font-weight: 500; }
+.rel-ver {
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-3);
+  border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px; background: var(--surface);
+}
+.rel-kind {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 999px; line-height: 1.6;
+}
+.rel-kind.k-novo { background: var(--ink); color: var(--ink-inv); }
+.rel-kind.k-melhoria { background: var(--info-bg); color: var(--info); border: 1px solid color-mix(in oklab, var(--info) 24%, var(--surface)); }
+.rel-kind.k-correcao { background: var(--surface-2); color: var(--ink-3); border: 1px solid var(--line); }
+.rel-area {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
+  font-family: var(--font-display); font-size: 11.5px; font-weight: 500; letter-spacing: .02em;
+  color: var(--c); background: color-mix(in oklab, var(--c) 10%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--c) 22%, var(--surface));
+  padding: 2px 9px 2px 6px; border-radius: 999px;
+}
+
+.rel-title {
+  font-family: var(--font-display); font-weight: 400; letter-spacing: -.02em; line-height: 1.06;
+  font-size: clamp(26px, 3.6vw, 34px); color: var(--ink); margin: 0 0 12px;
+}
+.rel-title em { font-style: italic; color: var(--c, var(--accent)); }
+.rel-intro { font-size: 14.5px; line-height: 1.62; color: var(--ink-2); max-width: 62ch; margin: 0; text-wrap: pretty; }
+
+/* stats strip */
+.rel-stats {
+  display: flex; flex-wrap: wrap; gap: 0; margin: 22px 0 4px;
+  border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden;
+  background: var(--surface);
+}
+.rel-stat { flex: 1 1 0; min-width: 130px; padding: 15px 18px; border-right: 1px solid var(--line-soft); }
+.rel-stat:last-child { border-right: 0; }
+.rel-stat-v {
+  font-family: var(--font-display); font-size: 30px; font-weight: 400; letter-spacing: -.02em;
+  line-height: 1; color: var(--ink); display: inline-flex; align-items: baseline; gap: 6px;
+}
+.rel-stat-v.pos { color: var(--ok); }
+.rel-stat-l { font-size: 11.5px; color: var(--ink-3); margin-top: 8px; line-height: 1.35; }
+
+/* flow (reuses styles.css .flow*) */
+.rel-flow-wrap { margin: 22px 0 4px; }
+
+/* educational points */
+.rel-points { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 10px; }
+.rel-points li { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+.rel-points .ck {
+  flex-shrink: 0; margin-top: 1px; width: 19px; height: 19px; border-radius: 999px;
+  display: grid; place-items: center; color: var(--c, var(--accent));
+  background: color-mix(in oklab, var(--c, var(--accent)) 13%, var(--surface));
+}
+
+/* image placeholder */
+.rel-shot {
+  margin: 22px 0 4px; border: 1px solid var(--line); border-radius: var(--radius-lg);
+  aspect-ratio: 16 / 7; display: grid; place-items: center; gap: 10px; overflow: hidden;
+  background:
+    repeating-linear-gradient(135deg, var(--surface) 0 11px, var(--surface-2) 11px 22px);
+  color: var(--ink-3); text-align: center; padding: 16px;
+}
+.rel-shot-cap { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .04em; }
+.rel-shot .ic { opacity: .55; }
+
+.nv-foot {
+  margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  font-size: 12.5px; color: var(--ink-3);
+}
+.nv-foot a { color: var(--accent); font-weight: 500; }
+
+@media (max-width: 640px) {
+  .nv-shell { padding: 22px 20px 90px; }
+  .nv-timeline { grid-template-columns: 44px 1fr; }
+  .rel-rail::before { left: 13px; }
+  .rel-node { left: 1px; }
+  .rel-area { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+<div class="nv-shell">
+  <header class="nv-top">
+    <div class="nv-brand">
+      <div class="nv-brand-mark"><span data-ic="orbit" data-sz="19" data-sw="2"></span></div>
+      <div>
+        <div class="nv-brand-name">Orion</div>
+        <div class="nv-brand-sub">Novidades</div>
+      </div>
+    </div>
+    <a class="nv-back" href="Orion.html"><span data-ic="arrow-left" data-sz="14"></span> Voltar ao Orion</a>
+  </header>
+
+  <section class="nv-hero">
+    <div class="nv-eyebrow"><span data-ic="sparkles" data-sz="13"></span> O que há de novo</div>
+    <h1 class="nv-h1">Tudo que mudou,<br/><em>do jeito que importa</em></h1>
+    <p class="nv-lede">Cada lançamento do Orion, contado de um jeito humano: o que mudou, por que ajuda a sua confecção e o impacto real no dia a dia da fábrica.</p>
+  </section>
+
+  <main class="nv-timeline" id="timeline"></main>
+
+  <footer class="nv-foot">
+    <span>Orion · Plataforma para confecção</span>
+    <span>Tem uma ideia? <a href="Orion.html">Fale com a gente dentro do app</a>.</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const lib = window.lucide;
+  function iconSvg(name, size, stroke) {
+    size = size || 16; stroke = stroke || 1.9;
+    if (!lib || !lib.icons) return '';
+    const pascal = name.split('-').map(s => s[0].toUpperCase() + s.slice(1)).join('');
+    const node = lib.icons[pascal] || lib.icons.Circle;
+    let kids = [];
+    if (Array.isArray(node)) kids = (node.length === 3 && Array.isArray(node[2])) ? node[2] : node;
+    else if (node && Array.isArray(node.children)) kids = node.children;
+    const inner = kids.map(c => {
+      const [tag, attrs] = c;
+      const a = Object.entries(attrs || {}).map(([k, v]) => `${k}="${v}"`).join(' ');
+      return `<${tag} ${a}/>`;
+    }).join('');
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+  }
+  function mountIcons(root) {
+    (root || document).querySelectorAll('[data-ic]').forEach(el => {
+      el.innerHTML = iconSvg(el.dataset.ic, +el.dataset.sz || 16, +el.dataset.sw || 1.9);
+      el.style.display = 'inline-flex';
+      el.removeAttribute('data-ic');
+    });
+  }
+
+  const KIND = { novo: 'Novo', melhoria: 'Melhoria', correcao: 'Correção' };
+  const releases = window.ORION_RELEASES || [];
+
+  function statHtml(s) {
+    return `<div class="rel-stat"><div class="rel-stat-v ${s.up ? 'pos' : ''}">${s.value}</div><div class="rel-stat-l">${s.label}</div></div>`;
+  }
+  function flowHtml(steps) {
+    let h = '<div class="rel-flow-wrap"><div class="flow">';
+    steps.forEach((s, i) => {
+      if (i > 0) h += `<span class="flow-ar"><span class="flow-ar-line"></span><span class="flow-ar-dot"></span><svg class="flow-ar-head" width="7" height="10" viewBox="0 0 7 10"><path d="M1 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+      const tone = s.tone ? ' t-' + s.tone : '';
+      h += `<div class="flow-nd${tone}"><span class="flow-nd-ic" data-ic="${s.icon}" data-sz="15"></span><span class="flow-nd-tx"><span class="flow-nd-lb">${s.label}</span>${s.sub ? `<span class="flow-nd-sb">${s.sub}</span>` : ''}</span></div>`;
+    });
+    h += '</div></div>';
+    return h;
+  }
+
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = releases.map(r => {
+    const ac = r.areaColor || 'var(--accent)';
+    const stats = r.stats ? `<div class="rel-stats">${r.stats.map(statHtml).join('')}</div>` : '';
+    const flow = r.flow ? flowHtml(r.flow) : '';
+    const shot = r.image ? `<div class="rel-shot"><span class="ic" data-ic="image" data-sz="24"></span><span class="rel-shot-cap">${r.image}</span></div>` : '';
+    const points = r.points ? `<ul class="rel-points">${r.points.map(p => `<li><span class="ck" data-ic="check" data-sz="12" data-sw="2.6"></span><span>${p}</span></li>`).join('')}</ul>` : '';
+    return `<article class="rel" id="rel-${r.id}" style="--c:${ac}">
+      <div class="rel-rail"><div class="rel-node"><span data-ic="${r.areaIcon || 'circle'}" data-sz="14" data-sw="2"></span></div></div>
+      <div class="rel-main">
+        <div class="rel-meta">
+          <span class="rel-date">${r.dateLabel}</span>
+          <span class="rel-ver">${r.version}</span>
+          <span class="rel-kind k-${r.kind}">${KIND[r.kind] || r.kind}</span>
+          <span class="rel-area"><span data-ic="${r.areaIcon}" data-sz="12" data-sw="2.2"></span>${r.area}</span>
+        </div>
+        <h2 class="rel-title">${r.title}${r.titleEm ? ` <em>${r.titleEm}</em>` : ''}</h2>
+        <p class="rel-intro">${r.intro}</p>
+        ${stats}${flow}${shot}${points}
+      </div>
+    </article>`;
+  }).join('');
+
+  mountIcons(document);
+
+  // Sequential pulse across each flow (mirrors the in-app Flow component)
+  if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+    document.querySelectorAll('.flow').forEach(flow => {
+      const nodes = [...flow.querySelectorAll('.flow-nd')];
+      const arrows = [...flow.querySelectorAll('.flow-ar')];
+      if (nodes.length < 2) return;
+      let i = 0;
+      setInterval(() => {
+        i = (i + 1) % nodes.length;
+        nodes.forEach((n, k) => n.classList.toggle('on', k === i));
+        arrows.forEach((a, k) => a.classList.toggle('on', k === i));
+      }, 1050);
+    });
+  }
+
+  // Visiting the changelog clears the "new" indicator + home popup.
+  try {
+    if (releases[0]) localStorage.setItem('orion.seenRelease', releases[0].id);
+  } catch (e) {}
+
+  // Deep-link: scroll to a specific release (#rel-id) without scrollIntoView.
+  if (location.hash && document.querySelector(location.hash)) {
+    const el = document.querySelector(location.hash);
+    const y = el.getBoundingClientRect().top + window.pageYOffset - 24;
+    window.scrollTo({ top: y, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+})();
+</script>
+</body>
+</html>

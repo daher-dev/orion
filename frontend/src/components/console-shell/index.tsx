@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { Logo, BeltLoader } from "@/components/brand";
+import { Logo, OrbitLoader } from "@/components/brand";
 import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/providers/auth-provider";
 import { useCompany } from "@/providers/company-provider";
@@ -18,8 +18,9 @@ import { ConsoleTopbar } from "./ConsoleTopbar";
  * else is bounced to the tenant app root. Mirrors AppShell's loading/redirect
  * discipline (act inside an effect, render a branded splash until settled).
  *
- * The whole tree is scoped under `.console-scope` so console components pick up
- * the indigo --console-accent without touching the tenant Ember theme.
+ * The whole tree is scoped under `.console-scope`; the console shares the
+ * tenant's Ember --console-accent but stays distinct via its warm-charcoal
+ * sidebar + "Console" tag.
  */
 export function ConsoleShell({ children }: { children: ReactNode }) {
   const t = useTranslations("appShell");
@@ -58,7 +59,7 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen flex-col items-center justify-center gap-7 p-8">
         <Logo layout="stacked" size={56} />
         <div className="flex flex-col items-center gap-3" role="status">
-          <BeltLoader size={52} className="text-[color:var(--console-accent)]" />
+          <OrbitLoader size={52} className="text-[color:var(--console-accent)]" />
           <span className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--orion-ink-3)]">
             {t("loading")}
           </span>

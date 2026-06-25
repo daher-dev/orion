@@ -3,7 +3,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
-import { Logo, BeltLoader } from "@/components/brand";
+import { Logo, OrbitLoader } from "@/components/brand";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/providers/auth-provider";
@@ -74,14 +74,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     (user && (meLoading || data === undefined)) ||
     establishSession.isPending
   ) {
-    // Branded splash — the Orion lockup over the belt loader (variant C), the
-    // app's canonical loading indicator. The belt pulses left→right (and stops
+    // Branded splash — the Orion lockup over the orbit loader (variant D), the
+    // app's canonical loading indicator. The moons orbit the core (and stop
     // under prefers-reduced-motion).
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-7 p-8">
         <Logo layout="stacked" size={56} />
         <div className="flex flex-col items-center gap-3" role="status">
-          <BeltLoader size={52} className="text-[color:var(--ember)]" />
+          <OrbitLoader size={52} className="text-[color:var(--ember)]" />
           <span className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--orion-ink-3)]">
             {t("loading")}
           </span>

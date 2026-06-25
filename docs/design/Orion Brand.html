@@ -11,1290 +11,300 @@
 
 <style>
 :root {
-  --ember: #a83227;        /* constellation blue */
-  --star:  #f5efe0;        /* warm cream highlight */
-  --star-glow: #fff3c2;    /* amber star core, used very sparingly */
+  --ember: #a83227;        /* Ember — brand accent */
+  --star:  #f5efe0;        /* warm cream highlight on dark */
+  --charcoal: #1c1812;     /* warm near-black */
 }
 
 html, body { background: var(--bg); }
-body {
-  font-family: var(--font-body);
-  color: var(--ink);
-  margin: 0;
-}
+body { font-family: var(--font-body); color: var(--ink); margin: 0; }
 
-/* ─────────── Brand-sheet layout ─────────── */
-.bs-shell {
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 56px 56px 96px;
-  position: relative;
-}
+/* ─────────── Layout shell ─────────── */
+.bs-shell { max-width: 1320px; margin: 0 auto; padding: 56px 56px 96px; position: relative; }
 .bs-shell::before {
-  content: '';
-  position: fixed; inset: 0;
-  pointer-events: none;
+  content: ''; position: fixed; inset: 0; pointer-events: none;
   background-image: radial-gradient(rgba(31,27,21,.025) 1px, transparent 1px);
-  background-size: 4px 4px;
-  z-index: 0;
+  background-size: 4px 4px; z-index: 0;
 }
 .bs-shell > * { position: relative; z-index: 1; }
 
 /* Top bar */
 .bs-top {
   display: flex; align-items: baseline; justify-content: space-between;
-  padding-bottom: 22px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 56px;
-  gap: 18px;
+  padding-bottom: 22px; border-bottom: 1px solid var(--line); margin-bottom: 56px; gap: 18px;
 }
 .bs-top-l { display: flex; align-items: center; gap: 14px; }
-.bs-top-mark { color: var(--ink); }
+.bs-top-mark { color: var(--ink); display: inline-flex; }
 .bs-top-eyebrow {
   font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--ink-3); font-weight: 600; line-height: 1;
 }
-.bs-top-title {
-  font-family: var(--font-display);
-  font-size: 18px; font-weight: 400;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-  line-height: 1.1;
-  margin-top: 4px;
-}
-.bs-top-meta {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-3);
-  letter-spacing: 0.04em;
-  text-align: right;
-  line-height: 1.6;
-}
+.bs-top-title { font-family: var(--font-display); font-size: 18px; font-weight: 400; letter-spacing: -0.015em; color: var(--ink); line-height: 1.1; margin-top: 4px; }
+.bs-top-meta { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.04em; text-align: right; line-height: 1.6; }
 
 /* Section header */
 .bs-sec { margin-top: 80px; }
 .bs-sec:first-of-type { margin-top: 0; }
 .bs-sec-head {
-  display: grid;
-  grid-template-columns: 140px 1fr;
-  gap: 32px;
-  align-items: baseline;
-  padding-bottom: 18px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--line);
+  display: grid; grid-template-columns: 140px 1fr; gap: 32px; align-items: baseline;
+  padding-bottom: 18px; margin-bottom: 24px; border-bottom: 1px solid var(--line);
 }
-.bs-sec-num {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-3);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.bs-sec-num em {
-  font-style: normal;
-  color: var(--ember);
-  margin-right: 8px;
-}
-.bs-sec-title {
-  font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: 400;
-  letter-spacing: -0.025em;
-  line-height: 1.05;
-  color: var(--ink);
-}
-.bs-sec-title em {
-  font-style: italic;
-  color: var(--ember);
-  font-weight: 400;
-}
-.bs-sec-sub {
-  font-size: 14px;
-  color: var(--ink-2);
-  max-width: 62ch;
-  margin-top: 10px;
-  line-height: 1.55;
-}
+.bs-sec-num { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.14em; text-transform: uppercase; }
+.bs-sec-num em { font-style: normal; color: var(--ember); margin-right: 8px; }
+.bs-sec-title { font-family: var(--font-display); font-size: 32px; font-weight: 400; letter-spacing: -0.025em; line-height: 1.05; color: var(--ink); }
+.bs-sec-title em { font-style: italic; color: var(--ember); font-weight: 400; }
+.bs-sec-sub { font-size: 14px; color: var(--ink-2); max-width: 64ch; margin-top: 10px; line-height: 1.55; }
 
 /* Generic surfaces */
-.bs-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  overflow: hidden;
-}
-.bs-card-pad { padding: 28px; }
-.bs-stage {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  display: grid;
-  place-items: center;
-  position: relative;
-  overflow: hidden;
-  min-height: 220px;
-}
-.bs-stage.night {
-  background: #1c1812;
-  border-color: #1c1812;
-  color: var(--star);
-}
-.bs-stage.paper { background: var(--bg); border-color: var(--line); }
-.bs-stage.surface-2 { background: var(--surface-2); }
-.bs-stage-label {
-  position: absolute;
-  bottom: 12px; left: 14px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.bs-stage.night .bs-stage-label { color: rgba(245,239,224,.55); }
-.bs-stage-meta {
-  position: absolute;
-  bottom: 12px; right: 14px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  color: var(--ink-3);
-}
-.bs-stage.night .bs-stage-meta { color: rgba(245,239,224,.55); }
-
-/* Labelled spec */
-.bs-spec {
-  display: grid;
-  grid-template-columns: 90px 1fr;
-  gap: 12px 18px;
-  font-size: 13px;
-  color: var(--ink-2);
-}
-.bs-spec dt {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  padding-top: 2px;
-}
+.bs-spec { display: grid; grid-template-columns: 92px 1fr; gap: 12px 18px; font-size: 13px; color: var(--ink-2); }
+.bs-spec dt { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); padding-top: 2px; }
 .bs-spec dd { margin: 0; }
-.bs-spec dd code {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  background: var(--surface-2);
-  padding: 1px 6px;
-  border-radius: 4px;
-  color: var(--ink);
+.bs-spec dd code, .clear-explain code, .anatomy-note-body code {
+  font-family: var(--font-mono); font-size: 11.5px; background: var(--surface-2);
+  padding: 1px 6px; border-radius: 4px; color: var(--ink);
 }
 
-/* ─────────── 01 — Hero / Display mark ─────────── */
-.hero {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 28px;
-  align-items: stretch;
-}
+/* ─────────── 01 — Hero ─────────── */
+.hero { display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: stretch; }
 .hero-mark-stage {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  position: relative;
-  overflow: hidden;
-  min-height: 480px;
-  display: grid;
-  place-items: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+  position: relative; overflow: hidden; min-height: 480px; display: grid; place-items: center;
 }
 .hero-mark-stage::after {
-  content: '';
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(closest-side at 50% 48%,
-      color-mix(in oklab, var(--ember) 14%, transparent) 0%,
-      transparent 60%);
-  pointer-events: none;
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(closest-side at 50% 46%, color-mix(in oklab, var(--ember) 12%, transparent) 0%, transparent 62%);
 }
-.hero-mark { position: relative; z-index: 1; display: grid; place-items: center; gap: 24px; }
-.hero-mark .wordmark { color: var(--ink); }
+/* faint orbital guide rings behind the hero mark */
+.hero-mark-stage .hero-guides { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; opacity: .5; }
+.hero-mark { position: relative; z-index: 1; display: grid; place-items: center; gap: 26px; }
 .hero-mark .mark-glyph { color: var(--ink); }
-.hero-tagline {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.hero-corner-tl, .hero-corner-tr, .hero-corner-bl, .hero-corner-br {
-  position: absolute;
-  width: 18px; height: 18px;
-  border-color: var(--ink-3);
-  opacity: 0.35;
-}
-.hero-corner-tl { top: 16px; left: 16px; border-top: 1px solid; border-left: 1px solid; }
-.hero-corner-tr { top: 16px; right: 16px; border-top: 1px solid; border-right: 1px solid; }
-.hero-corner-bl { bottom: 16px; left: 16px; border-bottom: 1px solid; border-left: 1px solid; }
-.hero-corner-br { bottom: 16px; right: 16px; border-bottom: 1px solid; border-right: 1px solid; }
-
-.hero-side {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.hero-side-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 22px 24px;
-}
-.hero-side-card h3 {
-  font-family: var(--font-display);
-  font-size: 17px; font-weight: 500;
-  letter-spacing: -0.01em;
-  margin-bottom: 12px;
-  color: var(--ink);
-}
-.hero-side-card p {
-  font-size: 13.5px;
-  color: var(--ink-2);
-  line-height: 1.55;
-  margin: 0 0 10px;
-}
-.hero-side-card p:last-child { margin-bottom: 0; }
-.hero-side-card p em {
-  color: var(--ember);
-  font-style: italic;
-  font-family: var(--font-display);
-  font-size: 14.5px;
-}
+.hero-tagline { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-3); }
+.hero-corner { position: absolute; width: 18px; height: 18px; border-color: var(--ink-3); opacity: 0.35; }
+.hero-corner.tl { top: 16px; left: 16px; border-top: 1px solid; border-left: 1px solid; }
+.hero-corner.tr { top: 16px; right: 16px; border-top: 1px solid; border-right: 1px solid; }
+.hero-corner.bl { bottom: 16px; left: 16px; border-bottom: 1px solid; border-left: 1px solid; }
+.hero-corner.br { bottom: 16px; right: 16px; border-bottom: 1px solid; border-right: 1px solid; }
+.hero-side { display: flex; flex-direction: column; gap: 16px; }
+.hero-side-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px 24px; }
+.hero-side-card h3 { font-family: var(--font-display); font-size: 17px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 10px; color: var(--ink); }
+.hero-side-card p { font-size: 13.5px; color: var(--ink-2); line-height: 1.55; margin: 0; }
+.hero-side-card p em { color: var(--ember); font-style: italic; font-family: var(--font-display); font-size: 14.5px; }
 
 /* ─────────── Wordmark (live type) ─────────── */
-.wordmark {
-  font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: -0.028em;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  font-feature-settings: "ss01" 1;
-}
+.wordmark { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.028em; line-height: 1; display: inline-flex; align-items: center; }
 .wordmark-xl { font-size: 128px; }
 .wordmark-lg { font-size: 64px; }
 .wordmark-md { font-size: 36px; }
 .wordmark-sm { font-size: 22px; }
-.wordmark-xs { font-size: 16px; }
 
-/* Dotless i with a 3-star belt diacritic */
-.wm-i {
-  position: relative;
-  display: inline-block;
-}
-/* Belt-flanked i: the natural i-dot stays as the middle "Alnilam".
-   Flanking dots must sit at the SAME baseline as that dot — otherwise the
-   three points read as a triangle (eyes-and-nose) instead of a horizontal
-   belt. In Fraunces, the i-dot sits noticeably below the top of the em-box,
-   so we use a larger `top` than naive intuition suggests. */
-.wm-i .wm-belt-l,
-.wm-i .wm-belt-r {
-  position: absolute;
-  top: 0.17em;            /* matches Fraunces i-dot vertical position */
-  left: 50%;
-  width: 0.095em;
-  height: 0.095em;
-  margin-left: -0.0475em; /* center the dot on the 50% line */
-  border-radius: 50%;
-  background: currentColor;
-  pointer-events: none;
-}
-.wm-i .wm-belt-l { transform: translateX(-0.13em); }
-.wm-i .wm-belt-r { transform: translateX( 0.13em); }
-/* Tagline lockup */
-.wm-lockup {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 6px;
-  line-height: 1;
-}
-.wm-lockup .wm-tagline {
-  font-family: var(--font-body);
-  font-size: 0.13em; /* relative to wordmark */
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  font-weight: 500;
-  padding-left: 0.05em;
+/* The i-dot echoes the planet: a thin orbit ring around the natural dot, shown at display sizes */
+.wm-i { position: relative; display: inline-block; }
+.wm-i .wm-orbit {
+  position: absolute; left: 50%; top: 0.205em;
+  width: 0.42em; height: 0.30em; margin-left: -0.21em; margin-top: -0.15em;
+  border: 0.028em solid currentColor; border-radius: 50%;
+  transform: rotate(-32deg); opacity: 0.42; pointer-events: none;
 }
 
-/* ─────────── 02 — Anatomy ─────────── */
-.anatomy {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-  align-items: stretch;
-}
-.anatomy-stage {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  min-height: 460px;
-  position: relative;
-  overflow: hidden;
-  display: grid; place-items: center;
-}
-.anatomy-stage svg.diagram { width: 100%; height: 100%; max-width: 520px; padding: 32px; }
-.anatomy-notes {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  justify-content: center;
-}
-.anatomy-note {
-  display: grid;
-  grid-template-columns: 36px 1fr;
-  gap: 14px;
-  align-items: flex-start;
-  padding: 16px 18px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-}
-.anatomy-note-num {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--ember);
-  background: color-mix(in oklab, var(--ember) 12%, var(--surface));
-  border: 1px solid color-mix(in oklab, var(--ember) 22%, var(--line));
-  border-radius: 999px;
-  padding: 4px 0;
-  text-align: center;
-  font-weight: 600;
-}
-.anatomy-note-title {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-.anatomy-note-body {
-  font-size: 13px;
-  color: var(--ink-2);
-  line-height: 1.5;
-  margin-top: 4px;
-}
+/* ─────────── 02 — Mark: anatomy + variants ─────────── */
+.mark-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: stretch; }
+.anatomy-stage { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; min-height: 420px; position: relative; overflow: hidden; display: grid; place-items: center; }
+.anatomy-stage svg.diagram { width: 100%; height: 100%; max-width: 460px; padding: 36px; }
+.anatomy-notes { display: flex; flex-direction: column; gap: 12px; justify-content: center; }
+.anatomy-note { display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: flex-start; padding: 15px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.anatomy-note-num { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; color: var(--ember); background: color-mix(in oklab, var(--ember) 12%, var(--surface)); border: 1px solid color-mix(in oklab, var(--ember) 22%, var(--line)); border-radius: 999px; padding: 4px 0; text-align: center; font-weight: 600; }
+.anatomy-note-title { font-family: var(--font-display); font-size: 15px; font-weight: 500; letter-spacing: -0.01em; color: var(--ink); }
+.anatomy-note-body { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin-top: 3px; }
 
-/* ─────────── 03 — Mark system ─────────── */
-.mark-system {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-}
-.mark-tier {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  overflow: hidden;
-  display: flex; flex-direction: column;
-}
-.mark-tier-stage {
-  background: var(--bg);
-  display: grid; place-items: center;
-  padding: 40px 24px;
-  border-bottom: 1px solid var(--line);
-  min-height: 240px;
-  color: var(--ink);
-}
-.mark-tier-stage.dark { background: #1c1812; color: var(--star); border-bottom-color: #1c1812; }
-.mark-tier-body { padding: 20px 22px 22px; }
-.mark-tier-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.mark-tier-eyebrow .tier-num { color: var(--ember); margin-right: 6px; font-weight: 600; }
-.mark-tier-name {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-  margin-top: 6px;
-}
-.mark-tier-desc {
-  font-size: 13px;
-  color: var(--ink-2);
-  line-height: 1.5;
-  margin-top: 8px;
-}
-.mark-tier-range {
-  margin-top: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  color: var(--ink);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  padding: 3px 10px;
-  border-radius: 999px;
-}
+.variants { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 22px; }
+.variant { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+.variant-stage { display: grid; place-items: center; padding: 38px 20px; border-bottom: 1px solid var(--line); min-height: 168px; background: var(--bg); color: var(--ink); }
+.variant-stage.dark { background: var(--charcoal); border-bottom-color: var(--charcoal); color: var(--star); }
+.variant-body { padding: 16px 18px 18px; }
+.variant-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+.variant-eyebrow .v-num { color: var(--ember); margin-right: 6px; font-weight: 600; }
+.variant-name { font-family: var(--font-display); font-size: 17px; font-weight: 500; letter-spacing: -0.012em; color: var(--ink); margin-top: 5px; }
+.variant-desc { font-size: 12px; color: var(--ink-2); line-height: 1.45; margin-top: 6px; }
 
-/* ─────────── 04 — Lockups ─────────── */
-.lockups {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 18px;
-}
-.lockup {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 36px 32px 24px;
-  position: relative;
-  display: grid; place-items: center;
-  min-height: 220px;
-}
+/* Clear space + min size, compact */
+.mark-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 22px; }
+.clear-stage { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 40px; position: relative; display: grid; place-items: center; min-height: 280px; overflow: hidden; }
+.clear-grid { position: relative; display: grid; place-items: center; }
+.clear-grid .glyph { color: var(--ink); position: relative; z-index: 2; display: inline-flex; }
+.clear-grid::before { content: ''; position: absolute; inset: -34px; border: 1px dashed color-mix(in oklab, var(--ember) 50%, var(--line)); border-radius: 8px; z-index: 1; }
+.clear-grid .xunit { position: absolute; font-family: var(--font-mono); font-size: 10.5px; color: var(--ember); letter-spacing: 0.04em; z-index: 3; background: var(--surface); padding: 0 4px; border-radius: 3px; }
+.clear-grid .xunit.t { top: -42px; left: 50%; transform: translateX(-50%); }
+.clear-grid .xunit.r { right: -52px; top: 50%; transform: translateY(-50%); }
+.clear-grid .xunit.b { bottom: -42px; left: 50%; transform: translateX(-50%); }
+.clear-grid .xunit.l { left: -52px; top: 50%; transform: translateY(-50%); }
+.clear-explain { align-self: center; }
+.clear-explain p { font-size: 13.5px; color: var(--ink-2); line-height: 1.6; margin: 0 0 16px; }
+
+.size-ramp { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; margin-top: 18px; }
+.size-cell { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+.size-cell .sz-glyph { display: grid; place-items: center; min-height: 56px; color: var(--ink); }
+.size-cell .sz-px { font-family: var(--font-mono); font-size: 11px; color: var(--ink); letter-spacing: 0.06em; }
+.size-cell .sz-note { font-size: 10.5px; color: var(--ink-3); }
+
+/* ─────────── Lockups ─────────── */
+.lockups { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+.lockup { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 36px 32px 24px; position: relative; display: grid; place-items: center; min-height: 210px; }
 .lockup.l-horizontal { grid-column: span 7; }
-.lockup.l-stacked    { grid-column: span 5; }
-.lockup.l-icon       { grid-column: span 4; }
-.lockup.l-wordmark   { grid-column: span 4; }
-.lockup.l-tagline    { grid-column: span 4; }
-.lockup-label {
-  position: absolute;
-  top: 14px; left: 18px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
-/* Horizontal lockup */
+.lockup.l-stacked { grid-column: span 5; }
+.lockup.l-icon { grid-column: span 4; }
+.lockup.l-wordmark { grid-column: span 4; }
+.lockup.l-tagline { grid-column: span 4; }
+.lockup-label { position: absolute; top: 14px; left: 18px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
 .lk-h { display: inline-flex; align-items: center; gap: 18px; color: var(--ink); }
-.lk-h .glyph { flex-shrink: 0; }
-
-/* Stacked lockup */
-.lk-stacked { display: inline-flex; flex-direction: column; align-items: center; gap: 14px; color: var(--ink); }
-
-/* Tagline lockup */
+.lk-h .glyph { flex-shrink: 0; display: inline-flex; }
+.lk-stacked { display: inline-flex; flex-direction: column; align-items: center; gap: 16px; color: var(--ink); }
 .lk-tag { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; color: var(--ink); }
-.lk-tag .tag-rule {
-  width: 24px; height: 1px;
-  background: var(--ember);
-  margin: 6px 0 4px;
-}
-.lk-tag .tag-text {
-  font-family: var(--font-body);
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-  font-weight: 500;
-}
+.lk-tag .tag-rule { width: 24px; height: 1px; background: var(--ember); margin: 8px 0 4px; }
+.lk-tag .tag-text { font-family: var(--font-body); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-2); font-weight: 500; }
 
-/* ─────────── 05 — Clear space + minimum sizes ─────────── */
-.clearance {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-}
-.clear-stage {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 40px;
-  position: relative;
-  display: grid; place-items: center;
-  min-height: 340px;
-  overflow: hidden;
-}
-.clear-grid {
-  position: relative;
-  display: grid; place-items: center;
-}
-.clear-grid .glyph {
-  color: var(--ink);
-  position: relative;
-  z-index: 2;
-}
-.clear-grid::before {
-  /* x-box outline = clear space rectangle */
-  content: '';
-  position: absolute;
-  inset: -36px;
-  border: 1px dashed color-mix(in oklab, var(--ember) 50%, var(--line));
-  border-radius: 6px;
-  z-index: 1;
-}
-.clear-grid .xunit {
-  position: absolute;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--ember);
-  letter-spacing: 0.04em;
-  z-index: 3;
-  background: var(--surface);
-  padding: 0 4px;
-  border-radius: 3px;
-}
-.clear-grid .xunit-t { top: -44px; left: 50%; transform: translateX(-50%); }
-.clear-grid .xunit-r { right: -56px; top: 50%; transform: translateY(-50%); }
-.clear-grid .xunit-b { bottom: -44px; left: 50%; transform: translateX(-50%); }
-.clear-grid .xunit-l { left: -56px; top: 50%; transform: translateY(-50%); }
-
-.clear-explain {
-  align-self: center;
-}
-.clear-explain p {
-  font-size: 14px;
-  color: var(--ink-2);
-  line-height: 1.6;
-  margin: 0 0 12px;
-}
-.clear-explain p code {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  background: var(--surface-2);
-  padding: 1px 6px;
-  border-radius: 4px;
-  color: var(--ink);
-}
-
-/* Size ramp */
-.size-ramp {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  margin-top: 28px;
-}
-.size-cell {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 16px 12px 12px;
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
-  text-align: center;
-  position: relative;
-}
-.size-cell.bad {
-  border-color: color-mix(in oklab, var(--err) 35%, var(--line));
-  background: color-mix(in oklab, var(--err) 4%, var(--surface));
-}
-.size-cell .sz-glyph {
-  display: grid; place-items: center;
-  min-height: 56px;
-  color: var(--ink);
-}
-.size-cell .sz-px {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink);
-  letter-spacing: 0.06em;
-}
-.size-cell .sz-note {
-  font-size: 11px;
-  color: var(--ink-3);
-  line-height: 1.3;
-}
-.size-cell.bad .sz-note { color: var(--err); }
-.size-cell .sz-tier {
-  position: absolute;
-  top: 8px; right: 10px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.06em;
-  color: var(--ember);
-  background: color-mix(in oklab, var(--ember) 10%, var(--surface));
-  padding: 1px 6px;
-  border-radius: 999px;
-}
-.size-cell.bad .sz-tier {
-  color: var(--err);
-  background: color-mix(in oklab, var(--err) 10%, var(--surface));
-}
-
-/* ─────────── 06 — Color ─────────── */
-.color-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
-}
-.swatch {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex; flex-direction: column;
-}
-.swatch-chip {
-  height: 88px;
-  position: relative;
-}
-.swatch-chip::after {
-  /* ring to read contrast on near-white chips */
-  content: '';
-  position: absolute; inset: 0;
-  box-shadow: inset 0 0 0 1px rgba(31,27,21,.06);
-}
+/* ─────────── Color ─────────── */
+.color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+.swatch { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+.swatch-chip { height: 88px; position: relative; }
+.swatch-chip::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(31,27,21,.06); }
 .swatch-body { padding: 12px 14px; }
-.swatch-name {
-  font-family: var(--font-display);
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--ink);
-  letter-spacing: -0.005em;
-}
-.swatch-hex {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--ink-3);
-  letter-spacing: 0.06em;
-  margin-top: 2px;
-}
-.swatch-role {
-  font-size: 10.5px;
-  color: var(--ink-3);
-  margin-top: 6px;
-  line-height: 1.35;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 600;
-}
+.swatch-name { font-family: var(--font-display); font-size: 13.5px; font-weight: 500; color: var(--ink); letter-spacing: -0.005em; }
+.swatch-hex { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.06em; margin-top: 2px; }
+.swatch-role { font-size: 10px; color: var(--ink-3); margin-top: 6px; line-height: 1.35; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
 
-.color-band {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin-top: 22px;
-}
-.color-pairing {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 28px 28px 22px;
-  display: flex; align-items: center; gap: 22px;
-}
-.color-pairing.dark { background: #1c1812; border-color: #1c1812; color: var(--star); }
+.color-band { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 22px; }
+.color-pairing { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 28px 28px 22px; display: flex; align-items: center; gap: 24px; }
+.color-pairing.dark { background: var(--charcoal); border-color: var(--charcoal); color: var(--star); }
 .color-pairing.dark .cp-name { color: var(--star); }
 .color-pairing.dark .cp-desc { color: rgba(245,239,224,.7); }
-.color-pairing .glyph { flex-shrink: 0; }
-.cp-name {
-  font-family: var(--font-display);
-  font-size: 17px; font-weight: 500;
-  color: var(--ink);
-}
+.color-pairing .glyph { flex-shrink: 0; display: inline-flex; }
+.cp-name { font-family: var(--font-display); font-size: 17px; font-weight: 500; color: var(--ink); }
 .cp-desc { font-size: 13px; color: var(--ink-2); margin-top: 4px; line-height: 1.5; }
 
-/* Sub-product hues */
-.subs {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
-  margin-top: 22px;
-}
-.sub-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 14px 14px 12px;
-}
-.sub-mark-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.sub-mark-square {
-  width: 26px; height: 26px;
-  border-radius: 7px;
-  display: grid; place-items: center;
-  color: white;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 13px;
-}
-.sub-mark-name {
-  font-family: var(--font-display);
-  font-size: 14px; font-weight: 500;
-  color: var(--ink);
-}
-.sub-card-hex {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--ink-3);
-  letter-spacing: 0.04em;
-}
+.subs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 22px; }
+.sub-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 14px 12px; }
+.sub-mark-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.sub-mark-square { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; color: white; }
+.sub-mark-name { font-family: var(--font-display); font-size: 14px; font-weight: 500; color: var(--ink); }
+.sub-card-hex { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.04em; }
+.sub-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.sub-card-icon-name { font-size: 11px; color: var(--ink-3); letter-spacing: 0.02em; }
 
-/* ─────────── 07 — Typography ─────────── */
-.type-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 18px;
-}
-.type-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 28px;
-  display: flex; flex-direction: column; gap: 20px;
-}
-.type-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
+/* ─────────── Typography ─────────── */
+.type-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+.type-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 28px; display: flex; flex-direction: column; gap: 20px; }
+.type-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
 .type-eyebrow em { color: var(--ember); font-style: normal; margin-right: 8px; }
-.type-name {
-  font-size: 36px;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  line-height: 1;
-}
+.type-name { font-size: 36px; letter-spacing: -0.02em; color: var(--ink); line-height: 1; }
 .type-name.display { font-family: var(--font-display); font-weight: 400; }
-.type-name.body    { font-family: var(--font-body); font-weight: 500; }
-.type-name.mono    { font-family: var(--font-mono); font-weight: 500; font-size: 30px; }
-.type-spec {
-  font-size: 12px;
-  color: var(--ink-3);
-  line-height: 1.5;
-  font-family: var(--font-mono);
-  letter-spacing: 0.04em;
-}
-.type-sample {
-  border-top: 1px solid var(--line-soft);
-  padding-top: 18px;
-}
-.type-sample-row {
-  display: flex; align-items: baseline; gap: 14px;
-  padding: 6px 0;
-  border-bottom: 1px dashed var(--line-soft);
-}
+.type-name.body { font-family: var(--font-body); font-weight: 500; }
+.type-name.mono { font-family: var(--font-mono); font-weight: 500; font-size: 30px; }
+.type-spec { font-size: 12px; color: var(--ink-3); line-height: 1.5; font-family: var(--font-mono); letter-spacing: 0.04em; }
+.type-sample { border-top: 1px solid var(--line-soft); padding-top: 18px; }
+.type-sample-row { display: flex; align-items: baseline; gap: 14px; padding: 6px 0; border-bottom: 1px dashed var(--line-soft); }
 .type-sample-row:last-child { border-bottom: 0; }
-.type-sample-meta {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--ink-3);
-  width: 60px; flex-shrink: 0;
-}
+.type-sample-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); width: 60px; flex-shrink: 0; }
 .type-sample-text { line-height: 1.15; color: var(--ink); }
 
-/* ─────────── 08 — In context ─────────── */
-.context-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 18px;
-}
+/* ─────────── Applications ─────────── */
+.context-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
 .ctx { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; position: relative; }
-.ctx-label {
-  position: absolute; top: 12px; left: 16px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--ink-3);
-  z-index: 2;
-}
-.ctx.on-dark .ctx-label {
-  color: rgba(245,239,224,.6);
-}
+.ctx-label { position: absolute; top: 12px; left: 16px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); z-index: 2; }
+.ctx.on-dark .ctx-label { color: rgba(245,239,224,.6); }
 .ctx-pad { padding: 50px 28px 28px; }
 
 .ctx-appicon { grid-column: span 4; }
-.ctx-appicon-stage {
-  background: linear-gradient(140deg, #1c1812 0%, #2a221a 60%, #3a2a1f 100%);
-  height: 280px;
-  display: grid; place-items: center;
-  color: var(--star);
-}
-.app-icon {
-  width: 156px; height: 156px;
-  border-radius: 36px;
-  background: var(--ink);
-  display: grid; place-items: center;
-  color: var(--star);
-  box-shadow:
-    0 1px 0 rgba(255,255,255,.08) inset,
-    0 24px 60px -16px rgba(0,0,0,.55),
-    0 8px 20px -8px rgba(0,0,0,.4);
-  position: relative;
-  overflow: hidden;
-}
-.app-icon::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(closest-side at 70% 18%, rgba(255,255,255,.16), transparent 60%);
-}
+.ctx-appicon-stage { background: linear-gradient(140deg, #1c1812 0%, #2a221a 60%, #3a2a1f 100%); height: 280px; display: grid; place-items: center; gap: 0; color: var(--star); }
+.app-icons { display: flex; gap: 22px; align-items: center; }
+.app-icon { width: 132px; height: 132px; border-radius: 30px; display: grid; place-items: center; position: relative; overflow: hidden; box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 24px 60px -16px rgba(0,0,0,.55), 0 8px 20px -8px rgba(0,0,0,.4); }
+.app-icon.ink { background: var(--ink); color: var(--star); }
+.app-icon.ember { background: linear-gradient(150deg, #c2473b 0%, var(--ember) 60%, #7f241c 100%); color: var(--star); }
+.app-icon::before { content: ''; position: absolute; inset: 0; background: radial-gradient(closest-side at 70% 16%, rgba(255,255,255,.18), transparent 60%); }
+.app-icon svg { position: relative; z-index: 1; }
+.app-icon-cap { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(245,239,224,.5); margin-top: 12px; text-align: center; }
 
-.ctx-favicon { grid-column: span 3; }
-.ctx-favicon-stage {
-  background: var(--surface);
-  height: 280px;
-  display: grid; place-items: center;
-  padding: 32px;
-}
-.fav-browser {
-  width: 100%;
-  max-width: 260px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 8px 24px -12px rgba(31,27,21,.18);
-}
-.fav-tabs {
-  display: flex;
-  background: var(--surface-2);
-  padding: 6px 6px 0;
-  gap: 4px;
-}
-.fav-tab {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--bg);
-  padding: 6px 12px 6px 8px;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-  font-size: 11px;
-  color: var(--ink);
-  border: 1px solid var(--line);
-  border-bottom: 0;
-}
-.fav-tab.muted {
-  background: var(--surface-2);
-  color: var(--ink-3);
-  border-color: transparent;
-}
-.fav-tab .fav-x {
-  margin-left: 4px;
-  color: var(--ink-3);
-  font-size: 10px;
-}
-.fav-url {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 10px;
-  background: var(--bg);
-  border-top: 1px solid var(--line);
-}
-.fav-url-pill {
-  flex: 1;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-3);
-  padding: 4px 10px;
-}
+.ctx-favicon { grid-column: span 4; }
+.ctx-favicon-stage { background: var(--surface); height: 280px; display: grid; place-items: center; padding: 32px; }
+.fav-browser { width: 100%; max-width: 280px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; box-shadow: 0 8px 24px -12px rgba(31,27,21,.18); }
+.fav-tabs { display: flex; background: var(--surface-2); padding: 6px 6px 0; gap: 4px; }
+.fav-tab { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); padding: 6px 12px 6px 8px; border-top-left-radius: 8px; border-top-right-radius: 8px; font-size: 11px; color: var(--ink); border: 1px solid var(--line); border-bottom: 0; }
+.fav-tab.muted { background: var(--surface-2); color: var(--ink-3); border-color: transparent; }
+.fav-tab .fav-x { margin-left: 4px; color: var(--ink-3); font-size: 10px; }
+.fav-url { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--bg); border-top: 1px solid var(--line); }
+.fav-url-pill { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); padding: 4px 10px; }
 
-.ctx-sidebar { grid-column: span 5; }
-.ctx-sb-stage {
-  background: linear-gradient(180deg, #1c1812 0%, #221d15 100%);
-  height: 280px;
-  display: flex;
-  padding: 0;
-}
-.sb-mock-rail {
-  width: 200px;
-  border-right: 1px solid rgba(255,255,255,.05);
-  display: flex; flex-direction: column;
-}
-.sb-mock-brand {
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(255,255,255,.05);
-}
-.sb-mock-brand .sb-mock-mark {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  background: var(--ember);
-  color: var(--star);
-  display: grid; place-items: center;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.1) inset, 0 4px 12px -4px var(--ember);
-}
-.sb-mock-brand-name {
-  font-family: var(--font-display);
-  font-size: 16px;
-  color: #f5efe0;
-  line-height: 1;
-}
-.sb-mock-brand-sub {
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(245,239,224,.6);
-  margin-top: 4px;
-  font-weight: 600;
-}
-.sb-mock-items {
-  flex: 1;
-  padding: 10px 8px;
-  display: flex; flex-direction: column; gap: 2px;
-}
-.sb-mock-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 8px;
-  font-size: 12.5px;
-  color: rgba(217,210,194,.85);
-  border-radius: 5px;
-}
-.sb-mock-item.on {
-  background: rgba(255,255,255,.06);
-  color: #f5efe0;
-}
-.sb-mock-item .dot {
-  width: 6px; height: 6px; border-radius: 2px;
-  background: var(--dot, currentColor);
-  opacity: 0.7;
-}
-.sb-mock-canvas {
-  flex: 1;
-  background: var(--bg);
-  padding: 18px;
-  position: relative;
-}
-.sb-mock-canvas-bar {
-  height: 8px;
-  width: 60%;
-  background: var(--surface-2);
-  border-radius: 4px;
-}
-.sb-mock-canvas-bar.short { width: 30%; margin-top: 8px; }
-.sb-mock-canvas-grid {
-  margin-top: 16px;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-}
-.sb-mock-tile {
-  height: 36px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
+.ctx-sidebar { grid-column: span 4; }
+.ctx-sb-stage { background: linear-gradient(180deg, #1c1812 0%, #221d15 100%); height: 280px; display: flex; padding: 0; }
+.sb-mock-rail { width: 100%; display: flex; flex-direction: column; }
+.sb-mock-brand { display: flex; align-items: center; gap: 10px; padding: 16px; border-bottom: 1px solid rgba(255,255,255,.05); }
+.sb-mock-brand .sb-mock-mark { width: 32px; height: 32px; border-radius: 8px; background: var(--ember); color: var(--star); display: grid; place-items: center; box-shadow: 0 0 0 1px rgba(255,255,255,.1) inset, 0 4px 12px -4px var(--ember); }
+.sb-mock-brand-name { font-family: var(--font-display); font-size: 16px; color: #f5efe0; line-height: 1; }
+.sb-mock-brand-sub { font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(245,239,224,.6); margin-top: 4px; font-weight: 600; }
+.sb-mock-items { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; }
+.sb-mock-item { display: flex; align-items: center; gap: 9px; padding: 8px; font-size: 12.5px; color: rgba(217,210,194,.85); border-radius: 6px; }
+.sb-mock-item.on { background: rgba(255,255,255,.06); color: #f5efe0; }
+.sb-mock-item .dot { width: 6px; height: 6px; border-radius: 2px; background: var(--dot, currentColor); opacity: 0.85; }
 
-.ctx-card { grid-column: span 6; }
-.ctx-card-stage {
-  background: linear-gradient(140deg, #efe9dd 0%, #f5f0e8 100%);
-  height: 280px;
-  display: grid; place-items: center;
-  padding: 28px;
-}
-.bcard {
-  width: 320px; height: 190px;
-  background: var(--surface);
-  border-radius: 12px;
-  box-shadow: 0 18px 40px -14px rgba(31,27,21,.28), 0 4px 12px -4px rgba(31,27,21,.12);
-  padding: 22px 22px 18px;
-  position: relative;
-  overflow: hidden;
-  display: flex; flex-direction: column; justify-content: space-between;
-  color: var(--ink);
-  transform: rotate(-3deg);
-}
-.bcard::before {
-  /* a small constellation watermark in the corner */
-  content: '';
-  position: absolute;
-  top: -40px; right: -40px;
-  width: 220px; height: 220px;
-  background: radial-gradient(closest-side at 50% 50%, color-mix(in oklab, var(--ember) 8%, transparent), transparent 70%);
-  pointer-events: none;
-}
-.bcard-meta {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: var(--ink-3);
-  text-transform: uppercase;
-}
-.bcard-name {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  margin-top: 2px;
-  color: var(--ink);
-}
-.bcard-role {
-  font-size: 11px;
-  color: var(--ink-3);
-  margin-top: 2px;
-  letter-spacing: 0.02em;
-}
+.ctx-splash { grid-column: span 5; }
+.ctx-splash-stage { background: linear-gradient(180deg, #1c1812 0%, #2a221a 100%); height: 280px; display: grid; place-items: center; color: var(--star); padding: 28px; position: relative; }
+.splash-inner { display: flex; flex-direction: column; align-items: center; gap: 26px; }
+.splash-inner .wordmark { color: var(--star); }
+.splash-loader-wrap { display: flex; align-items: center; gap: 14px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,239,224,.55); }
 
-.ctx-label-tag { grid-column: span 6; }
-.ctx-label-stage {
-  background: linear-gradient(135deg, #f5f0e8 0%, #e6dcc4 100%);
-  height: 280px;
-  display: grid; place-items: center;
-  padding: 28px;
-}
-.care-label {
-  width: 220px;
-  background: #fbf8f2;
-  border-radius: 6px;
-  padding: 18px 16px 16px;
-  box-shadow: 0 6px 18px -8px rgba(31,27,21,.25), inset 0 0 0 1px rgba(31,27,21,.06);
-  position: relative;
-  transform: rotate(2deg);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--ink-2);
-  letter-spacing: 0.06em;
-}
-.care-label .care-mark {
-  display: grid; place-items: center;
-  color: var(--ink);
-  margin-bottom: 10px;
-}
-.care-label .care-rule {
-  height: 1px; background: var(--line);
-  margin: 8px 0;
-}
-.care-label .care-row {
-  display: flex; justify-content: space-between;
-  padding: 2px 0;
-}
-.care-label .care-foot {
-  text-align: center;
-  margin-top: 10px;
-  font-size: 9px;
-  letter-spacing: 0.18em;
-  color: var(--ink-3);
-}
+.ctx-share { grid-column: span 7; }
+.ctx-share-stage { background: var(--bg); height: 280px; display: grid; place-items: center; padding: 24px; }
+.share-card { width: 100%; max-width: 480px; aspect-ratio: 1200 / 630; background: linear-gradient(135deg, #1c1812 0%, #2a221a 70%); border-radius: 14px; padding: 30px 32px; display: flex; flex-direction: column; justify-content: space-between; color: var(--star); position: relative; overflow: hidden; box-shadow: 0 18px 40px -16px rgba(31,27,21,.4); }
+.share-card::after { content: ''; position: absolute; right: -80px; bottom: -80px; width: 260px; height: 260px; background: radial-gradient(closest-side, color-mix(in oklab, var(--ember) 50%, transparent), transparent 70%); pointer-events: none; }
+.share-card-top { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
+.share-card-eyebrow { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(245,239,224,.55); }
+.share-card-title { font-family: var(--font-display); font-size: 27px; font-weight: 400; letter-spacing: -0.022em; line-height: 1.05; color: var(--star); position: relative; z-index: 1; max-width: 80%; }
+.share-card-title em { font-style: italic; color: color-mix(in oklab, var(--ember) 62%, var(--star)); }
 
-/* ─────────── 09 — Don'ts ─────────── */
-.donts {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-}
-.dont {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 22px 18px 18px;
-  position: relative;
-  min-height: 200px;
-  display: flex; flex-direction: column;
-}
-.dont-stage {
-  flex: 1;
-  display: grid; place-items: center;
-  background: var(--bg);
-  border-radius: 8px;
-  padding: 18px 12px;
-  margin-bottom: 12px;
-  position: relative;
-  overflow: hidden;
-  color: var(--ink);
-}
-.dont-x {
-  position: absolute;
-  top: 10px; right: 10px;
-  width: 22px; height: 22px;
-  border-radius: 999px;
-  background: var(--err);
-  color: white;
-  display: grid; place-items: center;
-  font-size: 12px;
-  font-weight: 600;
-  box-shadow: 0 0 0 3px var(--surface);
-}
-.dont-text {
-  font-size: 12.5px;
-  color: var(--ink-2);
-  line-height: 1.5;
-}
+/* ─────────── Don'ts ─────────── */
+.donts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.dont { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 18px 18px; position: relative; min-height: 200px; display: flex; flex-direction: column; }
+.dont-stage { flex: 1; display: grid; place-items: center; background: var(--bg); border-radius: 8px; padding: 18px 12px; margin-bottom: 12px; position: relative; overflow: hidden; color: var(--ink); }
+.dont-x { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 999px; background: var(--err); color: white; display: grid; place-items: center; font-size: 12px; font-weight: 600; box-shadow: 0 0 0 3px var(--surface); }
+.dont-text { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
 .dont-text strong { color: var(--ink); font-weight: 600; }
-
-/* skewed dont */
-.dont-skew .glyph { transform: skewX(-12deg) scale(1.05); }
-/* stretched */
-.dont-stretch .glyph { transform: scaleX(1.4); }
-/* rainbow */
-.dont-rainbow .glyph {
-  background: conic-gradient(from 180deg, #ef4444, #eab308, #22c55e, #06b6d4, #6366f1, #ef4444);
-  -webkit-background-clip: text; background-clip: text;
-  color: transparent;
-}
-.dont-rainbow .glyph svg * { stroke: url(#dont-rainbow-stroke); fill: url(#dont-rainbow-stroke); }
-/* low contrast */
-.dont-contrast {
-  background: #2c2820;
-}
+.dont-stretch .glyph { transform: scaleX(1.5); display: inline-flex; }
+.dont-rotate .glyph { transform: rotate(-24deg); display: inline-flex; }
+.dont-recolor .glyph { color: #22c55e; display: inline-flex; }
+.dont-fill .glyph { color: var(--ink); display: inline-flex; }
+.dont-shadow .glyph { filter: drop-shadow(0 0 9px rgba(168,50,39,.95)); color: var(--ember); display: inline-flex; }
+.dont-font .wordmark { font-family: "Comic Sans MS", "Comic Sans", system-ui, sans-serif !important; font-weight: 700; }
+.dont-contrast { background: #2c2820; }
 .dont-contrast .dont-stage { background: #3a352a; }
-.dont-contrast .dont-stage .glyph { color: #4a4337; }
+.dont-contrast .dont-stage .glyph { color: #4a4337; display: inline-flex; }
 .dont-contrast .dont-text { color: rgba(245,239,224,.55); }
 .dont-contrast .dont-text strong { color: #f5efe0; }
-/* rotated */
-.dont-rotate .glyph { transform: rotate(-22deg); }
-/* belt only */
-.dont-recolor .glyph { color: #22c55e; }
-/* shadow effect */
-.dont-shadow .glyph { filter: drop-shadow(0 0 10px rgba(168,50,39,.95)); }
-.dont-shadow .glyph svg { color: var(--ember); }
-/* mismatched font */
-.dont-font .wordmark { font-family: "Comic Sans MS", "Comic Sans", system-ui, sans-serif !important; font-weight: 700; }
 
 /* ─────────── Footer ─────────── */
-.bs-foot {
-  margin-top: 96px;
-  padding-top: 24px;
-  border-top: 1px solid var(--line);
-  display: flex; justify-content: space-between; align-items: center;
-  flex-wrap: wrap; gap: 12px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-3);
-  letter-spacing: 0.08em;
-}
+.bs-foot { margin-top: 96px; padding-top: 24px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.08em; }
 
-/* Responsive shrink */
+/* ─────────── Orbit spinner (loading state) ─────────── */
+.orbit-spin .spin-group { transform-box: view-box; transform-origin: 12px 12px; animation: orbit-rotate 3.4s linear infinite; will-change: transform; }
+@keyframes orbit-rotate { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .orbit-spin .spin-group { animation: none; } }
+
+/* Lucide inline sizing */
+[data-lucide] svg, i.lucide-loaded svg { display: block; }
+
+/* ─────────── Responsive ─────────── */
 @media (max-width: 1100px) {
   .bs-shell { padding: 40px 32px 80px; }
   .hero { grid-template-columns: 1fr; }
   .hero-side { flex-direction: row; }
   .hero-side-card { flex: 1; }
-  .mark-system { grid-template-columns: 1fr; }
-  .anatomy { grid-template-columns: 1fr; }
-  .lockup.l-horizontal, .lockup.l-stacked,
-  .lockup.l-icon, .lockup.l-wordmark, .lockup.l-tagline { grid-column: span 12; }
-  .clearance { grid-template-columns: 1fr; }
-  .size-ramp { grid-template-columns: repeat(3, 1fr); }
+  .mark-wrap { grid-template-columns: 1fr; }
+  .variants { grid-template-columns: 1fr 1fr; }
+  .mark-meta { grid-template-columns: 1fr; }
+  .lockup.l-horizontal, .lockup.l-stacked, .lockup.l-icon, .lockup.l-wordmark, .lockup.l-tagline { grid-column: span 12; }
   .color-grid { grid-template-columns: repeat(3, 1fr); }
   .subs { grid-template-columns: repeat(3, 1fr); }
   .type-grid { grid-template-columns: 1fr; }
-  .ctx-appicon, .ctx-favicon, .ctx-sidebar, .ctx-card, .ctx-label-tag { grid-column: span 12; }
+  .ctx-appicon, .ctx-favicon, .ctx-sidebar, .ctx-splash, .ctx-share { grid-column: span 12; }
   .donts { grid-template-columns: 1fr 1fr; }
-}
-
-/* ─────────── Belt loader (animated 3-dot indicator) ─────────── */
-/* The belt-of-Orion pulses dot-by-dot, left-to-right.
-   Doubles as the brand's loading state and as the soul of the wordmark. */
-.belt-loader { display: inline-block; color: currentColor; }
-.belt-loader circle {
-  transform-origin: center;
-  transform-box: fill-box;
-  animation: belt-pulse 1.4s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-.belt-loader circle:nth-child(1) { animation-delay: 0s; }
-.belt-loader circle:nth-child(2) { animation-delay: 0.18s; }
-.belt-loader circle:nth-child(3) { animation-delay: 0.36s; }
-@keyframes belt-pulse {
-  0%, 70%, 100% { opacity: 0.28; transform: scale(0.7); }
-  35% { opacity: 1; transform: scale(1.05); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .belt-loader circle { animation: none; opacity: 1; transform: none; }
-}
-
-/* Sub-product card — add a small Lucide icon next to the colored mark */
-.sub-mark-row { gap: 10px; }
-.sub-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
-.sub-card-icon {
-  width: 14px; height: 14px;
-  color: var(--ink-3);
-  display: inline-flex; align-items: center;
-}
-.sub-card-icon-name {
-  font-size: 11px;
-  color: var(--ink-3);
-  letter-spacing: 0.02em;
-}
-
-/* ─────────── New application stages (loading splash, share card) ─────────── */
-.ctx-splash { grid-column: span 6; }
-.ctx-splash-stage {
-  background: linear-gradient(180deg, #1c1812 0%, #2a221a 100%);
-  height: 280px;
-  display: grid;
-  place-items: center;
-  color: var(--star);
-  padding: 28px;
-  position: relative;
-}
-.splash-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-}
-.splash-inner .wordmark {
-  color: var(--star);
-}
-.splash-loader-wrap {
-  display: flex; align-items: center; gap: 14px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(245,239,224,.55);
-}
-
-.ctx-share { grid-column: span 6; }
-.ctx-share-stage {
-  background: var(--bg);
-  height: 280px;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-}
-.share-card {
-  width: 100%;
-  max-width: 460px;
-  aspect-ratio: 1200 / 630;
-  background: linear-gradient(135deg, #1c1812 0%, #2a221a 70%);
-  border-radius: 14px;
-  padding: 28px 30px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: var(--star);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 18px 40px -16px rgba(31,27,21,.4);
-}
-.share-card::after {
-  /* Ember glow in the bottom-right corner */
-  content: '';
-  position: absolute;
-  right: -80px; bottom: -80px;
-  width: 260px; height: 260px;
-  background: radial-gradient(closest-side, color-mix(in oklab, var(--ember) 50%, transparent), transparent 70%);
-  pointer-events: none;
-}
-.share-card-top {
-  display: flex; align-items: center; gap: 12px;
-  position: relative; z-index: 1;
-}
-.share-card-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(245,239,224,.55);
-}
-.share-card-title {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 400;
-  letter-spacing: -0.022em;
-  line-height: 1.05;
-  color: var(--star);
-  position: relative; z-index: 1;
-  max-width: 80%;
-}
-.share-card-title em {
-  font-style: italic;
-  color: color-mix(in oklab, var(--ember) 60%, var(--star));
-}
-
-/* Lucide replacement — make icons inherit currentColor + size */
-[data-lucide] svg,
-i.lucide-loaded svg { display: block; }
-
-@media (max-width: 1100px) {
-  .ctx-splash, .ctx-share { grid-column: span 12; }
 }
 </style>
 <script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js"></script>
@@ -1304,195 +314,43 @@ i.lucide-loaded svg { display: block; }
 <template id="__bundler_thumbnail" data-bg-color="#f5f0e8">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect width="1200" height="800" fill="#f5f0e8"/>
-    <g transform="translate(600 360) scale(2.7)" fill="#1f1b15">
-      <!-- t-shirt outline -->
-      <polyline points="42,20 23,25 12,43 32,41 28,86 72,86 68,41 88,43 77,25 58,20 50,26 42,20"
-                fill="none" stroke="#1f1b15" stroke-width="0.9"
-                stroke-linecap="round" stroke-linejoin="round" opacity="0.5"
-                transform="translate(-50 -53)"/>
-      <g transform="translate(-50 -53)">
-        <circle cx="42" cy="20" r="2.4"/><circle cx="23" cy="25" r="2.9"/>
-        <circle cx="12" cy="43" r="2.0"/><circle cx="32" cy="41" r="1.7"/>
-        <circle cx="28" cy="86" r="2.9"/><circle cx="72" cy="86" r="2.9"/>
-        <circle cx="68" cy="41" r="1.7"/><circle cx="88" cy="43" r="2.0"/>
-        <circle cx="77" cy="25" r="2.9"/><circle cx="58" cy="20" r="2.4"/>
-        <circle cx="50" cy="26" r="1.5"/>
-        <circle cx="40" cy="56" r="2.4" fill="#a83227"/>
-        <circle cx="50" cy="58" r="2.7" fill="#a83227"/>
-        <circle cx="60" cy="56" r="2.4" fill="#a83227"/>
+    <g transform="translate(600 360) scale(11)" fill="none" stroke="#1f1b15" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <g transform="translate(-12 -12)">
+        <circle cx="12" cy="12" r="3" fill="#a83227" stroke="#a83227"/>
+        <circle cx="19" cy="5" r="2"/>
+        <circle cx="5" cy="19" r="2"/>
+        <path d="M10.4 21.9a10 10 0 0 0 9.941-15.416"/>
+        <path d="M13.5 2.1a10 10 0 0 0-9.841 15.416"/>
       </g>
     </g>
-    <text x="600" y="660" text-anchor="middle" font-family="Georgia, serif"
-          font-size="76" fill="#1f1b15" letter-spacing="-2">Orion</text>
-    <text x="600" y="710" text-anchor="middle" font-family="monospace"
-          font-size="22" fill="#7a7160" letter-spacing="6">BRAND SHEET</text>
+    <text x="600" y="660" text-anchor="middle" font-family="Georgia, serif" font-size="76" fill="#1f1b15" letter-spacing="-2">Orion</text>
+    <text x="600" y="710" text-anchor="middle" font-family="monospace" font-size="22" fill="#7a7160" letter-spacing="6">BRAND SHEET</text>
   </svg>
 </template>
 
-<!-- ═════════ Shared SVG glyph definitions ═════════ -->
-<svg xmlns="http://www.w3.org/2000/svg" style="position: absolute; width: 0; height: 0; overflow: hidden;" aria-hidden="true">
+<!-- ═════════ Shared SVG symbol definitions ═════════ -->
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
   <defs>
-
-    <!-- Display mark: full constellation t-shirt (for large display).
-         Stroke width is THICKER than the original login mark so connecting lines
-         survive at 56-96px display sizes. -->
-    <symbol id="orion-display" viewBox="0 0 100 105">
-      <!-- soft halo bg behind constellation -->
-      <radialGradient id="orion-disp-glow" cx="50%" cy="55%" r="55%">
-        <stop offset="0%" stop-color="currentColor" stop-opacity="0.08"/>
-        <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
-      </radialGradient>
-      <circle cx="50" cy="55" r="50" fill="url(#orion-disp-glow)"/>
-
-      <!-- T-shirt outline traced through the 11 corner stars.
-           Order: collar-l → shoulder-l → sleeve-l → armpit-l → hem-l →
-           hem-r → armpit-r → sleeve-r → shoulder-r → collar-r → neckline → collar-l -->
-      <polyline points="42,20 23,25 12,43 32,41 28,86 72,86 68,41 88,43 77,25 58,20 50,26 42,20"
-                fill="none" stroke="currentColor" stroke-width="0.9"
-                stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
-
-      <!-- Orion's belt — chest emblem -->
-      <polyline points="40,56 50,58 60,56"
-                fill="none" stroke="currentColor" stroke-width="1.1"
-                stroke-linecap="round" opacity="0.7"/>
-
-      <!-- Outline stars (halo + dot, both bigger than login version) -->
-      <g fill="currentColor">
-        <circle cx="42" cy="20" r="4.4" opacity="0.10"/><circle cx="42" cy="20" r="2.4"/>
-        <circle cx="23" cy="25" r="5.4" opacity="0.10"/><circle cx="23" cy="25" r="2.9"/>
-        <circle cx="12" cy="43" r="3.8" opacity="0.10"/><circle cx="12" cy="43" r="2.0"/>
-        <circle cx="32" cy="41" r="3.2" opacity="0.10"/><circle cx="32" cy="41" r="1.7"/>
-        <circle cx="28" cy="86" r="5.4" opacity="0.10"/><circle cx="28" cy="86" r="2.9"/>
-        <circle cx="72" cy="86" r="5.4" opacity="0.10"/><circle cx="72" cy="86" r="2.9"/>
-        <circle cx="68" cy="41" r="3.2" opacity="0.10"/><circle cx="68" cy="41" r="1.7"/>
-        <circle cx="88" cy="43" r="3.8" opacity="0.10"/><circle cx="88" cy="43" r="2.0"/>
-        <circle cx="77" cy="25" r="5.4" opacity="0.10"/><circle cx="77" cy="25" r="2.9"/>
-        <circle cx="58" cy="20" r="4.4" opacity="0.10"/><circle cx="58" cy="20" r="2.4"/>
-        <circle cx="50" cy="26" r="2.8" opacity="0.10"/><circle cx="50" cy="26" r="1.5"/>
-      </g>
-
-      <!-- Belt stars — emphasized: bigger halos and core highlight -->
-      <g>
-        <circle cx="40" cy="56" r="5.4" fill="currentColor" opacity="0.10"/>
-        <circle cx="50" cy="58" r="6.2" fill="currentColor" opacity="0.10"/>
-        <circle cx="60" cy="56" r="5.4" fill="currentColor" opacity="0.10"/>
-        <circle cx="40" cy="56" r="2.4" fill="currentColor"/>
-        <circle cx="50" cy="58" r="2.7" fill="currentColor"/>
-        <circle cx="60" cy="56" r="2.4" fill="currentColor"/>
+    <!-- Display mark: faithful orbit (planet + 2 moons + broken orbit ring) -->
+    <symbol id="orbit-d" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <circle cx="19" cy="5" r="2"/>
+        <circle cx="5" cy="19" r="2"/>
+        <path d="M10.4 21.9a10 10 0 0 0 9.941-15.416"/>
+        <path d="M13.5 2.1a10 10 0 0 0-9.841 15.416"/>
       </g>
     </symbol>
-
-    <!-- App-icon mark: solid filled t-shirt silhouette with 3 belt stars cut out (white-on-dark).
-         Designed to survive at 16-48px because there are no fine strokes — only a single shape
-         and three clear punched circles for the belt. -->
-    <symbol id="orion-solid" viewBox="0 0 100 105">
-      <!-- T-shirt silhouette as a single path. Cutouts for collar + belt stars use evenodd. -->
-      <path fill-rule="evenodd" fill="currentColor"
-            d="M 42 16
-               C 38 18, 28 19, 22 22
-               L 9 41
-               C 8.5 42.5, 9 44, 10.5 44.5
-               L 26 49
-               L 22 88
-               C 21.8 90, 23.5 92, 25.5 92
-               L 74.5 92
-               C 76.5 92, 78.2 90, 78 88
-               L 74 49
-               L 89.5 44.5
-               C 91 44, 91.5 42.5, 91 41
-               L 78 22
-               C 72 19, 62 18, 58 16
-               C 56.5 22, 53.5 28, 50 28
-               C 46.5 28, 43.5 22, 42 16
-               Z
-               M 40 56 m -3.6 0 a 3.6 3.6 0 1 0 7.2 0 a 3.6 3.6 0 1 0 -7.2 0
-               M 50 58 m -4.2 0 a 4.2 4.2 0 1 0 8.4 0 a 4.2 4.2 0 1 0 -8.4 0
-               M 60 56 m -3.6 0 a 3.6 3.6 0 1 0 7.2 0 a 3.6 3.6 0 1 0 -7.2 0"/>
-    </symbol>
-
-    <!-- Belt-only mark for ultra-tight contexts (favicon-of-favicon, woven labels) -->
-    <symbol id="orion-belt" viewBox="0 0 30 10">
-      <circle cx="5"  cy="5" r="3"   fill="currentColor"/>
-      <circle cx="15" cy="5" r="3.6" fill="currentColor"/>
-      <circle cx="25" cy="5" r="3"   fill="currentColor"/>
-    </symbol>
-
-    <!-- Anatomy diagram — labelled version of the display mark -->
-    <symbol id="orion-anatomy" viewBox="-10 -8 120 125">
-      <!-- soft bg -->
-      <rect x="-10" y="-8" width="120" height="125" fill="var(--bg)"/>
-
-      <!-- t-shirt outline -->
-      <polyline points="42,20 23,25 12,43 32,41 28,86 72,86 68,41 88,43 77,25 58,20 50,26 42,20"
-                fill="none" stroke="#7a7160" stroke-width="0.6"
-                stroke-linecap="round" stroke-linejoin="round" opacity="0.85"
-                stroke-dasharray="1.4 1.4"/>
-
-      <!-- belt -->
-      <polyline points="40,56 50,58 60,56"
-                fill="none" stroke="#a83227" stroke-width="0.9"
-                stroke-linecap="round"/>
-
-      <!-- outline stars -->
-      <g fill="#1f1b15">
-        <circle cx="42" cy="20" r="2.4"/>
-        <circle cx="23" cy="25" r="2.9"/>
-        <circle cx="12" cy="43" r="2.0"/>
-        <circle cx="32" cy="41" r="1.7"/>
-        <circle cx="28" cy="86" r="2.9"/>
-        <circle cx="72" cy="86" r="2.9"/>
-        <circle cx="68" cy="41" r="1.7"/>
-        <circle cx="88" cy="43" r="2.0"/>
-        <circle cx="77" cy="25" r="2.9"/>
-        <circle cx="58" cy="20" r="2.4"/>
-        <circle cx="50" cy="26" r="1.5"/>
-      </g>
-      <!-- belt stars (blue) -->
-      <g fill="#a83227">
-        <circle cx="40" cy="56" r="2.4"/>
-        <circle cx="50" cy="58" r="2.7"/>
-        <circle cx="60" cy="56" r="2.4"/>
-      </g>
-
-      <!-- Annotations -->
-      <!-- Annotation 1: top — neckline / collar stars -->
-      <g font-family="JetBrains Mono, monospace" font-size="3.4" fill="#7a7160">
-        <line x1="50" y1="14" x2="50" y2="3" stroke="#7a7160" stroke-width="0.3"/>
-        <circle cx="50" cy="14" r="0.7" fill="#7a7160"/>
-        <text x="50" y="1.5" text-anchor="middle" fill="#1f1b15" font-weight="600">01 — Collar (3 stars)</text>
-      </g>
-      <!-- Annotation 2: left sleeve -->
-      <g font-family="JetBrains Mono, monospace" font-size="3.4" fill="#7a7160">
-        <line x1="6" y1="43" x2="-4" y2="55" stroke="#7a7160" stroke-width="0.3"/>
-        <text x="-8" y="58" fill="#1f1b15" font-weight="600">02 — Sleeve apex</text>
-      </g>
-      <!-- Annotation 3: belt center -->
-      <g font-family="JetBrains Mono, monospace" font-size="3.4" fill="#7a7160">
-        <line x1="65" y1="58" x2="78" y2="68" stroke="#a83227" stroke-width="0.3"/>
-        <text x="80" y="69.6" fill="#a83227" font-weight="600">03 — Orion's belt</text>
-        <text x="80" y="74.6" fill="#7a7160">Mintaka · Alnilam · Alnitak</text>
-      </g>
-      <!-- Annotation 4: hem -->
-      <g font-family="JetBrains Mono, monospace" font-size="3.4" fill="#7a7160">
-        <line x1="28" y1="86" x2="20" y2="100" stroke="#7a7160" stroke-width="0.3"/>
-        <text x="18" y="103" fill="#1f1b15" font-weight="600">04 — Hem corners</text>
-      </g>
-      <!-- Annotation 5: sleeve right -->
-      <g font-family="JetBrains Mono, monospace" font-size="3.4" fill="#7a7160">
-        <line x1="94" y1="43" x2="104" y2="36" stroke="#7a7160" stroke-width="0.3"/>
-        <text x="106" y="37" fill="#1f1b15" font-weight="600">05 — Connecting lines</text>
-        <text x="106" y="41" fill="#7a7160">0.9 stroke @ 50% opacity</text>
+    <!-- Small/UI mark: heavier stroke for tiny sizes -->
+    <symbol id="orbit-s" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <circle cx="19" cy="5" r="2"/>
+        <circle cx="5" cy="19" r="2"/>
+        <path d="M10.4 21.9a10 10 0 0 0 9.941-15.416"/>
+        <path d="M13.5 2.1a10 10 0 0 0-9.841 15.416"/>
       </g>
     </symbol>
-
-    <!-- Linear gradient used by the rainbow don't, scoped so it doesn't pollute -->
-    <linearGradient id="dont-rainbow-stroke" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%"   stop-color="#ef4444"/>
-      <stop offset="25%"  stop-color="#eab308"/>
-      <stop offset="50%"  stop-color="#22c55e"/>
-      <stop offset="75%"  stop-color="#06b6d4"/>
-      <stop offset="100%" stop-color="#7e5bef"/>
-    </linearGradient>
   </defs>
 </svg>
 
@@ -1502,9 +360,7 @@ i.lucide-loaded svg { display: block; }
   <div class="bs-top">
     <div class="bs-top-l">
       <span class="bs-top-mark">
-        <svg width="32" height="32" viewBox="0 0 100 105" style="overflow: visible;">
-          <use href="#orion-display"/>
-        </svg>
+        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#orbit-d"/></svg>
       </span>
       <div>
         <div class="bs-top-eyebrow">Orion · Brand</div>
@@ -1512,591 +368,380 @@ i.lucide-loaded svg { display: block; }
       </div>
     </div>
     <div class="bs-top-meta">
-      v1.0 · maio 2026<br/>
+      v2.0 · junho 2026<br/>
       Confidencial · uso interno
     </div>
   </div>
 
-  <!-- ═════════ 01 — Hero ═════════ -->
-  <section class="bs-sec" style="margin-top: 0;">
+  <!-- ═════════ 01 — Conceito ═════════ -->
+  <section class="bs-sec" style="margin-top:0;">
     <div class="bs-sec-head">
       <div class="bs-sec-num"><em>01</em>Conceito</div>
       <div>
-        <h2 class="bs-sec-title">Uma camiseta desenhada com <em>estrelas</em>.</h2>
-        <p class="bs-sec-sub">O símbolo da Orion é uma silhueta de camiseta cujos vértices são estrelas, com o cinturão de Órion atravessando o peito. É o nosso produto — software para quem faz roupa — desenhado pelo céu noturno que dá nome à empresa.</p>
+        <h2 class="bs-sec-title">Um <em>sistema</em> em órbita.</h2>
+        <p class="bs-sec-sub">A marca da Orion é um corpo central com duas luas percorrendo a sua órbita — um símbolo de sistema, claro e moderno. Um núcleo, coisas que giram em volta dele. É a plataforma e tudo que orbita ao redor: vendas, catálogo, produção, estoque.</p>
       </div>
     </div>
 
     <div class="hero">
       <div class="hero-mark-stage">
-        <span class="hero-corner-tl"></span>
-        <span class="hero-corner-tr"></span>
-        <span class="hero-corner-bl"></span>
-        <span class="hero-corner-br"></span>
+        <span class="hero-corner tl"></span><span class="hero-corner tr"></span>
+        <span class="hero-corner bl"></span><span class="hero-corner br"></span>
+        <div class="hero-guides" aria-hidden="true">
+          <svg width="380" height="380" viewBox="0 0 380 380">
+            <ellipse cx="190" cy="190" rx="150" ry="104" fill="none" stroke="var(--ember)" stroke-width="1" opacity="0.16" transform="rotate(-32 190 190)"/>
+            <ellipse cx="190" cy="190" rx="120" ry="120" fill="none" stroke="var(--ink-3)" stroke-width="1" opacity="0.12"/>
+          </svg>
+        </div>
         <div class="hero-mark">
           <span class="mark-glyph">
-            <svg width="220" height="231" viewBox="0 0 100 105" style="overflow: visible;">
-              <use href="#orion-display"/>
-            </svg>
+            <svg width="180" height="180" viewBox="0 0 24 24"><use href="#orbit-d"/></svg>
           </span>
-          <span class="wordmark wordmark-lg">Or<span class="wm-i">i<span class="wm-belt-l" aria-hidden="true"></span><span class="wm-belt-r" aria-hidden="true"></span></span>on</span>
+          <span class="wordmark wordmark-lg">Or<span class="wm-i">i<span class="wm-orbit" aria-hidden="true"></span></span>on</span>
           <span class="hero-tagline">SaaS para confecção</span>
         </div>
       </div>
       <aside class="hero-side">
         <div class="hero-side-card">
           <h3>O nome</h3>
-          <p><em>Órion</em> — o caçador na mitologia grega, a constelação mais reconhecível do hemisfério sul. Visível das oficinas do interior à passarela em Milão. Universal e nosso.</p>
+          <p><em>Órion</em> — a constelação mais reconhecível do céu. Um nome amplo, fácil de lembrar, que carrega ideia de ordem e direção sem prender a marca a um único produto.</p>
         </div>
         <div class="hero-side-card">
           <h3>O símbolo</h3>
-          <p>O cinturão de Órion — três estrelas em linha — vira o emblema no peito da camiseta. Onze estrelas adicionais marcam os vértices da silhueta: gola, ombros, mangas, axilas, barra.</p>
+          <p>Um <em>sistema</em> reduzido ao essencial: núcleo, órbita, duas luas. Geométrico, fino, minimalista — funciona de favicon a outdoor sem perder o sentido.</p>
         </div>
         <div class="hero-side-card">
           <h3>O tom</h3>
-          <p>Papel quente do atelier, tinta do céu noturno, brilho do algodão cru. Artesanal sem ser nostálgico; técnico sem ser frio.</p>
+          <p>Papel quente do atelier, tinta do céu noturno, a brasa do Ember como único acento. <em>Técnico sem ser frio.</em></p>
         </div>
       </aside>
     </div>
   </section>
 
-  <!-- ═════════ 02 — Anatomy ═════════ -->
+  <!-- ═════════ 02 — A marca ═════════ -->
   <section class="bs-sec">
     <div class="bs-sec-head">
-      <div class="bs-sec-num"><em>02</em>Anatomia</div>
+      <div class="bs-sec-num"><em>02</em>A marca</div>
       <div>
-        <h2 class="bs-sec-title">14 estrelas, uma <em>silhueta</em>.</h2>
-        <p class="bs-sec-sub">Onze estrelas formam o contorno da camiseta. Três — o cinturão de Órion — atravessam o peito como detalhe central. As linhas de conexão ficam em 50% de opacidade, deixando as estrelas como protagonistas.</p>
+        <h2 class="bs-sec-title">Quatro elementos, uma <em>geometria</em>.</h2>
+        <p class="bs-sec-sub">Construída sobre uma grade de 24. Núcleo no centro, duas luas em diagonal, e a órbita como dois arcos interrompidos que deixam o sistema respirar. Traço uniforme de 1.6 — o mesmo desenho fino que vive dentro do produto.</p>
       </div>
     </div>
 
-    <div class="anatomy">
+    <div class="mark-wrap">
       <div class="anatomy-stage">
-        <svg class="diagram" viewBox="-10 -8 120 125" style="overflow: visible;">
-          <use href="#orion-anatomy"/>
+        <svg class="diagram" viewBox="-9 -9 42 42">
+          <!-- construction grid -->
+          <g stroke="var(--line)" stroke-width="0.25" opacity="0.9">
+            <line x1="12" y1="-7" x2="12" y2="31"/>
+            <line x1="-7" y1="12" x2="31" y2="12"/>
+            <circle cx="12" cy="12" r="10" fill="none" stroke="var(--line)" stroke-width="0.25"/>
+          </g>
+          <!-- orbit arcs -->
+          <g fill="none" stroke="#7a7160" stroke-width="0.6" stroke-linecap="round" stroke-dasharray="1.4 1.4">
+            <path d="M10.4 21.9a10 10 0 0 0 9.941-15.416"/>
+            <path d="M13.5 2.1a10 10 0 0 0-9.841 15.416"/>
+          </g>
+          <!-- moons -->
+          <g fill="none" stroke="#1f1b15" stroke-width="0.7">
+            <circle cx="19" cy="5" r="2"/>
+            <circle cx="5" cy="19" r="2"/>
+          </g>
+          <!-- core -->
+          <circle cx="12" cy="12" r="3" fill="none" stroke="#a83227" stroke-width="0.9"/>
+
+          <!-- annotations -->
+          <g font-family="JetBrains Mono, monospace" font-size="2.2" fill="#7a7160">
+            <line x1="12" y1="9" x2="12" y2="-5" stroke="#a83227" stroke-width="0.25"/>
+            <text x="12" y="-6" text-anchor="middle" fill="#a83227" font-weight="600">01 · núcleo (r3)</text>
+
+            <line x1="19" y1="5" x2="27" y2="-2" stroke="#7a7160" stroke-width="0.25"/>
+            <text x="27.6" y="-2.4" fill="#1f1b15" font-weight="600">02 · luas (r2)</text>
+
+            <line x1="5" y1="19" x2="-4" y2="26" stroke="#7a7160" stroke-width="0.25"/>
+            <text x="-8" y="29" fill="#1f1b15" font-weight="600">03 · órbita</text>
+            <text x="-8" y="31.6" fill="#7a7160">2 arcos abertos</text>
+
+            <line x1="20.4" y1="14" x2="28" y2="17" stroke="#7a7160" stroke-width="0.25"/>
+            <text x="28.4" y="17.4" fill="#1f1b15" font-weight="600">04 · grade 24</text>
+          </g>
         </svg>
       </div>
       <div class="anatomy-notes">
         <div class="anatomy-note">
           <div class="anatomy-note-num">01</div>
           <div>
-            <div class="anatomy-note-title">Colarinho — 3 estrelas</div>
-            <div class="anatomy-note-body">Esquerda, direita e o vértice da gola em "V" rasa. Triangulam o topo da silhueta.</div>
+            <div class="anatomy-note-title">Núcleo</div>
+            <div class="anatomy-note-body">Círculo central de raio 3. É o ponto fixo — a plataforma. Em uso colorido, é o único elemento que recebe Ember.</div>
           </div>
         </div>
         <div class="anatomy-note">
           <div class="anatomy-note-num">02</div>
           <div>
-            <div class="anatomy-note-title">Ombros, mangas, axilas</div>
-            <div class="anatomy-note-body">Seis estrelas marcam a estrutura da peça. As das mangas são menores; as dos ombros são as maiores do contorno.</div>
+            <div class="anatomy-note-title">Duas luas</div>
+            <div class="anatomy-note-body">Raio 2, em diagonal (19,5) e (5,19). Sempre opostas — equilibram a composição e dão o movimento de órbita.</div>
           </div>
         </div>
         <div class="anatomy-note">
           <div class="anatomy-note-num">03</div>
           <div>
-            <div class="anatomy-note-title">Cinturão — sempre em azul Noite</div>
-            <div class="anatomy-note-body">Mintaka, Alnilam e Alnitak. Em uso colorido o cinturão é o único elemento em Ember — destaca o emblema do peito. Em mono, fica na mesma cor da silhueta.</div>
+            <div class="anatomy-note-title">Órbita aberta</div>
+            <div class="anatomy-note-body">Dois arcos de raio 10 que não se fecham. As aberturas dão leveza e deixam as luas "entrarem" na trajetória.</div>
           </div>
         </div>
         <div class="anatomy-note">
           <div class="anatomy-note-num">04</div>
           <div>
-            <div class="anatomy-note-title">Barra — 2 estrelas grandes</div>
-            <div class="anatomy-note-body">Ancoram a composição. Mesma escala visual das estrelas dos ombros — equilíbrio entre topo e base.</div>
+            <div class="anatomy-note-title">Traço uniforme</div>
+            <div class="anatomy-note-body">Stroke <code>1.6</code> na exibição, <code>2.2</code> em tamanhos pequenos. Pontas e junções arredondadas (<code>linecap / linejoin: round</code>).</div>
           </div>
         </div>
-        <div class="anatomy-note">
-          <div class="anatomy-note-num">05</div>
-          <div>
-            <div class="anatomy-note-title">Linhas de conexão</div>
-            <div class="anatomy-note-body">Stroke 0.9 sobre viewBox 100. Opacidade 50% para o contorno, 70% para o cinturão. Pontas arredondadas (<code>linecap: round</code>).</div>
-          </div>
+      </div>
+    </div>
+
+    <!-- Variants -->
+    <div class="variants">
+      <div class="variant">
+        <div class="variant-stage">
+          <svg width="64" height="64" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#orbit-d"/></svg>
+        </div>
+        <div class="variant-body">
+          <div class="variant-eyebrow"><span class="v-num">A</span>Primária</div>
+          <div class="variant-name">Mono / Ink</div>
+          <div class="variant-desc">Tudo em Ink sobre Paper. O padrão — 90% das aparições.</div>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant-stage">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <g stroke="var(--ink)">
+              <circle cx="19" cy="5" r="2"/>
+              <circle cx="5" cy="19" r="2"/>
+              <path d="M10.4 21.9a10 10 0 0 0 9.941-15.416"/>
+              <path d="M13.5 2.1a10 10 0 0 0-9.841 15.416"/>
+            </g>
+            <circle cx="12" cy="12" r="3" fill="var(--ember)" stroke="var(--ember)"/>
+          </svg>
+        </div>
+        <div class="variant-body">
+          <div class="variant-eyebrow"><span class="v-num">B</span>Acento</div>
+          <div class="variant-name">Núcleo Ember</div>
+          <div class="variant-desc">Núcleo preenchido em Ember. Para destaque — capa, hero, momentos de marca.</div>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant-stage dark">
+          <svg width="64" height="64" viewBox="0 0 24 24" style="color:var(--star)"><use href="#orbit-d"/></svg>
+        </div>
+        <div class="variant-body">
+          <div class="variant-eyebrow"><span class="v-num">C</span>Escuro</div>
+          <div class="variant-name">Star / on-dark</div>
+          <div class="variant-desc">Cor Star sobre Carvão. App icon, modo escuro, sidebar do produto.</div>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant-stage">
+          <svg class="orbit-spin" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Indicador de carregamento Orion">
+            <circle cx="12" cy="12" r="3"/>
+            <g class="spin-group">
+              <circle cx="19" cy="5" r="2"/>
+              <circle cx="5" cy="19" r="2"/>
+              <path d="M10.4 21.9a10 10 0 0 0 9.941-15.416"/>
+              <path d="M13.5 2.1a10 10 0 0 0-9.841 15.416"/>
+            </g>
+          </svg>
+        </div>
+        <div class="variant-body">
+          <div class="variant-eyebrow"><span class="v-num">D</span>Animada</div>
+          <div class="variant-name">Órbita em loop</div>
+          <div class="variant-desc">As luas giram em torno do núcleo. É o indicador de carregamento — splash, botões ocupados, sync.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clear space + min size -->
+    <div class="mark-meta">
+      <div class="clear-stage">
+        <div class="clear-grid">
+          <span class="glyph"><svg width="120" height="120" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#orbit-d"/></svg></span>
+          <span class="xunit t">↕ x</span><span class="xunit r">↔ x</span>
+          <span class="xunit b">↕ x</span><span class="xunit l">↔ x</span>
+        </div>
+      </div>
+      <div class="clear-explain">
+        <p>A unidade de espaço <code>x</code> é o raio do núcleo (¼ da altura do símbolo). Nada invade esse perímetro. O símbolo herda o desenho do produto, então sobrevive até <code>16px</code> sem ajustes.</p>
+        <dl class="bs-spec">
+          <dt>Clear space</dt>
+          <dd><code>x</code> em todos os lados · x = raio do núcleo</dd>
+          <dt>Min digital</dt>
+          <dd><code>16px</code> (use a variante de traço <code>2.2</code>)</dd>
+          <dt>Min impresso</dt>
+          <dd><code>7mm</code> de altura</dd>
+          <dt>Wordmark</dt>
+          <dd>Mínimo <code>14px</code>. Abaixo disso, o anel do <em>i</em> some</dd>
+        </dl>
+        <div class="size-ramp">
+          <div class="size-cell"><span class="sz-glyph"><svg width="56" height="56" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#orbit-d"/></svg></span><span class="sz-px">56px</span><span class="sz-note">Hero</span></div>
+          <div class="size-cell"><span class="sz-glyph"><svg width="32" height="32" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#orbit-d"/></svg></span><span class="sz-px">32px</span><span class="sz-note">Sidebar</span></div>
+          <div class="size-cell"><span class="sz-glyph"><svg width="24" height="24" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#orbit-s"/></svg></span><span class="sz-px">24px</span><span class="sz-note">Header</span></div>
+          <div class="size-cell"><span class="sz-glyph"><svg width="16" height="16" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#orbit-s"/></svg></span><span class="sz-px">16px</span><span class="sz-note">Favicon</span></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ═════════ 03 — Mark system ═════════ -->
+  <!-- ═════════ 03 — Wordmark & lockups ═════════ -->
   <section class="bs-sec">
     <div class="bs-sec-head">
-      <div class="bs-sec-num"><em>03</em>Sistema</div>
+      <div class="bs-sec-num"><em>03</em>Wordmark &amp; lockups</div>
       <div>
-        <h2 class="bs-sec-title">Três variantes, <em>uma marca</em>.</h2>
-        <p class="bs-sec-sub">A constelação inteira só sobrevive a partir de 56px. Abaixo disso, trocamos para a silhueta sólida com o cinturão recortado — robusta até 16px de favicon. O cinturão isolado é a última instância antes de não usar a marca.</p>
-      </div>
-    </div>
-
-    <div class="mark-system">
-      <!-- Tier 1 -->
-      <div class="mark-tier">
-        <div class="mark-tier-stage">
-          <svg width="148" height="155" viewBox="0 0 100 105" style="overflow: visible;">
-            <use href="#orion-display"/>
-          </svg>
-        </div>
-        <div class="mark-tier-body">
-          <div class="mark-tier-eyebrow"><span class="tier-num">A</span>Marca de exibição</div>
-          <div class="mark-tier-name">Constelação completa</div>
-          <p class="mark-tier-desc">A versão "rica" — 14 estrelas com halos, linhas de conexão sutis e o cinturão destacado. Hero do site, capa de slides, peça impressa, embalagem.</p>
-          <span class="mark-tier-range">≥ 56px · vetor preferível</span>
-        </div>
-      </div>
-
-      <!-- Tier 2 -->
-      <div class="mark-tier">
-        <div class="mark-tier-stage dark">
-          <svg width="124" height="130" viewBox="0 0 100 105" style="overflow: visible; color: var(--star);">
-            <use href="#orion-solid"/>
-          </svg>
-        </div>
-        <div class="mark-tier-body">
-          <div class="mark-tier-eyebrow"><span class="tier-num">B</span>Marca de aplicativo</div>
-          <div class="mark-tier-name">Silhueta sólida</div>
-          <p class="mark-tier-desc">A camiseta vira uma forma cheia; só o cinturão aparece, em recorte. É a versão que aguenta o ícone do app, o avatar no sidebar e o favicon sem perder identidade.</p>
-          <span class="mark-tier-range">16px – 56px · UI, app icons</span>
-        </div>
-      </div>
-
-      <!-- Tier 3 -->
-      <div class="mark-tier">
-        <div class="mark-tier-stage">
-          <svg class="belt-loader" width="144" height="48" viewBox="0 0 30 10" style="overflow: visible;" aria-label="Indicador de carregamento Orion">
-            <circle cx="5"  cy="5" r="3"/>
-            <circle cx="15" cy="5" r="3.6"/>
-            <circle cx="25" cy="5" r="3"/>
-          </svg>
-        </div>
-        <div class="mark-tier-body">
-          <div class="mark-tier-eyebrow"><span class="tier-num">C</span>Cinturão animado</div>
-          <div class="mark-tier-name">Três estrelas — e o loading</div>
-          <p class="mark-tier-desc">As três estrelas isoladas são também o indicador de carregamento da Orion. Pulsam em sequência da esquerda para direita — mesma cadência do cinturão piscando no céu. Usado em splash, botões ocupados, sincronização.</p>
-          <span class="mark-tier-range">loading state · sempre com wordmark se for 1ª aparição</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═════════ 04 — Wordmark + lockups ═════════ -->
-  <section class="bs-sec">
-    <div class="bs-sec-head">
-      <div class="bs-sec-num"><em>04</em>Wordmark &amp; lockups</div>
-      <div>
-        <h2 class="bs-sec-title">O <em>i</em> com cinturão.</h2>
-        <p class="bs-sec-sub">"Orion" em Fraunces 400, tracking −0.028em. O ponto natural do <em>i</em> não some — ele vira a estrela central de Alnilam. Dois pontos menores flanqueiam, formando o cinturão em mini. Detalhe pequeno, mas presente sempre que o wordmark aparece com peso de marca.</p>
+        <h2 class="bs-sec-title">O <em>i</em> em órbita.</h2>
+        <p class="bs-sec-sub">"Orion" em Fraunces 400, tracking −0.028em. O ponto do <em>i</em> ganha um anel fino e inclinado — um eco do símbolo dentro da palavra. Detalhe sutil, presente sempre que o wordmark aparece com peso de marca.</p>
       </div>
     </div>
 
     <div class="lockups">
-
-      <!-- Horizontal -->
       <div class="lockup l-horizontal">
         <span class="lockup-label">A — Horizontal</span>
         <div class="lk-h">
-          <span class="glyph">
-            <svg width="84" height="88" viewBox="0 0 100 105" style="overflow: visible;">
-              <use href="#orion-display"/>
-            </svg>
-          </span>
-          <span class="wordmark wordmark-lg">Or<span class="wm-i">i<span class="wm-belt-l" aria-hidden="true"></span><span class="wm-belt-r" aria-hidden="true"></span></span>on</span>
+          <span class="glyph"><svg width="72" height="72" viewBox="0 0 24 24"><use href="#orbit-d"/></svg></span>
+          <span class="wordmark wordmark-lg">Or<span class="wm-i">i<span class="wm-orbit" aria-hidden="true"></span></span>on</span>
         </div>
       </div>
-
-      <!-- Stacked -->
       <div class="lockup l-stacked">
         <span class="lockup-label">B — Empilhado</span>
         <div class="lk-stacked">
-          <span class="glyph">
-            <svg width="90" height="95" viewBox="0 0 100 105" style="overflow: visible;">
-              <use href="#orion-display"/>
-            </svg>
-          </span>
-          <span class="wordmark wordmark-md">Or<span class="wm-i">i<span class="wm-belt-l" aria-hidden="true"></span><span class="wm-belt-r" aria-hidden="true"></span></span>on</span>
+          <span class="glyph"><svg width="76" height="76" viewBox="0 0 24 24"><use href="#orbit-d"/></svg></span>
+          <span class="wordmark wordmark-md">Or<span class="wm-i">i<span class="wm-orbit" aria-hidden="true"></span></span>on</span>
         </div>
       </div>
-
-      <!-- Icon only -->
       <div class="lockup l-icon">
         <span class="lockup-label">C — Só símbolo</span>
-        <span class="glyph">
-          <svg width="120" height="126" viewBox="0 0 100 105" style="overflow: visible;">
-            <use href="#orion-display"/>
-          </svg>
-        </span>
+        <span class="glyph"><svg width="104" height="104" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#orbit-d"/></svg></span>
       </div>
-
-      <!-- Wordmark only -->
       <div class="lockup l-wordmark">
         <span class="lockup-label">D — Só wordmark</span>
-        <span class="wordmark wordmark-lg" style="color: var(--ink);">Or<span class="wm-i">i<span class="wm-belt-l" aria-hidden="true"></span><span class="wm-belt-r" aria-hidden="true"></span></span>on</span>
+        <span class="wordmark wordmark-lg" style="color:var(--ink)">Or<span class="wm-i">i<span class="wm-orbit" aria-hidden="true"></span></span>on</span>
       </div>
-
-      <!-- With tagline -->
       <div class="lockup l-tagline">
         <span class="lockup-label">E — Com tagline</span>
         <div class="lk-tag">
-          <span class="wordmark wordmark-md">Or<span class="wm-i">i<span class="wm-belt-l" aria-hidden="true"></span><span class="wm-belt-r" aria-hidden="true"></span></span>on</span>
+          <span class="wordmark wordmark-md">Or<span class="wm-i">i<span class="wm-orbit" aria-hidden="true"></span></span>on</span>
           <span class="tag-rule"></span>
           <span class="tag-text">SaaS para confecção</span>
         </div>
       </div>
-
     </div>
   </section>
 
-  <!-- ═════════ 05 — Clear space + size ═════════ -->
+  <!-- ═════════ 04 — Cor ═════════ -->
   <section class="bs-sec">
     <div class="bs-sec-head">
-      <div class="bs-sec-num"><em>05</em>Espaço &amp; escala</div>
+      <div class="bs-sec-num"><em>04</em>Cor</div>
       <div>
-        <h2 class="bs-sec-title">Respeite o <em>x</em>. Não desça do 16.</h2>
-        <p class="bs-sec-sub">A unidade de espaçamento <code>x</code> é a altura de uma estrela do ombro (≈ 1/8 da altura do símbolo). Nada toca a marca dentro desse perímetro. Mínimo absoluto: 16px na variante B (sólida); 56px na variante A (constelação).</p>
+        <h2 class="bs-sec-title">Papel quente, tinta, e a <em>brasa do Ember</em>.</h2>
+        <p class="bs-sec-sub">Papéis e tintas terrosas do atelier, com o Ember — um vermelho-brasa — como único acento. Sem azuis frios na marca-mãe; o calor é o que torna a Orion reconhecível.</p>
       </div>
     </div>
 
-    <div class="clearance">
-      <div class="clear-stage">
-        <div class="clear-grid">
-          <span class="glyph">
-            <svg width="180" height="189" viewBox="0 0 100 105" style="overflow: visible;">
-              <use href="#orion-display"/>
-            </svg>
-          </span>
-          <span class="xunit xunit-t">↕ x</span>
-          <span class="xunit xunit-r">↔ x</span>
-          <span class="xunit xunit-b">↕ x</span>
-          <span class="xunit xunit-l">↔ x</span>
-        </div>
-      </div>
-      <div class="clear-explain">
-        <dl class="bs-spec">
-          <dt>x =</dt>
-          <dd>Altura da estrela do ombro · ≈ <code>0.125 × altura do símbolo</code></dd>
-          <dt>Min A</dt>
-          <dd>Constelação completa · <code>56px</code> de altura no digital · <code>20mm</code> no impresso</dd>
-          <dt>Min B</dt>
-          <dd>Silhueta sólida · <code>16px</code> no digital · <code>8mm</code> no impresso</dd>
-          <dt>Min C</dt>
-          <dd>Cinturão isolado · qualquer tamanho, sempre acompanhado do wordmark</dd>
-          <dt>Wordmark</dt>
-          <dd>Mínimo <code>14px</code>. Abaixo disso o diacrítico some — use só "Orion" em Fraunces</dd>
-        </dl>
-      </div>
-    </div>
-
-    <div class="size-ramp">
-      <div class="size-cell">
-        <span class="sz-tier">A · 96</span>
-        <span class="sz-glyph">
-          <svg width="92" height="96" viewBox="0 0 100 105" style="overflow: visible;">
-            <use href="#orion-display"/>
-          </svg>
-        </span>
-        <span class="sz-px">96px</span>
-        <span class="sz-note">Hero, capa</span>
-      </div>
-      <div class="size-cell">
-        <span class="sz-tier">A · 64</span>
-        <span class="sz-glyph">
-          <svg width="60" height="63" viewBox="0 0 100 105" style="overflow: visible;">
-            <use href="#orion-display"/>
-          </svg>
-        </span>
-        <span class="sz-px">64px</span>
-        <span class="sz-note">Marketing</span>
-      </div>
-      <div class="size-cell">
-        <span class="sz-tier">B · 40</span>
-        <span class="sz-glyph">
-          <svg width="38" height="40" viewBox="0 0 100 105" style="overflow: visible;">
-            <use href="#orion-solid"/>
-          </svg>
-        </span>
-        <span class="sz-px">40px</span>
-        <span class="sz-note">Card, avatar</span>
-      </div>
-      <div class="size-cell">
-        <span class="sz-tier">B · 24</span>
-        <span class="sz-glyph">
-          <svg width="22" height="24" viewBox="0 0 100 105" style="overflow: visible;">
-            <use href="#orion-solid"/>
-          </svg>
-        </span>
-        <span class="sz-px">24px</span>
-        <span class="sz-note">Sidebar, header</span>
-      </div>
-      <div class="size-cell">
-        <span class="sz-tier">B · 16</span>
-        <span class="sz-glyph">
-          <svg width="15" height="16" viewBox="0 0 100 105" style="overflow: visible;">
-            <use href="#orion-solid"/>
-          </svg>
-        </span>
-        <span class="sz-px">16px</span>
-        <span class="sz-note">Favicon — limite</span>
-      </div>
-      <div class="size-cell bad">
-        <span class="sz-tier">A · 24</span>
-        <span class="sz-glyph">
-          <svg width="22" height="24" viewBox="0 0 100 105" style="overflow: visible;">
-            <use href="#orion-display"/>
-          </svg>
-        </span>
-        <span class="sz-px">24px</span>
-        <span class="sz-note">Não use A&nbsp;aqui</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═════════ 06 — Color ═════════ -->
-  <section class="bs-sec">
-    <div class="bs-sec-head">
-      <div class="bs-sec-num"><em>06</em>Cor</div>
-      <div>
-        <h2 class="bs-sec-title">Papel quente, <em>brasa de Betelgeuse</em>, brilho do algodão.</h2>
-        <p class="bs-sec-sub">Betelgeuse é a supergigante vermelha no ombro de Órion — a estrela mais quente da constelação, em cor. A paleta da Orion vive nesse calor: papéis e tintas terrosas do atelier, brasa de cinta de cobre, brilho do algodão cru. Sem azuis frios na marca-mãe.</p>
-      </div>
-    </div>
-
-    <!-- Core palette -->
     <div class="color-grid">
-      <div class="swatch">
-        <div class="swatch-chip" style="background: #f5f0e8;"></div>
-        <div class="swatch-body">
-          <div class="swatch-name">Paper</div>
-          <div class="swatch-hex">#F5F0E8</div>
-          <div class="swatch-role">Fundo principal</div>
-        </div>
-      </div>
-      <div class="swatch">
-        <div class="swatch-chip" style="background: #fbf8f2;"></div>
-        <div class="swatch-body">
-          <div class="swatch-name">Surface</div>
-          <div class="swatch-hex">#FBF8F2</div>
-          <div class="swatch-role">Cards, painéis</div>
-        </div>
-      </div>
-      <div class="swatch">
-        <div class="swatch-chip" style="background: #efe9dd;"></div>
-        <div class="swatch-body">
-          <div class="swatch-name">Surface-2</div>
-          <div class="swatch-hex">#EFE9DD</div>
-          <div class="swatch-role">Estados, divisores quentes</div>
-        </div>
-      </div>
-      <div class="swatch">
-        <div class="swatch-chip" style="background: #1f1b15;"></div>
-        <div class="swatch-body">
-          <div class="swatch-name">Ink</div>
-          <div class="swatch-hex">#1F1B15</div>
-          <div class="swatch-role">Texto primário, marca mono</div>
-        </div>
-      </div>
-      <div class="swatch">
-        <div class="swatch-chip" style="background: #a83227;"></div>
-        <div class="swatch-body">
-          <div class="swatch-name">Ember</div>
-          <div class="swatch-hex">#A83227</div>
-          <div class="swatch-role">Brasa de Betelgeuse, accent</div>
-        </div>
-      </div>
-      <div class="swatch">
-        <div class="swatch-chip" style="background: #f5efe0;"></div>
-        <div class="swatch-body">
-          <div class="swatch-name">Star</div>
-          <div class="swatch-hex">#F5EFE0</div>
-          <div class="swatch-role">Estrelas sobre fundo escuro</div>
-        </div>
-      </div>
+      <div class="swatch"><div class="swatch-chip" style="background:#f5f0e8"></div><div class="swatch-body"><div class="swatch-name">Paper</div><div class="swatch-hex">#F5F0E8</div><div class="swatch-role">Fundo principal</div></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:#fbf8f2"></div><div class="swatch-body"><div class="swatch-name">Surface</div><div class="swatch-hex">#FBF8F2</div><div class="swatch-role">Cards, painéis</div></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:#efe9dd"></div><div class="swatch-body"><div class="swatch-name">Surface-2</div><div class="swatch-hex">#EFE9DD</div><div class="swatch-role">Estados, divisores</div></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:#1f1b15"></div><div class="swatch-body"><div class="swatch-name">Ink</div><div class="swatch-hex">#1F1B15</div><div class="swatch-role">Texto, marca mono</div></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:#a83227"></div><div class="swatch-body"><div class="swatch-name">Ember</div><div class="swatch-hex">#A83227</div><div class="swatch-role">Acento único</div></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:#f5efe0"></div><div class="swatch-body"><div class="swatch-name">Star</div><div class="swatch-hex">#F5EFE0</div><div class="swatch-role">Marca sobre escuro</div></div></div>
     </div>
 
-    <!-- Three approved pairings -->
     <div class="color-band">
       <div class="color-pairing">
-        <span class="glyph">
-          <svg width="64" height="67" viewBox="0 0 100 105" style="overflow: visible; color: var(--ink);">
-            <use href="#orion-display"/>
-          </svg>
-        </span>
+        <span class="glyph"><svg width="60" height="60" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#orbit-d"/></svg></span>
         <div>
           <div class="cp-name">Ink sobre Paper · primário</div>
-          <div class="cp-desc">Combinação padrão. 13.4:1 de contraste. 95% das aparições da marca.</div>
+          <div class="cp-desc">Combinação padrão. 13.4:1 de contraste. A grande maioria das aparições da marca.</div>
         </div>
       </div>
       <div class="color-pairing dark">
         <span class="glyph">
-          <svg width="64" height="67" viewBox="0 0 100 105" style="overflow: visible; color: var(--star);">
-            <use href="#orion-display"/>
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <g stroke="var(--star)">
+              <circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/>
+              <path d="M10.4 21.9a10 10 0 0 0 9.941-15.416"/>
+              <path d="M13.5 2.1a10 10 0 0 0-9.841 15.416"/>
+            </g>
+            <circle cx="12" cy="12" r="3" fill="var(--ember)" stroke="var(--ember)"/>
           </svg>
         </span>
         <div>
           <div class="cp-name">Star sobre Carvão · escuro</div>
-          <div class="cp-desc">Modo escuro, app icon, capas. O cinturão sobe para Ember; o resto da marca fica em Star.</div>
+          <div class="cp-desc">Modo escuro e app icon. A marca fica em Star; o núcleo pode subir para Ember como acento.</div>
         </div>
       </div>
     </div>
 
-    <!-- Sub-product hues -->
-    <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 500; margin: 36px 0 4px; letter-spacing: -0.01em;">Famílias de produto</h3>
-    <p style="font-size: 13px; color: var(--ink-3); margin: 0 0 12px; max-width: 60ch;">Cada módulo herda uma cor de identidade. Elas só aparecem dentro do produto — nunca tocam o símbolo principal da Orion.</p>
+    <h3 style="font-family:var(--font-display);font-size:16px;font-weight:500;margin:36px 0 4px;letter-spacing:-0.01em;">Famílias de produto</h3>
+    <p style="font-size:13px;color:var(--ink-3);margin:0 0 12px;max-width:60ch;">Cada módulo herda uma cor de identidade. Elas só aparecem dentro do produto — nunca tocam o símbolo principal da Orion.</p>
     <div class="subs">
-      <div class="sub-card">
-        <div class="sub-mark-row">
-          <span class="sub-mark-square" style="background: #c2410c;">
-            <i data-lucide="trending-up" style="width: 14px; height: 14px;"></i>
-          </span>
-          <span class="sub-mark-name">Vendas</span>
-        </div>
-        <div class="sub-card-hex">#C2410C — terracota</div>
-        <div class="sub-card-meta">
-          <span class="sub-card-icon-name">lucide · trending-up</span>
-        </div>
-      </div>
-      <div class="sub-card">
-        <div class="sub-mark-row">
-          <span class="sub-mark-square" style="background: #7e5bef;">
-            <i data-lucide="shirt" style="width: 14px; height: 14px;"></i>
-          </span>
-          <span class="sub-mark-name">Catálogo</span>
-        </div>
-        <div class="sub-card-hex">#7E5BEF — beringela</div>
-        <div class="sub-card-meta">
-          <span class="sub-card-icon-name">lucide · shirt</span>
-        </div>
-      </div>
-      <div class="sub-card">
-        <div class="sub-mark-row">
-          <span class="sub-mark-square" style="background: #0f766e;">
-            <i data-lucide="scissors" style="width: 14px; height: 14px;"></i>
-          </span>
-          <span class="sub-mark-name">Produção</span>
-        </div>
-        <div class="sub-card-hex">#0F766E — verde-azulado</div>
-        <div class="sub-card-meta">
-          <span class="sub-card-icon-name">lucide · scissors</span>
-        </div>
-      </div>
-      <div class="sub-card">
-        <div class="sub-mark-row">
-          <span class="sub-mark-square" style="background: #b45309;">
-            <i data-lucide="package" style="width: 14px; height: 14px;"></i>
-          </span>
-          <span class="sub-mark-name">Estoque</span>
-        </div>
-        <div class="sub-card-hex">#B45309 — âmbar</div>
-        <div class="sub-card-meta">
-          <span class="sub-card-icon-name">lucide · package</span>
-        </div>
-      </div>
-      <div class="sub-card">
-        <div class="sub-mark-row">
-          <span class="sub-mark-square" style="background: #1e40af;">
-            <i data-lucide="bar-chart-3" style="width: 14px; height: 14px;"></i>
-          </span>
-          <span class="sub-mark-name">Relatórios</span>
-        </div>
-        <div class="sub-card-hex">#1E40AF — azul profundo</div>
-        <div class="sub-card-meta">
-          <span class="sub-card-icon-name">lucide · bar-chart-3</span>
-        </div>
-      </div>
-      <div class="sub-card">
-        <div class="sub-mark-row">
-          <span class="sub-mark-square" style="background: #44403c;">
-            <i data-lucide="settings" style="width: 14px; height: 14px;"></i>
-          </span>
-          <span class="sub-mark-name">Ajustes</span>
-        </div>
-        <div class="sub-card-hex">#44403C — pedra</div>
-        <div class="sub-card-meta">
-          <span class="sub-card-icon-name">lucide · settings</span>
-        </div>
-      </div>
+      <div class="sub-card"><div class="sub-mark-row"><span class="sub-mark-square" style="background:#c2410c"><i data-lucide="trending-up" style="width:14px;height:14px"></i></span><span class="sub-mark-name">Vendas</span></div><div class="sub-card-hex">#C2410C — terracota</div><div class="sub-card-meta"><span class="sub-card-icon-name">lucide · trending-up</span></div></div>
+      <div class="sub-card"><div class="sub-mark-row"><span class="sub-mark-square" style="background:#7e5bef"><i data-lucide="shirt" style="width:14px;height:14px"></i></span><span class="sub-mark-name">Catálogo</span></div><div class="sub-card-hex">#7E5BEF — beringela</div><div class="sub-card-meta"><span class="sub-card-icon-name">lucide · shirt</span></div></div>
+      <div class="sub-card"><div class="sub-mark-row"><span class="sub-mark-square" style="background:#0f766e"><i data-lucide="scissors" style="width:14px;height:14px"></i></span><span class="sub-mark-name">Produção</span></div><div class="sub-card-hex">#0F766E — verde-azulado</div><div class="sub-card-meta"><span class="sub-card-icon-name">lucide · scissors</span></div></div>
+      <div class="sub-card"><div class="sub-mark-row"><span class="sub-mark-square" style="background:#b45309"><i data-lucide="package" style="width:14px;height:14px"></i></span><span class="sub-mark-name">Estoque</span></div><div class="sub-card-hex">#B45309 — âmbar</div><div class="sub-card-meta"><span class="sub-card-icon-name">lucide · package</span></div></div>
+      <div class="sub-card"><div class="sub-mark-row"><span class="sub-mark-square" style="background:#1e40af"><i data-lucide="bar-chart-3" style="width:14px;height:14px"></i></span><span class="sub-mark-name">Relatórios</span></div><div class="sub-card-hex">#1E40AF — azul profundo</div><div class="sub-card-meta"><span class="sub-card-icon-name">lucide · bar-chart-3</span></div></div>
+      <div class="sub-card"><div class="sub-mark-row"><span class="sub-mark-square" style="background:#44403c"><i data-lucide="settings" style="width:14px;height:14px"></i></span><span class="sub-mark-name">Ajustes</span></div><div class="sub-card-hex">#44403C — pedra</div><div class="sub-card-meta"><span class="sub-card-icon-name">lucide · settings</span></div></div>
     </div>
   </section>
 
-  <!-- ═════════ 07 — Typography ═════════ -->
+  <!-- ═════════ 05 — Tipografia ═════════ -->
   <section class="bs-sec">
     <div class="bs-sec-head">
-      <div class="bs-sec-num"><em>07</em>Tipografia</div>
+      <div class="bs-sec-num"><em>05</em>Tipografia</div>
       <div>
         <h2 class="bs-sec-title">Fraunces para o <em>caráter</em>. Inter Tight para o trabalho.</h2>
-        <p class="bs-sec-sub">Fraunces traz o ar editorial e quente; Inter Tight resolve UI sem chamar atenção; JetBrains Mono carrega números e códigos. Três famílias, papéis bem definidos — não misture.</p>
+        <p class="bs-sec-sub">Fraunces traz o ar editorial e quente; Inter Tight resolve UI sem chamar atenção; JetBrains Mono carrega números e códigos. Três famílias, papéis bem definidos.</p>
       </div>
     </div>
 
     <div class="type-grid">
-      <!-- Display -->
       <div class="type-card">
         <div class="type-eyebrow"><em>A</em>Display</div>
         <div class="type-name display">Fraunces</div>
-        <div class="type-spec">var · opsz 9–144 · weights 300–600<br/>letter-spacing −0.025em<br/>line-height 1.05 (títulos), 1.15 (sub)</div>
+        <div class="type-spec">var · opsz 9–144 · weights 300–600<br/>letter-spacing −0.025em<br/>line-height 1.05 (títulos)</div>
         <div class="type-sample">
-          <div class="type-sample-row">
-            <span class="type-sample-meta">32 / 400</span>
-            <span class="type-sample-text" style="font-family: var(--font-display); font-size: 28px; font-weight: 400; letter-spacing: -0.025em;">Confecção com método</span>
-          </div>
-          <div class="type-sample-row">
-            <span class="type-sample-meta">24 / 400i</span>
-            <span class="type-sample-text" style="font-family: var(--font-display); font-size: 22px; font-weight: 400; font-style: italic; letter-spacing: -0.022em; color: var(--ember);">do corte ao romaneio</span>
-          </div>
-          <div class="type-sample-row">
-            <span class="type-sample-meta">17 / 500</span>
-            <span class="type-sample-text" style="font-family: var(--font-display); font-size: 16px; font-weight: 500; letter-spacing: -0.01em;">Ordem de produção #4821</span>
-          </div>
+          <div class="type-sample-row"><span class="type-sample-meta">28 / 400</span><span class="type-sample-text" style="font-family:var(--font-display);font-size:28px;font-weight:400;letter-spacing:-0.025em">Confecção com método</span></div>
+          <div class="type-sample-row"><span class="type-sample-meta">22 / 400i</span><span class="type-sample-text" style="font-family:var(--font-display);font-size:22px;font-weight:400;font-style:italic;letter-spacing:-0.022em;color:var(--ember)">do corte ao romaneio</span></div>
+          <div class="type-sample-row"><span class="type-sample-meta">16 / 500</span><span class="type-sample-text" style="font-family:var(--font-display);font-size:16px;font-weight:500;letter-spacing:-0.01em">Ordem de produção #4821</span></div>
         </div>
       </div>
-
-      <!-- Body -->
       <div class="type-card">
         <div class="type-eyebrow"><em>B</em>Body / UI</div>
         <div class="type-name body">Inter Tight</div>
-        <div class="type-spec">var · weights 300–700<br/>letter-spacing 0 (default), 0.12em (eyebrows)<br/>line-height 1.5 (corpo)</div>
+        <div class="type-spec">var · weights 300–700<br/>letter-spacing 0 · 0.12em (eyebrows)<br/>line-height 1.5 (corpo)</div>
         <div class="type-sample">
-          <div class="type-sample-row">
-            <span class="type-sample-meta">14 / 400</span>
-            <span class="type-sample-text" style="font-family: var(--font-body); font-size: 14px; font-weight: 400;">Confira o estoque de aviamentos antes do corte.</span>
-          </div>
-          <div class="type-sample-row">
-            <span class="type-sample-meta">13 / 500</span>
-            <span class="type-sample-text" style="font-family: var(--font-body); font-size: 13px; font-weight: 500;">Aprovar ficha técnica</span>
-          </div>
-          <div class="type-sample-row">
-            <span class="type-sample-meta">11 / 600</span>
-            <span class="type-sample-text" style="font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3);">Ordem de produção</span>
-          </div>
+          <div class="type-sample-row"><span class="type-sample-meta">14 / 400</span><span class="type-sample-text" style="font-family:var(--font-body);font-size:14px;font-weight:400">Confira o estoque antes do corte.</span></div>
+          <div class="type-sample-row"><span class="type-sample-meta">13 / 500</span><span class="type-sample-text" style="font-family:var(--font-body);font-size:13px;font-weight:500">Aprovar ficha técnica</span></div>
+          <div class="type-sample-row"><span class="type-sample-meta">11 / 600</span><span class="type-sample-text" style="font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3)">Ordem de produção</span></div>
         </div>
       </div>
-
-      <!-- Mono -->
       <div class="type-card">
         <div class="type-eyebrow"><em>C</em>Mono / Dados</div>
         <div class="type-name mono">JetBrains Mono</div>
-        <div class="type-spec">weights 400, 500<br/>letter-spacing 0.04em (etiquetas)<br/>uso: SKU, IDs, números, código</div>
+        <div class="type-spec">weights 400, 500<br/>letter-spacing 0.04em (etiquetas)<br/>uso: SKU, IDs, números</div>
         <div class="type-sample">
-          <div class="type-sample-row">
-            <span class="type-sample-meta">13 / 500</span>
-            <span class="type-sample-text" style="font-family: var(--font-mono); font-size: 13px; font-weight: 500;">CAM-2406-M-PRT</span>
-          </div>
-          <div class="type-sample-row">
-            <span class="type-sample-meta">12 / 400</span>
-            <span class="type-sample-text" style="font-family: var(--font-mono); font-size: 12px; font-weight: 400;">R$ 84.320,00 · 1 248 un</span>
-          </div>
-          <div class="type-sample-row">
-            <span class="type-sample-meta">10.5 / 500</span>
-            <span class="type-sample-text" style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3);">v1.0 · maio 2026</span>
-          </div>
+          <div class="type-sample-row"><span class="type-sample-meta">13 / 500</span><span class="type-sample-text" style="font-family:var(--font-mono);font-size:13px;font-weight:500">CAM-2406-M-PRT</span></div>
+          <div class="type-sample-row"><span class="type-sample-meta">12 / 400</span><span class="type-sample-text" style="font-family:var(--font-mono);font-size:12px;font-weight:400">R$ 84.320,00 · 1 248 un</span></div>
+          <div class="type-sample-row"><span class="type-sample-meta">10.5 / 500</span><span class="type-sample-text" style="font-family:var(--font-mono);font-size:10.5px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3)">v2.0 · junho 2026</span></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ═════════ 08 — In context ═════════ -->
+  <!-- ═════════ 06 — Aplicações ═════════ -->
   <section class="bs-sec">
     <div class="bs-sec-head">
-      <div class="bs-sec-num"><em>08</em>Aplicações</div>
+      <div class="bs-sec-num"><em>06</em>Aplicações</div>
       <div>
         <h2 class="bs-sec-title">A marca <em>no mundo</em>.</h2>
-        <p class="bs-sec-sub">Cinco aplicações canônicas. Cada uma usa a variante certa do sistema — não tente forçar a constelação completa onde a silhueta resolve.</p>
+        <p class="bs-sec-sub">Cinco aplicações canônicas. O mesmo símbolo fino atravessa do ícone do app ao favicon de 16px sem retoque — é a vantagem de um desenho que já nasce dentro do produto.</p>
       </div>
     </div>
 
@@ -2105,10 +750,15 @@ i.lucide-loaded svg { display: block; }
       <div class="ctx ctx-appicon on-dark">
         <span class="ctx-label">App icon · iOS / macOS</span>
         <div class="ctx-pad ctx-appicon-stage">
-          <div class="app-icon">
-            <svg width="92" height="97" viewBox="0 0 100 105" style="overflow: visible; color: var(--star); position: relative; z-index: 1;">
-              <use href="#orion-solid"/>
-            </svg>
+          <div class="app-icons">
+            <div>
+              <div class="app-icon ink"><svg width="76" height="76" viewBox="0 0 24 24" style="color:var(--star)"><use href="#orbit-d"/></svg></div>
+              <div class="app-icon-cap">Ink</div>
+            </div>
+            <div>
+              <div class="app-icon ember"><svg width="76" height="76" viewBox="0 0 24 24" style="color:var(--star)"><use href="#orbit-d"/></svg></div>
+              <div class="app-icon-cap">Ember</div>
+            </div>
           </div>
         </div>
       </div>
@@ -2120,72 +770,55 @@ i.lucide-loaded svg { display: block; }
           <div class="fav-browser">
             <div class="fav-tabs">
               <div class="fav-tab">
-                <svg width="12" height="13" viewBox="0 0 100 105" style="overflow: visible; color: var(--ink);">
-                  <use href="#orion-solid"/>
-                </svg>
-                <span>Orion</span>
-                <span class="fav-x">×</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#orbit-s"/></svg>
+                <span>Orion</span><span class="fav-x">×</span>
               </div>
               <div class="fav-tab muted"><span>Catálogo</span></div>
             </div>
             <div class="fav-url">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: var(--ink-3);"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink-3)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               <span class="fav-url-pill">app.orion.com.br/catalogo</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Sidebar in-product -->
+      <!-- Sidebar -->
       <div class="ctx ctx-sidebar on-dark">
-        <span class="ctx-label">Sidebar · dentro do produto</span>
-        <div class="ctx-sb-stage" style="padding-top: 36px;">
+        <span class="ctx-label">Sidebar · no produto</span>
+        <div class="ctx-sb-stage" style="padding-top:34px;">
           <div class="sb-mock-rail">
             <div class="sb-mock-brand">
-              <span class="sb-mock-mark">
-                <svg width="20" height="21" viewBox="0 0 100 105" style="overflow: visible; color: var(--star);">
-                  <use href="#orion-solid"/>
-                </svg>
-              </span>
+              <span class="sb-mock-mark"><svg width="18" height="18" viewBox="0 0 24 24" style="color:var(--star)"><use href="#orbit-s"/></svg></span>
               <div>
                 <div class="sb-mock-brand-name">Orion</div>
                 <div class="sb-mock-brand-sub">Confecção</div>
               </div>
             </div>
             <div class="sb-mock-items">
-              <div class="sb-mock-item on" style="--dot: #c2410c;"><span class="dot"></span>Vendas</div>
-              <div class="sb-mock-item" style="--dot: #7e5bef;"><span class="dot"></span>Catálogo</div>
-              <div class="sb-mock-item" style="--dot: #0f766e;"><span class="dot"></span>Produção</div>
-              <div class="sb-mock-item" style="--dot: #b45309;"><span class="dot"></span>Estoque</div>
-              <div class="sb-mock-item" style="--dot: #a83227;"><span class="dot"></span>Relatórios</div>
-            </div>
-          </div>
-          <div class="sb-mock-canvas">
-            <div class="sb-mock-canvas-bar"></div>
-            <div class="sb-mock-canvas-bar short"></div>
-            <div class="sb-mock-canvas-grid">
-              <div class="sb-mock-tile"></div>
-              <div class="sb-mock-tile"></div>
-              <div class="sb-mock-tile"></div>
-              <div class="sb-mock-tile"></div>
-              <div class="sb-mock-tile"></div>
-              <div class="sb-mock-tile"></div>
+              <div class="sb-mock-item on" style="--dot:#c2410c"><span class="dot"></span>Vendas</div>
+              <div class="sb-mock-item" style="--dot:#7e5bef"><span class="dot"></span>Catálogo</div>
+              <div class="sb-mock-item" style="--dot:#0f766e"><span class="dot"></span>Produção</div>
+              <div class="sb-mock-item" style="--dot:#b45309"><span class="dot"></span>Estoque</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Loading splash -->
+      <!-- Splash with orbit loader -->
       <div class="ctx ctx-splash on-dark">
         <span class="ctx-label">Splash · app inicializando</span>
         <div class="ctx-splash-stage">
           <div class="splash-inner">
-            <span class="wordmark wordmark-md">Or<span class="wm-i">i<span class="wm-belt-l" aria-hidden="true"></span><span class="wm-belt-r" aria-hidden="true"></span></span>on</span>
+            <span class="wordmark wordmark-md">Or<span class="wm-i">i<span class="wm-orbit" aria-hidden="true"></span></span>on</span>
             <div class="splash-loader-wrap">
-              <svg class="belt-loader" width="60" height="20" viewBox="0 0 30 10" style="overflow: visible; color: var(--star);" aria-label="carregando">
-                <circle cx="5"  cy="5" r="3"/>
-                <circle cx="15" cy="5" r="3.6"/>
-                <circle cx="25" cy="5" r="3"/>
+              <svg class="orbit-spin" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--star)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-label="carregando">
+                <circle cx="12" cy="12" r="3"/>
+                <g class="spin-group">
+                  <circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/>
+                  <path d="M10.4 21.9a10 10 0 0 0 9.941-15.416"/>
+                  <path d="M13.5 2.1a10 10 0 0 0-9.841 15.416"/>
+                </g>
               </svg>
               <span>carregando</span>
             </div>
@@ -2193,18 +826,14 @@ i.lucide-loaded svg { display: block; }
         </div>
       </div>
 
-      <!-- Social share card / OG image -->
+      <!-- Share card -->
       <div class="ctx ctx-share on-dark">
         <span class="ctx-label">Card de compartilhamento · 1200 × 630</span>
         <div class="ctx-share-stage">
           <div class="share-card">
             <div class="share-card-top">
-              <svg width="36" height="38" viewBox="0 0 100 105" style="overflow: visible; color: var(--star);">
-                <use href="#orion-display"/>
-              </svg>
-              <div>
-                <div class="share-card-eyebrow">Orion · SaaS para confecção</div>
-              </div>
+              <svg width="34" height="34" viewBox="0 0 24 24" style="color:var(--star)"><use href="#orbit-d"/></svg>
+              <div class="share-card-eyebrow">Orion · SaaS para confecção</div>
             </div>
             <div class="share-card-title">Do corte ao romaneio,<br/><em>no mesmo lugar.</em></div>
           </div>
@@ -2213,125 +842,59 @@ i.lucide-loaded svg { display: block; }
     </div>
   </section>
 
-  <!-- ═════════ 09 — Don'ts ═════════ -->
+  <!-- ═════════ 07 — Erros comuns ═════════ -->
   <section class="bs-sec">
     <div class="bs-sec-head">
-      <div class="bs-sec-num"><em>09</em>Erros comuns</div>
+      <div class="bs-sec-num"><em>07</em>Erros comuns</div>
       <div>
-        <h2 class="bs-sec-title">Oito coisas que <em>nunca</em> fazemos.</h2>
+        <h2 class="bs-sec-title">Seis coisas que <em>nunca</em> fazemos.</h2>
         <p class="bs-sec-sub">Se quiser uma variação que não está aqui — pergunta primeiro. Identidade vive de consistência.</p>
       </div>
     </div>
 
     <div class="donts">
       <div class="dont">
-        <div class="dont-stage dont-stretch">
-          <span class="dont-x">×</span>
-          <span class="glyph">
-            <svg width="72" height="76" viewBox="0 0 100 105" style="overflow: visible; color: var(--ink);">
-              <use href="#orion-display"/>
-            </svg>
-          </span>
-        </div>
-        <div class="dont-text"><strong>Não estique.</strong> Mantenha proporção.</div>
+        <div class="dont-stage dont-stretch"><span class="dont-x">×</span><span class="glyph"><svg width="60" height="60" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#orbit-d"/></svg></span></div>
+        <div class="dont-text"><strong>Não estique.</strong> Mantenha o círculo redondo.</div>
       </div>
-
       <div class="dont">
-        <div class="dont-stage dont-skew">
-          <span class="dont-x">×</span>
-          <span class="glyph">
-            <svg width="72" height="76" viewBox="0 0 100 105" style="overflow: visible; color: var(--ink);">
-              <use href="#orion-display"/>
-            </svg>
-          </span>
-        </div>
-        <div class="dont-text"><strong>Não incline.</strong> A camiseta fica em pé.</div>
+        <div class="dont-stage dont-rotate"><span class="dont-x">×</span><span class="glyph"><svg width="60" height="60" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#orbit-d"/></svg></span></div>
+        <div class="dont-text"><strong>Não gire.</strong> A órbita tem orientação fixa.</div>
       </div>
-
       <div class="dont">
-        <div class="dont-stage dont-rotate">
-          <span class="dont-x">×</span>
-          <span class="glyph">
-            <svg width="72" height="76" viewBox="0 0 100 105" style="overflow: visible; color: var(--ink);">
-              <use href="#orion-display"/>
-            </svg>
-          </span>
-        </div>
-        <div class="dont-text"><strong>Não gire.</strong> O cinturão é horizontal.</div>
-      </div>
-
-      <div class="dont">
-        <div class="dont-stage dont-recolor">
-          <span class="dont-x">×</span>
-          <span class="glyph">
-            <svg width="72" height="76" viewBox="0 0 100 105" style="overflow: visible; color: #22c55e;">
-              <use href="#orion-display"/>
-            </svg>
-          </span>
-        </div>
+        <div class="dont-stage dont-recolor"><span class="dont-x">×</span><span class="glyph"><svg width="60" height="60" viewBox="0 0 24 24"><use href="#orbit-d"/></svg></span></div>
         <div class="dont-text"><strong>Não recolora.</strong> Use Ink, Star ou Ember.</div>
       </div>
-
       <div class="dont">
-        <div class="dont-stage dont-shadow">
-          <span class="dont-x">×</span>
-          <span class="glyph">
-            <svg width="72" height="76" viewBox="0 0 100 105" style="overflow: visible; color: var(--ember); filter: drop-shadow(0 0 8px rgba(168,50,39,.95));">
-              <use href="#orion-display"/>
-            </svg>
-          </span>
-        </div>
-        <div class="dont-text"><strong>Sem brilho neon.</strong> As estrelas piscam, não brilham.</div>
+        <div class="dont-stage dont-fill"><span class="dont-x">×</span><span class="glyph">
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="var(--ink)" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/>
+            <path fill="none" d="M10.4 21.9a10 10 0 0 0 9.941-15.416"/><path fill="none" d="M13.5 2.1a10 10 0 0 0-9.841 15.416"/>
+          </svg>
+        </span></div>
+        <div class="dont-text"><strong>Não preencha tudo.</strong> Só o núcleo pode ser sólido.</div>
       </div>
-
       <div class="dont">
-        <div class="dont-stage" style="background: #e6dcc4;">
-          <span class="dont-x">×</span>
-          <span class="glyph">
-            <svg width="22" height="24" viewBox="0 0 100 105" style="overflow: visible; color: var(--ink);">
-              <use href="#orion-display"/>
-            </svg>
-          </span>
-        </div>
-        <div class="dont-text"><strong>Variante A no pequeno.</strong> Abaixo de 56px use a silhueta.</div>
+        <div class="dont-stage dont-shadow"><span class="dont-x">×</span><span class="glyph"><svg width="60" height="60" viewBox="0 0 24 24"><use href="#orbit-d"/></svg></span></div>
+        <div class="dont-text"><strong>Sem brilho neon.</strong> O traço é limpo e seco.</div>
       </div>
-
-      <div class="dont dont-contrast">
-        <div class="dont-stage">
-          <span class="dont-x">×</span>
-          <span class="glyph">
-            <svg width="72" height="76" viewBox="0 0 100 105" style="overflow: visible;">
-              <use href="#orion-display"/>
-            </svg>
-          </span>
-        </div>
-        <div class="dont-text"><strong>Sem baixo contraste.</strong> Marca tem que aparecer.</div>
-      </div>
-
       <div class="dont dont-font">
-        <div class="dont-stage">
-          <span class="dont-x">×</span>
-          <span class="wordmark wordmark-md" style="color: var(--ink);">Orion</span>
-        </div>
+        <div class="dont-stage"><span class="dont-x">×</span><span class="wordmark wordmark-md" style="color:var(--ink)">Orion</span></div>
         <div class="dont-text"><strong>Não troque a fonte.</strong> Wordmark é Fraunces 400.</div>
       </div>
     </div>
   </section>
 
-  <!-- ═════════ Footer ═════════ -->
   <div class="bs-foot">
-    <span>Orion · brand sheet v1.0</span>
-    <span>★ ★ ★</span>
-    <span>maio 2026 · feita com cuidado</span>
+    <span>Orion · brand sheet v2.0</span>
+    <span>◐ ○ ○</span>
+    <span>junho 2026 · feita com cuidado</span>
   </div>
 
 </main>
 
 <script>
-  // Inflate Lucide icons (sub-product cards, etc.).
-  if (window.lucide && window.lucide.createIcons) {
-    window.lucide.createIcons();
-  }
+  if (window.lucide && window.lucide.createIcons) { window.lucide.createIcons(); }
 </script>
 
 </body>

@@ -1,11 +1,11 @@
 /* Orion Console (backoffice) — overrides on top of styles.css.
    Scoped to .console so it never leaks into the tenant app.
-   Distinct identity: deep "Orion indigo" accent + an indigo-ink sidebar,
+   Distinct identity: warm charcoal sidebar + the "Console" tag,
    so an admin always knows they're in the platform console. */
 
 .console {
-  /* Fixed Orion-indigo console accent — distinct from any tenant accent. */
-  --accent:      #4f46e5;
+  /* Orion brand Ember accent — same brand color as the tenant app. */
+  --accent:      #a83227;
   --accent-soft: color-mix(in oklab, var(--accent) 14%, var(--surface));
   --accent-ink:  #ffffff;
   --accent-edge: color-mix(in oklab, var(--accent) 30%, var(--ink));
@@ -16,31 +16,31 @@
   --plan-pro:     #4f46e5;
   --plan-fabrica: #7e5bef;
 
-  --night:   #171528;  /* console sidebar ink */
-  --night-2: #1d1a35;
+  --night:   #1c1812;  /* console sidebar ink — warm charcoal */
+  --night-2: #221d15;
 }
 
 /* Sidebar: deep indigo-ink instead of the tenant's warm brown */
 .console .sidebar {
   background: linear-gradient(180deg, var(--night) 0%, var(--night-2) 100%);
-  border-right: 1px solid #100d1f;
+  border-right: 1px solid #100c08;
 }
 .console .sb-item.active::before { background: var(--sub-color, var(--accent)); }
 
 /* Console wordmark lockup in the sidebar brand */
 .console .sb-brand { cursor: default; }
 .console .sb-brand-mark {
-  background: linear-gradient(150deg, #6d5cff 0%, var(--accent) 100%);
+  background: linear-gradient(150deg, #c2473b 0%, var(--accent) 100%);
   box-shadow: 0 0 0 1px rgba(255,255,255,.14) inset, 0 4px 14px -4px var(--accent);
 }
 .console .sb-console-tag {
   font-size: 9px; letter-spacing: .18em; text-transform: uppercase;
-  color: rgba(199,194,255,.72); font-weight: 700;
+  color: rgba(245,239,224,.72); font-weight: 700;
   display: inline-flex; align-items: center; gap: 5px; margin-top: 4px;
 }
 .console .sb-console-tag::before {
   content: ''; width: 5px; height: 5px; border-radius: 999px;
-  background: #8b7bff; box-shadow: 0 0 0 3px rgba(139,123,255,.22);
+  background: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent);
 }
 
 /* Topbar: a hairline ribbon that reinforces "internal console" */
@@ -162,7 +162,7 @@
   position: sticky; top: 0; z-index: 50;
   display: flex; align-items: center; gap: 12px;
   padding: 9px 20px;
-  background: linear-gradient(90deg, #4f46e5, #6d5cff);
+  background: linear-gradient(90deg, #a83227, #c2473b);
   color: #fff; font-size: 13px;
 }
 .imp-banner b { font-weight: 600; }

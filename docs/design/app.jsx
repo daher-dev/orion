@@ -1,7 +1,7 @@
 // Main Orion app — depends on all pages, sidebar, topbar, tweaks-panel
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "accent": "#2563eb",
+  "accent": "#a83227",
   "companyName": "Underground",
   "role": "manager",
   "collapsed": false
@@ -54,6 +54,7 @@ function App() {
               role={tweaks.role}
               setRoute={setRoute}/>
       <main className="main" data-screen-label={route}>
+        {route === 'dashboard' && <FeatureAnnounce setRoute={setRoute}/>}
         {impersonating && (
           <div className="imp-banner">
             <Icon name="orbit" size={15}/>
@@ -72,7 +73,7 @@ function App() {
                    onChange={v => setTweak('companyName', v)}/>
         <TweakColor label="Cor de destaque"
                     value={tweaks.accent}
-                    options={['#2563eb','#c2410c','#0f766e','#7e5bef','#b45309','#1f1b15']}
+                    options={['#a83227','#c2410c','#0f766e','#7e5bef','#b45309','#1f1b15']}
                     onChange={v => setTweak('accent', v)}/>
         <TweakSection label="Persona"/>
         <TweakRadio label="Função"
@@ -91,6 +92,51 @@ function App() {
     </div>
   );
 }
+
+// Post-login feature popup — announces the newest release on Início.
+// Shows until the user dismisses it or opens Novidades (both set orion.seenRelease).
+function FeatureAnnounce() {
+  const r = window.ORION_LATEST_RELEASE;
+  const [open, setOpen] = React.useState(false);
+  React.useEffect(() => {
+    if (!r) return;
+    let seen = null;
+    try { seen = localStorage.getItem('orion.seenRelease'); } catch (e) {}
+    if (seen !== r.id) setOpen(true);
+  }, []);
+  const markSeen = () => { try { localStorage.setItem('orion.seenRelease', r.id); } catch (e) {} };
+  const dismiss = () => { markSeen(); setOpen(false); };
+  if (!open || !r) return null;
+  const ac = r.areaColor || 'var(--accent)';
+  const stats = (r.stats || []).slice(0, 3);
+  return (
+    <div className="fa-veil" onClick={dismiss}>
+      <div className="fa-card fa-card-lg" style={{ '--c': ac }} onClick={e => e.stopPropagation()}
+           role="dialog" aria-label="Novidade no Orion">
+        <div className="fa-accentbar"/>
+        <button className="fa-x" onClick={dismiss} aria-label="Fechar"><Icon name="x" size={17}/></button>
+        <div className="fa-eyebrow"><Icon name="sparkles" size={13}/> Novidade · {r.version}</div>
+        <h2 className="fa-title">{r.title} {r.titleEm && <em>{r.titleEm}</em>}</h2>
+        <p className="fa-intro">{r.intro}</p>
+        {r.flow && <div className="fa-flow"><Flow accent={ac} steps={r.flow}/></div>}
+        {stats.length > 0 && (
+          <div className="fa-stats">
+            {stats.map((s, i) => (
+              <div key={i} className="fa-stat">
+                <div className={"fa-stat-v" + (s.up ? ' pos' : '')}>{s.value}</div>
+                <div className="fa-stat-l">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        <a className="fa-link" href={`Novidades.html#rel-${r.id}`} onClick={markSeen}>
+          Ver no histórico de novidades <Icon name="arrow-right" size={14}/>
+        </a>
+      </div>
+    </div>
+  );
+}
+window.FeatureAnnounce = FeatureAnnounce;
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 

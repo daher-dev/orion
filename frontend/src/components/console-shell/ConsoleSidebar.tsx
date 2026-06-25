@@ -28,13 +28,13 @@ export function ConsoleSidebar() {
       <div className="flex h-14 items-center gap-2.5 border-b border-white/5 bg-black/20 px-3.5">
         <span
           className="grid size-[30px] place-items-center rounded-[9px]"
-          style={{ background: "linear-gradient(150deg,#6d5cff,var(--console-accent))" }}
+          style={{ background: "linear-gradient(150deg,#c2473b,var(--console-accent))" }}
         >
           <Orbit size={16} strokeWidth={2} className="text-white" />
         </span>
         <div className="min-w-0 flex-1">
           <div className="font-serif text-[15px] leading-tight font-medium text-[#f5efe0]">Orion</div>
-          <div className="text-[10.5px] uppercase tracking-[0.14em] text-[rgb(199_194_255_/_0.7)]">Console</div>
+          <div className="text-[10.5px] uppercase tracking-[0.14em] text-[rgb(245_239_224_/_0.72)]">Console</div>
         </div>
       </div>
 

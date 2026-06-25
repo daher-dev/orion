@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { orionMarkSvg, svgToDataUri } from "@/lib/brand-mark";
 
-// 1200×630 share card — the Star silhouette + wordmark + tagline on Carvão,
+// 1200×630 share card — the Star orbit mark + wordmark + tagline on Carvão,
 // per the brand sheet's "Card de compartilhamento". Fraunces is fetched at
 // request time; if the fetch fails the card falls back to the mark alone.
 export const size = { width: 1200, height: 630 };
@@ -49,7 +49,7 @@ export default async function Image({ params }: { params: Promise<{ locale: stri
           gap: 32,
         }}
       >
-        <img src={markSrc} width={132} height={139} alt="" />
+        <img src={markSrc} width={132} height={132} alt="" />
         {font ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div

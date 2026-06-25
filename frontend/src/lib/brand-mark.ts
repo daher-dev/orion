@@ -1,46 +1,44 @@
 /**
  * Orion mark geometry as plain SVG strings — shared by the React components'
  * sibling assets that can't import JSX: the generated app icons and OG image
- * (next/og rasterizes SVG via an <img> data URI). Source: the `orion-solid`
- * symbol in /docs/design/branding.html.
+ * (next/og rasterizes SVG via an <img> data URI). Source: the orbit symbol
+ * (`#orbit-d` / `#orbit-s`) in /docs/design/Orion Brand.html (§02 — A marca).
  */
 
-/** Solid t-shirt silhouette path (viewBox 0 0 100 105); belt cut out (evenodd). */
-export const ORION_SOLID_PATH =
-  "M 42 16 C 38 18,28 19,22 22 L 9 41 C 8.5 42.5,9 44,10.5 44.5 L 26 49 L 22 88 " +
-  "C 21.8 90,23.5 92,25.5 92 L 74.5 92 C 76.5 92,78.2 90,78 88 L 74 49 L 89.5 44.5 " +
-  "C 91 44,91.5 42.5,91 41 L 78 22 C 72 19,62 18,58 16 C 56.5 22,53.5 28,50 28 " +
-  "C 46.5 28,43.5 22,42 16 Z " +
-  "M 40 56 m -3.6 0 a 3.6 3.6 0 1 0 7.2 0 a 3.6 3.6 0 1 0 -7.2 0 " +
-  "M 50 58 m -4.2 0 a 4.2 4.2 0 1 0 8.4 0 a 4.2 4.2 0 1 0 -8.4 0 " +
-  "M 60 56 m -3.6 0 a 3.6 3.6 0 1 0 7.2 0 a 3.6 3.6 0 1 0 -7.2 0";
+/** The orbit shapes (viewBox 0 0 24 24): two moons, the open orbit, the core. */
+const ORION_ORBIT_SHAPES =
+  '<circle cx="19" cy="5" r="2"/>' +
+  '<circle cx="5" cy="19" r="2"/>' +
+  '<path d="M10.4 21.9a10 10 0 0 0 9.941-15.416"/>' +
+  '<path d="M13.5 2.1a10 10 0 0 0-9.841 15.416"/>' +
+  '<circle cx="12" cy="12" r="3"/>';
 
-/** The bare silhouette mark, `color` filled (default Star), aspect 100:105. */
+/** The bare orbit mark, stroked in `color` (default Star). Square (viewBox 24×24). */
 export function orionMarkSvg(width: number, color = "#f5efe0"): string {
-  const height = Math.round(width * 1.05);
+  const sw = width <= 24 ? 2.2 : 1.6;
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" ` +
-    `viewBox="0 0 100 105"><path fill-rule="evenodd" fill="${color}" d="${ORION_SOLID_PATH}"/></svg>`
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${width}" ` +
+    `viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="${sw}" ` +
+    `stroke-linecap="round" stroke-linejoin="round">${ORION_ORBIT_SHAPES}</svg>`
   );
 }
 
 /**
- * The canonical app icon: an Ink rounded tile holding the Star silhouette.
+ * The canonical app icon: an Ink rounded tile holding the Star orbit mark.
  * Resolution-independent (viewBox 0 0 100 100); `px` only sets the render box.
- * The mark is scaled to 0.62 and centered (its content center sits at ~50,54).
+ * The 24-grid mark is scaled to ~62% (62/24 = 2.583) and centered.
  */
 export function orionAppIconSvg(
   px = 100,
   { tile = "#1f1b15", mark = "#f5efe0" }: { tile?: string; mark?: string } = {},
 ): string {
-  const s = 0.62;
-  const tx = 50 - s * 50; // 19
-  const ty = 50 - s * 54; // 16.52
+  const s = 2.583;
+  const t = 50 - 12 * s; // center the grid's (12,12) at (50,50) → ~19
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 100 100">` +
     `<rect width="100" height="100" rx="23" fill="${tile}"/>` +
-    `<g transform="translate(${tx} ${ty}) scale(${s})" fill="${mark}" fill-rule="evenodd">` +
-    `<path d="${ORION_SOLID_PATH}"/></g></svg>`
+    `<g transform="translate(${t} ${t}) scale(${s})" fill="none" stroke="${mark}" ` +
+    `stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ORION_ORBIT_SHAPES}</g></svg>`
   );
 }
 

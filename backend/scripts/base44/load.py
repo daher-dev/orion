@@ -26,6 +26,8 @@ from models import (
     Ad,
     AdProduct,
     Batch,
+    BlankPiece,
+    BlankPieceMovement,
     Client,
     Company,
     CompanySettings,
@@ -46,8 +48,6 @@ from models import (
     SewingShipment,
     SewingShipmentItem,
     SpecTrim,
-    StockEntry,
-    StockExit,
     User,
 )
 from scripts.base44 import settings
@@ -76,8 +76,8 @@ TABLE_MODELS: dict[str, type] = {
     "order": Order,
     "order_item": OrderItem,
     "imported_order": ImportedOrder,
-    "stock_entry": StockEntry,
-    "stock_exit": StockExit,
+    "blank_piece": BlankPiece,
+    "blank_piece_movement": BlankPieceMovement,
     "company_settings": CompanySettings,
 }
 

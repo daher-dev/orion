@@ -247,35 +247,77 @@ async def _open_demand_rows(db: AsyncSession, *, company_id: uuid.UUID) -> list[
 
 
 async def _finished_on_hand_map(
-    db: AsyncSession, *, company_id: uuid.UUID, variation_ids: set[uuid.UUID]
+    db: AsyncSession, *, company_id: uuid.UUID, demand_rows: list[dict]
 ) -> dict[uuid.UUID, int]:
-    """``{variation_id: on_hand}`` (entries - exits) for the demand variations.
+    """``{design_variation_id: on_hand}`` (entries - exits) for the demand SKUs.
 
-    Built inline as two grouped aggregates filtered to the demand set, mirroring
-    ``stock.list_stock_levels``'s entries_agg/exits_agg — we do NOT loop
-    ``stock._compute_on_hand`` per variation. Missing keys default to 0.
+    Demand variations are design-specific (``Product.print_id IS NOT NULL``), but
+    the stock ledger is keyed to base variations (same spec x color x size, but
+    from the no-print product).  We bridge via ``(spec_id, color_code, size)``:
+    find the base variation for each demand natkey, sum its stock ledger, then
+    re-key the result back to the design variation id so callers stay unchanged.
     """
 
-    if not variation_ids:
+    if not demand_rows:
         return {}
 
+    # Build natkey → design variation id (first wins; natkey is 1:1 with demand row).
+    natkey_to_vid: dict[tuple[uuid.UUID, str, Size], uuid.UUID] = {}
+    for r in demand_rows:
+        nk = (r["spec_id"], r["color_code"], r["size"])
+        natkey_to_vid.setdefault(nk, r["variation_id"])
+
+    spec_ids = {nk[0] for nk in natkey_to_vid}
+    color_codes = {nk[1] for nk in natkey_to_vid}
+    sizes = {nk[2] for nk in natkey_to_vid}
+
+    # Find the base (no-print) product variation for each natkey.
+    base_stmt = (
+        select(ProductVariation.id, Product.spec_id, ProductVariation.color_code, ProductVariation.size)
+        .join(Product, Product.id == ProductVariation.product_id)
+        .where(
+            ProductVariation.company_id == company_id,
+            Product.print_id.is_(None),  # type: ignore[union-attr]
+            Product.spec_id.in_(spec_ids),  # type: ignore[union-attr]
+            ProductVariation.color_code.in_(color_codes),  # type: ignore[union-attr]
+            ProductVariation.size.in_(sizes),  # type: ignore[union-attr]
+        )
+    )
+    # base variation id → the demand variation id it covers
+    base_to_design: dict[uuid.UUID, uuid.UUID] = {}
+    for base_vid, spec_id, color_code, size in (await db.exec(base_stmt)).all():
+        nk = (spec_id, color_code, size)
+        design_vid = natkey_to_vid.get(nk)
+        if design_vid is not None:
+            base_to_design[base_vid] = design_vid
+
+    if not base_to_design:
+        return {}
+
+    base_vids = set(base_to_design)
     entries_stmt = (
         select(StockEntry.variation_id, func.coalesce(func.sum(StockEntry.quantity), 0))
-        .where(StockEntry.company_id == company_id, StockEntry.variation_id.in_(variation_ids))  # type: ignore[union-attr]
+        .where(StockEntry.company_id == company_id, StockEntry.variation_id.in_(base_vids))  # type: ignore[union-attr]
         .group_by(StockEntry.variation_id)
     )
     exits_stmt = (
         select(StockExit.variation_id, func.coalesce(func.sum(StockExit.quantity), 0))
-        .where(StockExit.company_id == company_id, StockExit.variation_id.in_(variation_ids))  # type: ignore[union-attr]
+        .where(StockExit.company_id == company_id, StockExit.variation_id.in_(base_vids))  # type: ignore[union-attr]
         .group_by(StockExit.variation_id)
     )
 
-    on_hand: dict[uuid.UUID, int] = {}
-    for variation_id, total in (await db.exec(entries_stmt)).all():
-        on_hand[variation_id] = int(total or 0)
-    for variation_id, total in (await db.exec(exits_stmt)).all():
-        on_hand[variation_id] = on_hand.get(variation_id, 0) - int(total or 0)
-    return on_hand
+    base_on_hand: dict[uuid.UUID, int] = {}
+    for base_vid, total in (await db.exec(entries_stmt)).all():
+        base_on_hand[base_vid] = int(total or 0)
+    for base_vid, total in (await db.exec(exits_stmt)).all():
+        base_on_hand[base_vid] = base_on_hand.get(base_vid, 0) - int(total or 0)
+
+    # Re-key to design variation ids.
+    result: dict[uuid.UUID, int] = {}
+    for base_vid, on_hand in base_on_hand.items():
+        design_vid = base_to_design[base_vid]
+        result[design_vid] = result.get(design_vid, 0) + max(0, on_hand)
+    return result
 
 
 async def _printed_in_production_map(db: AsyncSession, *, company_id: uuid.UUID) -> dict[uuid.UUID, int]:
@@ -392,8 +434,7 @@ async def build_suggestions(db: AsyncSession, *, company_id: uuid.UUID) -> Plann
     demand_rows = await _open_demand_rows(db, company_id=company_id)
 
     # On-hand + WIP readers (bulk, reused verbatim).
-    variation_ids = {r["variation_id"] for r in demand_rows}
-    finished_map = await _finished_on_hand_map(db, company_id=company_id, variation_ids=variation_ids)
+    finished_map = await _finished_on_hand_map(db, company_id=company_id, demand_rows=demand_rows)
     blank_on_hand = await blank_stock_service.compute_on_hand_map(db, company_id=company_id)
     printed_on_hand = await printed_transfer_service.compute_on_hand_map(db, company_id=company_id)
     printed_wip_map = await _printed_in_production_map(db, company_id=company_id)

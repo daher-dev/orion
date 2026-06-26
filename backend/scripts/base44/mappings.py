@@ -29,7 +29,16 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from config import config
-from models import ArtworkStatus, FabricType, PrintTechnique, ProductVariation, SeparationStatus, Size
+from models import (
+    ArtworkStatus,
+    BlankMovementKind,
+    FabricType,
+    OrderStatus,
+    PrintTechnique,
+    ProductVariation,
+    SeparationStatus,
+    Size,
+)
 from scripts.base44 import settings
 from services.company_settings import default_config
 
@@ -60,8 +69,8 @@ TABLE_ORDER: list[str] = [
     "order",
     "order_item",
     "imported_order",
-    "stock_entry",
-    "stock_exit",
+    "blank_piece",
+    "blank_piece_movement",
     "company_settings",
 ]
 
@@ -189,6 +198,21 @@ _INK_HEX_MAP: list[tuple[str, str]] = [
     ("laranja", "#d97a2e"),
     ("roxo", "#6a4a8a"),
 ]
+
+
+def _canonical_sep_color(color_raw: Any) -> str:
+    """Canonical base-color key for separação reconciliation.
+
+    'Preto 3', 'Preto c/branco', 'Preto DTF' all reduce to 'preto' so
+    SaidaEstoque exits match PedidoImportado orders even when the two data
+    sources use slightly different color names for the same physical garment.
+    Falls back to accent-stripped lowercase for colours not in the ink map.
+    """
+    cleaned = strip_accents(str(color_raw or "")).lower().strip()
+    for key, _ in _INK_HEX_MAP:
+        if key in cleaned:
+            return key
+    return cleaned
 
 
 def ink_hex_for(name: str) -> str:
@@ -773,68 +797,130 @@ def convert(
             report.add("sewing_shipment_item")
     report.fetched["sewing_shipment"] = len(_records(raw, "RemessaCostura"))
 
-    # 8) EntradaEstoque → stock_entry (one per size in itens_tamanho)
+    # 8) EntradaEstoque → blank_piece + blank_piece_movement (ENTRY).
+    # All EntradaEstoque records reference base (non-printed) products — they are
+    # peça lisa inventory, not finished goods. We map them to the WIP blank-piece
+    # tier so the planner can subtract available blank stock from cut demand.
+    blank_piece_seen: set[uuid.UUID] = set()
     for e in _records(raw, "EntradaEstoque"):
         cid = company_of(e)
         if cid is None:
-            report.skip("stock_entry:unknown_company")
+            report.skip("blank_piece:unknown_company")
             continue
+        info = product_by_b44.get(str(e.get("produto_id")))
+        if info is None:
+            report.skip("blank_piece:no_product", str(e.get("produto_id")))
+            continue
+        spec_id = info["spec_id"]
+        color = clean_color(e.get("cor"))
+        color_code = colors.code(cid, color)
         for t in e.get("itens_tamanho") or []:
             if not isinstance(t, dict):
                 continue
             size = settings.SIZE_MAP.get(norm(t.get("tamanho")))
             qty = to_int(t.get("quantidade")) or 0
             if size is None or qty <= 0:
-                report.skip("stock_entry:size_or_qty", f"{t.get('tamanho')}={t.get('quantidade')}")
+                report.skip("blank_piece:size_or_qty", f"{t.get('tamanho')}={t.get('quantidade')}")
                 continue
-            vid = resolve_variation(e.get("produto_id"), e.get("cor"), size)
-            if vid is None:
-                report.skip("stock_entry:no_product", str(e.get("produto_id")))
-                continue
-            data.rows["stock_entry"].append(
+            bp_id = derive_id("blank_piece", cid, spec_id, size.value, color_code)
+            if bp_id not in blank_piece_seen:
+                blank_piece_seen.add(bp_id)
+                data.rows["blank_piece"].append(
+                    {
+                        "id": bp_id,
+                        "company_id": cid,
+                        "spec_id": spec_id,
+                        "size": size,
+                        "color": color,
+                        "color_code": color_code,
+                        "min_stock": None,
+                    }
+                )
+            data.rows["blank_piece_movement"].append(
                 {
-                    "id": derive_id("stock_entry", str(e.get("id")), size.value),
+                    "id": derive_id("blank_piece_movement", str(e.get("id")), size.value),
                     "company_id": cid,
-                    "variation_id": vid,
+                    "blank_piece_id": bp_id,
+                    "kind": BlankMovementKind.ENTRY,
                     "quantity": qty,
-                    "source": settings.DEFAULT_STOCK_SOURCE,
+                    "sewing_shipment_id": None,
+                    "assembly_run_id": None,
                     "notes": e.get("observacoes") or None,
                 }
             )
-            report.add("stock_entry")
-    report.fetched["stock_entry"] = len(_records(raw, "EntradaEstoque"))
+            report.add("blank_piece_movement")
+    report.fetched["blank_piece"] = len(_records(raw, "EntradaEstoque"))
 
-    # 9) SaidaEstoque → stock_exit (flat: one row each)
+    # 9) SaidaEstoque → blank_piece_movement (EXIT) + separacao_counter.
+    # All SaidaEstoque records reference base (non-printed) products — they are
+    # blank-piece stock exits, not finished-goods exits. We map them to
+    # BlankPieceMovement so the planner sees the correct net blank on-hand.
+    # For separação rows we additionally build ``separacao_counter``, consumed in
+    # section 10b to mark the oldest matching orders SHIPPED so they drop out of
+    # planning demand. Two design choices for that counter's key:
+    # 1. Key by *product_type* (BERMUDA, CAMISETA, …) rather than spec_id: a
+    #    company can have multiple specs per garment family (e.g. "Short Compressão"
+    #    and "Short de Linho" are both BERMUDA), and orders get keyword-matched to
+    #    whichever spec wins — spec_id matching would silently miss the rest.
+    # 2. No company_id in the key: the 7 imported companies represent one business;
+    #    some are sales-channel sub-companies with 0 products and 0 separações —
+    #    their orders must be matched against the manufacturing company's exits.
+    separacao_counter: dict[tuple[str, str, Size], int] = {}
     for s in _records(raw, "SaidaEstoque"):
         cid = company_of(s)
         if cid is None:
-            report.skip("stock_exit:unknown_company")
+            report.skip("blank_exit:unknown_company")
             continue
         size = settings.SIZE_MAP.get(norm(s.get("tamanho")))
         qty = to_int(s.get("quantidade")) or 0
         if size is None:
-            report.skip("stock_exit:size", str(s.get("tamanho")))
+            report.skip("blank_exit:size", str(s.get("tamanho")))
             continue
         if qty <= 0:
-            report.skip("stock_exit:qty", str(s.get("quantidade")))
+            report.skip("blank_exit:qty", str(s.get("quantidade")))
             continue
-        vid = resolve_variation(s.get("produto_id"), s.get("cor"), size)
-        if vid is None:
-            report.skip("stock_exit:no_product", str(s.get("produto_id")))
+        info = product_by_b44.get(str(s.get("produto_id")))
+        if info is None:
+            report.skip("blank_exit:no_product", str(s.get("produto_id")))
             continue
-        data.rows["stock_exit"].append(
+        spec_id = info["spec_id"]
+        color = clean_color(s.get("cor"))
+        color_code = colors.code(cid, color)
+        bp_id = derive_id("blank_piece", cid, spec_id, size.value, color_code)
+        if bp_id not in blank_piece_seen:
+            blank_piece_seen.add(bp_id)
+            data.rows["blank_piece"].append(
+                {
+                    "id": bp_id,
+                    "company_id": cid,
+                    "spec_id": spec_id,
+                    "size": size,
+                    "color": color,
+                    "color_code": color_code,
+                    "min_stock": None,
+                }
+            )
+        data.rows["blank_piece_movement"].append(
             {
-                "id": derive_id("stock_exit", str(s.get("id"))),
+                "id": derive_id("blank_piece_movement_exit", str(s.get("id"))),
                 "company_id": cid,
-                "variation_id": vid,
-                "order_id": None,
+                "blank_piece_id": bp_id,
+                "kind": BlankMovementKind.EXIT,
                 "quantity": qty,
-                "reason": settings.STOCK_EXIT_REASON_MAP.get(norm(s.get("motivo")), settings.DEFAULT_STOCK_EXIT_REASON),
+                "sewing_shipment_id": None,
+                "assembly_run_id": None,
                 "notes": s.get("observacoes") or None,
             }
         )
-        report.add("stock_exit")
-    report.fetched["stock_exit"] = len(_records(raw, "SaidaEstoque"))
+        report.add("blank_exit")
+        if norm(s.get("motivo")) == "separacao":
+            nk: tuple[str, str, Size] = (
+                info["product_type"],
+                _canonical_sep_color(s.get("cor")),
+                size,
+            )
+            separacao_counter[nk] = separacao_counter.get(nk, 0) + qty
+    report.fetched["blank_exit"] = len(_records(raw, "SaidaEstoque"))
 
     # ── Mapeamento: print catalog (StampaMemory → PrintDesign) + indexes ──
     products_by_company: dict[uuid.UUID, list[dict]] = {}
@@ -976,6 +1062,10 @@ def convert(
     order_keys: set[tuple] = set()
     import_keys: set[tuple] = set()
     order_row_by_pi: dict[str, dict] = {}
+    # variation_id → (product_type, canonical_color, size) — used after section 10
+    # to reconcile separacao_counter against order rows (no company_id: all 7
+    # companies share the same production pool — see separacao_counter comment).
+    variation_natkey: dict[uuid.UUID, tuple[str, str, Size]] = {}
     real_matches = 0
     synth_matches = 0
     design_orders = 0
@@ -1136,7 +1226,21 @@ def convert(
         vid = register_variation(
             cid, chosen["product_id"], chosen["spec_code"], size, po.get("cor"), print_code=chosen.get("print_code")
         )
-        if chosen["product_id"] == synth.get(cid, {}).get("product_id"):
+        is_synth = chosen["product_id"] == synth.get(cid, {}).get("product_id")
+        # Derive product_type for the natkey: prefer the matched spec's type; for
+        # synthetic orders (no product match) fall back to the title keyword.
+        if is_synth:
+            title_types = _types_in(str(po.get("titulo_anuncio") or ""))
+            sep_pt: str | None = next(iter(title_types), None)
+        else:
+            sep_pt = chosen.get("product_type")
+        if vid not in variation_natkey and sep_pt:
+            variation_natkey[vid] = (
+                sep_pt,
+                _canonical_sep_color(po.get("cor")),
+                size,
+            )
+        if is_synth:
             synth_matches += 1
         else:
             real_matches += 1
@@ -1231,6 +1335,36 @@ def convert(
     report.fetched["imported_order"] = len(_records(raw, "PedidoImportado"))
     report.notes.append(f"order→product match: {real_matches} real, {synth_matches} synthetic")
     report.notes.append(f"order→design match: {design_orders} with design, {nodesign_orders} no-design (cut-only)")
+
+    # 10b) Reconcile SaidaEstoque separações against orders. The legacy system
+    # tracked individual-garment shipments in SaidaEstoque (motivo='separacao')
+    # per (produto, cor, tamanho) without a direct order reference.  We consume
+    # those exits against the oldest PENDING orders for each
+    # (product_type, canonical_color, size) and mark them SHIPPED.
+    orders_by_spec_color_size: dict[tuple[str, str, Size], list[dict]] = {}
+    for order_row in data.rows["order"]:
+        nk = variation_natkey.get(order_row["variation_id"])
+        if nk is None:
+            continue
+        orders_by_spec_color_size.setdefault(nk, []).append(order_row)
+    for _nk, orders in orders_by_spec_color_size.items():
+        orders.sort(key=lambda r: (r["ordered_at"] or datetime.min).replace(tzinfo=None))
+    shipped_orders = 0
+    for nk, orders in orders_by_spec_color_size.items():
+        remaining = separacao_counter.get(nk, 0)
+        for order_row in orders:
+            if remaining <= 0:
+                break
+            qty = int(order_row["quantity"])
+            if remaining >= qty:
+                order_row["status"] = OrderStatus.SHIPPED
+                remaining -= qty
+                shipped_orders += 1
+            # remaining < qty: not enough to fill this order, skip it and
+            # keep trying smaller later orders in the sorted list
+        separacao_counter[nk] = remaining
+    if shipped_orders:
+        report.notes.append(f"separacao reconciliation: {shipped_orders} orders marked SHIPPED")
 
     # 11) LoteProducao → batch (+ Order.batch_id backfill + print adjustments)
     for lote in _records(raw, "LoteProducao"):

@@ -247,20 +247,39 @@ async def test_demand_only_shortfall(db_session):
     assert s.totals.demandDriven == 2 and s.totals.stockDriven == 0
 
 
+async def _base_variation(db_session, *, company_id, spec, size=Size.M, color="Preto", color_code="PRT"):
+    """Create a base product variation (no print/design) for the given spec+size+color.
+
+    Stock is tracked against base variations; finished-stock lookup bridges from
+    the design variation via (spec_id, color_code, size).
+    """
+    base_product = await create_product(db_session, company_id=company_id, spec_id=spec.id)
+    return await create_product_variation(
+        db_session,
+        company_id=company_id,
+        product_id=base_product.id,
+        size=size,
+        color=color,
+        color_code=color_code,
+        sku=f"{spec.code}-BASE-{size.value.upper()}-{color_code}",
+    )
+
+
 async def test_finished_stock_covers_demand_net_zero(db_session):
     """Finished stock >= needed → net 0 → no corte / impressão for that SKU."""
 
     company, _user = await _company(db_session)
     spec = await create_product_spec(db_session, company_id=company.id, code="CAM01")
     design = await create_print_design(db_session, company_id=company.id, code="FLR03")
-    variation, _order = await _demand(
+    _variation, _order = await _demand(
         db_session, company_id=company.id, spec=spec, design=design, color_code="PRT", pieces=4
     )
-    # Credit 4 finished pieces of the exact ordered variation.
+    # Stock is tracked on the base (no-print) variation for the same spec/color/size.
     from models import StockEntry, StockSource
 
+    base_var = await _base_variation(db_session, company_id=company.id, spec=spec, color_code="PRT")
     db_session.add(
-        StockEntry(company_id=company.id, variation_id=variation.id, quantity=4, source=StockSource.ADJUSTMENT)
+        StockEntry(company_id=company.id, variation_id=base_var.id, quantity=4, source=StockSource.ADJUSTMENT)
     )
     await db_session.commit()
 
@@ -276,13 +295,14 @@ async def test_partial_finished_reduces_net(db_session):
     company, _user = await _company(db_session)
     spec = await create_product_spec(db_session, company_id=company.id, code="CAM01")
     design = await create_print_design(db_session, company_id=company.id, code="FLR03")
-    variation, _order = await _demand(
+    _variation, _order = await _demand(
         db_session, company_id=company.id, spec=spec, design=design, color_code="PRT", pieces=10
     )
     from models import StockEntry, StockSource
 
+    base_var = await _base_variation(db_session, company_id=company.id, spec=spec, color_code="PRT")
     db_session.add(
-        StockEntry(company_id=company.id, variation_id=variation.id, quantity=3, source=StockSource.ADJUSTMENT)
+        StockEntry(company_id=company.id, variation_id=base_var.id, quantity=3, source=StockSource.ADJUSTMENT)
     )
     await db_session.commit()
 

@@ -1,13 +1,14 @@
 """Dashboard Top-5 ranking — by mapped *estampa* (design), Base44-style.
 
 The ranking groups orders by the print design name (``estampa_mapeada``),
-falling back to the ad title for no-print orders, and carries the design
-artwork as a thumbnail. ``orders`` counts distinct marketplace orders.
+falling back to the ad title for no-print orders. The thumbnail is a
+representative marketplace listing photo (the order's ``foto_url``), falling
+back to the design artwork. ``orders`` counts distinct marketplace orders.
 """
 
 from datetime import UTC, datetime, timedelta
 
-from models import OrderStatus, Size
+from models import ImportedOrder, OrderStatus, Size
 from services.dashboard import get_summary
 from tests.factories import (
     create_ad,
@@ -68,10 +69,41 @@ async def test_top_products_ranked_by_design(db_session):
     assert [t.name for t in tp] == ["2055", "Punisher"]
     assert tp[0].pieces == 8
     assert tp[0].orders == 2
+    # No imported-order photo in this fixture → falls back to the design artwork.
     assert tp[0].image_url == "https://cdn.test/2055.png"
     assert tp[1].pieces == 4
     assert tp[1].orders == 1
     assert tp[1].image_url is None
+
+
+async def test_top_products_prefers_marketplace_photo_over_design_artwork(db_session):
+    """The thumbnail is the order's marketplace ``foto_url`` (what Base44 shows),
+    preferred over the design artwork; artwork is only the fallback."""
+    company = await create_company(db_session)
+    client = await create_client(db_session, company_id=company.id)
+    v, ad = await _design_product(
+        db_session, company.id, design_name="Punisher", image_url="https://base44.example/art.png"
+    )
+    order = await _order(db_session, company.id, client.id, v, ad, quantity=2, ext="MP1")
+    # The imported order carries the marketplace listing photo (foto_url).
+    db_session.add(
+        ImportedOrder(
+            company_id=company.id,
+            order_id=order.id,
+            marketplace="Shopee",
+            platform_order_id="MP1",
+            ad_title="Camiseta Punisher",
+            sku="PUN-M",
+            quantity=2,
+            image_url="https://cf.shopee.com.br/file/foto.jpg",
+        )
+    )
+    await db_session.commit()
+
+    tp = (await get_summary(db_session, company_id=company.id)).top_products
+    assert tp[0].name == "Punisher"
+    # Marketplace photo wins over the (dying) base44 design artwork.
+    assert tp[0].image_url == "https://cf.shopee.com.br/file/foto.jpg"
 
 
 async def test_top_products_groups_same_design_across_products(db_session):

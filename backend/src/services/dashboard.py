@@ -214,14 +214,16 @@ async def _top_products(
     Mirrors the legacy Base44 homepage ranking: orders group by the mapped
     *estampa* (print design name), falling back to the ad title when an order
     carries no print — the same ``estampa_mapeada || titulo_anuncio`` grouping.
-    The thumbnail is the design artwork, falling back to a representative
-    imported-order photo. ``orders`` counts distinct marketplace orders (one
-    external order number can span several line items); ``pieces`` sums
-    ``Order.quantity``.
+    The thumbnail is a representative **marketplace listing photo** (the order's
+    ``foto_url`` — the exact image Base44's homepage shows, served from the
+    marketplace CDN so it survives Base44 being retired), falling back to the
+    design artwork only when no order in the group carries a photo. ``orders``
+    counts distinct marketplace orders (one external order number can span
+    several line items); ``pieces`` sums ``Order.quantity``.
     """
 
     label = func.coalesce(PrintDesign.name, Ad.title)
-    image = func.max(func.coalesce(func.nullif(PrintDesign.image_url, ""), func.nullif(ImportedOrder.image_url, "")))
+    image = func.max(func.coalesce(func.nullif(ImportedOrder.image_url, ""), func.nullif(PrintDesign.image_url, "")))
     order_no = func.coalesce(Order.external_order_id, cast(Order.id, String))
     stmt = scoped(
         select(

@@ -49,6 +49,9 @@ const rows: BlankPieceLevelRead[] = [
 // Stable mock — levels resolved, movements empty, write access granted.
 vi.mock("@/hooks/use-blank-stock", () => ({
   useBlankStockLevels: () => ({ data: { items: rows, total: 2, page: 1, page_size: 50, has_more: false }, isPending: false, isError: false }),
+  // Tenant-wide KPI totals come from the server summary (every SKU), not a reduce
+  // over the page: 96 + 9 = 105 on-hand, 1 SKU below min.
+  useBlankStockLevelsSummary: () => ({ data: { total_on_hand: 105, below_min: 1, sku_count: 2 }, isPending: false, isError: false }),
   useBlankStockMovements: () => ({ data: { items: [], total: 0, page: 1, page_size: 50, has_more: false }, isPending: false, isError: false }),
   useCreateBlankMovement: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useCreateBlankPiece: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -69,8 +72,8 @@ describe("BlankPiecesPage", () => {
     // Page head title (en: "Blank pieces").
     expect(screen.getAllByText(/Blank/i).length).toBeGreaterThan(0);
 
-    // KPI strip present.
-    expect(screen.getByTestId("inventory-kpis")).toBeTruthy();
+    // KPI strip present, showing the server summary total (105), not a page reduce.
+    expect(screen.getByTestId("inventory-kpis").textContent).toContain("105");
 
     // One row per blank piece.
     expect(screen.getAllByTestId("blank-pieces-row")).toHaveLength(2);

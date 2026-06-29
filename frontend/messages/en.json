@@ -376,6 +376,8 @@
     "channels": {
       "shopee": "Shopee",
       "mercado_livre": "Mercado Livre",
+      "shein": "Shein",
+      "tiktok_shop": "TikTok Shop",
       "shopify": "Shopify",
       "instagram": "Instagram",
       "whatsapp": "WhatsApp",
@@ -559,6 +561,23 @@
         "reason": "Reason"
       }
     },
+    "resolver": {
+      "title": "Resolve unmatched SKUs",
+      "sub": "Pin each marketplace SKU to the right ad and variation. We remember it, so every future import resolves it automatically — you only do this once per SKU.",
+      "unpinnable": "{count, plural, one {# line has no SKU} other {# lines have no SKU}} and can't be pinned here — fix the catalog and re-import.",
+      "lineCount": "{count, plural, one {# line} other {# lines}}",
+      "chooseAd": "Choose an ad…",
+      "searchAd": "Search ads…",
+      "noAds": "No ads found",
+      "pickAdFirst": "Pick an ad first",
+      "chooseVariation": "Choose a variation…",
+      "link": "Link",
+      "linked": "Linked",
+      "toast": {
+        "linked": "SKU linked to {sku}",
+        "error": "Couldn't save the mapping"
+      }
+    },
     "commit": {
       "title": "Confirm import",
       "body": "Import {count, plural, one {# order} other {# orders}}? Each matched line becomes an order in your catalog.",
@@ -695,6 +714,8 @@
     "channels": {
       "shopee": "Shopee",
       "mercado_livre": "Mercado Livre",
+      "shein": "Shein",
+      "tiktok_shop": "TikTok Shop",
       "shopify": "Shopify",
       "instagram": "Instagram",
       "whatsapp": "WhatsApp",
@@ -735,6 +756,8 @@
         "externalId": {
           "shopee": "e.g. SH-99812",
           "mercado_livre": "e.g. MLB-3322114455",
+          "shein": "e.g. 4205012345678",
+          "tiktok_shop": "e.g. 17xxxxxxxxxxxxxxx",
           "shopify": "e.g. shopify-handle",
           "instagram": "e.g. instagram-post-id",
           "whatsapp": "e.g. catalog item code",
@@ -2930,6 +2953,8 @@
     "channels": {
       "shopee": "Shopee",
       "mercado_livre": "Mercado Livre",
+      "shein": "Shein",
+      "tiktok_shop": "TikTok Shop",
       "shopify": "Shopify",
       "instagram": "Instagram",
       "whatsapp": "WhatsApp",

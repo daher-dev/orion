@@ -38,7 +38,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from models import Ad, AdProduct, Ecommerce, ImportedOrder, Order, OrderStatus, ProductVariation, Size
+from models import Ad, AdProduct, Ecommerce, ImportedOrder, Order, OrderStatus, ProductVariation, Size, SkuMapping
 from schemas.imported_orders import UpsellerImportError, UpsellerImportSummary
 from services._audit import write_audit
 from services._base import scoped
@@ -167,15 +167,29 @@ _SIZE_TOKENS = {
     "54",
 }
 
-# Marketplace label → Orion channel, when it maps cleanly. TikTok Shop and
-# Shein have no Ecommerce member, so they simply don't constrain ad matching.
-_MARKETPLACE_TO_ECOMMERCE: dict[str, Ecommerce] = {
-    "shopee": Ecommerce.SHOPEE,
-    "mercado livre": Ecommerce.MERCADO_LIVRE,
-    "mercado libre": Ecommerce.MERCADO_LIVRE,
-    "mercadolivre": Ecommerce.MERCADO_LIVRE,
-    "mercadolibre": Ecommerce.MERCADO_LIVRE,
-}
+# Raw export label → Ecommerce. Substring keyword match (handles "Mercado
+# Libre"/"Mercado Livre", "TikTok Shop", …); anything unrecognized folds to
+# OTHER, so a marketplace is *always* a valid enum member — never free text.
+_MARKETPLACE_KEYWORDS: tuple[tuple[str, Ecommerce], ...] = (
+    ("shopee", Ecommerce.SHOPEE),
+    ("mercado", Ecommerce.MERCADO_LIVRE),  # "Mercado Livre" / "Mercado Libre"
+    ("shein", Ecommerce.SHEIN),
+    ("tiktok", Ecommerce.TIKTOK_SHOP),
+    ("tik tok", Ecommerce.TIKTOK_SHOP),
+    ("shopify", Ecommerce.SHOPIFY),
+    ("instagram", Ecommerce.INSTAGRAM),
+    ("whats", Ecommerce.WHATSAPP),
+)
+
+
+def _parse_marketplace(raw: str) -> Ecommerce:
+    """Fold a raw export label to its Ecommerce member (default OTHER)."""
+
+    folded = _norm_title(raw)
+    for keyword, channel in _MARKETPLACE_KEYWORDS:
+        if keyword in folded:
+            return channel
+    return Ecommerce.OTHER
 
 
 def _normalize_header(raw: str) -> str:
@@ -211,11 +225,21 @@ def _coerce_qty(value: str | None) -> int:
         return 1
 
 
+# Marketplace size spellings Orion models as a single Size member.
+_SIZE_ALIASES: dict[str, Size] = {
+    "unico": Size.U,
+    "u": Size.U,
+}
+
+
 def _to_size(value: str | None) -> Size | None:
     if not value:
         return None
+    token = _norm_token(value)
+    if token in _SIZE_ALIASES:
+        return _SIZE_ALIASES[token]
     try:
-        return Size(_norm_token(value))
+        return Size(token)
     except ValueError:
         return None
 
@@ -251,6 +275,62 @@ def _extract_color_size(variacao: str | None) -> tuple[str | None, str | None]:
     if not color and not size and len(parts) == 1:
         color = parts[0]
     return (color or None), (size or None)
+
+
+def _variation_tokens(variation_text: str | None) -> tuple[Size | None, set[str]]:
+    """Split a free-text Variação into (size, colour/print token bag).
+
+    Order-insensitive: the marketplace emits the variation tokens in any order
+    (``"Bege,NY,M"`` == ``"NY,Bege,M"`` == ``"M,NY,Bege"``) and may slip a print
+    name in among them (``"Preto,Naruto 03,GG"``). We pull the one size token and
+    return the rest as an unordered set of normalized tokens, so matching never
+    depends on which slot a colour landed in.
+    """
+
+    if not variation_text:
+        return None, set()
+    parts = [p.strip() for p in re.split(r"[;,·]", variation_text) if p.strip()]
+    size: Size | None = None
+    tokens: set[str] = set()
+    for part in parts:
+        match = re.match(r"^(cor|color|colour|c|variacao|tam|tamanho|size|t)[:=\s]+(.+)$", part, re.I)
+        key = match.group(1).lower() if match else None
+        value = match.group(2).strip() if match else part
+        token = _norm_token(value)
+        if key in {"tam", "tamanho", "size", "t"}:
+            size = _to_size(value) or size
+            continue
+        if key in {"cor", "color", "colour", "c", "variacao"}:
+            if token:
+                tokens.add(token)
+            continue
+        # Unlabeled: a size token is consumed as the size; everything else is a
+        # colour/print candidate (we never positionally guess which is colour).
+        if size is None and token in _SIZE_TOKENS:
+            mapped = _to_size(value)
+            if mapped is not None:
+                size = mapped
+                continue
+            # Recognized size spelling Orion doesn't model (PP, XG, …): drop it
+            # from the colour bag but leave size unresolved.
+            continue
+        if token:
+            tokens.add(token)
+    return size, tokens
+
+
+def _color_in_tokens(variation: ProductVariation, tokens: set[str]) -> bool:
+    """True if the variation's colour/colour-code matches any candidate token."""
+
+    if not tokens:
+        return True
+    for candidate in (_norm_token(variation.color), _norm_token(variation.color_code)):
+        if not candidate:
+            continue
+        for token in tokens:
+            if candidate == token or candidate in token or token in candidate:
+                return True
+    return False
 
 
 def _cell(raw: list[str], columns: dict[str, int], field: str) -> str | None:
@@ -368,16 +448,22 @@ def _derive_ordered_at(row: _ParsedRow, *, now: datetime) -> datetime:
 @dataclass(slots=True)
 class _ResolveContext:
     ads: list[Ad]
+    ads_by_id: dict[uuid.UUID, Ad]
     ads_by_external: dict[str, Ad]
+    variations_by_id: dict[uuid.UUID, ProductVariation]
     variations_by_product: dict[uuid.UUID, list[ProductVariation]]
     ad_product_ids: dict[uuid.UUID, list[uuid.UUID]]
+    # (marketplace value, normalized sku) → (ad_id, variation_id) — the De/Para.
+    sku_mappings: dict[tuple[str, str], tuple[uuid.UUID, uuid.UUID]]
 
 
 async def _build_resolve_context(db: AsyncSession, *, company_id: uuid.UUID) -> _ResolveContext:
     ads = list((await db.exec(scoped(select(Ad), Ad, company_id))).all())
+    ads_by_id = {ad.id: ad for ad in ads}
     ads_by_external = {ad.external_id.strip().lower(): ad for ad in ads if ad.external_id}
 
     variations = list((await db.exec(scoped(select(ProductVariation), ProductVariation, company_id))).all())
+    variations_by_id = {v.id: v for v in variations}
     by_product: dict[uuid.UUID, list[ProductVariation]] = {}
     for variation in variations:
         by_product.setdefault(variation.product_id, []).append(variation)
@@ -388,16 +474,51 @@ async def _build_resolve_context(db: AsyncSession, *, company_id: uuid.UUID) -> 
     ).all():
         ad_product_ids.setdefault(ad_id, []).append(product_id)
 
+    sku_mappings: dict[tuple[str, str], tuple[uuid.UUID, uuid.UUID]] = {}
+    for mapping in (await db.exec(scoped(select(SkuMapping), SkuMapping, company_id))).all():
+        sku_mappings[(mapping.marketplace.value, mapping.sku.strip().lower())] = (mapping.ad_id, mapping.variation_id)
+
     return _ResolveContext(
         ads=ads,
+        ads_by_id=ads_by_id,
         ads_by_external=ads_by_external,
+        variations_by_id=variations_by_id,
         variations_by_product=by_product,
         ad_product_ids=ad_product_ids,
+        sku_mappings=sku_mappings,
     )
 
 
+def _resolve_from_mapping(
+    ctx: _ResolveContext, *, marketplace: Ecommerce, row: _ParsedRow
+) -> tuple[Ad, ProductVariation] | None:
+    """SKU-first De/Para lookup: a once-resolved SKU resolves deterministically.
+
+    Returns the stored (ad, variation) when both still exist for this tenant and
+    the variation belongs to one of the ad's products; otherwise None, so the
+    caller falls back to fuzzy matching (a stale mapping never blocks an import).
+    """
+
+    sku = (row.sku or "").strip().lower()
+    if not sku:
+        return None
+    hit = ctx.sku_mappings.get((marketplace.value, sku))
+    if hit is None:
+        return None
+    ad = ctx.ads_by_id.get(hit[0])
+    variation = ctx.variations_by_id.get(hit[1])
+    if ad is None or variation is None:
+        return None
+    if variation.product_id not in set(ctx.ad_product_ids.get(ad.id, [])):
+        return None
+    return ad, variation
+
+
 def _channel_of(marketplace: str) -> Ecommerce | None:
-    return _MARKETPLACE_TO_ECOMMERCE.get(_norm_title(marketplace))
+    """The channel an ad match can be narrowed by — OTHER never constrains."""
+
+    channel = _parse_marketplace(marketplace)
+    return channel if channel is not Ecommerce.OTHER else None
 
 
 def _resolve_ad(ctx: _ResolveContext, row: _ParsedRow) -> tuple[Ad | None, str | None]:
@@ -440,15 +561,6 @@ def _resolve_ad(ctx: _ResolveContext, row: _ParsedRow) -> tuple[Ad | None, str |
     return candidates[0], None
 
 
-def _color_matches(variation: ProductVariation, color_norm: str) -> bool:
-    if not color_norm:
-        return True
-    for candidate in (_norm_token(variation.color), _norm_token(variation.color_code)):
-        if candidate and (candidate == color_norm or candidate in color_norm or color_norm in candidate):
-            return True
-    return False
-
-
 def _sku_matches(variation_sku: str, row_sku: str) -> bool:
     a, b = variation_sku.strip().lower(), row_sku.strip().lower()
     if not a or not b:
@@ -470,10 +582,10 @@ def _resolve_variation(ctx: _ResolveContext, ad: Ad, row: _ParsedRow) -> tuple[P
         if len(sku_hits) > 1:
             return None, "ambiguous variation match (SKU)"
 
-    size = _to_size(row.size)
+    # Order-insensitive size + colour token match over the variation text.
+    size, color_tokens = _variation_tokens(row.variation_text)
     pool = [v for v in variations if v.size == size] if size is not None else list(variations)
-    color_norm = _norm_token(row.color or "")
-    hits = [v for v in pool if _color_matches(v, color_norm)]
+    hits = [v for v in pool if _color_in_tokens(v, color_tokens)]
 
     if len(hits) == 1:
         return hits[0], None
@@ -492,13 +604,28 @@ async def _existing_import_keys(db: AsyncSession, *, company_id: uuid.UUID) -> s
         company_id,
     )
     return {
-        (marketplace.strip().lower(), platform_order_id.strip(), sku.strip())
+        (str(marketplace), platform_order_id.strip(), sku.strip())
         for marketplace, platform_order_id, sku in (await db.exec(stmt)).all()
     }
 
 
-def _dedup_key(row: _ParsedRow) -> tuple[str, str, str]:
-    return (row.marketplace.strip().lower(), row.platform_order_id.strip(), row.sku.strip())
+def _dedup_key(marketplace: Ecommerce, row: _ParsedRow) -> tuple[str, str, str]:
+    return (marketplace.value, row.platform_order_id.strip(), row.sku.strip())
+
+
+def _row_error(row: _ParsedRow, marketplace: Ecommerce, message: str) -> UpsellerImportError:
+    """Build an unmatched-line error rich enough for the import resolver UI."""
+
+    return UpsellerImportError(
+        row_index=row.row_index,
+        message=message,
+        marketplace=marketplace,
+        platform_order_id=row.platform_order_id or None,
+        sku=row.sku or None,
+        ad_title=row.ad_title or None,
+        variation_text=row.variation_text or None,
+        image_url=row.image_url or None,
+    )
 
 
 async def import_upseller_orders(
@@ -522,34 +649,27 @@ async def import_upseller_orders(
     seen: set[tuple[str, str, str]] = set()
 
     for row in rows:
-        key = _dedup_key(row)
+        marketplace = _parse_marketplace(row.marketplace)
+        key = _dedup_key(marketplace, row)
         if key in existing or key in seen:
             skipped += 1
             continue
 
-        ad, ad_error = _resolve_ad(ctx, row)
-        if ad is None:
-            errors.append(
-                UpsellerImportError(
-                    row_index=row.row_index,
-                    message=ad_error or "ad not resolved",
-                    platform_order_id=row.platform_order_id or None,
-                    sku=row.sku or None,
-                )
-            )
-            continue
+        # SKU-first: a previously-resolved marketplace SKU resolves both the ad
+        # and the variation deterministically — never re-guessed, never ambiguous.
+        mapped = _resolve_from_mapping(ctx, marketplace=marketplace, row=row)
+        if mapped is not None:
+            ad, variation = mapped
+        else:
+            ad, ad_error = _resolve_ad(ctx, row)
+            if ad is None:
+                errors.append(_row_error(row, marketplace, ad_error or "ad not resolved"))
+                continue
 
-        variation, var_error = _resolve_variation(ctx, ad, row)
-        if variation is None:
-            errors.append(
-                UpsellerImportError(
-                    row_index=row.row_index,
-                    message=var_error or "variation not resolved",
-                    platform_order_id=row.platform_order_id or None,
-                    sku=row.sku or None,
-                )
-            )
-            continue
+            variation, var_error = _resolve_variation(ctx, ad, row)
+            if variation is None:
+                errors.append(_row_error(row, marketplace, var_error or "variation not resolved"))
+                continue
 
         if dry_run:
             created += 1
@@ -576,7 +696,7 @@ async def import_upseller_orders(
                         company_id=company_id,
                         order_id=order.id,
                         source="upseller",
-                        marketplace=row.marketplace,
+                        marketplace=marketplace,
                         store_name=row.store_name,
                         platform_order_id=row.platform_order_id,
                         upseller_order_no=row.upseller_order_no,
@@ -605,7 +725,7 @@ async def import_upseller_orders(
             user_id=user_id,
             resource_type=_RESOURCE,
             resource_id=order.id,
-            message=f"Imported order ORD-{order.id.hex[:8].upper()} from {row.marketplace}",
+            message=f"Imported order ORD-{order.id.hex[:8].upper()} from {marketplace.value}",
         )
         created += 1
         seen.add(key)

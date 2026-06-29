@@ -4,6 +4,8 @@ from sqlalchemy import Column, ForeignKey, UniqueConstraint, Uuid
 from sqlmodel import Field
 
 from models.base import CompanyModel
+from models.enums import Ecommerce
+from models.pg_enums import ECOMMERCE
 
 
 class ImportedOrder(CompanyModel, table=True):
@@ -44,9 +46,11 @@ class ImportedOrder(CompanyModel, table=True):
         ),
     )
 
-    # Provenance / channel.
+    # Provenance / channel. The raw export label ("Mercado Libre", "Shopee",
+    # "Shein", …) is parsed to a single Ecommerce member at import time so the
+    # re-import dedup key and the SkuMapping De/Para share one vocabulary.
     source: str = Field(default="upseller", max_length=40)
-    marketplace: str = Field(max_length=60)
+    marketplace: Ecommerce = Field(sa_type=ECOMMERCE)
     store_name: str | None = Field(default=None, max_length=120)
     platform_order_id: str = Field(max_length=120)
     upseller_order_no: str | None = Field(default=None, max_length=120)

@@ -1221,6 +1221,9 @@ def convert(
             report.skip("order:qty", str(po.get("quantidade")))
             continue
         marketplace = str(po.get("marketplace") or "Não informado").strip() or "Não informado"
+        # ImportedOrder.marketplace is the ecommerce enum now — parse the raw
+        # label to its member so the stored value matches the live importer.
+        marketplace_eco, _ = keyword_match(marketplace, settings.ECOMMERCE_KEYWORDS, settings.DEFAULT_ECOMMERCE)
         ad_id = _get_or_build_ad(cid, marketplace, po.get("titulo_anuncio"))
         chosen = (ad_products_index.get(ad_id) or [_synth_product(cid)])[0]
         vid = register_variation(
@@ -1255,9 +1258,9 @@ def convert(
         if external is not None and order_key in order_keys:
             report.skip("order:dup_line", f"{external} {size.value}/{po.get('cor')}")
             continue
-        import_key = (cid, norm(marketplace), platform_order_id, sku)
+        import_key = (cid, marketplace_eco.value, platform_order_id, sku)
         if import_key in import_keys:
-            report.skip("order:dup_import", f"{marketplace}/{platform_order_id}/{sku}")
+            report.skip("order:dup_import", f"{marketplace_eco.value}/{platform_order_id}/{sku}")
             continue
         ordered_at = to_dmy_datetime(po.get("data_pedido")) or to_datetime(po.get("created_date")) or datetime.now(UTC)
         oid = derive_id("order", str(po.get("id")))
@@ -1283,7 +1286,7 @@ def convert(
                 "company_id": cid,
                 "order_id": oid,
                 "source": "base44",
-                "marketplace": marketplace[:60],
+                "marketplace": marketplace_eco.value,
                 "platform_order_id": platform_order_id[:120],
                 "ad_title": (str(po.get("titulo_anuncio") or "").strip() or "—")[:300],
                 "sku": sku[:120],

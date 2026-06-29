@@ -13,15 +13,55 @@
 
 import { z } from "zod";
 
-/** One source line that could not be matched + persisted, with the reason. */
+import { ecommerceSchema } from "@/lib/schemas/ad";
+
+/**
+ * One source line that could not be matched + persisted, with the reason.
+ *
+ * Carries enough of the raw line (channel, SKU, ad title, variation text,
+ * image) for the in-import resolver to render it and let an operator pin the
+ * right ad + variation — persisted as a SKU mapping the importer then reuses.
+ */
 export const upsellerImportErrorSchema = z.object({
   row_index: z.number().int().min(0),
   message: z.string(),
+  marketplace: ecommerceSchema.nullable().optional(),
   platform_order_id: z.string().nullable().optional(),
   sku: z.string().nullable().optional(),
+  ad_title: z.string().nullable().optional(),
+  variation_text: z.string().nullable().optional(),
+  image_url: z.string().nullable().optional(),
 });
 
 export type UpsellerImportError = z.infer<typeof upsellerImportErrorSchema>;
+
+/** Pin a marketplace SKU → ad + variation (the persistent De/Para). */
+export const skuMappingCreateSchema = z.object({
+  marketplace: ecommerceSchema,
+  sku: z.string().min(1).max(120),
+  ad_id: z.string().min(1),
+  variation_id: z.string().min(1),
+});
+
+export type SkuMappingCreate = z.infer<typeof skuMappingCreateSchema>;
+
+/** A stored De/Para entry, enriched with the resolved catalog context. */
+export const skuMappingReadSchema = z.object({
+  id: z.string(),
+  marketplace: ecommerceSchema,
+  sku: z.string(),
+  ad_id: z.string(),
+  variation_id: z.string(),
+  source: z.string(),
+  created_at: z.string(),
+  ad_title: z.string().nullable().optional(),
+  product_name: z.string().nullable().optional(),
+  variation_sku: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  size: z.string().nullable().optional(),
+});
+
+export type SkuMappingRead = z.infer<typeof skuMappingReadSchema>;
 
 /** Outcome of an import run (or a dry-run preview). */
 export const upsellerImportSummarySchema = z.object({

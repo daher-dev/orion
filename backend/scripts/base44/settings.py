@@ -172,6 +172,8 @@ DEFAULT_ECOMMERCE = Ecommerce.OTHER
 ECOMMERCE_KEYWORDS: list[tuple[str, Ecommerce]] = [
     ("shopee", Ecommerce.SHOPEE),
     ("mercado", Ecommerce.MERCADO_LIVRE),  # "Mercado Livre" / "Mercado Libre"
+    ("shein", Ecommerce.SHEIN),
+    ("tiktok", Ecommerce.TIKTOK_SHOP),
     ("shopify", Ecommerce.SHOPIFY),
     ("instagram", Ecommerce.INSTAGRAM),
     ("whats", Ecommerce.WHATSAPP),

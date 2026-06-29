@@ -90,7 +90,7 @@ async def test_top_products_prefers_marketplace_photo_over_design_artwork(db_ses
         ImportedOrder(
             company_id=company.id,
             order_id=order.id,
-            marketplace="Shopee",
+            marketplace="shopee",
             platform_order_id="MP1",
             ad_title="Camiseta Punisher",
             sku="PUN-M",

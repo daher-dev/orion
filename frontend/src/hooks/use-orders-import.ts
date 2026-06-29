@@ -4,9 +4,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApi } from "@/hooks/use-api";
 import { qk } from "@/lib/query-keys";
 import type { ApiError } from "@/lib/api-client";
-import type { UpsellerImportSummary } from "@/lib/schemas/orders-import";
+import type {
+  SkuMappingCreate,
+  SkuMappingRead,
+  UpsellerImportSummary,
+} from "@/lib/schemas/orders-import";
 
 const UPSELLER_PATH = "/v1/orders/import/upseller";
+const SKU_MAPPINGS_PATH = "/v1/orders/import/sku-mappings";
 
 export type UpsellerImportInput = {
   file: File;
@@ -37,5 +42,19 @@ export function useImportUpseller() {
         void qc.invalidateQueries({ queryKey: qk.orders.all() });
       }
     },
+  });
+}
+
+/**
+ * Pin a marketplace SKU to an ad + variation (the persistent De/Para).
+ *
+ * Once stored, every later import resolves that SKU deterministically — so the
+ * resolver writes one of these per unmatched SKU, then the wizard re-runs the
+ * dry-run to fold the now-resolvable lines back into the preview.
+ */
+export function useUpsertSkuMapping() {
+  const api = useApi();
+  return useMutation<SkuMappingRead, ApiError, SkuMappingCreate>({
+    mutationFn: (payload) => api.post<SkuMappingRead>(SKU_MAPPINGS_PATH, payload),
   });
 }

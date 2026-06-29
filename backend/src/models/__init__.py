@@ -60,6 +60,7 @@ from models.product_spec import ProductSpec, SpecTrim
 from models.role import Permission, Role, RolePermission
 from models.sewing_contractor import SewingContractor
 from models.sewing_shipment import SewingShipment, SewingShipmentItem
+from models.sku_mapping import SkuMapping
 from models.stock import StockEntry, StockExit
 from models.subscription import Subscription
 from models.user import User
@@ -127,6 +128,7 @@ __all__ = [
     "SewingShipmentItem",
     "ShipmentStatus",
     "Size",
+    "SkuMapping",
     "SpecTrim",
     "StockEntry",
     "StockExit",

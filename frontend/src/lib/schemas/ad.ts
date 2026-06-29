@@ -16,6 +16,8 @@ import { z } from "zod";
 export const ECOMMERCE_CHANNELS = [
   "shopee",
   "mercado_livre",
+  "shein",
+  "tiktok_shop",
   "shopify",
   "instagram",
   "whatsapp",

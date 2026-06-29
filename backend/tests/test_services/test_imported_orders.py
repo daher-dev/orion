@@ -4,12 +4,15 @@ import uuid
 
 from sqlmodel import select
 
-from models import ImportedOrder, Order, OrderStatus, Size
+from models import Ecommerce, ImportedOrder, Order, OrderStatus, Size
 from services.imported_orders import (
     _extract_color_size,
+    _parse_marketplace,
+    _variation_tokens,
     import_upseller_orders,
     parse_upseller_csv,
 )
+from services.sku_mapping import upsert_mapping
 from tests.factories import (
     create_ad,
     create_company,
@@ -109,6 +112,27 @@ def test_extract_color_size_handles_per_channel_formats():
     assert _extract_color_size("") == (None, None)
 
 
+def test_parse_marketplace_folds_labels_to_enum():
+    assert _parse_marketplace("Shopee") == Ecommerce.SHOPEE
+    assert _parse_marketplace("Mercado Libre") == Ecommerce.MERCADO_LIVRE  # Spanish
+    assert _parse_marketplace("Mercado Livre") == Ecommerce.MERCADO_LIVRE
+    assert _parse_marketplace("Shein") == Ecommerce.SHEIN
+    assert _parse_marketplace("TikTok Shop") == Ecommerce.TIKTOK_SHOP
+    assert _parse_marketplace("Some Random Channel") == Ecommerce.OTHER
+    assert _parse_marketplace("") == Ecommerce.OTHER
+
+
+def test_variation_tokens_are_order_insensitive():
+    # The marketplace shuffles the tokens (and slips a print name among them);
+    # the extracted size + colour token bag is identical regardless of order.
+    assert _variation_tokens("Bege,NY,M") == (Size.M, {"bege", "ny"})
+    assert _variation_tokens("NY,Bege,M") == (Size.M, {"bege", "ny"})
+    assert _variation_tokens("M,NY,Bege") == (Size.M, {"bege", "ny"})
+    assert _variation_tokens("Preto,Naruto 03,GG") == (Size.GG, {"preto", "naruto03"})
+    # "Único" folds to the single Size.U member.
+    assert _variation_tokens("Preto,Único")[0] == Size.U
+
+
 def test_parse_decodes_cp1252_and_maps_headers():
     csv = _csv_bytes(
         _row(),
@@ -184,7 +208,7 @@ async def test_import_strict_match_creates_order_and_imported_order(db_session):
     assert (order.ordered_at.year, order.ordered_at.month, order.ordered_at.day) == (2026, 5, 18)
 
     imported = (await db_session.exec(select(ImportedOrder).where(ImportedOrder.order_id == order.id))).one()
-    assert imported.marketplace == "Shopee"
+    assert imported.marketplace == Ecommerce.SHOPEE
     assert imported.upseller_order_no == "UPTHK246656"
     assert imported.tracking_code == "BR2699283158831"
     assert imported.invoice_key == "35260544031336000197550090001016751345126228"
@@ -318,3 +342,77 @@ async def test_dry_run_does_not_persist(db_session):
     assert summary.dry_run is True
     assert (await db_session.exec(select(Order).where(Order.company_id == company.id))).all() == []
     assert (await db_session.exec(select(ImportedOrder))).all() == []
+
+
+async def test_import_matches_variation_despite_shuffled_tokens(db_session):
+    """Size-first / colour-first / print-name-in-the-middle all resolve alike."""
+
+    company, user = await _company_user(db_session)
+    # SKU won't sku-match the catalog variation, so the colour/size token path runs.
+    _, _, variation, _ = await _seed_match(db_session, company.id, size=Size.G, color="Azul", color_code="AZU")
+
+    for variacao in ("G,Azul", "Azul,G", "Azul,Estampa Legal,G"):
+        csv = _csv_bytes(_row(platform_order_id=f"ORD-{variacao}", sku="ZZZ", variacao=variacao))
+        summary = await import_upseller_orders(db_session, company_id=company.id, user_id=user.id, file_bytes=csv)
+        assert summary.errors == [], variacao
+        assert summary.created == 1, variacao
+
+    orders = (await db_session.exec(select(Order).where(Order.company_id == company.id))).all()
+    assert len(orders) == 3
+    assert {o.variation_id for o in orders} == {variation.id}
+
+
+async def test_import_resolves_via_sku_mapping_when_fuzzy_fails(db_session):
+    company, user = await _company_user(db_session)
+    company_id = company.id
+    # Catalog exists but neither the ad's listing id nor its title match the row,
+    # so fuzzy resolution would drop the line as an error.
+    _, _, variation, ad = await _seed_match(
+        db_session, company_id, ad_title="Totally Different", external_id="999"
+    )
+
+    # Without a mapping the line is unmatched.
+    csv = _csv_bytes(_row())
+    dry = await import_upseller_orders(
+        db_session, company_id=company_id, user_id=user.id, file_bytes=csv, dry_run=True
+    )
+    assert dry.created == 0
+    assert len(dry.errors) == 1
+
+    # Operator pins the marketplace SKU → ad + variation (the De/Para).
+    await upsert_mapping(
+        db_session,
+        company_id=company_id,
+        user_id=user.id,
+        marketplace=Ecommerce.SHOPEE,
+        sku="18398298341-0391-AZUL-G",
+        ad_id=ad.id,
+        variation_id=variation.id,
+    )
+
+    # Same file now resolves deterministically via the mapping.
+    summary = await import_upseller_orders(db_session, company_id=company_id, user_id=user.id, file_bytes=csv)
+    assert summary.errors == []
+    assert summary.created == 1
+    order = (await db_session.exec(select(Order).where(Order.company_id == company_id))).one()
+    assert order.ad_id == ad.id
+    assert order.variation_id == variation.id
+
+
+async def test_unmatched_error_carries_resolver_context(db_session):
+    company, user = await _company_user(db_session)
+    company_id = company.id
+    await _seed_match(db_session, company_id, ad_title="Totally Different", external_id="999")
+
+    summary = await import_upseller_orders(
+        db_session, company_id=company_id, user_id=user.id, file_bytes=_csv_bytes(_row()), dry_run=True
+    )
+
+    assert len(summary.errors) == 1
+    err = summary.errors[0]
+    # The resolver needs the channel, SKU, ad title, variation text and image.
+    assert err.marketplace == Ecommerce.SHOPEE
+    assert err.sku == "18398298341-0391-AZUL-G"
+    assert err.ad_title == "Short 2 em 1 Muay Thai"
+    assert err.variation_text == "0391-AZUL,G"
+    assert err.image_url is not None

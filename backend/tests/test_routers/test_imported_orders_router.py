@@ -152,3 +152,72 @@ async def test_upseller_import_rejects_empty_file(authed_client: AsyncClient, db
         data={"dry_run": "false"},
     )
     assert response.status_code == 400
+
+
+async def _seed_unmatchable(db_session, company_id: uuid.UUID):
+    """Catalog whose ad/title don't match the default _row() (fuzzy fails)."""
+
+    spec = await create_product_spec(db_session, company_id=company_id)
+    product = await create_product(db_session, company_id=company_id, spec_id=spec.id)
+    variation = await create_product_variation(
+        db_session, company_id=company_id, product_id=product.id, size=Size.G, color="Azul", color_code="AZU"
+    )
+    ad = await create_ad(
+        db_session,
+        company_id=company_id,
+        product_id=product.id,
+        title="Totally Different",
+        external_id="999",
+        ecommerce=Ecommerce.SHOPEE,
+    )
+    return ad, variation
+
+
+async def test_sku_mapping_resolver_loop(authed_client: AsyncClient, db_session):
+    """Unmatched line → pin a SKU mapping → re-import resolves it."""
+
+    company, _ = await _provision_manager(db_session)
+    ad, variation = await _seed_unmatchable(db_session, company.id)
+
+    # 1. Fuzzy match fails — the line is unmatched.
+    dry = await authed_client.post("/v1/orders/import/upseller", **_upload(_csv_bytes(_row()), dry_run=True))
+    assert dry.json()["created"] == 0
+    err = dry.json()["errors"][0]
+    assert err["marketplace"] == "shopee"
+    assert err["sku"] == "18398298341-0391-AZUL-G"
+
+    # 2. Operator pins the SKU → ad + variation.
+    pin = await authed_client.post(
+        "/v1/orders/import/sku-mappings",
+        json={
+            "marketplace": err["marketplace"],
+            "sku": err["sku"],
+            "ad_id": str(ad.id),
+            "variation_id": str(variation.id),
+        },
+    )
+    assert pin.status_code == 201
+    assert pin.json()["variation_sku"] == variation.sku
+
+    # 3. Re-import resolves deterministically via the mapping.
+    done = await authed_client.post("/v1/orders/import/upseller", **_upload(_csv_bytes(_row())))
+    assert done.json()["created"] == 1
+    assert done.json()["errors"] == []
+
+    listing = await authed_client.get("/v1/orders")
+    assert listing.json()["total"] == 1
+
+
+async def test_sku_mapping_403_for_operator(authed_client: AsyncClient, db_session):
+    company, _ = await _provision_operator(db_session)
+    ad, variation = await _seed_unmatchable(db_session, company.id)
+    response = await authed_client.post(
+        "/v1/orders/import/sku-mappings",
+        json={
+            "marketplace": "shopee",
+            "sku": "x",
+            "ad_id": str(ad.id),
+            "variation_id": str(variation.id),
+        },
+    )
+    assert response.status_code == 403

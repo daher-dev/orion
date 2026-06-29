@@ -52,8 +52,19 @@ class TrimType(StrEnum):
 
 
 class Ecommerce(StrEnum):
+    """Sales channel of a listing — marketplaces and owned channels alike.
+
+    The marketplace members (``SHOPEE``, ``MERCADO_LIVRE``, ``SHEIN``,
+    ``TIKTOK_SHOP``) are also the canonical values stored on every
+    marketplace-import record (``ImportedOrder.marketplace`` and the
+    ``SkuMapping`` De/Para key) — the raw export label is parsed to one of
+    these once, at import time, so nothing downstream handles free text.
+    """
+
     SHOPEE = "shopee"
     MERCADO_LIVRE = "mercado_livre"
+    SHEIN = "shein"
+    TIKTOK_SHOP = "tiktok_shop"
     SHOPIFY = "shopify"
     INSTAGRAM = "instagram"
     WHATSAPP = "whatsapp"

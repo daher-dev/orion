@@ -40,6 +40,8 @@ type Props = { range: ReportDateRange };
 const CHANNEL_COLORS: Record<SalesByChannel["channel"], string> = {
   shopee: "#c2410c", // brand-sales
   mercado_livre: "#eab308",
+  shein: "#1f2937",
+  tiktok_shop: "#0ea5a4",
   shopify: "#0f766e", // brand-prod (used as a complement)
   instagram: "#7e5bef", // brand-catalog
   whatsapp: "#15803d",

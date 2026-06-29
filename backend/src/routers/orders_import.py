@@ -12,14 +12,17 @@ Requires ``orders.write`` so an operator without that permission gets a
 
 from __future__ import annotations
 
+import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 
 from dependencies import DbSession, RequirePermission
 from models import User
 from schemas.imported_orders import UpsellerImportSummary
+from schemas.sku_mapping import SkuMappingCreate, SkuMappingPage, SkuMappingRead
 from services import imported_orders as upseller_import_service
+from services import sku_mapping as sku_mapping_service
 
 router = APIRouter(
     prefix="/orders/import",
@@ -62,4 +65,60 @@ async def import_upseller_endpoint(
         user_id=user.id,
         file_bytes=data,
         dry_run=dry_run,
+    )
+
+
+@router.post("/sku-mappings", response_model=SkuMappingRead, status_code=status.HTTP_201_CREATED)
+async def upsert_sku_mapping_endpoint(
+    payload: SkuMappingCreate,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+) -> SkuMappingRead:
+    """Pin a marketplace SKU to an ad + variation (the persistent De/Para).
+
+    Once stored, every later import resolves this SKU deterministically. Re-pin
+    the same SKU to overwrite a previous resolution.
+    """
+
+    return await sku_mapping_service.upsert_mapping(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        marketplace=payload.marketplace,
+        sku=payload.sku,
+        ad_id=payload.ad_id,
+        variation_id=payload.variation_id,
+    )
+
+
+@router.get("/sku-mappings", response_model=SkuMappingPage)
+async def list_sku_mappings_endpoint(
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 50,
+) -> SkuMappingPage:
+    """List the stored SKU → ad/variation mappings for this tenant."""
+
+    return await sku_mapping_service.list_mappings(
+        db,
+        company_id=user.company_id,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.delete("/sku-mappings/{mapping_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_sku_mapping_endpoint(
+    mapping_id: uuid.UUID,
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("orders.write"))],
+) -> None:
+    """Forget a SKU mapping — the SKU falls back to fuzzy matching."""
+
+    await sku_mapping_service.delete_mapping(
+        db,
+        company_id=user.company_id,
+        user_id=user.id,
+        mapping_id=mapping_id,
     )

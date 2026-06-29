@@ -15,6 +15,8 @@ export type ChannelTheme = {
 export const CHANNEL_THEME: Record<Ecommerce, ChannelTheme> = {
   shopee: { color: "#ee4d2d", fg: "#ffffff", short: "SH" },
   mercado_livre: { color: "#fff159", fg: "#1f1f1f", short: "ML" },
+  shein: { color: "#000000", fg: "#ffffff", short: "SN" },
+  tiktok_shop: { color: "#010101", fg: "#69c9d0", short: "TT" },
   shopify: { color: "#95bf47", fg: "#ffffff", short: "SP" },
   instagram: { color: "#e4405f", fg: "#ffffff", short: "IG" },
   whatsapp: { color: "#25d366", fg: "#ffffff", short: "WA" },

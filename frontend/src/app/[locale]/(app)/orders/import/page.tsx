@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PageHead } from "@/components/page/PageHead";
 import { ImportDropZone } from "@/components/orders-import/ImportDropZone";
 import { ImportSummaryPanel } from "@/components/orders-import/ImportSummaryPanel";
-import { ImportErrorList } from "@/components/orders-import/ImportErrorList";
+import { ImportResolver } from "@/components/orders-import/ImportResolver";
 import { ImportCommitDialog } from "@/components/orders-import/ImportCommitDialog";
 import { useImportUpseller } from "@/hooks/use-orders-import";
 import { useCanAccess } from "@/hooks/use-permissions";
@@ -24,8 +24,10 @@ type Step = "drop" | "review";
  *  drop    — `ImportDropZone` accepts the .csv export (up to 5 MB). On
  *            analyze we POST it with `dry_run: true` to preview the
  *            strict-match result without writing anything.
- *  review  — `ImportSummaryPanel` shows the counts and `ImportErrorList`
- *            lists the unmatched lines (skipped). The footer commits.
+ *  review  — `ImportSummaryPanel` shows the counts and `ImportResolver`
+ *            lets the operator pin each unmatched marketplace SKU to an ad +
+ *            variation (persisted as a De/Para, then re-analyzed). The footer
+ *            commits the now-resolvable lines.
  *  commit  — `ImportCommitDialog` confirms, then we POST the same file
  *            with `dry_run: false`. On success we toast and bounce back
  *            to /orders; re-imports return duplicates, not errors.
@@ -72,6 +74,19 @@ export default function OrdersImportPage() {
     },
     [importer, t],
   );
+
+  // Re-run the dry-run on the held file so SKUs just pinned in the resolver
+  // fold back into the preview (counts + remaining unmatched) without leaving
+  // the review step. Silent: a transient failure keeps the current preview.
+  const refreshPreview = useCallback(async () => {
+    if (!file) return;
+    try {
+      const result = await importer.mutateAsync({ file, dryRun: true });
+      setSummary(result);
+    } catch {
+      // Keep the existing preview; the operator can retry from the resolver.
+    }
+  }, [file, importer]);
 
   const handleBack = useCallback(() => {
     setStep("drop");
@@ -166,7 +181,7 @@ export default function OrdersImportPage() {
           <ImportSummaryPanel summary={summary} />
 
           {summary.errors.length > 0 ? (
-            <ImportErrorList errors={summary.errors} />
+            <ImportResolver errors={summary.errors} onResolved={refreshPreview} />
           ) : (
             <p className="rounded-[14px] border border-[color:var(--orion-line)] bg-[color:var(--orion-surface)] px-4 py-3 text-[12.5px] text-[color:var(--orion-ink-2)]">
               {t("review.allGood")}

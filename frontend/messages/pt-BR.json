@@ -376,6 +376,8 @@
     "channels": {
       "shopee": "Shopee",
       "mercado_livre": "Mercado Livre",
+      "shein": "Shein",
+      "tiktok_shop": "TikTok Shop",
       "shopify": "Shopify",
       "instagram": "Instagram",
       "whatsapp": "WhatsApp",
@@ -559,6 +561,23 @@
         "reason": "Motivo"
       }
     },
+    "resolver": {
+      "title": "Resolver SKUs sem correspondência",
+      "sub": "Vincule cada SKU do marketplace ao anúncio e à variação corretos. Guardamos a escolha, então toda importação futura resolve sozinha — você faz isso uma única vez por SKU.",
+      "unpinnable": "{count, plural, one {# linha não tem SKU} other {# linhas não têm SKU}} e não podem ser vinculadas aqui — ajuste o catálogo e importe de novo.",
+      "lineCount": "{count, plural, one {# linha} other {# linhas}}",
+      "chooseAd": "Escolha um anúncio…",
+      "searchAd": "Buscar anúncios…",
+      "noAds": "Nenhum anúncio encontrado",
+      "pickAdFirst": "Escolha um anúncio primeiro",
+      "chooseVariation": "Escolha uma variação…",
+      "link": "Vincular",
+      "linked": "Vinculado",
+      "toast": {
+        "linked": "SKU vinculado a {sku}",
+        "error": "Não foi possível salvar o vínculo"
+      }
+    },
     "commit": {
       "title": "Confirmar importação",
       "body": "Importar {count, plural, one {# pedido} other {# pedidos}}? Cada linha correspondida vira um pedido no seu catálogo.",
@@ -695,6 +714,8 @@
     "channels": {
       "shopee": "Shopee",
       "mercado_livre": "Mercado Livre",
+      "shein": "Shein",
+      "tiktok_shop": "TikTok Shop",
       "shopify": "Shopify",
       "instagram": "Instagram",
       "whatsapp": "WhatsApp",
@@ -735,6 +756,8 @@
         "externalId": {
           "shopee": "Ex: SH-99812",
           "mercado_livre": "Ex: MLB-3322114455",
+          "shein": "Ex: 4205012345678",
+          "tiktok_shop": "Ex: 17xxxxxxxxxxxxxxx",
           "shopify": "Ex: shopify-handle",
           "instagram": "Ex: id da postagem",
           "whatsapp": "Ex: código do catálogo",
@@ -2930,6 +2953,8 @@
     "channels": {
       "shopee": "Shopee",
       "mercado_livre": "Mercado Livre",
+      "shein": "Shein",
+      "tiktok_shop": "TikTok Shop",
       "shopify": "Shopify",
       "instagram": "Instagram",
       "whatsapp": "WhatsApp",

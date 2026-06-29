@@ -16,14 +16,25 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from models.enums import Ecommerce
+
 
 class UpsellerImportError(BaseModel):
-    """A source row that could not be persisted, with the reason."""
+    """A source row that could not be persisted, with the reason.
+
+    Carries enough of the raw line (channel, SKU, ad title, variation text,
+    image) for the in-import resolver to render it and let an operator pin the
+    right ad + variation — which is then remembered as a ``SkuMapping``.
+    """
 
     row_index: int = Field(ge=0)
     message: str
+    marketplace: Ecommerce | None = None
     platform_order_id: str | None = None
     sku: str | None = None
+    ad_title: str | None = None
+    variation_text: str | None = None
+    image_url: str | None = None
 
 
 class UpsellerImportSummary(BaseModel):

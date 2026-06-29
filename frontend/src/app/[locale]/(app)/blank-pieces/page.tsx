@@ -22,6 +22,7 @@ import {
 import { BlankPiecesTable } from "@/components/blank-pieces/BlankPiecesTable";
 import {
   useBlankStockLevels,
+  useBlankStockLevelsSummary,
   useBlankStockMovements,
   useCreateBlankMovement,
 } from "@/hooks/use-blank-stock";
@@ -64,6 +65,7 @@ export default function BlankPiecesPage() {
     q: debouncedSearch || undefined,
     low_stock_only: lowOnly || undefined,
   });
+  const summary = useBlankStockLevelsSummary();
   const movements = useBlankStockMovements(tab === "movements" ? { page_size: 50 } : {});
   const recentForItem = useBlankStockMovements(
     moveOpen && moveItem ? { blank_piece_id: moveItem.blank_piece_id, page_size: 10 } : {},
@@ -71,8 +73,11 @@ export default function BlankPiecesPage() {
   const createMovement = useCreateBlankMovement();
 
   const rows = levels.data?.items ?? [];
-  const total = rows.reduce((sum, r) => sum + r.on_hand, 0);
-  const belowMin = rows.filter((r) => r.low_stock).length;
+  // Headline figures come from the server summary (every SKU), not a reduce over
+  // the current page — the page holds at most `page_size` rows, so summing it
+  // both undercounts and could surface a misleading negative.
+  const total = summary.data?.total_on_hand ?? 0;
+  const belowMin = summary.data?.below_min ?? 0;
 
   function openMove(item: BlankPieceLevelRead) {
     setServerError(null);

@@ -10,7 +10,7 @@ Orders whose title has no design fall back to the spec's base no-print product
 
 import re
 
-from models import ArtworkStatus, ProductVariation, SeparationStatus
+from models import ArtworkStatus, BlankMovementKind, ProductVariation, SeparationStatus
 from scripts.base44.mappings import ConversionReport, convert, ink_hex_for
 
 _HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
@@ -273,6 +273,61 @@ def test_company_settings_palette_covers_every_variation_code():
     for entry in palette:
         assert re.match(r"^[A-Z]{3}$", entry["code"]), entry
         assert _HEX_RE.match(entry["hex"]), entry
+
+
+def test_blank_tier_seeds_from_entradaestoque_balance_never_negative():
+    """Peças-lisas conservation contract (regression for the prod "-9657" bug).
+
+    EntradaEstoque is base44's *maintained current balance* of blank pieces, so
+    the blank tier is seeded ONLY from it (one opening ENTRY per size). SaidaEstoque
+    is the removals audit trail — its separações are already reflected in that
+    balance — so it must NOT emit blank EXIT movements. Even when separações vastly
+    exceed receipts, the imported blank balance equals EntradaEstoque and is never
+    negative. (The old importer double-subtracted SaidaEstoque, driving the tier to
+    -35k for Underground.)
+    """
+
+    raw = {
+        **RAW,
+        "EntradaEstoque": [
+            {
+                "id": "ent1",
+                "company_id": "c1",
+                "produto_id": "p1",
+                "cor": "Preto",
+                "itens_tamanho": [
+                    {"tamanho": "M", "quantidade": 10},
+                    {"tamanho": "G", "quantidade": 5},
+                ],
+            }
+        ],
+        "SaidaEstoque": [
+            # Far more separação than was ever received — must NOT drive blank
+            # negative, because the balance already accounts for it.
+            {
+                "id": "sai1",
+                "company_id": "c1",
+                "produto_id": "p1",
+                "cor": "Preto",
+                "tamanho": "M",
+                "quantidade": 100,
+                "motivo": "separacao",
+            },
+        ],
+    }
+    data, _ = _convert(raw)
+    movements = _rows(data, "blank_piece_movement")
+
+    # Only opening ENTRY movements exist — SaidaEstoque produces ZERO blank EXIT.
+    assert movements, "expected opening blank entries from EntradaEstoque"
+    assert all(m["kind"] == BlankMovementKind.ENTRY for m in movements)
+
+    # Net blank on-hand == EntradaEstoque total (15), regardless of the 100 separação.
+    by_piece: dict = {}
+    for m in movements:
+        by_piece[m["blank_piece_id"]] = by_piece.get(m["blank_piece_id"], 0) + m["quantity"]
+    assert sum(by_piece.values()) == 15
+    assert all(v >= 0 for v in by_piece.values()), "blank on-hand must never be negative"
 
 
 def test_order_items_synthesized_one_per_unit():

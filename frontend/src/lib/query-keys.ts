@@ -117,6 +117,7 @@ export const qk = {
     list: (filters: Readonly<Record<string, unknown>> = {}) => tuple("blank-stock", "list", filters),
     detail: (id: string) => tuple("blank-stock", "detail", id),
     levels: (filters: Readonly<Record<string, unknown>> = {}) => tuple("blank-stock", "levels", filters),
+    levelsSummary: () => tuple("blank-stock", "levels", "summary"),
     movements: (filters: Readonly<Record<string, unknown>> = {}) =>
       tuple("blank-stock", "movements", filters),
   },

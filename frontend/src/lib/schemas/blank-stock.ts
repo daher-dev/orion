@@ -65,6 +65,14 @@ export const blankPieceLevelPageSchema = z.object({
 });
 export type BlankPieceLevelPage = z.infer<typeof blankPieceLevelPageSchema>;
 
+// Tenant-wide headline totals (every SKU, not the current page) for the KPIs.
+export const blankPieceLevelSummarySchema = z.object({
+  total_on_hand: z.number().int(),
+  below_min: z.number().int(),
+  sku_count: z.number().int(),
+});
+export type BlankPieceLevelSummary = z.infer<typeof blankPieceLevelSummarySchema>;
+
 // ---------- Movements ledger ----------
 
 export const blankMovementReadSchema = z.object({

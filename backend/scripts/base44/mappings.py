@@ -797,10 +797,19 @@ def convert(
             report.add("sewing_shipment_item")
     report.fetched["sewing_shipment"] = len(_records(raw, "RemessaCostura"))
 
-    # 8) EntradaEstoque → blank_piece + blank_piece_movement (ENTRY).
-    # All EntradaEstoque records reference base (non-printed) products — they are
-    # peça lisa inventory, not finished goods. We map them to the WIP blank-piece
-    # tier so the planner can subtract available blank stock from cut demand.
+    # 8) EntradaEstoque → blank_piece + blank_piece_movement (opening ENTRY).
+    # EntradaEstoque is base44's *maintained current balance* of peças lisas — one
+    # row per (produto, cor) lot, mutated in place as stock moves, and never
+    # negative. It is NOT an additions log: LogEntradaEstoque (the append-only
+    # additions trail) and SaidaEstoque (the removals trail) are both already
+    # reflected in this balance. So we seed each lot's current per-size quantity as
+    # a single opening blank ENTRY — this reproduces exactly the on-hand base44
+    # shows. We deliberately do NOT also replay LogEntradaEstoque, SaidaEstoque, or
+    # sewing receipts into the blank tier: every one of those movements is already
+    # baked into the EntradaEstoque balance, and replaying them double-counts (the
+    # SaidaEstoque double-count was the root cause of the large negative "Peças
+    # lisas" balances in prod). Post-cutover, the live receive_shipment / assemble
+    # transitions take over and move the balance from here.
     blank_piece_seen: set[uuid.UUID] = set()
     for e in _records(raw, "EntradaEstoque"):
         cid = company_of(e)
@@ -851,76 +860,37 @@ def convert(
             report.add("blank_piece_movement")
     report.fetched["blank_piece"] = len(_records(raw, "EntradaEstoque"))
 
-    # 9) SaidaEstoque → blank_piece_movement (EXIT) + separacao_counter.
-    # All SaidaEstoque records reference base (non-printed) products — they are
-    # blank-piece stock exits, not finished-goods exits. We map them to
-    # BlankPieceMovement so the planner sees the correct net blank on-hand.
-    # For separação rows we additionally build ``separacao_counter``, consumed in
-    # section 10b to mark the oldest matching orders SHIPPED so they drop out of
-    # planning demand. Two design choices for that counter's key:
-    # 1. Key by *product_type* (BERMUDA, CAMISETA, …) rather than spec_id: a
-    #    company can have multiple specs per garment family (e.g. "Short Compressão"
-    #    and "Short de Linho" are both BERMUDA), and orders get keyword-matched to
-    #    whichever spec wins — spec_id matching would silently miss the rest.
-    # 2. No company_id in the key: the 7 imported companies represent one business;
-    #    some are sales-channel sub-companies with 0 products and 0 separações —
-    #    their orders must be matched against the manufacturing company's exits.
+    # 9) SaidaEstoque → separacao_counter ONLY (no blank-tier movement).
+    # SaidaEstoque is base44's removals audit trail; its separações are ALREADY
+    # reflected in the EntradaEstoque current balance seeded in §8. Debiting the
+    # blank tier here a second time double-counts every removal — that double-count
+    # (compounded by attributing entries and exits to different companies) is what
+    # drove "Peças lisas" deeply negative in prod. So we emit NO blank EXIT here.
+    # We only tally separação rows into ``separacao_counter``, consumed in §10b to
+    # mark the oldest matching orders SHIPPED so they drop out of planning demand.
+    # The counter is keyed by (product_type, canonical_color, size) — NOT spec_id —
+    # because a company can have several specs per garment family (e.g. "Short
+    # Compressão" and "Short de Linho" are both BERMUDA) and orders keyword-match to
+    # whichever spec wins; spec_id matching would silently miss the rest.
     separacao_counter: dict[tuple[str, str, Size], int] = {}
     for s in _records(raw, "SaidaEstoque"):
-        cid = company_of(s)
-        if cid is None:
-            report.skip("blank_exit:unknown_company")
+        if norm(s.get("motivo")) != "separacao":
             continue
         size = settings.SIZE_MAP.get(norm(s.get("tamanho")))
         qty = to_int(s.get("quantidade")) or 0
-        if size is None:
-            report.skip("blank_exit:size", str(s.get("tamanho")))
-            continue
-        if qty <= 0:
-            report.skip("blank_exit:qty", str(s.get("quantidade")))
+        if size is None or qty <= 0:
             continue
         info = product_by_b44.get(str(s.get("produto_id")))
         if info is None:
-            report.skip("blank_exit:no_product", str(s.get("produto_id")))
             continue
-        spec_id = info["spec_id"]
-        color = clean_color(s.get("cor"))
-        color_code = colors.code(cid, color)
-        bp_id = derive_id("blank_piece", cid, spec_id, size.value, color_code)
-        if bp_id not in blank_piece_seen:
-            blank_piece_seen.add(bp_id)
-            data.rows["blank_piece"].append(
-                {
-                    "id": bp_id,
-                    "company_id": cid,
-                    "spec_id": spec_id,
-                    "size": size,
-                    "color": color,
-                    "color_code": color_code,
-                    "min_stock": None,
-                }
-            )
-        data.rows["blank_piece_movement"].append(
-            {
-                "id": derive_id("blank_piece_movement_exit", str(s.get("id"))),
-                "company_id": cid,
-                "blank_piece_id": bp_id,
-                "kind": BlankMovementKind.EXIT,
-                "quantity": qty,
-                "sewing_shipment_id": None,
-                "assembly_run_id": None,
-                "notes": s.get("observacoes") or None,
-            }
+        nk: tuple[str, str, Size] = (
+            info["product_type"],
+            _canonical_sep_color(s.get("cor")),
+            size,
         )
-        report.add("blank_exit")
-        if norm(s.get("motivo")) == "separacao":
-            nk: tuple[str, str, Size] = (
-                info["product_type"],
-                _canonical_sep_color(s.get("cor")),
-                size,
-            )
-            separacao_counter[nk] = separacao_counter.get(nk, 0) + qty
-    report.fetched["blank_exit"] = len(_records(raw, "SaidaEstoque"))
+        separacao_counter[nk] = separacao_counter.get(nk, 0) + qty
+        report.add("separacao_counted")
+    report.fetched["separacao"] = len(_records(raw, "SaidaEstoque"))
 
     # ── Mapeamento: print catalog (StampaMemory → PrintDesign) + indexes ──
     products_by_company: dict[uuid.UUID, list[dict]] = {}

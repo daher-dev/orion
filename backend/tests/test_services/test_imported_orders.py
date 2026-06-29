@@ -367,15 +367,11 @@ async def test_import_resolves_via_sku_mapping_when_fuzzy_fails(db_session):
     company_id = company.id
     # Catalog exists but neither the ad's listing id nor its title match the row,
     # so fuzzy resolution would drop the line as an error.
-    _, _, variation, ad = await _seed_match(
-        db_session, company_id, ad_title="Totally Different", external_id="999"
-    )
+    _, _, variation, ad = await _seed_match(db_session, company_id, ad_title="Totally Different", external_id="999")
 
     # Without a mapping the line is unmatched.
     csv = _csv_bytes(_row())
-    dry = await import_upseller_orders(
-        db_session, company_id=company_id, user_id=user.id, file_bytes=csv, dry_run=True
-    )
+    dry = await import_upseller_orders(db_session, company_id=company_id, user_id=user.id, file_bytes=csv, dry_run=True)
     assert dry.created == 0
     assert len(dry.errors) == 1
 

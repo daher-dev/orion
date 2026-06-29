@@ -101,12 +101,8 @@ def upgrade() -> None:
         sa.Column("variation_id", sa.Uuid(), nullable=False),
         sa.Column("source", sqlmodel.sql.sqltypes.AutoString(length=40), nullable=False),
         sa.Column("created_by", sa.Uuid(), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["company_id"], ["companies.id"], name=op.f("fk_sku_mappings_company_id_companies")
-        ),
-        sa.ForeignKeyConstraint(
-            ["ad_id"], ["ads.id"], name=op.f("fk_sku_mappings_ad_id_ads"), ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["company_id"], ["companies.id"], name=op.f("fk_sku_mappings_company_id_companies")),
+        sa.ForeignKeyConstraint(["ad_id"], ["ads.id"], name=op.f("fk_sku_mappings_ad_id_ads"), ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
             ["variation_id"],
             ["product_variations.id"],
@@ -128,21 +124,15 @@ def upgrade() -> None:
     op.execute(_NORMALIZE_SQL)
     op.execute(_DEDUP_SQL)
     op.execute("ALTER TABLE imported_orders ALTER COLUMN marketplace TYPE ecommerce USING marketplace::ecommerce")
-    op.create_unique_constraint(
-        _MKT_UQ, "imported_orders", ["company_id", "marketplace", "platform_order_id", "sku"]
-    )
+    op.create_unique_constraint(_MKT_UQ, "imported_orders", ["company_id", "marketplace", "platform_order_id", "sku"])
 
 
 def downgrade() -> None:
     # Revert the column to free text (the added enum values stay — Postgres has
     # no DROP VALUE; they are harmless if unused).
     op.drop_constraint(_MKT_UQ, "imported_orders", type_="unique")
-    op.execute(
-        "ALTER TABLE imported_orders ALTER COLUMN marketplace TYPE VARCHAR(60) USING marketplace::text"
-    )
-    op.create_unique_constraint(
-        _MKT_UQ, "imported_orders", ["company_id", "marketplace", "platform_order_id", "sku"]
-    )
+    op.execute("ALTER TABLE imported_orders ALTER COLUMN marketplace TYPE VARCHAR(60) USING marketplace::text")
+    op.create_unique_constraint(_MKT_UQ, "imported_orders", ["company_id", "marketplace", "platform_order_id", "sku"])
 
     op.drop_index(op.f("ix_sku_mappings_variation_id"), table_name="sku_mappings")
     op.drop_index(op.f("ix_sku_mappings_ad_id"), table_name="sku_mappings")

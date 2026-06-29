@@ -61,9 +61,7 @@ async def _to_read(db: AsyncSession, *, company_id: uuid.UUID, mapping: SkuMappi
     product = None
     if variation is not None:
         product = (
-            await db.exec(
-                scoped(select(Product), Product, company_id).where(Product.id == variation.product_id)
-            )
+            await db.exec(scoped(select(Product), Product, company_id).where(Product.id == variation.product_id))
         ).first()
     return SkuMappingRead(
         id=mapping.id,

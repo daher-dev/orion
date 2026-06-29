@@ -30,10 +30,12 @@ from schemas.blank_stock import (
     BlankPieceLevelFilters,
     BlankPieceLevelPage,
     BlankPieceLevelRead,
+    BlankPieceLevelSummary,
 )
 from services.blank_stock import (
     create_blank_piece,
     create_movement,
+    levels_summary,
     list_levels,
     list_movements,
 )
@@ -68,6 +70,18 @@ async def list_levels_endpoint(
     )
     items = [BlankPieceLevelRead(**row) for row in rows]
     return BlankPieceLevelPage.build(items, total, params)
+
+
+# ---------- GET /blank-stock/levels/summary ----------
+
+
+@router.get("/levels/summary", response_model=BlankPieceLevelSummary)
+async def levels_summary_endpoint(
+    db: DbSession,
+    user: Annotated[User, Depends(RequirePermission("blank_stock.read"))],
+) -> BlankPieceLevelSummary:
+    """Tenant-wide totals for the page KPIs (every SKU, not the current page)."""
+    return BlankPieceLevelSummary(**await levels_summary(db, company_id=user.company_id))
 
 
 # ---------- GET /blank-stock/movements ----------

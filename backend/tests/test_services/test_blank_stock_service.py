@@ -29,6 +29,7 @@ from services import company_settings as settings_service
 from shared.exceptions import ConflictError, NotFoundError
 from tests.factories import (
     create_blank_piece,
+    create_blank_piece_movement,
     create_company,
     create_product_spec,
     create_user,
@@ -301,6 +302,39 @@ async def test_list_levels_low_stock_only_filter(db_session):
     # Only "low" (5 <= 10) qualifies; "ok" (5 > 1) does not.
     assert total == 1
     assert rows[0]["blank_piece_id"] == low.id
+
+
+# ---------- levels_summary ----------
+
+
+async def test_levels_summary_sums_all_skus_and_floors_negatives(db_session):
+    """Headline totals aggregate every SKU (not a page) and floor negative on-hand
+    at 0 — so a corrupt/legacy negative SKU never drags the figure below the real
+    positive stock. Regression for the page-1 reduce that produced "-9657"."""
+
+    company, user, spec = await _setup(db_session)
+    # SKU A: on-hand 60.
+    a = await create_blank_piece(db_session, company_id=company.id, spec_id=spec.id, color="Preto")
+    await service.create_movement(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        payload=BlankMovementCreate(blank_piece_id=a.id, kind=BlankMovementKind.ENTRY, quantity=60),
+    )
+    # SKU B: no movements -> on-hand 0.
+    await create_blank_piece(db_session, company_id=company.id, spec_id=spec.id, color="Branco")
+    # SKU C: a raw EXIT with no matching entry -> net -5 (the factory bypasses the
+    # service's on-hand guard, simulating a legacy/corrupt negative). Must be
+    # floored at 0, not subtracted from the headline.
+    c = await create_blank_piece(db_session, company_id=company.id, spec_id=spec.id, color="Vermelho")
+    await create_blank_piece_movement(
+        db_session, company_id=company.id, blank_piece_id=c.id, kind=BlankMovementKind.EXIT, quantity=5
+    )
+
+    summary = await service.levels_summary(db_session, company_id=company.id)
+    assert summary["sku_count"] == 3
+    # 60 + 0 + max(-5, 0) == 60. A naive reduce over on_hand would yield 55.
+    assert summary["total_on_hand"] == 60
 
 
 # ---------- list_movements ----------

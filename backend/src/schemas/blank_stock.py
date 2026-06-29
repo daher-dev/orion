@@ -72,6 +72,14 @@ class BlankPieceLevelRead(BaseModel):
     last_movement_at: datetime | None = None
 
 
+class BlankPieceLevelSummary(BaseModel):
+    """Tenant-wide headline figures for the Peças Lisas page (all SKUs, not a page)."""
+
+    total_on_hand: int
+    below_min: int
+    sku_count: int
+
+
 # ---------- Ledger movements ----------
 
 

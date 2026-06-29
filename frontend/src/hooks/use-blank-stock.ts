@@ -13,6 +13,7 @@ import type {
   BlankPieceLevelFilters,
   BlankPieceLevelPage,
   BlankPieceLevelRead,
+  BlankPieceLevelSummary,
 } from "@/lib/schemas/blank-stock";
 
 const ROOT = "/v1/blank-stock";
@@ -44,6 +45,14 @@ export function useBlankStockLevels(
           page_size: filters.page_size,
         }),
       }),
+  });
+}
+
+export function useBlankStockLevelsSummary(): UseQueryResult<BlankPieceLevelSummary, ApiError> {
+  const api = useApi();
+  return useQuery<BlankPieceLevelSummary, ApiError>({
+    queryKey: qk.blankStock.levelsSummary(),
+    queryFn: () => api.get<BlankPieceLevelSummary>(`${ROOT}/levels/summary`),
   });
 }
 

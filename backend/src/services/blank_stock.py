@@ -421,6 +421,32 @@ async def list_levels(
     return rows, total
 
 
+async def levels_summary(db: AsyncSession, *, company_id: uuid.UUID) -> dict:
+    """Tenant-wide headline figures for the Peças Lisas page.
+
+    Aggregates across EVERY blank piece (not a page), so the UI must not derive
+    these by reducing a paginated slice — the old client summed only page 1, which
+    both undercounted and could show a misleading negative if the first 50 SKUs
+    happened to net below zero. ``total_on_hand`` floors each SKU at 0 (a single
+    negative SKU never drags the headline below the real positive stock).
+    """
+
+    on_hand_map = await compute_on_hand_map(db, company_id=company_id)
+
+    settings = await settings_service.get_settings(db, company_id=company_id)
+    threshold = settings.config.get("stockThresholds", {}).get(_THRESHOLD_KEY)
+
+    pieces = (await db.exec(select(BlankPiece).where(BlankPiece.company_id == company_id))).all()
+    total_on_hand = 0
+    below_min = 0
+    for piece in pieces:
+        on_hand = int(on_hand_map.get(piece.id, 0))
+        total_on_hand += max(on_hand, 0)
+        if _is_low_stock(on_hand=on_hand, row_min_stock=piece.min_stock, threshold=threshold):
+            below_min += 1
+    return {"total_on_hand": total_on_hand, "below_min": below_min, "sku_count": len(pieces)}
+
+
 # ---------- list_movements ----------
 
 

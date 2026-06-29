@@ -55,6 +55,19 @@ async def run(
     exclude_companies: list[str] | None = None,
     rehost: bool = False,
 ) -> None:
+    # Every imported row id is derived from a namespace seeded by BASE44_APP_ID
+    # (see mappings._NAMESPACE). Running with it empty silently uses a DIFFERENT
+    # namespace ("base44:unset"), so the per-company wipe matches nothing and the
+    # load creates a PARALLEL DUPLICATE dataset (companies under *-2 subdomains).
+    # Refuse rather than corrupt the target — required even with --from-files.
+    if not config.BASE44_APP_ID:
+        raise SystemExit(
+            "BASE44_APP_ID is empty. The import derives all ids from a namespace "
+            "seeded by it; without it the per-company wipe matches nothing and you "
+            "get a duplicate dataset. Set BASE44_APP_ID before importing (even with "
+            "--from-files)."
+        )
+
     raw = read_raw() if from_files else await _extract()
 
     report = ConversionReport()

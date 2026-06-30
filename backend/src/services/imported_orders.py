@@ -628,6 +628,43 @@ def _row_error(row: _ParsedRow, marketplace: Ecommerce, message: str) -> Upselle
     )
 
 
+async def _store_auto_mapping(
+    db: AsyncSession,
+    *,
+    company_id: uuid.UUID,
+    user_id: uuid.UUID | None,
+    marketplace: Ecommerce,
+    sku: str,
+    ad_id: uuid.UUID,
+    variation_id: uuid.UUID,
+) -> bool:
+    """Learn a ``(marketplace, sku) → (ad, variation)`` mapping from a match.
+
+    Isolated in its own savepoint so the unique-key constraint firing (a race,
+    or a key created earlier this run) never rolls back the order it was learned
+    from. Never overwrites an existing mapping — a human's manual pin stays
+    authoritative. Returns ``True`` when a new mapping was written.
+    """
+
+    try:
+        async with db.begin_nested():
+            db.add(
+                SkuMapping(
+                    company_id=company_id,
+                    marketplace=marketplace,
+                    sku=sku,
+                    ad_id=ad_id,
+                    variation_id=variation_id,
+                    source="auto",
+                    created_by=user_id,
+                )
+            )
+            await db.flush()
+        return True
+    except IntegrityError:
+        return False
+
+
 async def import_upseller_orders(
     db: AsyncSession,
     *,
@@ -647,6 +684,8 @@ async def import_upseller_orders(
     skipped = 0
     errors: list[UpsellerImportError] = []
     seen: set[tuple[str, str, str]] = set()
+    # (marketplace value, normalized sku) learned from fuzzy matches this run.
+    auto_seen: set[tuple[str, str]] = set()
 
     for row in rows:
         marketplace = _parse_marketplace(row.marketplace)
@@ -729,6 +768,26 @@ async def import_upseller_orders(
         )
         created += 1
         seen.add(key)
+
+        # Learn the resolution: a fuzzy-matched SKU becomes a stored mapping so
+        # the next import resolves it deterministically. Skip lines that already
+        # came from the De/Para (mapped) or whose SKU is already known.
+        if mapped is None and row.sku:
+            mkey = (marketplace.value, row.sku.strip().lower())
+            if (
+                mkey not in ctx.sku_mappings
+                and mkey not in auto_seen
+                and await _store_auto_mapping(
+                    db,
+                    company_id=company_id,
+                    user_id=user_id,
+                    marketplace=marketplace,
+                    sku=mkey[1],
+                    ad_id=ad.id,
+                    variation_id=variation.id,
+                )
+            ):
+                auto_seen.add(mkey)
 
     if not dry_run:
         if created:

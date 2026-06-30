@@ -412,3 +412,75 @@ async def test_unmatched_error_carries_resolver_context(db_session):
     assert err.ad_title == "Short 2 em 1 Muay Thai"
     assert err.variation_text == "0391-AZUL,G"
     assert err.image_url is not None
+
+
+async def test_import_auto_stores_fuzzy_match_as_mapping(db_session):
+    from models import SkuMapping
+
+    company, user = await _company_user(db_session)
+    _, _, variation, ad = await _seed_match(db_session, company.id)
+
+    summary = await import_upseller_orders(
+        db_session, company_id=company.id, user_id=user.id, file_bytes=_csv_bytes(_row())
+    )
+    assert summary.created == 1
+
+    # The successful fuzzy match is learned as a mapping for next time.
+    mappings = (await db_session.exec(select(SkuMapping).where(SkuMapping.company_id == company.id))).all()
+    assert len(mappings) == 1
+    m = mappings[0]
+    assert m.marketplace == Ecommerce.SHOPEE
+    assert m.sku == "18398298341-0391-azul-g"  # normalized (trim + lower)
+    assert m.ad_id == ad.id
+    assert m.variation_id == variation.id
+    assert m.source == "auto"
+
+
+async def test_dry_run_does_not_store_mapping(db_session):
+    from models import SkuMapping
+
+    company, user = await _company_user(db_session)
+    await _seed_match(db_session, company.id)
+
+    await import_upseller_orders(
+        db_session, company_id=company.id, user_id=user.id, file_bytes=_csv_bytes(_row()), dry_run=True
+    )
+    assert (await db_session.exec(select(SkuMapping))).all() == []
+
+
+async def test_auto_store_never_overwrites_a_manual_mapping(db_session):
+    from models import SkuMapping
+
+    company, user = await _company_user(db_session)
+    _, _, variation, ad = await _seed_match(db_session, company.id)
+    # A human already pinned this SKU to a different variation of the ad's product.
+    other = await create_product_variation(
+        db_session,
+        company_id=company.id,
+        product_id=variation.product_id,
+        size=Size.M,
+        color="Verde",
+        color_code="GRN",
+    )
+    await upsert_mapping(
+        db_session,
+        company_id=company.id,
+        user_id=user.id,
+        marketplace=Ecommerce.SHOPEE,
+        sku="18398298341-0391-AZUL-G",
+        ad_id=ad.id,
+        variation_id=other.id,
+    )
+
+    summary = await import_upseller_orders(
+        db_session, company_id=company.id, user_id=user.id, file_bytes=_csv_bytes(_row())
+    )
+    assert summary.created == 1
+
+    # The manual pin wins: the order follows it and the mapping is untouched.
+    mappings = (await db_session.exec(select(SkuMapping).where(SkuMapping.company_id == company.id))).all()
+    assert len(mappings) == 1
+    assert mappings[0].variation_id == other.id
+    assert mappings[0].source == "manual"
+    order = (await db_session.exec(select(Order).where(Order.company_id == company.id))).one()
+    assert order.variation_id == other.id

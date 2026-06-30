@@ -61,8 +61,10 @@ class SkuMapping(CompanyModel, table=True):
         ),
     )
 
-    # Provenance: who resolved it and how. "manual" = a human picked it in the
-    # import resolver; the column leaves room to learn auto-matches later.
+    # Provenance: how the mapping was learned. "manual" = a human pinned it in
+    # the import resolver (authoritative — never overwritten); "auto" = the
+    # importer learned it from a successful fuzzy match; "backfill" = derived
+    # from a historically-resolved order.
     source: str = Field(default="manual", max_length=40)
     created_by: uuid.UUID | None = Field(
         default=None,
